@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link href="{% static 'polls/css/styles.css' %}" rel="stylesheet" type="text/css">
+    <title>My cool site</title>
+</head>
+<body>
+    <div class="img-container">
+        <img src="https://img.kwcdn.com/product/Fancyalgo/VirtualModelMatting/4cedc65fa647850d8acfbadc2c76c4aa.jpg?imageMogr2/auto-orient%7CimageView2/2/w/800/q/70/format/webp" alt="A badass dragon" width="300" height="400"/>
+    </div>
+    <div class="poll list">
+        <fieldset>
+            <legend>Is this thing cool?</legend>
+            <label for="dragon_cool"><input type="radio" name="dragon" id="dragon_cool" value="yes">Yes</label>
+            <label for="dragon_lame"><input type="radio" name="dragon" id="dragon_lame" value="no">No</label>
+            <input type="submit" value="Submit" class="submit_button">
+        </fieldset>
+    </div>
+<div class="album">
+    <h1>Here is my favorite recent album</h1><iframe id="album" style="border-radius:12px" src="https://open.spotify.com/embed/album/5fXeDBzHjkgwYod1kt4EUL?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+</div>
+</body>
+</html>
