@@ -1,12 +1,4 @@
-.img-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    padding: 1em;
-    box-sizing: border-box;
-}
+
 
 
 body, html {
@@ -16,10 +8,6 @@ body, html {
     justify-content: center;
     align-items: center;
     background-color: #264b5d;
-}
-
-div {
-    background-color: #ffffff;
 }
 
 input[type="submit"] {
