@@ -16,10 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
-from polls import views
+from .views import index
 
 urlpatterns = [
-    path("", include("polls.urls"), name='home'),
+    path("", index, name='index'),
     path("admin/", admin.site.urls),
+    path('__reload__', include('django_browser_reload.urls')),
 ]

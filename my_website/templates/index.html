@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My DaisyUI Page</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar bg-base-100">
+        <div class="flex-1">
+            <a class="btn btn-ghost normal-case text-xl">DaisyUI</a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal p-0">
+                <li><a>Item 1</a></li>
+                <li><a>Item 2</a></li>
+                <li><a>Item 3</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero min-h-screen bg-base-200">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold">Hello there</h1>
+                <p class="py-6">Welcome to my DaisyUI powered page. Enjoy the beautiful components and the responsive design.</p>
+                <button class="btn btn-primary">Get Started</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Section -->
+    <div class="container mx-auto py-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="card w-full bg-base-100 shadow-xl">
+                <figure><img src="https://via.placeholder.com/400" alt="Placeholder Image" /></figure>
+                <div class="card-body">
+                    <h2 class="card-title">Card Title 1</h2>
+                    <p>This is a card description. Use this area to describe the content of the card.</p>
+                    <div class="card-actions justify-end">
+                        <button class="btn btn-primary">Learn More</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card w-full bg-base-100 shadow-xl">
+                <figure><img src="https://via.placeholder.com/400" alt="Placeholder Image" /></figure>
+                <div class="card-body">
+                    <h2 class="card-title">Card Title 2</h2>
+                    <p>This is another card description. Use this area to describe the content of the card.</p>
+                    <div class="card-actions justify-end">
+                        <button class="btn btn-primary">Learn More</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card w-full bg-base-100 shadow-xl">
+                <figure><img src="https://via.placeholder.com/400" alt="Placeholder Image" /></figure>
+                <div class="card-body">
+                    <h2 class="card-title">Card Title 3</h2>
+                    <p>This is yet another card description. Use this area to describe the content of the card.</p>
+                    <div class="card-actions justify-end">
+                        <button class="btn btn-primary">Learn More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
