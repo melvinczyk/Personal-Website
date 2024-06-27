@@ -54,6 +54,10 @@ COMPRESS_ENABLED = True
 
 STATICFILES_FINDERS = ('compressor.finders.CompressorFinder',)
 
+STATICFILES_DIRS = ('static',)
+STATIC_URL = '/static/'
+
+STATIC_ROOT = ''
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

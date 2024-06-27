@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="404 - Page Not Found">
+    <title>404 - Page Not Found</title>
+    {% load static %}
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-r from-black to-green-500 text-gray-200">
+
+<!-- Main Content -->
+<div class="container mx-auto p-4">
+    <div class="bg-white sm:rounded-3xl mt-8 p-8">
+        <div class="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-20">
+
+                <!-- Left Column -->
+                <div class="lg:w-1/2">
+                    <!-- 404 Message Section -->
+                    <div class="mx-auto max-w-md text-center lg:text-left py-8">
+                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">404 - Page Not Found</h1>
+                        <p class="text-lg mb-4">Blog coming soon!</p>
+                    </div>
+                    <!-- Button Section -->
+                    <div class="mx-auto max-w-md text-center lg:text-left pb-8">
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                            <div class="bg-base-100 p-6 rounded-lg shadow-lg">
+                                <h1 class="text-4xl font-bold mb-2">Go back to Home?</h1>
+                                <div class="card-actions justify-center">
+                                    <a href="/" class="btn btn-primary">Return to Home</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="mt-8 text-center text-sm text-gray-400">
+    <hr class="border-t-2 border-gray-400 mb-4">
+    <p>&copy; 2024 Nicholas Burczyk. All rights reserved.</p>
+    <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
+</footer>
+
+</body>
+</html>
