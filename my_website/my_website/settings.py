@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "polls.apps.PollsConfig",
     'compressor',
-    'django_browser_reload',
 ]
 
 COMPRESS_ROOT = BASE_DIR / 'static'
@@ -63,7 +62,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django_browser_reload.middleware.BrowserReloadMiddleware',
 ]
 
 ROOT_URLCONF = "my_website.urls"
