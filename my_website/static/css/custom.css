@@ -1,4 +1,11 @@
-.custom-position
+.profile-image
 {
-    object-position: 60% -3px;
+    max-width: none;
+    width: 300px;
+    border-radius: 50%;
+}
+
+body
+{
+    overflow-x: hidden;
 }

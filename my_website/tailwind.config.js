@@ -4,7 +4,11 @@ module.exports = {
       './templates/**/*.html'
   ],
   theme: {
-    extend: {},
+    extend: {
+        backgroundImage: {
+            'radial-gradient': 'radial-gradient(circle, #00ff00, #000000)'
+        },
+    },
   },
   plugins: [
   require("daisyui")

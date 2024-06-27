@@ -1,66 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Personal website of Nicholas Burczyk">
-  <title>Nicholas Burczyk - Personal Website</title>
-  {% load static %}
-  <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-  <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal website of Nicholas Burczyk">
+    <title>Nicholas Burczyk - Personal Website</title>
+    {% load static %}
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-r from-black to-green-500 text-gray-200">
+<body class="bg-gradient-to-r from-black to-green-500 text-gray-200 blur-md">
 
-  <!-- Navbar -->
-  <nav class="navbar bg-neutral text-neutral-content px-4 py-2">
+<!-- Navbar -->
+<nav class="navbar bg-neutral text-neutral-content px-4 py-2">
     <div class="navbar-start">
-      <a href="#" class="text-xl font-bold">My Website</a>
+        <a href="#" class="text-xl font-bold">My Website</a>
     </div>
     <div class="navbar-center hidden lg:flex">
-      <ul class="menu menu-horizontal px-1">
-        <li><a href="#">Home</a></li>
-        <li><a href="#">About</a></li>
-        <li><a href="#">Projects</a></li>
-        <li><a href="#">Contact</a></li>
-      </ul>
+        <ul class="menu menu-horizontal px-1">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Projects</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
     </div>
-  </nav>
+</nav>
 
-  <!-- Main Content -->
-  <div class="container mx-auto p-4">
-    <div class="flex flex-col lg:flex-row items-center lg:items-start lg:space-x-8 my-8">
-      <div class="mt-4 lg:mt-0">
-        <div class="flex items-center justify-center">
-          <img src="{% static 'images/nick.jpg' %}" alt="Nicholas Burczyk" class="h-36 w-36 rounded-full object-none object-[59%_-4px]">
-        </div>
-        <h1 class="text-4xl font-bold mb-2">Nicholas Burczyk</h1>
-        <p class="text-lg">Hi, my name is Nicholas. I'm passionate about creating meaningful projects.</p>
-      </div>
-    </div>
+<!-- Main Content -->
+<div class="container mx-auto p-4">
 
-    <!-- Projects -->
-    <div>
-      <h2 class="text-3xl font-bold mb-4">Projects</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-          <figure></figure>
-          <div class="card-body">
-            <h2 class="card-title">Project Title</h2>
-            <p>Short description of the project. What it does, technologies used, and any interesting details.</p>
-            <div class="card-actions justify-end">
-              <a href="#" class="btn btn-primary">View Project</a>
+    <!-- Introduction Section -->
+    <div class="bg-white sm:rounded-3xl mt-8 p-8">
+        <div class="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 py-100 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+
+                <!-- Text content -->
+                <div class="mx-auto max-w-md text-center lg:mx-0 lg:flex-auto lg:py-32 lg:text-left">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nicholas Burczyk<br>Software
+                        Developer</h1>
+                    <p class="text-lg mb-4">Hi, my name is Nicholas. I'm passionate about creating meaningful
+                        projects.</p>
+
+                    <!-- Card section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <!-- Left Column Content -->
+                        <div class="lg:pl-4 card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                            <div class="bg-base-100 p-6 rounded-lg shadow-lg">
+                                <h1 class="text-4xl font-bold mb-2">Do you like music?</h1>
+                                <p class="text-lg mb-4">If so, check out my blog!</p>
+                                <div class="card-actions justify-center">
+                                    <a href="#" class="btn btn-primary">Check out my blog!</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column Image -->
+                        <div class="relative mt-16 h-80 lg:mt-8">
+                            <img class="absolute left-0 top-0 w-full h-full object-cover md:object-scale-down rounded-full"
+                                 src="{% static 'images/nick.jpg' %}" alt="Nick Burczyk">
+                        </div>
+                    </div>
+
+                </div>
             </div>
-          </div>
         </div>
-        <!-- repeat the card for more projects -->
-      </div>
+    </div>
+    <!-- Projects Section -->
+    <div class="mb-8">
+        <hr class="border-t-2 border-gray-400 mb-4">
+        <h2 class="text-3xl font-bold mb-4">Projects</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Project card example (replace with your projects) -->
+            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                <figure></figure>
+                <div class="card-body">
+                    <h2 class="card-title">Project Title</h2>
+                    <p>Short description of the project. What it does, technologies used, and any interesting
+                        details.</p>
+                    <div class="card-actions justify-end">
+                        <a href="#" class="btn btn-primary">View Project</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Repeat the card for more projects -->
+        </div>
     </div>
 
+    <!-- Contact Section -->
+    <div class="mb-8">
+        <hr class="border-t-2 border-gray-400 mb-4">
+        <h2 class="text-3xl font-bold mb-4">Contact Me</h2>
+        <p>Feel free to reach out to me via the following channels:</p>
+        <!-- Add your contact form or details here -->
+    </div>
+
+    <!-- Footer -->
     <footer class="mt-8 text-center text-sm text-gray-400">
-      <p>&copy; 2024 Nicholas Burczyk. All rights reserved.</p>
-      <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
+        <hr class="border-t-2 border-gray-400 mb-4">
+        <p>&copy; 2024 Nicholas Burczyk. All rights reserved.</p>
+        <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
+                href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
     </footer>
-  </div>
+</div>
 
 </body>
 </html>
