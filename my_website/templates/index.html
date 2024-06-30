@@ -55,8 +55,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative mt-0 h-80 lg:mt-8 flex justify-center items-center">
-                    <img class="w-full h-full object-cover rounded-full" src="{% static 'images/nick.jpg' %}"
+                <div class="relative mt-0 h-80 lg:mt-8 flex justify-center items-center object-scale-down overflow-hidden">
+                    <img class="w-40 h-40 object-scale-down" src="{% static 'images/nick.jpg' %}"
                          alt="Nick Burczyk">
                 </div>
             </div>
@@ -64,7 +64,7 @@
     </div>
 
     <div class="my-10 bg-gray-900 sm:rounded-3xl">
-        <h2 class="text-3xl font-bold mb-4 text-white">Overview</h2>
+        <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
         <p class="text-lg mb-8 mx-auto">Welcome to my personal website! Here, I showcase my projects, share insights into my
             academic journey. I am an Honors Computer Science student at The University of Alabama at Birmingham, my
             expected graduation is in Spring 2025!<br><br> This website was built using django as the project structure
