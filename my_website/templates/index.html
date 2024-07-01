@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,22 +10,42 @@
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
 </head>
+
 <body class="bg-gradient-to-r from-black to-green-500 text-gray-200">
 
 <!-- Navbar -->
-<nav class="navbar bg-neutral text-neutral-content px-4 py-2">
+<div class="navbar bg-base-100">
     <div class="navbar-start">
-        <a href="#" class="text-xl font-bold">Nick Burczyk</a>
+        <div class="dropdown">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                    <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h7"/>
+                </svg>
+            </div>
+            <ul
+                    tabindex="0"
+                    class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+                <li><a>Homepage</a></li>
+                <li><a class="link" href="#projects">Projects</a></li>
+                <li><a>About</a></li>
+            </ul>
+        </div>
     </div>
-    <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
-            <li><a href="#">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="#">Projects</a></li>
-            <li><a href="#">Contact</a></li>
-        </ul>
+    <div class="navbar-center">
+        <a class="btn btn-ghost text-xl">Nick Burczyk</a>
     </div>
-</nav>
+    <div class="navbar-end">
+    </div>
+</div>
 
 <!-- Main Content -->
 <div class="container mx-auto p-4">
@@ -32,16 +53,28 @@
     <!-- Introduction Section -->
     <div class="bg-white sm:rounded-3xl mt-8">
         <div class="mx-auto max-w-7xl py-10 sm:px-6 sm:py-32 lg:px-8">
-            <div class="relative isolate overflow-hidden bg-gray-900 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-10 md:pt-24 lg:flex lg:gap-x-20 xlg:pt-20 xl:py-32 xl:px-32 xl:pt-32 lg:px-24 lg:pt-20">
-                <div class="glass">Glass</div>
+
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+                <svg viewBox="0 0 1024 1024"
+                     class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+                     aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill-opacity="0.7"/>
+                    <defs>
+                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                            <stop stop-color="#7775D6"/>
+                            <stop offset="1" stop-color="#E935C1"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
                 <!-- Left Column -->
                 <div class="lg:w-1/2">
                     <!-- Bio Section -->
-                    <div class="mx-auto max-w-md text-center lg:text-left py-8">
+                    <div class="mx-auto max-w-md text-center py-8">
                         <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nicholas Burczyk</h1>
-                        <p class="text-lg mb-4">Hey, my name is Nicholas. I'm a senior Honors Computer Science student
-                            at UAB as well as a music fanatic<br><br>This site was developed (still is) using Django and
-                            Tailwind</p>
+                        <p class="text-lg mb-4">Hey, my name is Nicholas. I'm a senior Honors Computer Science
+                            student at UAB as well as a music fanatic<br><br>This site was developed (still is) using
+                            Django and Tailwind</p>
                     </div>
                     <!-- Button Section -->
                     <div class="mx-auto max-w-md text-center lg:text-left pb-8">
@@ -56,9 +89,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative mt-0 h-80 lg:mt-8 flex justify-center items-center overflow-hidden">
-                    <img class="w-40 h-40 object-contain rounded-full" src="{% static 'images/nick.jpg' %}"
-                         alt="Nick Burczyk">
+                <!-- Right Column -->
+                <div class="relative lg:w-1/2 flex justify-center items-center">
+                    <img class="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain rounded-full"
+                         src="{% static 'images/nick.jpg' %}" alt="Nick Burczyk">
                 </div>
             </div>
         </div>
@@ -67,113 +101,117 @@
     <div class="my-10 bg-gray-900 sm:rounded-3xl">
         <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
         <p class="text-lg mb-8 mx-auto">Welcome to my personal website! Here, I showcase my projects, share insights
-            into my
-            academic journey. I am an Honors Computer Science student at The University of Alabama at Birmingham, my
-            expected graduation is in Spring 2025!<br><br> This website was built using django as the project structure
-            as well as the back end, and tailwind and daisyUI as the front end! I am very new to web development, but I
-            always love learning new skills that will advance me in my tech lifestyle.</p>
+            into my academic journey. I am an Honors Computer Science student at The University of Alabama at
+            Birmingham, my expected graduation is in Spring 2025!<br><br> This website was built using django as the
+            project structure as well as the back end, and tailwind and daisyUI as the front end! I am very new to
+            web development, but I always love learning new skills that will advance me in my tech lifestyle.</p>
     </div>
+
     <!-- Projects Section -->
-    <div class="my-10">
-        <h2 class="text-3xl font-bold mb-4 text-white">Projects</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Project card example (replace with your projects) -->
-            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                <figure>
-                    <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
-                         alt="Waste detection example"/>
-                </figure>
-                <div class="card-body">
-                    <h2 class="card-title">
-                        Waste Detection Drone
-                        <div class="badge badge-primary">Research!</div>
-                    </h2>
-                    <p>Used machine vision AI to program a drone to detect waste. Developed in mind for government waste
-                        management, useful for locating high concentrated areas of waste. Utilizes the YOLOv5 algorithm
-                        developed by Ultralytics for training custom annotated data via Roboflow.io<br><br>
-                        Curently in academic research at UAB with a paper being released in the fall<br><br>Used
-                        a tello sdk to
-                        program a drone to
-                        do automated flights as well as a built-in logging and screenshot system!</p>
+    <section id="projects">
+        <div class="my-10">
+            <h2 class="text-3xl font-bold mb-4 text-white">Projects</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Project card example (replace with your projects) -->
+                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                    <figure>
+                        <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
+                             alt="Waste detection example"/>
+                    </figure>
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            Waste Detection Drone
+                            <div class="badge badge-primary">Research!</div>
+                        </h2>
+                        <p>Used machine vision AI to program a drone to detect waste. Developed in mind for government
+                            waste management, useful for locating high concentrated areas of waste. Utilizes the YOLOv5
+                            algorithm developed by Ultralytics for training custom annotated data via
+                            Roboflow.io<br><br>
+                            Curently in academic research at UAB with a paper being released in the fall<br><br>Used
+                            a tello sdk to program a drone to do automated flights as well as a built-in logging and
+                            screenshot system!</p>
 
-                    <div class="card-actions justify-end">
-                        <a href="https://github.com/melvinczyk/Waste-detection-drone.git" class="btn btn-info">View
-                            Project</a>
+                        <div class="card-actions justify-end">
+                            <a href="https://github.com/melvinczyk/Waste-detection-drone.git" class="btn btn-info">View
+                                Project</a>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                <figure>
-                    <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
-                         alt="Alabama state bird"/>
-                </figure>
-                <div class="card-body">
-                    <h2 class="card-title">What the Flock?</h2>
-                    <p>Audio machine learning project that will identify common Alabama bird calls. Will be exported as
-                        a web app on my website when completed<br><br>This project uses Convolutional Neural Networks to
-                        identify patterns in spectrograms and comparing them to known bird chirps in Alabama.</p>
-                    <div class="card-actions justify-end">
-                        <a class="btn btn-primary">Active Development!</a>
+                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                    <figure>
+                        <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
+                             alt="Alabama state bird"/>
+                    </figure>
+                    <div class="card-body">
+                        <h2 class="card-title">What the Flock?</h2>
+                        <p>Audio machine learning project that will identify common Alabama bird calls. Will be exported
+                            as a web app on my website when completed<br><br>This project uses Convolutional Neural
+                            Networks to identify patterns in spectrograms and comparing them to known bird chirps in
+                            Alabama.</p>
+                        <div class="card-actions justify-end">
+                            <a class="btn btn-primary">Active Development!</a>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                <figure>
-                    <img src="https://viperimaging.com/wp-content/uploads/2022/02/Gaston8-scaled.jpg"
-                         alt="Viper Imaging LLC software"/>
-                </figure>
-                <div class="card-body">
-                    <h2 class="card-title">Viper Vision Automation</h2>
-                    <p>I am in charge of developing an automated testing framework for the Viper Vision software
-                        developed by Viper Imaging LLC. This framework is responsible for conducting thorough tests to
-                        cut back on integration, testing, build, and release times.<br><br>Framework incorporates
-                        various design patterns and features such as ROI state logging, database access, screen
-                        manipulation, and dynamic camera management. Developed using python and various libraries such
-                        as OpenCV.</p>
-                    <div class="card-actions justify-end">
-                        <a class="btn btn-primary">Active Development!</a>
+                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                    <figure>
+                        <img src="https://viperimaging.com/wp-content/uploads/2022/02/Gaston8-scaled.jpg"
+                             alt="Viper Imaging LLC software"/>
+                    </figure>
+                    <div class="card-body">
+                        <h2 class="card-title">Viper Vision Automation</h2>
+                        <p>I am in charge of developing an automated testing framework for the Viper Vision software
+                            developed by Viper Imaging LLC. This framework is responsible for conducting thorough tests
+                            to cut back on integration, testing, build, and release times.<br><br>Framework incorporates
+                            various design patterns and features such as ROI state logging, database access, screen
+                            manipulation, and dynamic camera management. Developed using python and various libraries
+                            such as OpenCV.</p>
+                        <div class="card-actions justify-end">
+                            <a class="btn btn-primary">Active Development!</a>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                <figure>
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe6SbzUYe0Mb9K8WZDyQeBuvpZ5oT7sLpt8qGvp_3lvQwOIoMNLni1tHJAgfmotSxjQiY&usqp=CAU"
-                         alt="Viper Vision"/>
-                </figure>
-                <div class="card-body">
-                    <h2 class="card-title">Viper Vision
-                        <div class="badge badge-primary">Contribution!</div>
-                    </h2>
-                    <p>Working with the team at Viper Imaging LLC on developing and updating our software, Viper Vision.
-                        Viper Vision is a thermal camera hub where you can connect cameras and get data and live image
-                        feed from them, as well as numerous other actions. Developed on thee .NET framework using
-                        C#.<br><br>Some of my tasks have been developing new features for newer thermal cameras with
-                        features including accurate thermal scale display, web streaming, range selection, and mirror
-                        and rotate calculations. Other tasks I have contributed to were live chart database separation,
-                        UI changes, and various others</p>
+                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                    <figure>
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe6SbzUYe0Mb9K8WZDyQeBuvpZ5oT7sLpt8qGvp_3lvQwOIoMNLni1tHJAgfmotSxjQiY&usqp=CAU"
+                             alt="Viper Vision"/>
+                    </figure>
+                    <div class="card-body">
+                        <h2 class="card-title">Viper Vision
+                            <div class="badge badge-primary">Contribution!</div>
+                        </h2>
+                        <p>Working with the team at Viper Imaging LLC on developing and updating our software, Viper
+                            Vision. Viper Vision is a thermal camera hub where you can connect cameras and get data and
+                            live image feed from them, as well as numerous other actions. Developed on thee .NET
+                            framework using C#.<br><br>Some of my tasks have been developing new features for newer
+                            thermal cameras with features including accurate thermal scale display, web streaming, range
+                            selection, and mirror and rotate calculations. Other tasks I have contributed to were live
+                            chart database separation, UI changes, and various others</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                <figure>
-                    <img src="{% static 'images/minecraft.png' %}" alt="Minecraft custom mob">
-                </figure>
-                <div class="card-body">
-                    <h2 class="card-title">QuestR</h2>
-                    <p>Minecraft mod pack designed by me using various mods and custom scripts as well as resource and
-                        datapacks.<br><br>Includes custom datapacks developed with json and mcscript to generate various
-                        features such as custom mobs, event modifiers, biome and loot modifiers, and structure
-                        generations</p>
-                    <div class="card-actions justify-end">
-                        <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-primary">View Project</a>
+                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                    <figure>
+                        <img src="{% static 'images/minecraft.png' %}" alt="Minecraft custom mob">
+                    </figure>
+                    <div class="card-body">
+                        <h2 class="card-title">QuestR</h2>
+                        <p>Minecraft mod pack designed by me using various mods and custom scripts as well as resource
+                            and datapacks.<br><br>Includes custom datapacks developed with json and mcscript to generate
+                            various features such as custom mobs, event modifiers, biome and loot modifiers, and
+                            structure generations</p>
+                        <div class="card-actions justify-end">
+                            <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-primary">View
+                                Project</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Contact Section -->
     <div class="mb-8">
@@ -187,12 +225,11 @@
     <!-- Footer -->
     <footer class="mt-8 text-center text-sm text-gray-400">
         <hr class="border-t-2 border-gray-400 mb-4">
-        <p>&copy; 2024 Nicholas Burczyk. All rights reserved.</p>
         <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
                 href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
     </footer>
 </div>
 
-
 </body>
+
 </html>
