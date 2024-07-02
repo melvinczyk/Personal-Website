@@ -58,7 +58,7 @@
         </button>
     </div>
     <ul class="menu">
-        <li><a>Homepage</a></li>
+        <li><a class="link" href="/">Homepage</a></li>
         <li><a class="link" href="#projects">Projects</a></li>
         <li><a>About</a></li>
     </ul>
@@ -107,7 +107,7 @@
                     <!-- Bio Section -->
                     <div class="mx-auto max-w-md text-center py-8">
                         <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nicholas Burczyk</h1>
-                        <p class="text-lg mb-4">Hey, my name is Nicholas. I'm a senior Honors Computer Science
+                        <p class="text-lg mb-4">Hey, my name is Nicholas. I'm a Senior Honors Computer Science
                             student at UAB as well as a music fanatic<br><br>This site was developed (still is) using
                             Django and Tailwind</p>
                     </div>
@@ -133,18 +133,35 @@
         </div>
     </div>
 
-    <div class="my-10 bg-gray-900 sm:rounded-3xl">
-        <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
-        <p class="text-lg mb-8 mx-auto">Welcome to my personal website! Here, I showcase my projects, share insights
-            into my academic journey. I am an Honors Computer Science student at The University of Alabama at
-            Birmingham, my expected graduation is in Spring 2025!<br><br> This website was built using django as the
-            project structure as well as the back end, and tailwind and daisyUI as the front end! I am very new to
-            web development, but I always love learning new skills that will advance me in my tech lifestyle.</p>
+    <div class="mx-auto max-w-7xl py-6 sm:py-16 lg:py-20 sm:px-8">
+        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
+            <p class="text-lg mb-8 mt-8 mx-auto">Welcome to my personal website! Here, I showcase my projects, share
+                insights
+                into my academic journey. I am an Honors Computer Science student at The University of Alabama at
+                Birmingham, my expected graduation is in Spring 2025!<br><br> This website was built using django as the
+                project structure as well as the back end, and tailwind and daisyUI as the front end! I am very new to
+                web development, but I always love learning new skills that will advance me in my tech lifestyle.</p>
+        </div>
     </div>
+
     <!-- Projects Section -->
     <section id="projects">
+        <div class="mx-auto max-w-7xl py-6 sm:py-8 lg:py-10 sm:px-8">
         <div class="my-10">
-            <h2 class="text-3xl font-bold mb-4 text-white">Projects</h2>
+            <h2 class="text-3xl font-bold mb-8 text-white">Projects</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Project card example (replace with your projects) -->
                 <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
@@ -155,18 +172,18 @@
                     <div class="card-body">
                         <h2 class="card-title">
                             Waste Detection Drone
-                            <div class="badge badge-primary">Research!</div>
+                            <div class="badge badge-primary text-xs">Research!</div>
                         </h2>
                         <p>Used machine vision AI to program a drone to detect waste. Developed in mind for government
                             waste management, useful for locating high concentrated areas of waste. Utilizes the YOLOv5
                             algorithm developed by Ultralytics for training custom annotated data via
                             Roboflow.io<br><br>
-                            Curently in academic research at UAB with a paper being released in the fall<br><br>Used
+                            Currently, in academic research at UAB with a paper being released in the fall<br><br>Used
                             a tello sdk to program a drone to do automated flights as well as a built-in logging and
                             screenshot system!</p>
 
                         <div class="card-actions justify-end">
-                            <a href="https://github.com/melvinczyk/Waste-detection-drone.git" class="btn btn-info">View
+                            <a href="https://github.com/melvinczyk/Waste-detection-drone.git" class="btn btn-primary">View
                                 Project</a>
                         </div>
                     </div>
@@ -178,14 +195,15 @@
                              alt="Alabama state bird"/>
                     </figure>
                     <div class="card-body">
-                        <h2 class="card-title">What the Flock?</h2>
+                        <h2 class="card-title">What the Flock?
+                            <div class="badge badge-primary text-xs">In Development!</div>
+                        </h2>
                         <p>Audio machine learning project that will identify common Alabama bird calls. Will be exported
                             as a web app on my website when completed<br><br>This project uses Convolutional Neural
-                            Networks to identify patterns in spectrograms and comparing them to known bird chirps in
-                            Alabama.</p>
-                        <div class="card-actions justify-end">
-                            <a class="btn btn-primary">Active Development!</a>
-                        </div>
+                            Networks to identify patterns in spectrogram's and comparing them to known bird chirps in
+                            Alabama.<br><br>Applying skills that I learned from Udemy <a
+                                    href="https://www.udemy.com/share/101WfW3@tgKMq9jVMDtJCRpDyQl-fbcoWfM9c4flHvCD87Z2u4k5tnZUenVmM3Tl6fb4ixFhrQ==/">Machine
+                                Learning A-Z</a> course.</p>
                     </div>
                 </div>
 
@@ -195,16 +213,15 @@
                              alt="Viper Imaging LLC software"/>
                     </figure>
                     <div class="card-body">
-                        <h2 class="card-title">Viper Vision Automation</h2>
+                        <h2 class="card-title">Viper Vision Automation
+                            <div class="badge badge-primary text-xs">Project Lead!</div>
+                        </h2>
                         <p>I am in charge of developing an automated testing framework for the Viper Vision software
                             developed by Viper Imaging LLC. This framework is responsible for conducting thorough tests
                             to cut back on integration, testing, build, and release times.<br><br>Framework incorporates
                             various design patterns and features such as ROI state logging, database access, screen
                             manipulation, and dynamic camera management. Developed using python and various libraries
                             such as OpenCV.</p>
-                        <div class="card-actions justify-end">
-                            <a class="btn btn-primary">Active Development!</a>
-                        </div>
                     </div>
                 </div>
 
