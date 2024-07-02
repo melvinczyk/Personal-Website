@@ -60,7 +60,6 @@
     <ul class="menu">
         <li><a class="link" href="/">Homepage</a></li>
         <li><a class="link" href="#projects">Projects</a></li>
-        <li><a>About</a></li>
     </ul>
 </div>
 
@@ -160,103 +159,133 @@
     <!-- Projects Section -->
     <section id="projects">
         <div class="mx-auto max-w-7xl py-6 sm:py-8 lg:py-10 sm:px-8">
-        <div class="my-10">
-            <h2 class="text-3xl font-bold mb-8 text-white">Projects</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Project card example (replace with your projects) -->
-                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                    <figure>
-                        <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
-                             alt="Waste detection example"/>
-                    </figure>
-                    <div class="card-body">
-                        <h2 class="card-title">
-                            Waste Detection Drone
-                            <div class="badge badge-primary text-xs">Research!</div>
-                        </h2>
-                        <p>Used machine vision AI to program a drone to detect waste. Developed in mind for government
-                            waste management, useful for locating high concentrated areas of waste. Utilizes the YOLOv5
-                            algorithm developed by Ultralytics for training custom annotated data via
-                            Roboflow.io<br><br>
-                            Currently, in academic research at UAB with a paper being released in the fall<br><br>Used
-                            a tello sdk to program a drone to do automated flights as well as a built-in logging and
-                            screenshot system!</p>
+            <div class="my-10">
+                <h2 class="text-3xl font-bold mb-8 text-white">Projects</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Project card example (replace with your projects) -->
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
+                                 alt="Waste detection example"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">
+                                Waste Detection Drone
+                                <div class="badge badge-primary text-xs">Research!</div>
+                            </h2>
+                            <p>Utilized machine vision AI to program a drone for waste detection, specifically designed
+                                for government waste management. The solution identifies high-concentration waste areas
+                                using the YOLOv5 algorithm from Ultralytics, trained with custom annotated data via
+                                Roboflow.io.<br><br>
+                                This project is currently undergoing academic research at UAB, with a paper scheduled
+                                for release in the fall. Additionally, I employed the Tello SDK to enable automated
+                                drone flights, integrating built-in logging and a screenshot system.</p>
 
-                        <div class="card-actions justify-end">
-                            <a href="https://github.com/melvinczyk/Waste-detection-drone.git" class="btn btn-primary">View
-                                Project</a>
+                            <div class="card-actions justify-end">
+                                <a href="https://github.com/melvinczyk/Waste-detection-drone.git"
+                                   class="btn btn-primary">View
+                                    Project</a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                    <figure>
-                        <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
-                             alt="Alabama state bird"/>
-                    </figure>
-                    <div class="card-body">
-                        <h2 class="card-title">What the Flock?
-                            <div class="badge badge-primary text-xs">In Development!</div>
-                        </h2>
-                        <p>Audio machine learning project that will identify common Alabama bird calls. Will be exported
-                            as a web app on my website when completed<br><br>This project uses Convolutional Neural
-                            Networks to identify patterns in spectrogram's and comparing them to known bird chirps in
-                            Alabama.<br><br>Applying skills that I learned from Udemy <a
-                                    href="https://www.udemy.com/share/101WfW3@tgKMq9jVMDtJCRpDyQl-fbcoWfM9c4flHvCD87Z2u4k5tnZUenVmM3Tl6fb4ixFhrQ==/">Machine
-                                Learning A-Z</a> course.</p>
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
+                                 alt="Alabama state bird"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">What the Flock?
+                                <div class="badge badge-primary text-xs">In Dev!</div>
+                            </h2>
+                            <p>Audio machine learning project that will identify common Alabama bird calls. Will be
+                                exported
+                                as a web app on my website when completed<br><br>This project uses Convolutional Neural
+                                Networks to identify patterns in spectrogram's and comparing them to known bird chirps
+                                in
+                                Alabama.<br><br>Applying skills that I learned from Udemy <a
+                                        href="https://www.udemy.com/share/101WfW3@tgKMq9jVMDtJCRpDyQl-fbcoWfM9c4flHvCD87Z2u4k5tnZUenVmM3Tl6fb4ixFhrQ==/">Machine
+                                    Learning A-Z</a> course.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                    <figure>
-                        <img src="https://viperimaging.com/wp-content/uploads/2022/02/Gaston8-scaled.jpg"
-                             alt="Viper Imaging LLC software"/>
-                    </figure>
-                    <div class="card-body">
-                        <h2 class="card-title">Viper Vision Automation
-                            <div class="badge badge-primary text-xs">Project Lead!</div>
-                        </h2>
-                        <p>I am in charge of developing an automated testing framework for the Viper Vision software
-                            developed by Viper Imaging LLC. This framework is responsible for conducting thorough tests
-                            to cut back on integration, testing, build, and release times.<br><br>Framework incorporates
-                            various design patterns and features such as ROI state logging, database access, screen
-                            manipulation, and dynamic camera management. Developed using python and various libraries
-                            such as OpenCV.</p>
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="https://www.emizentech.com/blog/wp-content/uploads/sites/2/2022/07/Python-web-framework-django.jpg"
+                                 alt="Django framework logo"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">nicholasburczyk.com</h2>
+                            <p>I have engineered this website utilizing the Django web framework, leveraging its robust
+                                capabilities to establish a secure and reliable backend infrastructure. While no web
+                                applications have been deployed yet, Django stands as a solid foundation
+                                for future deployment.<br><br>In conjunction with the Django web framework, I
+                                have integrated Tailwind CSS for the frontend design. Additionally, I have utilized the DaisyUI component
+                                library, which extends Tailwind with a diverse set of pre-built components, which allowed for
+                                rapid and responsive frontend development.</p>
+                            <div class="card-actions justify-end">
+                                <a href="https://github.com/melvinczyk/Personal-Website.git" class="btn btn-primary">View
+                                    Project</a>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                    <figure>
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe6SbzUYe0Mb9K8WZDyQeBuvpZ5oT7sLpt8qGvp_3lvQwOIoMNLni1tHJAgfmotSxjQiY&usqp=CAU"
-                             alt="Viper Vision"/>
-                    </figure>
-                    <div class="card-body">
-                        <h2 class="card-title">Viper Vision
-                            <div class="badge badge-primary">Contribution!</div>
-                        </h2>
-                        <p>Working with the team at Viper Imaging LLC on developing and updating our software, Viper
-                            Vision. Viper Vision is a thermal camera hub where you can connect cameras and get data and
-                            live image feed from them, as well as numerous other actions. Developed on thee .NET
-                            framework using C#.<br><br>Some of my tasks have been developing new features for newer
-                            thermal cameras with features including accurate thermal scale display, web streaming, range
-                            selection, and mirror and rotate calculations. Other tasks I have contributed to were live
-                            chart database separation, UI changes, and various others</p>
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="https://viperimaging.com/wp-content/uploads/2022/02/Gaston8-scaled.jpg"
+                                 alt="Viper Imaging LLC software"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">Auto Viper
+                                <div class="badge badge-primary text-xs">Project Lead!</div>
+                            </h2>
+                            <p>I lead the development of an automated testing framework for Viper Vision software at
+                                Viper Imaging LLC. This framework efficiently conducts comprehensive tests,
+                                significantly reducing integration, testing, build, and release times.<br><br>The
+                                framework integrates various design patterns and includes features such as ROI state
+                                logging, database access, screen manipulation, and dynamic camera management. It is
+                                implemented in Python, leveraging libraries such as OpenCV.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                    <figure>
-                        <img src="{% static 'images/minecraft.png' %}" alt="Minecraft custom mob">
-                    </figure>
-                    <div class="card-body">
-                        <h2 class="card-title">QuestR</h2>
-                        <p>Minecraft mod pack designed by me using various mods and custom scripts as well as resource
-                            and datapacks.<br><br>Includes custom datapacks developed with json and mcscript to generate
-                            various features such as custom mobs, event modifiers, biome and loot modifiers, and
-                            structure generations</p>
-                        <div class="card-actions justify-end">
-                            <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-primary">View
-                                Project</a>
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSe6SbzUYe0Mb9K8WZDyQeBuvpZ5oT7sLpt8qGvp_3lvQwOIoMNLni1tHJAgfmotSxjQiY&usqp=CAU"
+                                 alt="Viper Vision"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">Viper Vision
+                                <div class="badge badge-primary">Contribution!</div>
+                            </h2>
+                            <p>Working with the team at Viper Imaging LLC on developing and updating our software, Viper
+                                Vision. Viper Vision is a thermal camera hub where you can connect cameras and get data
+                                and
+                                live image feed from them, as well as numerous other actions. Developed on thee .NET
+                                framework using C#.<br><br>Some of my tasks have been developing new features for newer
+                                thermal cameras with features including accurate thermal scale display, web streaming,
+                                range
+                                selection, and mirror and rotate calculations. Other tasks I have contributed to were
+                                live
+                                chart database separation, UI changes, and various others</p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="{% static 'images/minecraft.png' %}" alt="Minecraft custom mob">
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">QuestR</h2>
+                            <p>Minecraft mod pack designed by me using various mods and custom scripts as well as
+                                resource
+                                and data packs.<br><br>Includes custom data packs developed with json and mcscript to
+                                generate
+                                various features such as custom mobs, event modifiers, biome and loot modifiers, and
+                                structure generations</p>
+                            <div class="card-actions justify-end">
+                                <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-primary">View
+                                    Project</a>
+                            </div>
                         </div>
                     </div>
                 </div>
