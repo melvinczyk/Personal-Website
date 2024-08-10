@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+my_website/bird_classifier/best_model_early_stop.pth filter=lfs diff=lfs merge=lfs -text
+my_website/bird_classifier/best_model.pth filter=lfs diff=lfs merge=lfs -text
