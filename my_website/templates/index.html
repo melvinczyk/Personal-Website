@@ -7,6 +7,7 @@
     <meta name="description" content="Personal website of Nicholas Burczyk">
     <title>Nicholas Burczyk - Personal Website</title>
     {% load static %}
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon-16x16.png' %}">
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
 </head>
@@ -14,7 +15,7 @@
 <body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-600 via-indigo-800 to-green-500 text-gray-200">
 
 <!-- Navbar -->
-<div class="navbar bg-base-100">
+<div class="navbar bg-base-100 min-h-20">
     <div class="navbar-start">
         <button id="menu-button" class="btn btn-ghost btn-circle">
             <svg
@@ -58,8 +59,11 @@
         </button>
     </div>
     <ul class="menu">
-        <li><a class="link" href="/">Homepage</a></li>
-        <li><a class="link" href="#projects">Projects</a></li>
+        <li><a class="link" target="_blank" id="link-homepage">Homepage</a></li>
+        <li><a class="link" target="_blank" href="#projects" id="link-projects">Projects</a></li>
+        <li><a class="link" target="_blank" href="#contact" id="link-contact">Contact</a></li>
+        <li><a class="link" target="_blank" href="/blog.html">Blog</a>
+        <li>
     </ul>
 </div>
 
@@ -71,22 +75,29 @@
     const closeMenu = document.getElementById('close-menu');
     const sideMenu = document.getElementById('side-menu');
     const overlay = document.getElementById('overlay');
+    const links = document.querySelectorAll('#side-menu .link');
 
     const toggleMenu = () => {
-      sideMenu.classList.toggle('-translate-x-full');
-     overlay.classList.toggle('hidden');
+        sideMenu.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
     };
 
-    menuButton.addEventListener('click', toggleMenu);
+    if (menuButton) {
+        menuButton.addEventListener('click', toggleMenu);
+    }
     closeMenu.addEventListener('click', toggleMenu);
     overlay.addEventListener('click', toggleMenu);
+
+    links.forEach(link => {
+        link.addEventListener('click', toggleMenu);
+    });
 </script>
 
 
 <!-- Main Content -->
 <div class="container mx-auto p-4">
     <!-- Introduction Section -->
-    <div class="bg-white rounded sm:rounded-3xl mt-8 mt-4">
+    <div class="bg-white rounded sm:rounded-3xl mt-8">
         <div class="mx-auto max-w-7xl py-6 sm:py-16 lg:py-20 sm:px-8">
             <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
                 <svg viewBox="0 0 1024 1024"
@@ -101,17 +112,28 @@
                         </radialGradient>
                     </defs>
                 </svg>
+                <svg viewBox="0 0 1024 1024"
+                     class="absolute left-0.5 top-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                     aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill-opacity="0.7"/>
+                    <defs>
+                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                            <stop stop-color="#0284C7"/>
+                            <stop offset="1" stop-color="#16A34A"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
                 <!-- Left Column -->
                 <div class="lg:w-1/2">
                     <!-- Bio Section -->
-                    <div class="mx-auto max-w-md text-center py-8">
+                    <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
                         <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nicholas Burczyk</h1>
-                        <p class="text-lg mb-4">Hey, my name is Nicholas. I'm a Senior Honors Computer Science
-                            student at UAB as well as a music fanatic<br><br>This site was developed (still is) using
-                            Django and Tailwind</p>
+                        <p class="text-lg">Hey, my name is Nicholas. I'm a Senior Honors Computer Science
+                            student at UAB as well as a music fanatic.</p>
                     </div>
                     <!-- Button Section -->
-                    <div class="mx-auto max-w-md text-center lg:text-left pb-8">
+                    <div class="mx-auto max-w-md mt-8 text-center lg:text-left pb-8">
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                             <div class="bg-base-100 p-6 rounded-lg shadow-lg">
                                 <h1 class="text-4xl mb-2 font-bold">Do you like music?</h1>
@@ -125,14 +147,15 @@
                 </div>
                 <!-- Right Column -->
                 <div class="relative lg:w-1/2 pb-8 flex justify-center items-center">
-                    <img class="w-40 h-40 sm:w-32 sm:h-32 md:w-40 md:h-40 object-contain rounded-full"
+                    <img class="w-40 h-40 sm:w-40 sm:h-40 md:w-40 md:h-40 lg:w-40 lg:h-40 object-contain rounded-full"
                          src="{% static 'images/nick.jpg' %}" alt="Nick Burczyk">
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mx-auto max-w-7xl py-6 sm:py-16 lg:py-20 sm:px-8">
+    <!-- Overview -->
+    <div class="mx-auto max-w-7xl py-6 sm:py-10 lg:py-20 sm:px-8 rounded sm:rounded-3xl">
         <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
@@ -147,22 +170,48 @@
                 </defs>
             </svg>
             <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
-            <p class="text-lg mb-8 mt-8 mx-auto">Welcome to my personal website! Here, I showcase my projects, share
-                insights
-                into my academic journey. I am an Honors Computer Science student at The University of Alabama at
-                Birmingham, my expected graduation is in Spring 2025!<br><br> This website was built using django as the
-                project structure as well as the back end, and tailwind and daisyUI as the front end! I am very new to
-                web development, but I always love learning new skills that will advance me in my tech lifestyle.</p>
+            <p class="text-lg mb-8 mt-8 mx-auto">Welcome to my personal website! Here, I showcase my projects and share
+                insights into my academic journey. I am an Honors Computer Science student at The University of Alabama
+                at Birmingham, expecting to graduate in Spring 2025.<br><br> Currently, I am a software development
+                intern at Viper Imaging LLC, where I contribute by implementing new features in our software and
+                developing innovative solutions to reduce production times.<br><br>This website was built using Django
+                for the backend and TailwindCSS with DaisyUI for the frontend. While I am new to web development, I am
+                passionate about learning new skills to advance my career in technology. I am fascinated with data
+                science and artificial intelligence, I am currently leveraging my machine learning skills, acquired
+                through Udemy courses and practical usage, in my work.</p>
         </div>
     </div>
 
     <!-- Projects Section -->
     <section id="projects">
-        <div class="mx-auto max-w-7xl py-6 sm:py-8 lg:py-10 sm:px-8">
+        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-8 shadow-2xl rounded sm:rounded-3xl">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
             <div class="my-10">
-                <h2 class="text-3xl font-bold mb-8 text-white">Projects</h2>
+                <h1 class="text-4xl font-bold mb-8 text-white">Projects</h1>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Project card example (replace with your projects) -->
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
                             <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
@@ -203,12 +252,11 @@
                                 as a web app on my website when completed<br><br>This project uses Convolutional Neural
                                 Networks to identify patterns in spectrogram's and comparing them to known bird chirps
                                 in
-                                Alabama.<br><br>Applying skills that I learned from Udemy <a
-                                        href="https://www.udemy.com/share/101WfW3@tgKMq9jVMDtJCRpDyQl-fbcoWfM9c4flHvCD87Z2u4k5tnZUenVmM3Tl6fb4ixFhrQ==/">Machine
-                                    Learning A-Z</a> course.</p>
+                                Alabama.<br><br>Applying skills that I learned from Udemy's <a
+                                        href="https://www.udemy.com/course/machinelearning/"><u>Machine
+                                    Learning A-Z</u></a> course.</p>
                             <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Bird-classifier.git"
-                                   class="btn btn-primary">View
+                                <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-primary">View
                                     Project</a>
                             </div>
                         </div>
@@ -225,8 +273,10 @@
                                 capabilities to establish a secure and reliable backend infrastructure. While no web
                                 applications have been deployed yet, Django stands as a solid foundation
                                 for future deployment.<br><br>In conjunction with the Django web framework, I
-                                have integrated Tailwind CSS for the frontend design. Additionally, I have utilized the DaisyUI component
-                                library, which extends Tailwind with a diverse set of pre-built components, which allowed for
+                                have integrated Tailwind CSS for the frontend design. Additionally, I have utilized the
+                                DaisyUI component
+                                library, which extends Tailwind with a diverse set of pre-built components, which
+                                allowed for
                                 rapid and responsive frontend development.</p>
                             <div class="card-actions justify-end">
                                 <a href="https://github.com/melvinczyk/Personal-Website.git" class="btn btn-primary">View
@@ -298,14 +348,45 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
-    <div class="mb-8">
-        <hr class="border-t-2 border-gray-400 mb-4">
-        <h2 class="text-3xl font-bold mb-4">Contact Me</h2>
-        <p>Feel free to reach out to me via the following channels:</p>
-        <!-- Add your contact form or details here -->
-        <a href="https://www.linkedin.com/in/nicholas-burczyk-360259294/">My LinkedIn</a>
-    </div>
+    <section id="contact">
+        <div class="divider divider-base"></div>
+        <!-- Contact Section -->
+        <!-- div class="mb-8 p-6 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white rounded-lg shadow-lg" -->
+        <div class="relative isolate overflow-hidden bg-gray-900 p-6 shadow-lg rounded-lg text-white">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute right-0 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute right-0 top-12  mb-60 -z-10 h-[64rem] w-[64rem] translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <h2 class="text-3xl font-bold mb-4">Contact Me</h2>
+            <p class="mb-4">Feel free to reach out to me via the following channels:</p>
+            <div class="flex items-center">
+                <a href="https://www.linkedin.com/in/nicholas-burczyk-360259294/"
+                   class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
+                    <i class="fab fa-linkedin fa-2x mr-2"></i>
+                    <span class="text-xl">My LinkedIn</span>
+                </a>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="mt-8 text-center text-sm text-gray-400">
