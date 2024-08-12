@@ -6,7 +6,7 @@ from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms
-
+from collections import Counter
 
 class BirdClassifierCNN(nn.Module):
     def __init__(self, num_classes=29):
@@ -29,6 +29,37 @@ class BirdClassifierCNN(nn.Module):
         x = self.fc2(x)
         return x
 
+bird_dict = {
+    0: "american crow",
+    1: "american goldfinch",
+    2: "american robin",
+    3: "barred owl",
+    4: "blue jay",
+    5: "brown-headed nuthatch",
+    6: "carolina chickadee",
+    7: "carolina wren",
+    8: "cedar waxwing",
+    9: "chipping sparrow",
+    10: "dark-eyed junco",
+    11: "downy woodpecker",
+    12: "eastern bluebird",
+    13: "eastern kingbird",
+    14: "eastern phoebe",
+    15: "eastern towhee",
+    16: "house finch",
+    17: "mourning dove",
+    18: "myrtle warbler",
+    19: "northern cardinal",
+    20: "northern flicker",
+    21: "northern mockingbird",
+    22: "pine warbler",
+    23: "purple finch",
+    24: "red-bellied woodpecker",
+    25: "red-winged blackbird",
+    26: "song sparrow",
+    27: "tufted titmouse",
+    28: "white-breasted nuthatch"
+}
 
 def save_mel_spectrogram(signal, sr):
     params = {
@@ -48,31 +79,23 @@ def save_mel_spectrogram(signal, sr):
     fig, ax = plt.subplots(figsize=(6, 6), dpi=100, frameon=False)
     ax.set_axis_off()
     librosa.display.specshow(S_dB, sr=sr, fmin=params['fmin'], ax=ax)
-
     fig.canvas.draw()
+
     width, height = fig.canvas.get_width_height()
     print(f"Canvas dimensions: width={width}, height={height}")
 
     image = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
-
     print(f"Raw image data size: {image.size}")
 
     num_channels = 4
-    print(f"Number of channels: {num_channels}")
     image = Image.frombytes('RGBA', (width, height), image.tobytes())
     image = image.convert('RGB')
-
     image = image.resize((224, 224))
 
     plt.close(fig)
     return image
 
-
-def test_model(wav_file, model_path):
-    model = BirdClassifierCNN(num_classes=29)
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'), weights_only=True))
-    model.eval()
-    signal, sr = librosa.load(wav_file, sr=16000, duration=10)
+def classify_segment(model, signal, sr, threshold=0.7):
     spectrogram = save_mel_spectrogram(signal, sr)
 
     transform = transforms.Compose([
@@ -82,12 +105,50 @@ def test_model(wav_file, model_path):
     with torch.no_grad():
         image = transform(spectrogram).unsqueeze(0)
         output = model(image)
-        _, predicted = torch.max(output, 1)
-        return predicted.item()
+        probabilities = torch.nn.functional.softmax(output, dim=1)
+        confidence, predicted = torch.max(probabilities, 1)
+        confidence = confidence.item()
 
+        if confidence < threshold:
+            return "Unknown", confidence * 100
+
+        bird_name = bird_dict.get(predicted.item(), "Unknown")
+        return bird_name, confidence * 100
+
+def test_model(wav_file, model_path, threshold=0.7):
+    model = BirdClassifierCNN(num_classes=29)
+    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    model.eval()
+
+    signal, sr = librosa.load(wav_file, sr=16000)
+
+    segment_duration = 10
+    segment_samples = segment_duration * sr
+
+    segments = []
+    for i in range(0, len(signal), segment_samples):
+        segment = signal[i:i + segment_samples]
+
+        if len(segment) < segment_samples:
+            padding = np.zeros(segment_samples - len(segment))
+            segment = np.concatenate((segment, padding))
+
+        segments.append(segment)
+
+    predictions = []
+    confidences = []
+    for segment in segments:
+        bird_name, confidence = classify_segment(model, segment, sr, threshold)
+        predictions.append(bird_name)
+        confidences.append(confidence)
+
+    most_common_prediction = Counter(predictions).most_common(1)[0][0]
+    avg_confidence = np.mean([conf for pred, conf in zip(predictions, confidences) if pred == most_common_prediction])
+
+    return most_common_prediction, avg_confidence
 
 if __name__ == "__main__":
-    wav_file = "./43850.wav"
+    wav_file = "./chipping_sparrow_clean.wav"
     model_path = "best_model.pth"
-    class_index = test_model(wav_file, model_path)
-    print(f"Predicted class index: {class_index}")
+    bird_name, confidence = test_model(wav_file, model_path)
+    print(f"Predicted bird: {bird_name} with confidence: {confidence:.2f}%")

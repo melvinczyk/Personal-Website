@@ -155,7 +155,7 @@
     </div>
 
     <!-- Overview -->
-    <div class="mx-auto max-w-7xl py-6 sm:py-10 lg:py-20 sm:px-8 rounded sm:rounded-3xl">
+    <div class="mx-auto max-w-7xl py-10 sm:py-10 sm:px-8 rounded sm:rounded-3xl">
         <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
@@ -182,9 +182,50 @@
         </div>
     </div>
 
+    <!-- MINECRAFT MAP!!! -->
+    <section id="map" class="pt-10">
+        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <h2 class="text-3xl font-bold mb-4 mt-10 text-white">My Server Map</h2>
+            <p>This is the map of my Minecraft server rendered using the mod <a
+                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays realtime data from the world including player location.<br><br>You can view a larger version of the map <a href="http://s45.oddblox.us:8100" class="green-link" target="_blank"><b><strong>here</strong></b></a></p>
+            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded sm:rounded-3xl">
+                <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
+                    <div class="absolute inset-0 mb-8">
+                        <iframe src="http://s45.oddblox.us:8100" class="w-full h-full" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
     <!-- Projects Section -->
-    <section id="projects">
-        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-8 shadow-2xl rounded sm:rounded-3xl">
+    <section id="projects" class="pt-10">
+        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
                  aria-hidden="true">
@@ -245,18 +286,41 @@
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">What the Flock?
-                                <div class="badge badge-primary text-xs">In Dev!</div>
+                                <div class="badge badge-primary text-xs">Webapp!</div>
                             </h2>
                             <p>Audio machine learning project that will identify common Alabama bird calls. Will be
                                 exported
                                 as a web app on my website when completed<br><br>This project uses Convolutional Neural
                                 Networks to identify patterns in spectrogram's and comparing them to known bird chirps
                                 in
-                                Alabama.<br><br>Applying skills that I learned from Udemy's <a
-                                        href="https://www.udemy.com/course/machinelearning/"><u>Machine
-                                    Learning A-Z</u></a> course.</p>
+                                Alabama.<br><br>Currently, the model has been trained and tested thoroughly! Webapp
+                                development is now in progress
+                                for a user experience on my website!</p>
                             <div class="card-actions justify-end">
                                 <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-primary">View
+                                    Project</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
+                            <img src="{% static 'images/menu.png' %}" alt="VisAudio menu"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">VisAudio
+                            </h2>
+                            <p>VisAudio is a desktop app that I made for myself to deal with audio file manipulation,
+                                and YouTube audio downloading for all of my projects I deal with. I also added
+                                mel-spectrogram and waveform graphs for some audio visualization, with a visual EQ
+                                generator currently being worked on.<br><br>Some features include file type conversion,
+                                bit-rate resampling, noise reduction, and visual graph downloads. Along with file
+                                manipulation, it also includes a YouTube downloader where you can input any valid
+                                link to get that video's audio. It could do the video but... this is an audio themed
+                                application.<br><br>File types that are supported are: mp3, wav, flac, ogg, m4a, and aac
+                                with a lot more features planned for the future</p>
+                            <div class="card-actions justify-end">
+                                <a href="https://github.com/melvinczyk/VisAudio" class="btn btn-primary">View
                                     Project</a>
                             </div>
                         </div>
@@ -394,8 +458,8 @@
         <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
                 href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
     </footer>
+    </section>
 </div>
-
 </body>
 
 </html>
