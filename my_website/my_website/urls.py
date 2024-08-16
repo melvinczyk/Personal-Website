@@ -22,4 +22,5 @@ urlpatterns = [
     path("", index, name='index'),
     path("blog/", include('blog.urls')),
     path("admin/", admin.site.urls),
+    path("bird_classifier/", include("bird_classifier.urls"))
 ]

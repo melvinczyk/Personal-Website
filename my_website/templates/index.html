@@ -60,6 +60,7 @@
     </div>
     <ul class="menu">
         <li><a class="link" target="_blank" id="link-homepage">Homepage</a></li>
+        <li><a class="link" href="https://servermap.minecraft.bz" id="link-map">Server Map</a></li>
         <li><a class="link" target="_blank" href="#projects" id="link-projects">Projects</a></li>
         <li><a class="link" target="_blank" href="#contact" id="link-contact">Contact</a></li>
         <li><a class="link" target="_blank" href="/blog.html">Blog</a>
@@ -144,6 +145,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="mx-auto max-w-md mt-8 text-center lg:text-left pb-8">
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                            <div class="bg-base-100 p-6 rounded-lg shadow-lg">
+                                <h1 class="text-4xl mb-2 font-bold">Link to classifier</h1>
+                                <div class="card-actions justify-center">
+                                    <a href="bird_classifier/upload" class="btn btn-primary">Classifier</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Right Column -->
                 <div class="relative lg:w-1/2 pb-8 flex justify-center items-center">
@@ -182,46 +193,6 @@
         </div>
     </div>
 
-    <!-- MINECRAFT MAP!!! -->
-    <section id="map" class="pt-10">
-        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <h2 class="text-3xl font-bold mb-4 mt-10 text-white">My Server Map</h2>
-            <p>This is the map of my Minecraft server rendered using the mod <a
-                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays realtime data from the world including player location.<br><br>You can view a larger version of the map <a href="http://s45.oddblox.us:8100" class="green-link" target="_blank"><b><strong>here</strong></b></a></p>
-            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded sm:rounded-3xl">
-                <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
-                    <div class="absolute inset-0 mb-8">
-                        <iframe src="http://s45.oddblox.us:8100" class="w-full h-full" frameborder="0"></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
 
     <!-- Projects Section -->
     <section id="projects" class="pt-10">
@@ -255,20 +226,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
-                            <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/images/Medium%20model%20frame.png?raw=true"
+                            <img src="https://github.com/melvinczyk/Waste-detection-drone/blob/main/imagservermap.minecraft.bzes/Medium%20model%20frame.png?raw=true"
                                  alt="Waste detection example"/>
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">
                                 Waste Detection Drone
-                                <div class="badge badge-primary text-xs">Research!</div>
                             </h2>
                             <p>Utilized machine vision AI to program a drone for waste detection, specifically designed
                                 for government waste management. The solution identifies high-concentration waste areas
                                 using the YOLOv5 algorithm from Ultralytics, trained with custom annotated data via
                                 Roboflow.io.<br><br>
-                                This project is currently undergoing academic research at UAB, with a paper scheduled
-                                for release in the fall. Additionally, I employed the Tello SDK to enable automated
+                                Additionally, I employed the Tello SDK to enable automated
                                 drone flights, integrating built-in logging and a screenshot system.</p>
 
                             <div class="card-actions justify-end">
@@ -406,6 +375,46 @@
                                     Project</a>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MINECRAFT MAP!!! -->
+    <section id="map" class="pt-10">
+        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#00ff37"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <h2 class="text-3xl font-bold mb-4 mt-10 text-white">My Server Map</h2>
+            <p>This is the map of my Minecraft server rendered using the mod <a
+                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays realtime data from the world including player location.<br><br>You can view a larger version of the map <a href="https://servermap.minecraft.bz" class="green-link" target="_blank"><b><strong>here</strong></b></a></p>
+            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded sm:rounded-3xl">
+                <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
+                    <div class="absolute inset-0 mb-8">
+                        <iframe src="https://servermap.minecraft.bz" class="w-full h-full" frameborder="0"></iframe>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,27 @@
+<form id="uploadForm" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload Audio</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+    const form = document.getElementById('uploadForm');
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const response = await fetch("{% url 'classify_audio' %}", {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        document.getElementById('result').innerHTML = `
+            <p>Predicted Bird: ${result.predicted_bird}</p>
+            <p>Confidence: ${result.confidence}%</p>
+            <p>All Predictions: ${result.predictions.join(', ')}</p>
+        `;
+    });
+</script>

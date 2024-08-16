@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')  # Set backend to 'Agg' for non-GUI operations
 import numpy as np
 import librosa
 import librosa.display
@@ -6,7 +8,11 @@ from PIL import Image
 import torch
 import torch.nn as nn
 from torchvision import transforms
+import noisereduce as nr
 from collections import Counter
+from scipy.io import wavfile
+from pathlib import Path
+from django.conf import settings
 
 class BirdClassifierCNN(nn.Module):
     def __init__(self, num_classes=29):
@@ -82,17 +88,15 @@ def save_mel_spectrogram(signal, sr):
     fig.canvas.draw()
 
     width, height = fig.canvas.get_width_height()
-    print(f"Canvas dimensions: width={width}, height={height}")
 
+    # Convert the canvas to an image
     image = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
-    print(f"Raw image data size: {image.size}")
-
-    num_channels = 4
     image = Image.frombytes('RGBA', (width, height), image.tobytes())
     image = image.convert('RGB')
     image = image.resize((224, 224))
 
     plt.close(fig)
+    image.save('temp.png')
     return image
 
 def classify_segment(model, signal, sr, threshold=0.7):
@@ -108,9 +112,6 @@ def classify_segment(model, signal, sr, threshold=0.7):
         probabilities = torch.nn.functional.softmax(output, dim=1)
         confidence, predicted = torch.max(probabilities, 1)
         confidence = confidence.item()
-
-        if confidence < threshold:
-            return "Unknown", confidence * 100
 
         bird_name = bird_dict.get(predicted.item(), "Unknown")
         return bird_name, confidence * 100
@@ -146,6 +147,14 @@ def test_model(wav_file, model_path, threshold=0.7):
     avg_confidence = np.mean([conf for pred, conf in zip(predictions, confidences) if pred == most_common_prediction])
 
     return most_common_prediction, avg_confidence
+
+def reduce_noise(file_path):
+    signal, sr = librosa.load(file_path)
+    reduce = nr.reduce_noise(y=signal, sr=sr)
+    reduce = (reduce * 32767).astype('int16')
+    output_path = settings.MEDIA_ROOT + f"/{Path(file_path).stem}_clean.wav"
+    wavfile.write(output_path, sr, reduce)
+    return output_path
 
 if __name__ == "__main__":
     wav_file = "./chipping_sparrow_clean.wav"
