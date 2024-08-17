@@ -60,8 +60,7 @@
         <li><a class="link" href="https://servermap.minecraft.bz" id="link-map">Server Map</a></li>
         <li><a class="link" href="/#projects" id="link-projects">Projects</a></li>
         <li><a class="link" href="#contact" id="link-contact">Contact</a></li>
-        <li><a class="link" href="/blog.html">Blog</a>
-        <li>
+        <li><a class="link" href="/blog.html">Blog</a></li>
     </ul>
 </div>
 
@@ -93,27 +92,148 @@
 
 <!-- Main Content -->
 <div class="container mx-auto p-4">
-    <div class="bg-white sm:rounded-3xl mt-8 p-8">
-        <div class="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
-            <div class="relative isolate overflow-hidden bg-gray-900 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-20">
-                <div class="lg:w-1/2">
-                    <div class="mx-auto max-w-md text-center lg:text-left py-8">
-                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Upload a file</h1>
-                    </div>
-                        <form method="post" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <input type="file" name="file" required>
-                            <button type="submit">Upload</button>
-                        </form>
+    <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
+        <div class="relative isolate mx-auto max-w-7xl py-16 sm:px-6 sm:py-32 lg:px-8 overflow-hidden bg-gray-900 mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-20">
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                        fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="#0284C7"/>
+                        <stop offset="1" stop-color="#16A34A"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <div class="lg:w-1/2">
+                <div class="mx-auto max-w-md text-center lg:text-left py-8">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Upload a file or Record
+                        Audio</h1>
                 </div>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <input type="file" name="file" class="mb-4" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="recorded-audio" class="block text-white mb-2">Or Record Audio:</label>
+                        <div class="flex items-center">
+                            <button type="button" id="start-recording" class="mr-2 btn btn-secondary">Start Recording
+                            </button>
+                            <button type="button" id="stop-recording" class="btn btn-secondary" disabled>Stop
+                                Recording
+                            </button>
+                        </div>
+                        <audio id="audio-playback" controls class="mt-4 hidden"></audio>
+                        <input type="hidden" id="recorded-audio" name="recorded_audio">
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-4">Upload</button>
+                </form>
             </div>
         </div>
+
+        <!-- How it works -->
+        <section id="projects" class="pt-10">
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
+                <svg viewBox="0 0 1024 1024"
+                     class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                     aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill-opacity="0.7"/>
+                    <defs>
+                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                            <stop stop-color="#0284C7"/>
+                            <stop offset="1" stop-color="#16A34A"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
+                <svg viewBox="0 0 1024 1024"
+                     class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                     aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
+                            fill-opacity="0.7"/>
+                    <defs>
+                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                            <stop stop-color="#0284C7"/>
+                            <stop offset="1" stop-color="#16A34A"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
+                <div class="my-10">
+                    <div class="mx-auto max-w-md text-center lg:text-left py-8">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">How it works</h1>
+                </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                            <figure>
+                                <img src="{% static '/images/114555_1.png' %}" alt="Image One"/>
+                            </figure>
+                            <div class="card-body">
+                                <h2 class="card-title">
+                                    Step 1
+                                </h2>
+                                <p>In the first step, the file is checked to see what type it is. If it is an audio file then it will be converted to the .wav format.</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
+                            <figure>
+                                <img src="{% static '/images/114555_1.png' %}"
+                                     alt="Image Two"/>
+                            </figure>
+                            <div class="card-body">
+                                <h2 class="card-title">Step 2
+                                </h2>
+                                <p>Next, the file is loaded in and resampled to 22050 Hz and various metadata will be extracted such as audio length, pitch, and average frequency.</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
+                            <figure>
+                                <img src="{% static 'images/114555_1.png' %}" alt="image 3"/>
+                            </figure>
+                            <div class="card-body">
+                                <h2 class="card-title">Image 3
+                                </h2>
+                                <p>Step 3</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
+                            <figure>
+                                <img src="{% static 'images/114555_1.png' %}"
+                                     alt="Image 4"/>
+                            </figure>
+                            <div class="card-body">
+                                <h2 class="card-title">Image 4</h2>
+                                <p>Step 4</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
+                            <figure>
+                                <img src="{% static 'images/114555_1.png' %}"
+                                     alt="Image 5"/>
+                            </figure>
+                            <div class="card-body">
+                                <h2 class="card-title">Step 5
+                                </h2>
+                                <p>Step 5</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </div>
 </div>
 <footer class="mt-8 text-center text-sm text-gray-400">
     <hr class="border-t-2 border-gray-400 mb-4">
     <p>Nicholas Burczyk. All rights reserved.</p>
-    <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
+    <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
+            href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
 </footer>
 </body>
 </html>
