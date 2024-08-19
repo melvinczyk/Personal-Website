@@ -11,8 +11,9 @@ import os
 def upload_file(request):
     if request.method == 'POST' and request.FILES.get('file'):
         uploaded_file = request.FILES['file']
-        saved_file = audio_handler.save_uploaded_file(uploaded_file)
 
+        saved_file = audio_handler.save_uploaded_file(uploaded_file)
+        print(f"{saved_file}")
         signal, sr, duration = audio_handler.get_audio_data(saved_file)
 
         db_entry = FileEntry(

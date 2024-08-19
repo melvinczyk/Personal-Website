@@ -88,12 +88,64 @@
     links.forEach(link => {
         link.addEventListener('click', toggleMenu);
     });
+
+    function displayFileName() {
+    const fileInput = document.getElementById('file-upload');
+    const fileNameDisplay = document.getElementById('file-name-display');
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = fileInput.files[0].name;
+        } else {
+            fileNameDisplay.textContent = 'No file chosen';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const startRecordingButton = document.getElementById('start-recording');
+    const stopRecordingButton = document.getElementById('stop-recording');
+    const audioPlayback = document.getElementById('audio-playback');
+    const recordedAudioInput = document.getElementById('recorded-audio');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    startRecordingButton.addEventListener('click', async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            const recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+            const recordedUrl = URL.createObjectURL(recordedBlob);
+            audioPlayback.src = recordedUrl;
+            audioPlayback.classList.remove('hidden');
+            recordedAudioInput.value = recordedUrl;  // Optionally store the blob URL
+        };
+
+        mediaRecorder.start();
+        startRecordingButton.disabled = true;
+        stopRecordingButton.disabled = false;
+    });
+
+    stopRecordingButton.addEventListener('click', () => {
+        mediaRecorder.stop();
+        startRecordingButton.disabled = false;
+        stopRecordingButton.disabled = true;
+    });
+});
+
 </script>
 
 <!-- Main Content -->
 <div class="container mx-auto p-4">
     <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-        <div class="relative isolate mx-auto max-w-7xl py-16 sm:px-6 sm:py-32 lg:px-8 overflow-hidden bg-gray-900 mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-20">
+        <div class="relative isolate mx-auto max-w-7xl py-16 sm:px-6 sm:py-32 lg:px-8 overflow-hidden bg-gray-900 sm:rounded-3xl shadow-2xl flex items-center justify-center">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
@@ -106,15 +158,16 @@
                     </radialGradient>
                 </defs>
             </svg>
-            <div class="lg:w-1/2">
-                <div class="mx-auto max-w-md text-center lg:text-left py-8">
+            <div class="max-w-lg text-center">
+                <div class="mx-auto max-w-md py-8">
                     <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Upload a file or Record
                         Audio</h1>
                 </div>
-                <form method="post" enctype="multipart/form-data">
+                <!-- Form HTML -->
+                <form method="post" enctype="multipart/form-data" id="upload-form">
                     {% csrf_token %}
                     <div class="mb-4">
-                        <input type="file" name="file" class="mb-4" required>
+                        <input type="file" name="file" id="file-input" accept="audio/*" required>
                     </div>
                     <div class="mb-4">
                         <label for="recorded-audio" class="block text-white mb-2">Or Record Audio:</label>
@@ -128,8 +181,23 @@
                         <audio id="audio-playback" controls class="mt-4 hidden"></audio>
                         <input type="hidden" id="recorded-audio" name="recorded_audio">
                     </div>
+
                     <button type="submit" class="btn btn-primary mt-4">Upload</button>
                 </form>
+
+                <script>
+                    document.getElementById('file-input').addEventListener('change', function(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const fileType = file.type;
+                            if (!fileType.startsWith('audio/')) {
+                                alert('Please upload a valid audio file.');
+                                event.target.value = '';
+                            }
+                        }
+                    });
+                </script>
+
             </div>
         </div>
 
@@ -162,64 +230,71 @@
                 </svg>
                 <div class="my-10">
                     <div class="mx-auto max-w-md text-center lg:text-left py-8">
-                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">How it works</h1>
-                </div>
+                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">How it works</h1>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                             <figure>
-                                <img src="{% static '/images/114555_1.png' %}" alt="Image One"/>
+                                <img src="{% static '/images/convert.png' %}" alt="Image One"/>
                             </figure>
                             <div class="card-body">
                                 <h2 class="card-title">
                                     Step 1
                                 </h2>
-                                <p>In the first step, the file is checked to see what type it is. If it is an audio file then it will be converted to the .wav format.</p>
+                                <p>In the first step, the file is checked to see what type it is. If it is an audio file
+                                    then it will be converted to the .wav format.</p>
                             </div>
                         </div>
 
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
                             <figure>
-                                <img src="{% static '/images/114555_1.png' %}"
+                                <img src="{% static '/images/visual.png' %}"
                                      alt="Image Two"/>
                             </figure>
                             <div class="card-body">
                                 <h2 class="card-title">Step 2
                                 </h2>
-                                <p>Next, the file is loaded in and resampled to 22050 Hz and various metadata will be extracted such as audio length, pitch, and average frequency.</p>
+                                <p>Next, the file is loaded in and resampled to 22050 Hz and various metadata will be
+                                    extracted such as audio length, pitch, and average frequency.</p>
                             </div>
                         </div>
 
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
                             <figure>
-                                <img src="{% static 'images/114555_1.png' %}" alt="image 3"/>
+                                <img src="{% static 'images/visual_reduced.png' %}" alt="image 3"/>
                             </figure>
                             <div class="card-body">
-                                <h2 class="card-title">Image 3
+                                <h2 class="card-title">Step 3
                                 </h2>
-                                <p>Step 3</p>
+                                <p>Noise reduction is then applied to the audio file to amplify important
+                                    frequencies.</p>
                             </div>
                         </div>
 
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
                             <figure>
-                                <img src="{% static 'images/114555_1.png' %}"
+                                <img src="{% static 'images/split.png' %}"
                                      alt="Image 4"/>
                             </figure>
                             <div class="card-body">
-                                <h2 class="card-title">Image 4</h2>
-                                <p>Step 4</p>
+                                <h2 class="card-title">Step 4</h2>
+                                <p>Next, a mel spectrogram is created for every 5 seconds of the audio. What we have
+                                    left is an array of spectrogram images corresponding to every 5 seconds of the audio
+                                    file.</p>
                             </div>
                         </div>
 
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
                             <figure>
-                                <img src="{% static 'images/114555_1.png' %}"
+                                <img src="{% static 'images/predict.png' %}"
                                      alt="Image 5"/>
                             </figure>
                             <div class="card-body">
                                 <h2 class="card-title">Step 5
                                 </h2>
-                                <p>Step 5</p>
+                                <p>The spectrogram images are fed into the model where it makes a prediction based on
+                                    the individual image. Next it makes a weighted prediction for the audio file based
+                                    on the predictions and confidence of each individual spectrogram.</p>
                             </div>
                         </div>
                     </div>
