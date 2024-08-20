@@ -1,8 +1,12 @@
 from django.db import models
+from django.core.exceptions import ValidationError
+import hashlib
+
 
 # Create your models here.
 class FileEntry(models.Model):
     audio_file = models.FileField(upload_to='media/uploads/originals')
+    file_name = models.CharField(max_length=255)
     date_time = models.DateTimeField(auto_now_add=True)
     hash = models.CharField(max_length=64, unique=True)
     predicted_bird = models.CharField(max_length=255)
@@ -10,4 +14,4 @@ class FileEntry(models.Model):
     audio_length = models.FloatField()
 
     def __str__(self):
-        return f"{self.audio_file} - {self.predicted_bird} ({self.confidence:.2f}"
+        return f"{self.audio_file} - {self.hash} {self.confidence:.2f}"

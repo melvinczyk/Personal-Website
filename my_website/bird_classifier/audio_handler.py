@@ -5,17 +5,14 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from pydub import AudioSegment
 import mimetypes
-from models import FileEntry
+from .models import FileEntry
 
 
 def save_uploaded_file(uploaded_file):
-    file_hash = generate_hash(uploaded_file)
     directory = 'uploads/originals/'
     file_path = os.path.join(directory, uploaded_file.name)
 
     print(f"{file_path}")
-    if FileEntry.objects.filter(file_hash=file_hash).exists():
-
 
     saved_path = default_storage.save(file_path, uploaded_file)
     print(f"{saved_path}")
@@ -33,11 +30,6 @@ def save_uploaded_file(uploaded_file):
     print(f"{saved_file_path}")
     return  saved_file_path
 
-def generate_hash(file):
-    hasher = hashlib.sha256()
-    for chunk in file.chunks():
-        hasher.update(chunk)
-    return hasher.hexdigest()
 
 def get_audio_data(file_path):
     signal, sr = librosa.load(file_path, sr=None)
