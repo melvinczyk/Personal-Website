@@ -2,6 +2,7 @@ import os
 import torch
 import numpy as np
 import librosa
+import matplotlib
 import matplotlib.pyplot as plt
 import librosa.display
 from PIL import Image
@@ -9,8 +10,11 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 from torchvision import models
 from torchvision.models import ResNet18_Weights
+from django.conf import settings
+from scipy.io import wavfile
+import noisereduce as nr
 
-
+matplotlib.use('Agg')
 class BirdDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
@@ -114,7 +118,7 @@ def process_audio_file(file_path, output_dir, size):
 
 def classify_audio_file(file_path, model, transform, device):
     model.eval()
-    mel_spectrogram_paths = process_audio_file(file_path, 'temp_mels',
+    mel_spectrogram_paths = process_audio_file(file_path, os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels'),
                                                size={'desired': 5, 'minimum': 4, 'stride': 0, 'name': 5})
     predictions = []
 
@@ -145,7 +149,18 @@ def load_model(model_path, num_classes, device):
     return model
 
 
-def main():
+def reduce_noise(file_path):
+    signal, rate = librosa.load(file_path)
+    reduce = nr.reduce_noise(y=signal, sr=rate)
+    reduce = (reduce * 32767).astype('int16')
+    wavfile.write(file_path, rate, reduce)
+
+
+def get_prediction(file_path, model_path):
+    for file in os.listdir(os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')):
+        path = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels', file)
+        if os.path.isfile(path):
+            os.remove(path)
     bird_dict = {
         0: "american crow",
         1: "american goldfinch",
@@ -180,11 +195,11 @@ def main():
     }
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = 'bird_classifier_best_model.pth'
     num_classes = len(bird_dict)
     model = load_model(model_path, num_classes, device)
 
-    file_path = 'test_audio/BlueJay/622782414_cornell.wav'
+    reduce_noise(file_path)
+
     predictions, mel_spectrogram_paths = classify_audio_file(file_path, model, data_transforms, device)
 
     for i, (pred, mel_path) in enumerate(zip(predictions, mel_spectrogram_paths)):
@@ -211,11 +226,5 @@ def main():
         predicted_bird = 'Unknown'
         final_confidence = 100 - final_confidence
     print(f"Final prediction for the audio file: {predicted_bird} with confidence {final_confidence:.2f}%")
+    return predicted_bird, final_confidence
 
-
-if __name__ == "__main__":
-    for file in os.listdir('temp_mels'):
-        path = os.path.join('temp_mels', file)
-        if os.path.isfile(path):
-            os.remove(path)
-    main()

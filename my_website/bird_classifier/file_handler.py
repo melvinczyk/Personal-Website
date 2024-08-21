@@ -1,27 +1,19 @@
-import hashlib
-import librosa
 import os
 from django.core.files.storage import default_storage
 from django.conf import settings
 from pydub import AudioSegment
 import mimetypes
-from .models import FileEntry
-from django.utils.text import slugify
 import base64
 import librosa
-from io import BytesIO
-import soundfile as sf
-import re
+import requests
 
 def base64_encode_filename(filename):
-    # Encode the filename to base64
     byte_data = filename.encode('utf-8')
     encoded_name = base64.urlsafe_b64encode(byte_data).decode('utf-8')
     return encoded_name
 
 def save_uploaded_file(uploaded_file):
     directory = 'uploads/originals/'
-    # Base64 encode the uploaded file's name (without extension)
     filename, ext = os.path.splitext(uploaded_file.name)
     encoded_name = base64_encode_filename(filename) + ext
     file_path = os.path.join(directory, encoded_name)
@@ -49,5 +41,18 @@ def get_audio_data(file_path):
     signal, sr = librosa.load(file_path, sr=None)
     duration = librosa.get_duration(y=signal, sr=sr)
     return signal, sr, duration
+
+
+def download_from_macaulay(asset_num):
+    url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
+    output_path = os.path.join(settings.MEDIA_ROOT, 'downloads')
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(output_path, 'wb') as f:
+            for chunk in response.iter_content(1024):
+                f.write(chunk)
+        print(f"File downloaded successfully and saved to {output_path}")
+    else:
+        print(f"Failed to download the file. Status code: {response.status_code}")
 
 
