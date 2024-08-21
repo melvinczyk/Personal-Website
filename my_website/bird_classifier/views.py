@@ -4,8 +4,7 @@ import hashlib
 from django.shortcuts import render
 from django.core.files.storage import default_storage
 from django.conf import settings
-from django_clamd.validators import validate_file_infection
-from . import audio_handler
+from . import file_handler
 from .models import FileEntry
 from .forms import UploadFileForm
 import os
@@ -32,9 +31,9 @@ def upload_file(request):
                                   'exists': 'Yes',
                               })
             else:
-                saved_file = audio_handler.save_uploaded_file(uploaded_file)
+                saved_file = file_handler.save_uploaded_file(uploaded_file)
                 print(f"{saved_file}")
-                signal, sr, duration = audio_handler.get_audio_data(saved_file)
+                signal, sr, duration = file_handler.get_audio_data(saved_file)
 
                 db_entry = FileEntry(
                     audio_file = saved_file,

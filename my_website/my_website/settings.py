@@ -48,14 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'compressor',
     "bird_classifier.apps.BirdClassifierConfig",
-    'django_clamd',
 ]
-
-CLAMD_SERVER = {
-    'HOST': '127.0.0.1',
-    'PORT': 3310
-}
-
 
 COMPRESS_ROOT = BASE_DIR / 'static'
 

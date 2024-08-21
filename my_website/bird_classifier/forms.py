@@ -1,5 +1,4 @@
 from django import forms
-from django_clamd.validators import validate_file_infection
 from django.core.exceptions import ValidationError
 
 
