@@ -8,6 +8,7 @@ from .forms import UploadFileForm
 from . import classify
 import os
 
+
 def upload_file(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -24,34 +25,38 @@ def upload_file(request):
                 return render(request, 'result.html',
                               {
                                   'file_name': existing_entry.file_name,
-                                  'file_location': existing_entry.audio_file,
+                                  'file_location': existing_entry.file_location,
                                   'file_length': existing_entry.audio_length,
                                   'exists': 'Yes',
-                                  'bird': existing_entry.predicted_bird,
-                                  'confidence': existing_entry.confidence
+                                  'bird': existing_entry.bird,
+                                  'confidence': existing_entry.confidence,
+                                  'hash': existing_entry.hash
                               })
             else:
-                saved_file = file_handler.save_uploaded_file(uploaded_file)
+                saved_file, cleaned_name = file_handler.save_uploaded_file(uploaded_file)
                 print(f"{saved_file}")
                 signal, sr, duration = file_handler.get_audio_data(saved_file)
                 bird, confidence = classify.get_prediction(saved_file, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth'))
+                zipped_path = file_handler.compress_file(saved_file)
 
                 db_entry = FileEntry(
-                    audio_file = saved_file,
-                    file_name = uploaded_file.name,
-                    date_time = datetime.datetime.now(),
-                    hash = file_hash,
-                    predicted_bird = bird,
+                    file_location=zipped_path,
+                    file_name=cleaned_name,
+                    date_time=datetime.datetime.now(),
+                    hash=file_hash,
+                    bird=bird,
                     confidence=confidence,
                     audio_length=duration
                 )
                 db_entry.save()
                 return render(request, 'result.html', {
-                    'file_name': uploaded_file.name,
-                    'file_location': saved_file,
-                    'file_length' : duration,
-                    'bird': bird,
-                    'confidence': confidence,
+                    'file_name': db_entry.file_name,
+                    'file_location': db_entry.file_location,
+                    'file_length' : db_entry.audio_length,
+                    'bird': db_entry.bird,
+                    'confidence': db_entry.confidence,
+                    'hash': db_entry.hash,
+                    'exists': 'No'
                 })
         else:
             return render(request, 'upload.html')

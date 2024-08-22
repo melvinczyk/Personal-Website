@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require('tailwindcss/plugin')
+
 module.exports = {
   content: [
       './templates/**/*.{html, js}'
@@ -27,13 +29,13 @@ module.exports = {
     },
   },
   plugins: [
-    require("daisyui"),
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/aspect-ratio'),
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/container-queries'),
-    require('tailwindcss/colors')
-  ],
+  require("daisyui"),
+  require('@tailwindcss/forms')({ strategy: 'class'}),
+  require('@tailwindcss/aspect-ratio'),
+  require('@tailwindcss/typography'),
+  require('@tailwindcss/container-queries'),
+  require('tailwindcss/colors'),
+],
 
   daisyui: {
     themes: [

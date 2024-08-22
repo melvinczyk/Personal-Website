@@ -5,11 +5,11 @@ import hashlib
 
 # Create your models here.
 class FileEntry(models.Model):
-    audio_file = models.FileField(upload_to='media/uploads/originals')
+    file_location = models.FileField(upload_to='media/uploads/originals')
     file_name = models.CharField(max_length=255)
     date_time = models.DateTimeField(auto_now_add=True)
     hash = models.CharField(max_length=64, unique=True)
-    predicted_bird = models.CharField(max_length=255)
+    bird = models.CharField(max_length=255)
     confidence = models.FloatField()
     audio_length = models.FloatField()
 
