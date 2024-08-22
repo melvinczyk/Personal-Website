@@ -1,7 +1,6 @@
 import os
 from django.core.files.storage import default_storage
 from django.conf import settings
-from pydub import AudioSegment
 import mimetypes
 import base64
 import librosa
@@ -80,7 +79,19 @@ def get_audio_data(file_path):
 
 def download_from_macaulay(asset_num):
     url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
-    output_path = os.path.join(settings.MEDIA_ROOT, 'downloads')
+    output_path = os.path.join(settings.MEDIA_ROOT, 'downloads', f"{asset_num}.flac")
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(output_path, 'wb') as f:
+            for chunk in response.iter_content(1024):
+                f.write(chunk)
+        print(f"File downloaded successfully and saved to {output_path}")
+    else:
+        print(f"Failed to download the file. Status code: {response.status_code}")
+
+def download_birds(asset_num, bird):
+    url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
+    output_path = os.path.join('..', 'static', 'audio', f"{bird}.flac")
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         with open(output_path, 'wb') as f:
@@ -91,3 +102,5 @@ def download_from_macaulay(asset_num):
         print(f"Failed to download the file. Status code: {response.status_code}")
 
 
+if __name__ == "__main__":
+    download_birds(622572493, 'american_crow')

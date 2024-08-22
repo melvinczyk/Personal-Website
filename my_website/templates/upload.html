@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="forest">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,53 @@
     {% load static %}
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
+            rel="stylesheet"
+            type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{% static 'scripts/script.js' %}"></script>
+    <style>
+        .carousel-image-container {
+            width: 100%;
+            height: 100%; /* Adjust as needed */
+            overflow: hidden;
+            position: relative;
+        }
+        .carousel {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .glow-text {
+            color: white;
+            text-shadow:
+                0 0 5px rgba(255, 255, 255, 0.5),
+        }
+        .carousel-text {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5); /* Optional: Adds a background for better readability */
+            color: white;
+            font-size: 1.5rem; /* Adjust font size as needed */
+            font-weight: bold;
+        }
+
+    </style>
 </head>
 <body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-600 via-indigo-800 to-green-500 text-gray-200">
 
@@ -145,9 +192,11 @@
 <!-- Main Content -->
 
 <div class="container mx-auto p-4">
-
     <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-        <div class="relative isolate mx-auto max-w-7xl py-16 sm:px-6 sm:py-32 lg:px-8 overflow-hidden bg-gray-900 sm:rounded-3xl shadow-2xl flex items-center justify-center">
+        <div class="mb-8">
+        <h1 class="text-9xl font-bold tracking-tight text-center text-white glow-text sm:text-4xl">Backyard Alabama Bird Classifier</h1>
+        </div>
+        <div class="relative isolate mx-auto max-w-7xl py-8 sm:px-6 lg:px-8 overflow-hidden bg-gray-900 sm:rounded-3xl shadow-2xl flex items-center justify-center">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
@@ -160,46 +209,70 @@
                     </radialGradient>
                 </defs>
             </svg>
-            <div class="max-w-lg text-center">
-                <div class="mx-auto max-w-md py-8">
-                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Upload a file or Record
-                        Audio</h1>
-                </div>
-                <!-- Form HTML -->
-                <form method="post" enctype="multipart/form-data" id="upload-form">
-                    {% csrf_token %}
-                    <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
-                        <div class="flex items-center justify-center">
-                            <label for="file-input" class="btn btn-primary cursor-pointer">Upload Audio</label>
-                            <input type="file" name="file" id="file-input" accept="audio/*" class="hidden">
+            <div class="flex flex-col lg:flex-row justify-center items-center lg:space-x-8 space-y-8 lg:space-y-0">
+                <!-- Upload and Record Form -->
+                <div class="max-w-lg text-center flex-1">
+                    <div class="mx-auto max-w-md py-8">
+                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Upload a file or Record
+                            Audio</h1>
+                    </div>
+                    <!-- Form HTML -->
+                    <form method="post" enctype="multipart/form-data" id="upload-form">
+                        {% csrf_token %}
+                        <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-center">
+                                <label for="file-input" class="btn btn-secondary cursor-pointer">Upload Audio</label>
+                                <input type="file" name="file" id="file-input" accept="audio/*" class="hidden">
+                            </div>
+                            <div class="mt-2 text-white" id="file-name">No file selected</div>
                         </div>
-                        <div class="mt-2 text-white" id="file-name">No file selected</div>
-                    </div>
 
-                    <script>
-                        document.getElementById('file-input').addEventListener('change', function() {
-                            const fileName = this.files.length > 0 ? this.files[0].name : 'No file selected';
-                            document.getElementById('file-name').textContent = fileName;
-                        });
-                    </script>
+                        <script>
+                            document.getElementById('file-input').addEventListener('change', function() {
+                                const fileName = this.files.length > 0 ? this.files[0].name : 'No file selected';
+                                document.getElementById('file-name').textContent = fileName;
+                            });
+                        </script>
 
-                    <div class="mb-8 mt-8">
-                        <p>Or Record Audio</p>
-                    </div>
-                    <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
+                        <div class="mb-8 mt-8">
+                            <p>Or Record Audio</p>
+                        </div>
+                        <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-center space-x-4">
+                                <button type="button" id="start-recording" class="btn btn-secondary">Start Recording
+                                </button>
+                                <button type="button" id="stop-recording" class="btn btn-error" disabled>Stop
+                                    Recording
+                                </button>
+                            </div>
+                            <audio id="audio-playback" controls class="mt-4 hidden mx-auto"></audio>
+                            <input type="hidden" id="recorded-audio" name="recorded_audio">
+                        </div>
+
                         <div class="flex items-center justify-center space-x-4">
-                            <button type="button" id="start-recording" class="btn btn-secondary">Start Recording</button>
-                            <button type="button" id="stop-recording" class="btn btn-secondary" disabled>Stop Recording</button>
+                            <button type="submit" id="upload-btn" class="btn btn-secondary mt-4 mr-2">Upload</button>
+                            <button id="loading-btn" class="btn mt-4 hidden">
+                                <span class="loading loading-spinner"></span>
+                                loading...
+                            </button>
+                            <button type="button" id="reset-form" class="btn mt-4">Reset</button>
                         </div>
-                        <audio id="audio-playback" controls class="mt-4 hidden mx-auto"></audio>
-                        <input type="hidden" id="recorded-audio" name="recorded_audio">
-                    </div>
 
-                    <div class="flex items-center justify-center space-x-4">
-                        <button type="submit" class="btn btn-primary mt-4 mr-2">Upload</button>
-                        <button type="button" id="reset-form" class="btn btn-secondary mt-4">Reset</button>
-                    </div>
-                </form>
+                        <script>
+                            document.querySelector('form').addEventListener('submit', function(event) {
+                                event.preventDefault();
+
+                                document.getElementById('upload-btn').classList.add('hidden');
+                                document.getElementById('loading-btn').classList.remove('hidden');
+                                event.target.submit();
+                            });
+
+                            document.getElementById('reset-form').addEventListener('click', function() {
+                                document.querySelector('form').reset();
+                            });
+                        </script>
+
+                    </form>
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             const fileInput = document.getElementById('file-input');
@@ -249,19 +322,252 @@
                         });
 
                         document.getElementById('file-input').addEventListener('change', function(event) {
-                                            const file = event.target.files[0];
-                                            if (file) {
-                                                const fileType = file.type;
-                                                if (!fileType.startsWith('audio/')) {
-                                                    alert('Please upload a valid audio file.');
-                                                    event.target.value = '';
-                                                }
-                                            }
-                                        });
+                            const file = event.target.files[0];
+                            if (file) {
+                                const fileType = file.type;
+                                if (!fileType.startsWith('audio/')) {
+                                    alert('Please upload a valid audio file.');
+                                    event.target.value = '';
+                                }
+                            }
+                        });
                     </script>
+                </div>
+                <div class="carousel carousel-center rounded-box w-1/2 relative flex">
+                    <div class="carousel-slider flex transition-transform duration-500">
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                        <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://www.galveston.com/red-winged-black-bird-by-rose-pool/"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    <div class="carousel-item w-1/2">
+                        <div class="carousel-image-container">
+                            <img
+                                    src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg"
+                                    class="carousel-image"/>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="carousel-text">
+            Meet the birds below
+        </div>
+                </div>
+                <script>
+const slider = document.querySelector('.carousel-slider');
+const items = document.querySelectorAll('.carousel-item');
+let currentIndex = 0;
+
+function slideCarousel() {
+    currentIndex++;
+    if (currentIndex >= items.length /2) {
+        // If we've reached the end, instantly jump back to the start
+        currentIndex = 0;
+        slider.style.transition = 'none';
+        slider.style.transform = `translateX(0)`;
+        // Force a reflow to make sure the transition is removed
+        slider.offsetHeight;
+        // Re-enable the transition for the next slide
+        slider.style.transition = 'transform 500ms ease';
+    } else {
+        slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+    }
+}
+
+setInterval(slideCarousel, 3000); // Change slide every 3 seconds
+</script>
             </div>
         </div>
-</div>
         <!-- How it works -->
         <section id="projects" class="pt-10">
             <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
@@ -362,7 +668,6 @@
                 </div>
             </div>
         </section>
-
     </div>
 </div>
 <footer class="mt-8 text-center text-sm text-gray-400">
