@@ -91,7 +91,7 @@ def download_from_macaulay(asset_num):
 
 def download_birds(asset_num, bird):
     url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
-    output_path = os.path.join('..', 'static', 'audio', f"{bird}.flac")
+    output_path = os.path.join('..', 'static', 'audio', f"{bird}.mp3")
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         with open(output_path, 'wb') as f:
@@ -103,4 +103,4 @@ def download_birds(asset_num, bird):
 
 
 if __name__ == "__main__":
-    download_birds(622572493, 'american_crow')
+    download_birds(104468111, 'white')
