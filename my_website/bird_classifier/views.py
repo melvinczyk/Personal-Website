@@ -14,6 +14,7 @@ def upload_file(request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = form.cleaned_data['file']
+            print(f"uploaded_file: {uploaded_file.name}")
 
             hasher = hashlib.sha256()
             for chunk in uploaded_file.chunks():
@@ -34,7 +35,7 @@ def upload_file(request):
                               })
             else:
                 saved_file, cleaned_name = file_handler.save_uploaded_file(uploaded_file)
-                print(f"{saved_file}")
+                print(f"saved_file: {saved_file}")
                 signal, sr, duration = file_handler.get_audio_data(saved_file)
                 bird, confidence = classify.get_prediction(saved_file, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth'))
                 zipped_path = file_handler.compress_file(saved_file)

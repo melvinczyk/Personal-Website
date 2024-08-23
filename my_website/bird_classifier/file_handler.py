@@ -8,6 +8,8 @@ import requests
 import zipfile
 from pydub import AudioSegment
 import re
+import datetime
+import warnings
 
 
 def clean_filename(file):
@@ -27,9 +29,7 @@ def base64_encode_filename(filename):
 def compress_file(wav_file_path):
     directory, filename = os.path.split(wav_file_path)
     filename_no_ext = os.path.splitext(filename)[0]
-    print(f"filename_no_ext: {filename_no_ext}")
     flac_path = os.path.join(directory, f"{filename_no_ext}.flac")
-    print(f"flac path: {flac_path}")
     audio = AudioSegment.from_file(wav_file_path)
     audio.export(flac_path, format='flac')
     print(f"exported flac: {flac_path}")
@@ -38,36 +38,40 @@ def compress_file(wav_file_path):
 
     with zipfile.ZipFile(zip_file_path, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
         zip_file.write(flac_path, arcname=filename)
-    os.remove(wav_file_path)
-    os.remove(flac_path)
+    #os.remove(wav_file_path)
+    #os.remove(flac_path)
     print(f"Compressed to: {zip_file_path}")
     return zip_file_path
 
 
 def save_uploaded_file(uploaded_file):
     directory = 'uploads/originals/'
+    recorded_directory = 'uploads/recordings'
     filename, ext = os.path.splitext(uploaded_file.name)
     encoded_name = base64_encode_filename(filename) + ext
-    file_path = os.path.join(directory, encoded_name)
+    if filename == 'user_recording':
+        encoded_name = base64_encode_filename(str(datetime.datetime.now())) + ext
+        file_path = os.path.join(recorded_directory, encoded_name)
+    else:
+        file_path = os.path.join(directory, encoded_name)
 
     cleaned_name = clean_filename(filename)
 
-    print(f"{file_path}")
+    print(f"file_path: {file_path}")
 
     saved_path = default_storage.save(file_path, uploaded_file)
-    print(f"{saved_path}")
+    print(f"saved_path: {saved_path}")
     saved_file_path = os.path.join(settings.MEDIA_ROOT, saved_path)
 
     mime_type, _ = mimetypes.guess_type(saved_file_path)
-
+    print(f"mine_type: {mime_type}")
     if mime_type != 'audio/wav' and mime_type != 'audio/x-wav':
         audio = AudioSegment.from_file(saved_file_path)
         wav_path = os.path.splitext(saved_file_path)[0] + '.wav'
         audio.export(wav_path, format='wav')
         os.remove(saved_file_path)
-        print(f"{wav_path}")
         return wav_path
-    print(f"{saved_file_path}")
+    print(f"saved_file_path: {saved_file_path}")
     return saved_file_path, cleaned_name
 
 
@@ -88,6 +92,7 @@ def download_from_macaulay(asset_num):
         print(f"File downloaded successfully and saved to {output_path}")
     else:
         print(f"Failed to download the file. Status code: {response.status_code}")
+
 
 def download_birds(asset_num, bird):
     url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
