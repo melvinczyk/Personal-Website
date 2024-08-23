@@ -103,4 +103,4 @@ def download_birds(asset_num, bird):
 
 
 if __name__ == "__main__":
-    download_birds(104468111, 'white')
+    download_birds(619644408, 'titmouse')

@@ -150,9 +150,12 @@
     const stopRecordingButton = document.getElementById('stop-recording');
     const audioPlayback = document.getElementById('audio-playback');
     const recordedAudioInput = document.getElementById('recorded-audio');
+    const uploadForm = document.getElementById('upload-form');
+    const fileInput = document.getElementById('file-input');
 
     let mediaRecorder;
     let recordedChunks = [];
+    let recordedBlob;
 
     startRecordingButton.addEventListener('click', async () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -167,7 +170,7 @@
         };
 
         mediaRecorder.onstop = () => {
-            const recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
             const recordedUrl = URL.createObjectURL(recordedBlob);
             audioPlayback.src = recordedUrl;
             audioPlayback.classList.remove('hidden');
@@ -184,7 +187,31 @@
         startRecordingButton.disabled = false;
         stopRecordingButton.disabled = true;
     });
+
+    uploadForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(uploadForm);
+
+        if (recordedBlob) {
+            const recordedFile = new File([recordedBlob], "recording.wav", { type: 'audio/wav' });
+            formData.append('file', recordedFile);
+        }
+        fetch(uploadForm.action, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            document.getElementById('loading-btn').classList.add('hidden');
+            document.getElementById('upload-btn').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
 });
+
 
 </script>
 
@@ -257,24 +284,10 @@
                             </button>
                             <button type="button" id="reset-form" class="btn mt-4">Reset</button>
                         </div>
-
-                        <script>
-                            document.querySelector('form').addEventListener('submit', function(event) {
-                                event.preventDefault();
-
-                                document.getElementById('upload-btn').classList.add('hidden');
-                                document.getElementById('loading-btn').classList.remove('hidden');
-                                event.target.submit();
-                            });
-
-                            document.getElementById('reset-form').addEventListener('click', function() {
-                                document.querySelector('form').reset();
-                            });
-                        </script>
-
                     </form>
+
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
+                            document.addEventListener('DOMContentLoaded', function() {
                             const fileInput = document.getElementById('file-input');
                             const startRecordingBtn = document.getElementById('start-recording');
                             const stopRecordingBtn = document.getElementById('stop-recording');
@@ -314,7 +327,7 @@
                                 if (stopRecordingBtn.disabled == false) {
                                     stopRecordingBtn.disabled = true;
                                 }
-
+                                document.getElementById('file-name').textContent = 'No file selected';
                                 recordedAudioInput.value = '';
                                 audioPlayback.classList.add('hidden');
                                 audioPlayback.src = '';
@@ -551,20 +564,17 @@
                     function slideCarousel() {
                         currentIndex++;
                         if (currentIndex >= items.length /2) {
-                            // If we've reached the end, instantly jump back to the start
                             currentIndex = 0;
                             slider.style.transition = 'none';
                             slider.style.transform = `translateX(0)`;
-                            // Force a reflow to make sure the transition is removed
                             slider.offsetHeight;
-                            // Re-enable the transition for the next slide
                             slider.style.transition = 'transform 500ms ease';
                         } else {
                             slider.style.transform = `translateX(-${currentIndex * 100}%)`;
                         }
                     }
 
-                    setInterval(slideCarousel, 3000); // Change slide every 3 seconds
+                    setInterval(slideCarousel, 3000);
                 </script>
             </div>
         </div>
@@ -1365,7 +1375,7 @@
                             <button id="playButton_red_woodpecker" class="btn btn-secondary btn-lg"
                                     onclick="togglePlay('audio_red_woodpecker', 'playButton_red_woodpecker')">Play Chirp
                             </button>
-                            <audio id="audio_red+woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio>
+                            <audio id="audio_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio>
                         </th>
                         <td>
                             Found in Eastern United States
