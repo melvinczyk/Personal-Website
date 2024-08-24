@@ -4,10 +4,11 @@ from django.core.exceptions import ValidationError
 
 
 def file_size(value):
-    limit = 200 * 1024 * 1024
+    limit = 2 * 1024 * 1024
+    file_size_mb = value.size / (1024 * 1024)
     if value.size > limit:
-        print("Nuh uhh")
-        raise ValidationError('File too large. Maximum size is 7 MB')
+        raise ValidationError(f'File uploaded: {file_size_mb:.2f} MB. Maximum size is 2 MB.')
+
 
 class UploadFileForm(forms.Form):
     file = forms.FileField(validators=[file_size])

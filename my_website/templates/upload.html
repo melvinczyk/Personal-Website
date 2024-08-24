@@ -187,31 +187,7 @@
         startRecordingButton.disabled = false;
         stopRecordingButton.disabled = true;
     });
-
-    uploadForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const formData = new FormData(uploadForm);
-
-        if (recordedBlob) {
-            const recordedFile = new File([recordedBlob], "user_recording.wav", { type: 'audio/wav' });
-            formData.append('file', recordedFile);
-        }
-        fetch(uploadForm.action, {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            document.getElementById('loading-btn').classList.add('hidden');
-            document.getElementById('upload-btn').classList.remove('hidden');
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    });
 });
-
 
 </script>
 
@@ -285,64 +261,98 @@
                             <button type="button" id="reset-form" class="btn mt-4">Reset</button>
                         </div>
                     </form>
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div role="alert" class="alert alert-error mt-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Error:{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
 
                     <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                            const fileInput = document.getElementById('file-input');
-                            const startRecordingBtn = document.getElementById('start-recording');
-                            const stopRecordingBtn = document.getElementById('stop-recording');
-                            const recordedAudioInput = document.getElementById('recorded-audio');
-                            const audioPlayback = document.getElementById('audio-playback');
-                            const resetFormBtn = document.getElementById('reset-form');
+                        document.addEventListener('DOMContentLoaded', () => {
+                        const startRecordingButton = document.getElementById('start-recording');
+                        const stopRecordingButton = document.getElementById('stop-recording');
+                        const audioPlayback = document.getElementById('audio-playback');
+                        const recordedAudioInput = document.getElementById('recorded-audio');
+                        const fileInput = document.getElementById('file-input');
+                        const uploadButton = document.getElementById('upload-btn');
+                        const resetFormBtn = document.getElementById('reset-form');
 
-                            startRecordingBtn.addEventListener('click', function() {
-                                fileInput.disabled = true;
-                                fileInput.value = '';
-                                stopRecordingBtn.disabled = false;
-                            });
+                        let mediaRecorder;
+                        let recordedChunks = [];
+                        let recordedBlob;
 
-                            stopRecordingBtn.addEventListener('click', function() {
-                                fileInput.disabled = false;
-                                stopRecordingBtn.disabled = true;
-                            });
+                        startRecordingButton.addEventListener('click', async () => {
+                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                            mediaRecorder = new MediaRecorder(stream);
 
-                            fileInput.addEventListener('change', function() {
-                                if (fileInput.files.length > 0) {
-                                    startRecordingBtn.disabled = true;
-                                    stopRecordingBtn.disabled = true;
+                            recordedChunks = [];
 
-                                    recordedAudioInput.value = '';
-                                    audioPlayback.classList.add('hidden');
-                                    audioPlayback.src = '';
-                                } else {
-                                    startRecordingBtn.disabled = false;
-                                    stopRecordingBtn.disabled = true;
+                            mediaRecorder.ondataavailable = (event) => {
+                                if (event.data.size > 0) {
+                                    recordedChunks.push(event.data);
                                 }
-                            });
+                            };
 
-                            resetFormBtn.addEventListener('click', function() {
-                                fileInput.value = '';
-                                fileInput.disabled = false;
-                                startRecordingBtn.disabled = false;
-                                if (stopRecordingBtn.disabled == false) {
-                                    stopRecordingBtn.disabled = true;
-                                }
-                                document.getElementById('file-name').textContent = 'No file selected';
+                            mediaRecorder.onstop = () => {
+                                recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+                                const recordedUrl = URL.createObjectURL(recordedBlob);
+                                audioPlayback.src = recordedUrl;
+                                audioPlayback.classList.remove('hidden');
+
+                                const file = new File([recordedBlob], "user_recording.wav", { type: 'audio/wav' });
+
+                                const dataTransfer = new DataTransfer();
+                                dataTransfer.items.add(file);
+                                fileInput.files = dataTransfer.files;
+
+                                recordedAudioInput.value = recordedUrl;
+                            };
+
+                            mediaRecorder.start();
+                            startRecordingButton.disabled = true;
+                            stopRecordingButton.disabled = false;
+                        });
+
+                        stopRecordingButton.addEventListener('click', () => {
+                            mediaRecorder.stop();
+                            startRecordingButton.disabled = false;
+                            stopRecordingButton.disabled = true;
+                        });
+
+                        resetFormBtn.addEventListener('click', () => {
+                            fileInput.value = '';
+                            fileInput.disabled = false;
+                            startRecordingButton.disabled = false;
+                            if (stopRecordingButton.disabled == false) {
+                                stopRecordingButton.disabled = true;
+                            }
+                            document.getElementById('file-name').textContent = 'No file selected';
+                            recordedAudioInput.value = '';
+                            audioPlayback.classList.add('hidden');
+                            audioPlayback.src = '';
+                        });
+
+                        fileInput.addEventListener('change', function() {
+                            if (fileInput.files.length > 0) {
+                                startRecordingButton.disabled = true;
+                                stopRecordingButton.disabled = true;
+
                                 recordedAudioInput.value = '';
                                 audioPlayback.classList.add('hidden');
                                 audioPlayback.src = '';
-                            });
-                        });
-
-                        document.getElementById('file-input').addEventListener('change', function(event) {
-                            const file = event.target.files[0];
-                            if (file) {
-                                const fileType = file.type;
-                                if (!fileType.startsWith('audio/')) {
-                                    alert('Please upload a valid audio file.');
-                                    event.target.value = '';
-                                }
+                            } else {
+                                startRecordingButton.disabled = false;
+                                stopRecordingButton.disabled = true;
                             }
+                        });
                         });
                     </script>
                 </div>
