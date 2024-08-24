@@ -9,7 +9,7 @@ import zipfile
 from pydub import AudioSegment
 import re
 import datetime
-import warnings
+from django.core.exceptions import ValidationError
 
 
 def clean_filename(file):
@@ -83,15 +83,15 @@ def get_audio_data(file_path):
 
 def download_from_macaulay(asset_num):
     url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"
-    output_path = os.path.join(settings.MEDIA_ROOT, 'downloads', f"{asset_num}.flac")
+    output_path = os.path.join(settings.MEDIA_ROOT, 'downloads', f"{asset_num}.wav")
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         with open(output_path, 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
-        print(f"File downloaded successfully and saved to {output_path}")
+        return output_path
     else:
-        print(f"Failed to download the file. Status code: {response.status_code}")
+        raise ValidationError(f"Failed to download {asset_num}: response status code {response.status_code}")
 
 
 def download_birds(asset_num, bird):

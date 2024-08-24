@@ -1,12 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="forest">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Information</title>
+    <meta name="upload" content="Upload File">
+    <title>Upload File</title>
+    {% load static %}
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
+            rel="stylesheet"
+            type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
     <h1>File Information</h1>
+<h2>Head over to <a href="https://macaulaylibrary.org" target="_blank">Macaulay Library</a> and
+                            find an audio entry and input its ML number below</h2>
     <p><strong>File Location:</strong> {{ file_location }}</p>
     <p><strong>File Name:</strong> {{ file_name }}</p>
     <p><strong>Hash:</strong> {{ hash }}</p>

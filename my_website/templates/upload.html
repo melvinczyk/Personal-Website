@@ -150,12 +150,9 @@
     const stopRecordingButton = document.getElementById('stop-recording');
     const audioPlayback = document.getElementById('audio-playback');
     const recordedAudioInput = document.getElementById('recorded-audio');
-    const uploadForm = document.getElementById('upload-form');
-    const fileInput = document.getElementById('file-input');
 
     let mediaRecorder;
     let recordedChunks = [];
-    let recordedBlob;
 
     startRecordingButton.addEventListener('click', async () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -195,11 +192,11 @@
 
 <div class="container mx-auto p-4">
     <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-4xl font-bold tracking-tight text-center text-white glow-text sm:text-3xl">Backyard Alabama
-                Bird Classifier</h1>
+        <div class="w-full bg-base-100 py-8 px-6 sm:px-8 rounded-lg">
+            <h1 class="text-3xl font-bold tracking-tight text-center text-white sm:text-4xl">Backyard Alabama Bird Detector</h1>
+            <h2 class="text-2xl tracking-tight text-center">Deep learning model trained to detect common Alabama bird chirps</h2>
         </div>
-        <div class="relative isolate mx-auto max-w-7xl py-8 sm:px-6 lg:px-8 overflow-hidden bg-gray-900 sm:rounded-3xl shadow-2xl flex items-center justify-center">
+        <div class="relative isolate mx-auto mt-4 max-w-7xl py-8 sm:px-6 lg:px-8 overflow-hidden bg-gray-900 rounded sm:rounded-3xl shadow-2xl flex items-center justify-center">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
@@ -224,21 +221,25 @@
                         {% csrf_token %}
                         <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
                             <div class="flex items-center justify-center">
-                                <label for="file-input" class="btn btn-secondary cursor-pointer">Upload Audio</label>
+                                <button type="button" id="upload-audio" class="btn btn-secondary">Upload Audio</button>
                                 <input type="file" name="file" id="file-input" accept="audio/*" class="hidden">
                             </div>
                             <div class="mt-2 text-white" id="file-name">No file selected</div>
                         </div>
 
                         <script>
+                            document.getElementById('upload-audio').addEventListener('click', () => {
+                                document.getElementById('file-input').click();
+                            });
                             document.getElementById('file-input').addEventListener('change', function() {
                                 const fileName = this.files.length > 0 ? this.files[0].name : 'No file selected';
                                 document.getElementById('file-name').textContent = fileName;
                             });
                         </script>
 
+
                         <div class="mb-8 mt-8">
-                            <p>Or Record Audio</p>
+                            <h2>Or Record Audio</h2>
                         </div>
                         <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
                             <div class="flex items-center justify-center space-x-4">
@@ -283,8 +284,9 @@
                         const recordedAudioInput = document.getElementById('recorded-audio');
                         const fileInput = document.getElementById('file-input');
                         const uploadButton = document.getElementById('upload-btn');
+                        const uploadAudio = document.getElementById('upload-audio');
                         const resetFormBtn = document.getElementById('reset-form');
-
+                        const errorAlert = document.querySelector('.alert-error');
                         let mediaRecorder;
                         let recordedChunks = [];
                         let recordedBlob;
@@ -292,6 +294,7 @@
                         startRecordingButton.addEventListener('click', async () => {
                             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                             mediaRecorder = new MediaRecorder(stream);
+                            uploadAudio.disabled = true;
 
                             recordedChunks = [];
 
@@ -330,21 +333,23 @@
                         resetFormBtn.addEventListener('click', () => {
                             fileInput.value = '';
                             fileInput.disabled = false;
+                            uploadAudio.disabled = false
                             startRecordingButton.disabled = false;
-                            if (stopRecordingButton.disabled == false) {
-                                stopRecordingButton.disabled = true;
-                            }
+                            stopRecordingButton.disabled = true;
                             document.getElementById('file-name').textContent = 'No file selected';
                             recordedAudioInput.value = '';
                             audioPlayback.classList.add('hidden');
                             audioPlayback.src = '';
+                            if (errorAlert) {
+                                errorAlert.style.display = 'none';
+                            }
                         });
 
                         fileInput.addEventListener('change', function() {
                             if (fileInput.files.length > 0) {
                                 startRecordingButton.disabled = true;
                                 stopRecordingButton.disabled = true;
-
+                                uploadButton.disabled = false;
                                 recordedAudioInput.value = '';
                                 audioPlayback.classList.add('hidden');
                                 audioPlayback.src = '';
@@ -353,9 +358,11 @@
                                 stopRecordingButton.disabled = true;
                             }
                         });
-                        });
+                    });
+
                     </script>
                 </div>
+
                 <div class="carousel carousel-center rounded-box w-1/2 relative flex">
                     <div class="carousel-slider flex transition-transform duration-500">
                         <div class="carousel-item w-1/2">
@@ -613,12 +620,40 @@
                         button.classList.add("btn-secondary");
                     }
                 }
-
-
         </script>
 
+        <div class="flex flex-col justify-center h-full w-full mt-4 items-center">
+            <!-- Macaulay download -->
+            <div class="w-full lg:w-1/2 text-center">
+                <div class="w-full bg-base-100 py-8 px-6 sm:px-8 rounded-lg mb-4">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">No Bird? No problem</h1>
+                    <h2 class="text-2xl tracking-tight">Visit <a href="https://macaulaylibrary.org" target="_blank">Macaulay
+                        Library</a> to find an audio recording, then enter its ML number below.</h2>
+                    <div class="relative flex mt-8 bg-green-600 py-8 px-8 rounded justify-center">
+                        <iframe src="https://macaulaylibrary.org/asset/622572493/embed" height="469" width="320"
+                                frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <form method="post" id="download-form">
+                        {% csrf_token %}
+                        <div class="w-full bg-base-100 py-6 px-6 sm:px-8 mt-8 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-center">
+                                <label class="input input-bordered input-primary flex items-center gap-2">
+                                    ML
+                                    <input type="text" name="asset_num" class="grow" placeholder="#"/>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center space-x-4 mt-4">
+                            <button type="submit" id="fetch-btn" class="btn btn-lg btn-secondary">Fetch</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
         <!-- Birds section -->
-        <div class="relative isolate overflow-hidden bg-gray-900 mt-10 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+        <div class="relative isolate overflow-hidden bg-gray-900 mt-10 px-6 shadow-2xl rounded sm:rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
@@ -631,900 +666,769 @@
                     </radialGradient>
                 </defs>
             </svg>
-            <div class="overflow-x-auto w-full">
-                <table class="table">
-                    <!-- head -->
-                    <thead>
-                    <tr>
-                        <th>Bird</th>
-                        <th>Chirp</th>
-                        <th>Area Found</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <!-- crow -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg"
-                                                alt="american crow"/>
+            <div class="w-full mx-auto py-8">
+                <!-- Text above the table -->
+                <div class="w-full bg-base-100 py-8 px-6 sm:px-8 rounded-lg">
+                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">All Birds Detectable</h1>
+                    <p class="text-lg">These are all the birds the model can detect</p>
+                </div>
+                <div class="w-full mx-auto py-8">
+                    <table class="table">
+                        <!-- head -->
+                        <thead>
+                        <tr>
+                            <th>Bird</th>
+                            <th>Chirp</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- crow -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg"
+                                                    alt="american crow"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">American Crow</div>
+                                        <div class="text-sm opacity-50">Corvus brachyrhynchos</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">American Crow</div>
-                                    <div class="text-sm opacity-50">Corvus brachyrhynchos</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_crow" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_crow', 'playButton_crow')">Play Chirp
-                            </button>
-                            <audio id="audio_crow" src="{% static 'audio/american_crow.mp3' %}"></audio>
-                        </th>
-
-                        <td>
-                            Found in mainland 48 states
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_crow" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_crow', 'playButton_crow')">Play Chirp
+                                </button>
+                                <audio id="audio_crow" src="{% static 'audio/american_crow.mp3' %}"></audio>
+                            </th>
 
 
-                    </tr>
-                    <!-- American goldfinch -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg"
-                                                alt="American Goldfinch"/>
+                        </tr>
+                        <!-- American goldfinch -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg"
+                                                    alt="American Goldfinch"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">American Goldfinch</div>
+                                        <div class="text-sm opacity-50">Spinus tristis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">American Goldfinch</div>
-                                    <div class="text-sm opacity-50">Spinus tristis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_goldfinch" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_goldfinch', 'playButton_goldfinch')">Play Chirp
-                            </button>
-                            <audio id="audio_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in mainland 48 states
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_goldfinch" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_goldfinch', 'playButton_goldfinch')">Play Chirp
+                                </button>
+                                <audio id="audio_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- American robin -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419"
-                                                alt="american robin"/>
+
+                        </tr>
+                        <!-- American robin -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419"
+                                                    alt="american robin"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">American Robin</div>
+                                        <div class="text-sm opacity-50">Turdus migratorius</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">American Robin</div>
-                                    <div class="text-sm opacity-50">Turdus migratorius</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_robin" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_robin', 'playButton_robin')">Play Chirp
-                            </button>
-                            <audio id="audio_robin" src="{% static 'audio/american_robin.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all North America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_robin" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_robin', 'playButton_robin')">Play Chirp
+                                </button>
+                                <audio id="audio_robin" src="{% static 'audio/american_robin.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- barred owl -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg"
-                                                alt="barred owl"/>
+
+                        </tr>
+                        <!-- barred owl -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg"
+                                                    alt="barred owl"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Barred Owl</div>
+                                        <div class="text-sm opacity-50">Strix varia</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Barred Owl</div>
-                                    <div class="text-sm opacity-50">Strix varia</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_owl" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_owl', 'playButton_owl')">Play Chirp
-                            </button>
-                            <audio id="audio_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Common around eastern United States and west Canada
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
-
-                    </tr>
-                    <!-- Blue jay -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg"
-                                                alt="blue jay"/>
+                            </td>
+                            <th>
+                                <button id="playButton_owl" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_owl', 'playButton_owl')">Play Chirp
+                                </button>
+                                <audio id="audio_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio>
+                            </th>
+                        </tr>
+                        <!-- Blue jay -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg"
+                                                    alt="blue jay"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Blue Jay</div>
+                                        <div class="text-sm opacity-50">Cyanocitta cristata</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Blue Jay</div>
-                                    <div class="text-sm opacity-50">Cyanocitta cristata</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_jay" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_jay', 'playButton_jay')">Play Chirp
-                            </button>
-                            <audio id="audio_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Middle to Eastern America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_jay" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_jay', 'playButton_jay')">Play Chirp
+                                </button>
+                                <audio id="audio_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- brow nuthatch -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg"
-                                                alt="brown nuthcatch"/>
+
+                        </tr>
+                        <!-- brow nuthatch -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg"
+                                                    alt="brown nuthcatch"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Brown-headed Nuthatch</div>
+                                        <div class="text-sm opacity-50">Sitta pusilla</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Brown-headed Nuthatch</div>
-                                    <div class="text-sm opacity-50">Sitta pusilla</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_nuthatch" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_nuthatch', 'playButton_nuthatch')">Play Chirp
-                            </button>
-                            <audio id="audio_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Southeast United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_nuthatch" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_nuthatch', 'playButton_nuthatch')">Play Chirp
+                                </button>
+                                <audio id="audio_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- carolina chickadee -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false"
-                                                alt="carolina chickadee"/>
+
+                        </tr>
+                        <!-- carolina chickadee -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false"
+                                                    alt="carolina chickadee"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Carolina Chickadee</div>
+                                        <div class="text-sm opacity-50">Poecile carolinensis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Carolina Chickadee</div>
-                                    <div class="text-sm opacity-50">Poecile carolinensis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_chickadee" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_chickadee', 'playButton_chickadee')">Play Chirp
-                            </button>
-                            <audio id="audio_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Southeast United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_chickadee" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_chickadee', 'playButton_chickadee')">Play Chirp
+                                </button>
+                                <audio id="audio_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- carolina wren -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg"
-                                                alt="carolina wren"/>
+
+                        </tr>
+                        <!-- carolina wren -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg"
+                                                    alt="carolina wren"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Carolina Wren</div>
+                                        <div class="text-sm opacity-50">Thryothorus ludovicianus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Carolina Wren</div>
-                                    <div class="text-sm opacity-50">Thryothorus ludovicianus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_wren" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_wren', 'playButton_wren')">Play Chirp
-                            </button>
-                            <audio id="audio_wren" src="{% static 'audio/wren.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_wren" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_wren', 'playButton_wren')">Play Chirp
+                                </button>
+                                <audio id="audio_wren" src="{% static 'audio/wren.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- cedar waxwing 0-->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg"
-                                                alt="cedar waxwing"/>
+
+                        </tr>
+                        <!-- cedar waxwing 0-->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg"
+                                                    alt="cedar waxwing"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Cedar Waxwing</div>
+                                        <div class="text-sm opacity-50">Bombycilla cedrorum</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Cedar Waxwing</div>
-                                    <div class="text-sm opacity-50">Bombycilla cedrorum</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_waxwing" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_waxwing', 'playButton_waxwing')">Play Chirp
-                            </button>
-                            <audio id="audio_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all America and Central America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico, C.A.</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_waxwing" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_waxwing', 'playButton_waxwing')">Play Chirp
+                                </button>
+                                <audio id="audio_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- chipping sparrow -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png"
-                                                alt="chipping sparrow"/>
+
+                        </tr>
+                        <!-- chipping sparrow -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png"
+                                                    alt="chipping sparrow"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Chipping Sparrow</div>
+                                        <div class="text-sm opacity-50">Spizella passerina</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Chipping Sparrow</div>
-                                    <div class="text-sm opacity-50">Spizella passerina</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_chipping" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_chipping', 'playButton_chipping')">Play Chirp
-                            </button>
-                            <audio id="audio_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all North America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_chipping" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_chipping', 'playButton_chipping')">Play Chirp
+                                </button>
+                                <audio id="audio_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- dark eyed -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024"
-                                                alt="dark-eyed junco"/>
+
+                        </tr>
+                        <!-- dark eyed -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024"
+                                                    alt="dark-eyed junco"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Dark-eyed Junco</div>
+                                        <div class="text-sm opacity-50">Junco hyemalis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Dark-eyed Junco</div>
-                                    <div class="text-sm opacity-50">Junco hyemalis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_dark" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_dark', 'playButton_dark')">Play Chirp
-                            </button>
-                            <audio id="audio_dark" src="{% static 'audio/junco.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all North America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_dark" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_dark', 'playButton_dark')">Play Chirp
+                                </button>
+                                <audio id="audio_dark" src="{% static 'audio/junco.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- Downy woodpecker -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg"
-                                                alt="downy woodpecker"/>
+
+                        </tr>
+                        <!-- Downy woodpecker -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg"
+                                                    alt="downy woodpecker"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Downy Woodpecker</div>
+                                        <div class="text-sm opacity-50">Dryobates pubescens</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Downy Woodpecker</div>
-                                    <div class="text-sm opacity-50">Dryobates pubescens</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_downy" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_downy', 'playButton_downy')">Play Chirp
-                            </button>
-                            <audio id="audio_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in the United States and Canada
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_downy" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_downy', 'playButton_downy')">Play Chirp
+                                </button>
+                                <audio id="audio_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- eaastern bluebird -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg"
-                                                alt="eastern bluebird"/>
+                        </tr>
+                        <!-- eaastern bluebird -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg"
+                                                    alt="eastern bluebird"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Eastern Bluebird</div>
+                                        <div class="text-sm opacity-50">Sialia sialis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Eastern Bluebird</div>
-                                    <div class="text-sm opacity-50">Sialia sialis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_bluebird" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_bluebird', 'playButton_bluebird')">Play Chirp
-                            </button>
-                            <audio id="audio_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Southeast United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_bluebird" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_bluebird', 'playButton_bluebird')">Play Chirp
+                                </button>
+                                <audio id="audio_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- eastern kingbird -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg"
-                                                alt="eastern kingbird"/>
+
+                        </tr>
+                        <!-- eastern kingbird -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg"
+                                                    alt="eastern kingbird"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Eastern Kingbird</div>
+                                        <div class="text-sm opacity-50">Tyrannus tyrannus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Eastern Kingbird</div>
-                                    <div class="text-sm opacity-50">Tyrannus tyrannus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_kingbird" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_kingbird', 'playButton_kingbird')">Play Chirp
-                            </button>
-                            <audio id="audio_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in All America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">North America, South America, C.A.</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_kingbird" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_kingbird', 'playButton_kingbird')">Play Chirp
+                                </button>
+                                <audio id="audio_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- eastern phoebe -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg"
-                                                alt="eastern phoebe"/>
+                        </tr>
+                        <!-- eastern phoebe -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg"
+                                                    alt="eastern phoebe"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Eastern Phoebe</div>
+                                        <div class="text-sm opacity-50">Sayornis phoebe</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Eastern Phoebe</div>
-                                    <div class="text-sm opacity-50">Sayornis phoebe</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_phoebe" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_phoebe', 'playButton_phoebe')">Play Chirp
-                            </button>
-                            <audio id="audio_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_phoebe" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_phoebe', 'playButton_phoebe')">Play Chirp
+                                </button>
+                                <audio id="audio_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- eastern towhee -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg"
-                                                alt="eastern towhee"/>
+                        </tr>
+                        <!-- eastern towhee -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg"
+                                                    alt="eastern towhee"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Eastern Towhee</div>
+                                        <div class="text-sm opacity-50">Pipilo erythrophthalmus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Eastern Towhee</div>
-                                    <div class="text-sm opacity-50">Pipilo erythrophthalmus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_towhee" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_towhee', 'playButton_towhee')">Play Chirp
-                            </button>
-                            <audio id="audio_towhee" src="{% static 'audio/towhee.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_towhee" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_towhee', 'playButton_towhee')">Play Chirp
+                                </button>
+                                <audio id="audio_towhee" src="{% static 'audio/towhee.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- house finch -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg"
-                                                alt="house finch"/>
+                        </tr>
+                        <!-- house finch -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg"
+                                                    alt="house finch"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">House Finch</div>
+                                        <div class="text-sm opacity-50">Haemorhous mexicanus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">House Finch</div>
-                                    <div class="text-sm opacity-50">Haemorhous mexicanus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_house" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_house', 'playButton_house')">Play Chirp
-                            </button>
-                            <audio id="audio_house" src="{% static 'audio/house_finch.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in the United States and Mexico
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_house" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_house', 'playButton_house')">Play Chirp
+                                </button>
+                                <audio id="audio_house" src="{% static 'audio/house_finch.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- mourning dove -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg"
-                                                alt="barred owl"/>
+                        </tr>
+                        <!-- mourning dove -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg"
+                                                    alt="barred owl"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Mourning Dove</div>
+                                        <div class="text-sm opacity-50">Zenaida macrouraa</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Mourning Dove</div>
-                                    <div class="text-sm opacity-50">Zenaida macrouraa</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_dove" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_dove', 'playButton_dove')">Play Chirp
-                            </button>
-                            <audio id="audio_dove" src="{% static 'audio/mourning.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all Northern America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico, C.A.</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_dove" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_dove', 'playButton_dove')">Play Chirp
+                                </button>
+                                <audio id="audio_dove" src="{% static 'audio/mourning.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- myrtly warbler -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg"
-                                                alt="myrtle warbler"/>
+                        </tr>
+                        <!-- myrtly warbler -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg"
+                                                    alt="myrtle warbler"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Myrtle Warbler</div>
+                                        <div class="text-sm opacity-50">Setophaga coronata</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Myrtle Warbler</div>
-                                    <div class="text-sm opacity-50">Setophaga coronata</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_myrtle" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_myrtle', 'playButton_myrtle')">Play Chirp
-                            </button>
-                            <audio id="audio_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all Northern America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico, C.A.</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_myrtle" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_myrtle', 'playButton_myrtle')">Play Chirp
+                                </button>
+                                <audio id="audio_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- northern cardinal -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg"
-                                                alt="northern cardinal"/>
+                        </tr>
+                        <!-- northern cardinal -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg"
+                                                    alt="northern cardinal"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Northern Cardinal</div>
+                                        <div class="text-sm opacity-50">Cardinalis cardinalis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Northern Cardinal</div>
-                                    <div class="text-sm opacity-50">Cardinalis cardinalis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_cardinal" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_cardinal', 'playButton_cardinal')">Play Chirp
-                            </button>
-                            <audio id="audio_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern and Southern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_cardinal" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_cardinal', 'playButton_cardinal')">Play Chirp
+                                </button>
+                                <audio id="audio_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- northern flicker -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg"
-                                                alt="northern flicker"/>
+                        </tr>
+                        <!-- northern flicker -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg"
+                                                    alt="northern flicker"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Northern Flicker</div>
+                                        <div class="text-sm opacity-50">Colaptes auratus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Northern Flicker</div>
-                                    <div class="text-sm opacity-50">Colaptes auratus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_flicker" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_flicker', 'playButton_flicker')">Play Chirp
-                            </button>
-                            <audio id="audio_flicker" src="{% static 'audio/flicker.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all Northern America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_flicker" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_flicker', 'playButton_flicker')">Play Chirp
+                                </button>
+                                <audio id="audio_flicker" src="{% static 'audio/flicker.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- northern mockingbird -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU"
-                                                alt="northern mockingbird"/>
+                        </tr>
+                        <!-- northern mockingbird -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU"
+                                                    alt="northern mockingbird"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Northern Mockingbird</div>
+                                        <div class="text-sm opacity-50">Mimus polyglottos</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Northern Mockingbird</div>
-                                    <div class="text-sm opacity-50">Mimus polyglottos</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_mock" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_mock', 'playButton_mock')">Play Chirp
-                            </button>
-                            <audio id="audio_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in the United States, Mexico, and islands
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico, Southern Islands</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_mock" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_mock', 'playButton_mock')">Play Chirp
+                                </button>
+                                <audio id="audio_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- pine warbler -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg"
-                                                alt="pine warbler"/>
+                        </tr>
+                        <!-- pine warbler -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg"
+                                                    alt="pine warbler"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Pine Warbler</div>
+                                        <div class="text-sm opacity-50">Setophaga pinus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Pine Warbler</div>
-                                    <div class="text-sm opacity-50">Setophaga pinus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_pine" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_pine', 'playButton_pine')">Play Chirp
-                            </button>
-                            <audio id="audio_pine" src="{% static 'audio/pine.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_pine" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_pine', 'playButton_pine')">Play Chirp
+                                </button>
+                                <audio id="audio_pine" src="{% static 'audio/pine.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- purple finch -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg"
-                                                alt="purple finch"/>
+                        </tr>
+                        <!-- purple finch -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg"
+                                                    alt="purple finch"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Purple Finch</div>
+                                        <div class="text-sm opacity-50">Haemorhous purpureus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Purple Finch</div>
-                                    <div class="text-sm opacity-50">Haemorhous purpureus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_purple" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_purple', 'playButton_purple')">Play Chirp
-                            </button>
-                            <audio id="audio_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_purple" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_purple', 'playButton_purple')">Play Chirp
+                                </button>
+                                <audio id="audio_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- Red bellied woodpecker -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg"
-                                                alt="barred owl"/>
+                        </tr>
+                        <!-- Red bellied woodpecker -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg"
+                                                    alt="barred owl"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Red-bellied Woodpecker</div>
+                                        <div class="text-sm opacity-50">Melanerpes carolinus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Red-bellied Woodpecker</div>
-                                    <div class="text-sm opacity-50">Melanerpes carolinus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_red_woodpecker" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_red_woodpecker', 'playButton_red_woodpecker')">Play Chirp
-                            </button>
-                            <audio id="audio_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_red_woodpecker" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_red_woodpecker', 'playButton_red_woodpecker')">Play
+                                    Chirp
+                                </button>
+                                <audio id="audio_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- red winged blackbird -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://www.galveston.com/red-winged-black-bird-by-rose-pool/"
-                                                alt="barred owl"/>
+                        </tr>
+                        <!-- red winged blackbird -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://www.galveston.com/red-winged-black-bird-by-rose-pool/"
+                                                    alt="barred owl"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Red-winged Blackbird</div>
+                                        <div class="text-sm opacity-50">Agelaius phoeniceus</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Red-winged Blackbird</div>
-                                    <div class="text-sm opacity-50">Agelaius phoeniceus</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_red_wing" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_red_wing', 'playButton_red_wing')">Play Chirp
-                            </button>
-                            <audio id="audio_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all North America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Canada, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_red_wing" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_red_wing', 'playButton_red_wing')">Play Chirp
+                                </button>
+                                <audio id="audio_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- song sparrow -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA"
-                                                alt="song sparrow"/>
+                        </tr>
+                        <!-- song sparrow -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA"
+                                                    alt="song sparrow"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Song Sparrow</div>
+                                        <div class="text-sm opacity-50">Melospiza melodia</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Song Sparrow</div>
-                                    <div class="text-sm opacity-50">Melospiza melodia</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_song" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_song', 'playButton_song')">Play Chirp
-                            </button>
-                            <audio id="audio_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in the United States and Canada
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_song" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_song', 'playButton_song')">Play Chirp
+                                </button>
+                                <audio id="audio_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- tufted titmouse -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg"
-                                                alt="tufted titmouse"/>
+                        </tr>
+                        <!-- tufted titmouse -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg"
+                                                    alt="tufted titmouse"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold">Tufted Titmouse</div>
+                                        <div class="text-sm opacity-50">Baeolophus bicolor</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold">Tufted Titmouse</div>
-                                    <div class="text-sm opacity-50">Baeolophus bicolor</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_titmouse" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_titmouse', 'playButton_titmouse')">Play Chirp
-                            </button>
-                            <audio id="audio_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in Eastern United States
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_titmouse" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_titmouse', 'playButton_titmouse')">Play Chirp
+                                </button>
+                                <audio id="audio_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
-                    <!-- white breasted nuthatch -->
-                    <tr>
-                        <td>
-                            <div class="flex items-center gap-3">
-                                <div class="avatar">
-                                    <div class="rounded w-32">
-                                        <img
-                                                src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg"
-                                                alt="white breasted nuthatch"/>
+                        </tr>
+                        <!-- white breasted nuthatch -->
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar">
+                                        <div class="rounded w-32">
+                                            <img
+                                                    src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg"
+                                                    alt="white breasted nuthatch"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold test-2xl">White-breasted Nuthatch</div>
+                                        <div class="text-sm opacity-50">Sitta carolinensis</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold test-2xl">White-breasted Nuthatch</div>
-                                    <div class="text-sm opacity-50">Sitta carolinensis</div>
-                                </div>
-                            </div>
-                        </td>
-                        <th>
-                            <button id="playButton_white" class="btn btn-secondary btn-lg"
-                                    onclick="togglePlay('audio_white', 'playButton_white')">Play Chirp
-                            </button>
-                            <audio id="audio_white" src="{% static 'audio/white.mp3' %}"></audio>
-                        </th>
-                        <td>
-                            Found in all North America
-                            <br/>
-                            <span class="badge badge-ghost badge-sm">United States, Mexico, Canada</span>
-                        </td>
+                            </td>
+                            <th>
+                                <button id="playButton_white" class="btn-lg btn-secondary btn"
+                                        onclick="togglePlay('audio_white', 'playButton_white')">Play Chirp
+                                </button>
+                                <audio id="audio_white" src="{% static 'audio/white.mp3' %}"></audio>
+                            </th>
 
-                    </tr>
+                        </tr>
 
-                    </tbody>
-                    <!-- foot -->
-                    <tfoot>
-                    <tr>
-                        <th>Bird</th>
-                        <th>Chirp</th>
-                        <th>Area Found</th>
-                    </tr>
-                    </tfoot>
-                </table>
+                        </tbody>
+                        <!-- foot -->
+                        <tfoot>
+                        <tr>
+                            <th>Bird</th>
+                            <th>Chirp</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1557,8 +1461,8 @@
                     </defs>
                 </svg>
                 <div class="my-10">
-                    <div class="mx-auto max-w-md text-center py-8">
-                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">How it works</h1>
+                    <div class="flex justify-center items-center mb-4">
+                        <h1 class="text-4xl font-bold text-center">How it works</h1>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">

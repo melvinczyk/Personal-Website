@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from .models import FileEntry
 from .forms import UploadFileForm
 from . import file_handler, classify
@@ -11,8 +12,20 @@ import os
 def upload_file(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
+        text_input = request.POST.get('asset_num')
+        download_path = None
+        request_error = None
+
+        if text_input:
+            try:
+                download_path = file_handler.download_from_macaulay(text_input)
+            except ValidationError as e:
+                request_error = str(e)
+
+
         if form.is_valid():
             uploaded_file = form.cleaned_data['file']
+            print(f"uploaded_file: {uploaded_file}")
 
             hasher = hashlib.sha256()
             for chunk in uploaded_file.chunks():
@@ -46,10 +59,29 @@ def upload_file(request):
                     audio_length=duration
                 )
                 db_entry.save()
-                return redirect('result_view')
+                return render(request, 'result.html', {
+                    'file_name': db_entry.file_name,
+                    'file_location': db_entry.file_location,
+                    'file_length': db_entry.audio_length,
+                    'exists': 'No',
+                    'bird': db_entry.bird,
+                    'confidence': db_entry.confidence,
+                    'hash': db_entry.hash
+                })
+
+        elif download_path is not None:
+            bird, confidence = classify.get_prediction(download_path, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth'))
+            return render(request, 'result.html', {
+                'file_name': os.path.basename(download_path),
+                'bird': bird,
+                'confidence': confidence
+            })
 
         else:
-            error_message = form.errors.get('__all__') or form.errors.get('file')
+            if request_error is not None:
+                error_message = request_error
+            else:
+                error_message = form.errors.get('__all__') or form.errors.get('file')
             if error_message:
                 messages.error(request, error_message)
             return redirect('upload_file')
