@@ -13,8 +13,10 @@ from torchvision.models import ResNet18_Weights
 from django.conf import settings
 from scipy.io import wavfile
 import noisereduce as nr
-
+from . import file_handler
+import re
 matplotlib.use('Agg')
+
 class BirdDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
@@ -87,6 +89,7 @@ def process_audio_file(file_path, output_dir, size):
     signal, sr = librosa.load(file_path, sr=16000)
     step = (size['desired'] - size['stride']) * sr
     mel_spectrogram_paths = []
+    filename = os.path.splitext(os.path.basename(file_path))[0]
 
     for start in range(0, len(signal) - size['desired'] * sr + 1, step):
         end = start + size['desired'] * sr
@@ -95,7 +98,7 @@ def process_audio_file(file_path, output_dir, size):
         if len(segment) < size['desired'] * sr:
             segment = np.pad(segment, (0, size['desired'] * sr - len(segment)), mode='constant')
 
-        mel_path = os.path.join(output_dir, f"segment_{start // sr}.png")
+        mel_path = os.path.join(output_dir, f"{filename}_{start // sr}.png")
         if not os.path.exists(mel_path):
             save_mel_spectrogram(segment, mel_path, sr)
         mel_spectrogram_paths.append(mel_path)
@@ -107,7 +110,7 @@ def process_audio_file(file_path, output_dir, size):
         if len(segment) < size['desired'] * sr:
             segment = np.pad(segment, (0, size['desired'] * sr - len(segment)), mode='constant')
 
-        mel_path = os.path.join(output_dir, f"segment_{start // sr}.png")
+        mel_path = os.path.join(output_dir, f"{filename}_{start // sr}.png")
         if not os.path.exists(mel_path):
             save_mel_spectrogram(segment, mel_path, sr)
         mel_spectrogram_paths.append(mel_path)
@@ -157,10 +160,6 @@ def reduce_noise(file_path):
 
 
 def get_prediction(file_path, model_path):
-    for file in os.listdir(os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')):
-        path = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels', file)
-        if os.path.isfile(path):
-            os.remove(path)
     bird_dict = {
         0: "American Crow",
         1: "American Goldfinch",
@@ -224,9 +223,17 @@ def get_prediction(file_path, model_path):
     final_confidence = np.max([p['probabilities'][p['predicted_class']] for p in predictions if
                                p['predicted_class'] == final_prediction]) * 100
     predicted_bird = bird_dict[final_prediction]
-    if final_confidence < 45.0:
+    if final_confidence < 60.0:
         predicted_bird = 'Unknown'
         final_confidence = 100 - final_confidence
     print(f"Final prediction for the audio file: {predicted_bird} with confidence {final_confidence:.2f}%")
-    return predicted_bird, '%.2f'%final_confidence, num_segments
+
+    zipped_image_path = file_handler.compress_spectrograms(os.path.splitext(os.path.basename(file_path))[0])
+    for file in os.listdir(os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')):
+        pattern = re.compile(rf"^{os.path.splitext(os.path.basename(file_path))[0]}_\d+")
+        if pattern.match(file):
+            path = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels', file)
+            os.remove(path)
+
+    return predicted_bird, '%.2f'%final_confidence, num_segments, zipped_image_path
 

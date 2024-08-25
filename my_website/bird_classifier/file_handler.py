@@ -32,11 +32,13 @@ def compress_spectrograms(encoded_name):
     output_zip_path = os.path.join(settings.MEDIA_ROOT, 'spectrograms',f'{encoded_name}.zip')
 
     input_dir = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')
+    pattern = re.compile(rf"^{encoded_name}_\d+")
     with zipfile.ZipFile(output_zip_path, 'w') as zip_file:
         for root, dirs, files in os.walk(input_dir):
             for file in files:
-                full_path = os.path.join(root, file)
-                zip_file.write(full_path, os.path.relpath(full_path, input_dir))
+                if pattern.match(file):
+                    full_path = os.path.join(root, file)
+                    zip_file.write(full_path, os.path.relpath(full_path, input_dir))
 
     print(f"All files compressed to {output_zip_path}")
     return output_zip_path
@@ -104,6 +106,8 @@ def get_list_spectrograms(file_path):
             os.remove(full_path)
     return image_list
 
+def macaulay_list_spectrograms():
+    pass
 def image_to_64(image):
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
@@ -114,10 +118,10 @@ def get_audio_data(file_path):
     duration = librosa.get_duration(y=signal, sr=sr)
     return '%.2f'%duration
 
-def get_severity(confidence):
-    if float(confidence) > 80:
+def get_severity(number):
+    if float(number) > 80:
         severity = 'secondary'
-    elif 80 > float(confidence) > 60:
+    elif 80 > float(number) > 60:
         severity = 'warning'
     else:
         severity = 'error'
