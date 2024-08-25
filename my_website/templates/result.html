@@ -15,16 +15,179 @@
     />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>File Information</h1>
-<h2>Head over to <a href="https://macaulaylibrary.org" target="_blank">Macaulay Library</a> and
-                            find an audio entry and input its ML number below</h2>
-    <p><strong>File Location:</strong> {{ file_location }}</p>
-    <p><strong>File Name:</strong> {{ file_name }}</p>
-    <p><strong>Hash:</strong> {{ hash }}</p>
-    <p><strong>Bird guess:</strong> {{ bird }}</p>
-    <p><strong>Confidence:</strong> {{ confidence }}</p>
-    <p><strong>File Length:</strong> {{ file_length }} seconds</p>
-    <p><strong>Exists already:</strong> {{ exists }}</p>
+<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-600 via-indigo-800 to-green-500 text-gray-200">
+
+<!-- Navbar -->
+<div class="navbar bg-base-100 min-h-20">
+    <div class="navbar-start">
+        <button id="menu-button" class="btn btn-ghost btn-circle">
+            <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h7"/>
+            </svg>
+        </button>
+    </div>
+    <div class="navbar-center">
+        <a class="btn btn-ghost text-xl">Nick Burczyk</a>
+    </div>
+    <div class="navbar-end"></div>
+</div>
+
+<!-- Side Menu -->
+<div id="side-menu"
+     class="fixed top-0 left-0 z-50 h-full w-64 bg-base-100 p-4 shadow-lg transform -translate-x-full transition-transform">
+    <div class="flex justify-between items-center mb-4">
+        <span class="text-xl font-bold">Menu</span>
+        <button id="close-menu" class="btn btn-ghost btn-circle">
+            <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <ul class="menu">
+        <li><a class="link" href="/" id="link-homepage">Homepage</a></li>
+        <li><a class="link" href="https://servermap.minecraft.bz" id="link-map">Server Map</a></li>
+        <li><a class="link" href="/#projects" id="link-projects">Projects</a></li>
+        <li><a class="link" href="#contact" id="link-contact">Contact</a></li>
+        <li><a class="link" href="/blog.html">Blog</a></li>
+    </ul>
+</div>
+<div id="overlay" class="fixed inset-0 z-40 bg-black opacity-50 hidden"></div>
+
+<script>
+    const menuButton = document.getElementById('menu-button');
+    const closeMenu = document.getElementById('close-menu');
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.getElementById('overlay');
+    const links = document.querySelectorAll('#side-menu .link');
+
+    const toggleMenu = () => {
+        sideMenu.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    };
+
+    if (menuButton) {
+        menuButton.addEventListener('click', toggleMenu);
+    }
+    closeMenu.addEventListener('click', toggleMenu);
+    overlay.addEventListener('click', toggleMenu);
+
+    links.forEach(link => {
+        link.addEventListener('click', toggleMenu);
+    });
+
+    function displayFileName() {
+    const fileInput = document.getElementById('file-upload');
+    const fileNameDisplay = document.getElementById('file-name-display');
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.textContent = fileInput.files[0].name;
+        } else {
+            fileNameDisplay.textContent = 'No file chosen';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const startRecordingButton = document.getElementById('start-recording');
+    const stopRecordingButton = document.getElementById('stop-recording');
+    const audioPlayback = document.getElementById('audio-playback');
+    const recordedAudioInput = document.getElementById('recorded-audio');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+
+    startRecordingButton.addEventListener('click', async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
+            const recordedUrl = URL.createObjectURL(recordedBlob);
+            audioPlayback.src = recordedUrl;
+            audioPlayback.classList.remove('hidden');
+            recordedAudioInput.value = recordedUrl;
+        };
+
+        mediaRecorder.start();
+        startRecordingButton.disabled = true;
+        stopRecordingButton.disabled = false;
+    });
+
+    stopRecordingButton.addEventListener('click', () => {
+        mediaRecorder.stop();
+        startRecordingButton.disabled = false;
+        stopRecordingButton.disabled = true;
+    });
+});
+
+</script>
+<div class="container mx-auto p-4">
+    <div class="bg-white sm:rounded-3xl mt-8 p-8">
+        <div class="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
+            <div class="relative isolate overflow-hidden bg-gray-900 px-6 py-16 pb-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-20">
+                <h1>File Information</h1>
+                <p><strong>File Location:</strong> {{ file_location }}</p>
+                <p><strong>File Name:</strong> {{ file_name }}</p>
+                <p><strong>Hash:</strong> {{ hash }}</p>
+                <p><strong>Bird guess:</strong> {{ bird }}</p>
+                <img src="{{ bird_image }}">
+                <p><strong>Confidence:</strong> {{ confidence }}</p>
+                <p><strong>File Length:</strong> {{ file_length }} seconds</p>
+                <p><strong>Spectrogram Path:</strong> {{ spectrogram_path }}</p>
+                <p><strong>Exists already:</strong> {{ exists }}</p>
+                <div class="stats shadow">
+                    <div class="stat place-items-center">
+                        <div class="stat-title">Confidence</div>
+                        <div class="stat-value">{{ confidence }}</div>
+                        <div class="stat-desc">From January 1st to February 1st</div>
+                    </div>
+
+                    <div class="stat place-items-center">
+                        <div class="stat-title">Segments Examined</div>
+                        <div class="stat-value text-secondary">{{ num_segments }}</div>
+                        <div class="stat-desc text-secondary">↗︎ 40 (2%)</div>
+                    </div>
+
+                    <div class="stat place-items-center">
+                        <div class="stat-title">New Registers</div>
+                        <div class="stat-value">1,200</div>
+                        <div class="stat-desc">↘︎ 90 (14%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Footer -->
+<footer class="mt-8 text-center text-sm text-gray-400">
+    <hr class="border-t-2 border-gray-400 mb-4">
+    <p>Nicholas Burczyk. All rights reserved.</p>
+    <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
+            href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
+</footer>
 </body>
 </html>

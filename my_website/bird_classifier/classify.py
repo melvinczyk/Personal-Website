@@ -202,7 +202,9 @@ def get_prediction(file_path, model_path):
 
     predictions, mel_spectrogram_paths = classify_audio_file(file_path, model, data_transforms, device)
 
+    num_segments = 0
     for i, (pred, mel_path) in enumerate(zip(predictions, mel_spectrogram_paths)):
+        num_segments += 1
         predicted_class = pred['predicted_class']
         probabilities = pred['probabilities']
         top_probs = pred['top_probs']
@@ -226,5 +228,5 @@ def get_prediction(file_path, model_path):
         predicted_bird = 'Unknown'
         final_confidence = 100 - final_confidence
     print(f"Final prediction for the audio file: {predicted_bird} with confidence {final_confidence:.2f}%")
-    return predicted_bird, final_confidence
+    return predicted_bird, '%.2f'%final_confidence, num_segments
 

@@ -26,6 +26,19 @@ def base64_encode_filename(filename):
     return encoded_name
 
 
+def compress_spectrograms(encoded_name):
+    output_zip_path = os.path.join(settings.MEDIA_ROOT, 'spectrograms',f'{encoded_name}.zip')
+
+    input_dir = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')
+    with zipfile.ZipFile(output_zip_path, 'w') as zipf:
+        for root, dirs, files in os.walk(input_dir):
+            for file in files:
+                full_path = os.path.join(root, file)
+                zipf.write(full_path, os.path.relpath(full_path, input_dir))
+
+    print(f"All files compressed to {output_zip_path}")
+    return output_zip_path
+
 def compress_file(wav_file_path):
     directory, filename = os.path.split(wav_file_path)
     filename_no_ext = os.path.splitext(filename)[0]
@@ -38,8 +51,8 @@ def compress_file(wav_file_path):
 
     with zipfile.ZipFile(zip_file_path, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
         zip_file.write(flac_path, arcname=filename)
-    #os.remove(wav_file_path)
-    #os.remove(flac_path)
+    os.remove(wav_file_path)
+    os.remove(flac_path)
     print(f"Compressed to: {zip_file_path}")
     return zip_file_path
 
@@ -70,7 +83,7 @@ def save_uploaded_file(uploaded_file):
         wav_path = os.path.splitext(saved_file_path)[0] + '.wav'
         audio.export(wav_path, format='wav')
         os.remove(saved_file_path)
-        return wav_path
+        return wav_path, cleaned_name
     print(f"saved_file_path: {saved_file_path}")
     return saved_file_path, cleaned_name
 
@@ -78,7 +91,7 @@ def save_uploaded_file(uploaded_file):
 def get_audio_data(file_path):
     signal, sr = librosa.load(file_path, sr=None)
     duration = librosa.get_duration(y=signal, sr=sr)
-    return signal, sr, duration
+    return duration
 
 
 def download_from_macaulay(asset_num):
@@ -89,6 +102,10 @@ def download_from_macaulay(asset_num):
         with open(output_path, 'wb') as f:
             for chunk in response.iter_content(1024):
                 f.write(chunk)
+        signal, sr = librosa.load(output_path)
+        duration = librosa.get_duration(y=signal, sr=sr)
+        if duration > 90:
+            raise ValidationError(f"Audio segment too long {duration} s. Maximum duration 90 s")
         return output_path
     else:
         raise ValidationError(f"Failed to download {asset_num}: response status code {response.status_code}")
