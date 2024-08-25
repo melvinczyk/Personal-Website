@@ -7,6 +7,8 @@ import librosa
 import requests
 import zipfile
 from pydub import AudioSegment
+from PIL import  Image
+import io
 import re
 import datetime
 from django.core.exceptions import ValidationError
@@ -30,11 +32,11 @@ def compress_spectrograms(encoded_name):
     output_zip_path = os.path.join(settings.MEDIA_ROOT, 'spectrograms',f'{encoded_name}.zip')
 
     input_dir = os.path.join(settings.BASE_DIR, 'bird_classifier', 'temp_mels')
-    with zipfile.ZipFile(output_zip_path, 'w') as zipf:
+    with zipfile.ZipFile(output_zip_path, 'w') as zip_file:
         for root, dirs, files in os.walk(input_dir):
             for file in files:
                 full_path = os.path.join(root, file)
-                zipf.write(full_path, os.path.relpath(full_path, input_dir))
+                zip_file.write(full_path, os.path.relpath(full_path, input_dir))
 
     print(f"All files compressed to {output_zip_path}")
     return output_zip_path
@@ -88,11 +90,38 @@ def save_uploaded_file(uploaded_file):
     return saved_file_path, cleaned_name
 
 
+def get_list_spectrograms(file_path):
+    tmp_path = os.path.join(settings.MEDIA_ROOT, 'spectrograms', 'tmp')
+    image_list = []
+    with zipfile.ZipFile(file_path, 'r') as zip_file:
+        zip_file.extractall(tmp_path)
+    for root, dirs, files in os.walk(tmp_path):
+        for file in files:
+            full_path = os.path.join(root, file)
+            with open(full_path, 'rb') as img_file:
+                image = Image.open(io.BytesIO(img_file.read()))
+                image_list.append(image_to_64(image))
+            os.remove(full_path)
+    return image_list
+
+def image_to_64(image):
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
+
 def get_audio_data(file_path):
     signal, sr = librosa.load(file_path, sr=None)
     duration = librosa.get_duration(y=signal, sr=sr)
-    return duration
+    return '%.2f'%duration
 
+def get_severity(confidence):
+    if float(confidence) > 80:
+        severity = 'secondary'
+    elif 80 > float(confidence) > 60:
+        severity = 'warning'
+    else:
+        severity = 'error'
+    return  severity
 
 def download_from_macaulay(asset_num):
     url = f"https://cdn.download.ams.birds.cornell.edu/api/v1/asset/{asset_num}"

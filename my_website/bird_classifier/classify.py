@@ -162,36 +162,36 @@ def get_prediction(file_path, model_path):
         if os.path.isfile(path):
             os.remove(path)
     bird_dict = {
-        0: "american crow",
-        1: "american goldfinch",
-        2: "american robin",
-        3: "barred owl",
-        4: "blue jay",
-        5: "brown-headed nuthatch",
-        6: "carolina chickadee",
-        7: "carolina wren",
-        8: "cedar waxwing",
-        9: "chipping sparrow",
-        10: "dark-eyed junco",
-        11: "downy woodpecker",
-        12: "eastern bluebird",
-        13: "eastern kingbird",
-        14: "eastern phoebe",
-        15: "eastern towhee",
-        16: 'empty',
-        17: "house finch",
-        18: "mourning dove",
-        19: "myrtle warbler",
-        20: "northern cardinal",
-        21: "northern flicker",
-        22: "northern mockingbird",
-        23: "pine warbler",
-        24: "purple finch",
-        25: "red-bellied woodpecker",
-        26: "red-winged blackbird",
-        27: "song sparrow",
-        28: "tufted titmouse",
-        29: "white-breasted nuthatch",
+        0: "American Crow",
+        1: "American Goldfinch",
+        2: "American Robin",
+        3: "Barred Owl",
+        4: "Blue Jay",
+        5: "Brown-headed Nuthatch",
+        6: "Carolina Chickadee",
+        7: "Carolina Wren",
+        8: "Cedar Waxwing",
+        9: "Chipping Sparrow",
+        10: "Dark-eyed Junco",
+        11: "Downy Woodpecker",
+        12: "Eastern Bluebird",
+        13: "Eastern Kingbird",
+        14: "Eastern Phoebe",
+        15: "Eastern Towhee",
+        16: 'Empty',
+        17: "House Finch",
+        18: "Mourning Dove",
+        19: "Myrtle Warbler",
+        20: "Northern Cardinal",
+        21: "Northern Flicker",
+        22: "Northern Mockingbird",
+        23: "Pine Warbler",
+        24: "Purple Finch",
+        25: "Red-bellied Woodpecker",
+        26: "Red-winged Blackbird",
+        27: "Song Sparrow",
+        28: "Tufted Titmouse",
+        29: "White-breasted Nuthatch",
     }
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -224,7 +224,7 @@ def get_prediction(file_path, model_path):
     final_confidence = np.max([p['probabilities'][p['predicted_class']] for p in predictions if
                                p['predicted_class'] == final_prediction]) * 100
     predicted_bird = bird_dict[final_prediction]
-    if final_confidence < 40.0:
+    if final_confidence < 45.0:
         predicted_bird = 'Unknown'
         final_confidence = 100 - final_confidence
     print(f"Final prediction for the audio file: {predicted_bird} with confidence {final_confidence:.2f}%")

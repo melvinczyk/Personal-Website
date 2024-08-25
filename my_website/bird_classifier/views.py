@@ -12,35 +12,37 @@ import os
 
 def get_image(bird):
     bird_images = {
-        'american crow': 'https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg',
-        'american goldfinch': 'https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg',
-        'american robin': 'https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419',
-        'barred owl': 'https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg',
-        'blue jay': 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg',
-        'brown-headed nuthatch': 'https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg',
-        'carolina chickadee': 'https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false',
-        'carolina wren': 'https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg',
-        'cedar waxwing': 'https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg',
-        'chipping sparrow': 'https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png',
-        'dark-eyed junco': 'https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024',
-        'downy woodpecker': 'https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg',
-        'eastern bluebird': 'https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg',
-        'eastern kingbird': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg',
-        'eastern phoebe': 'https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg',
-        'eastern towhee': 'https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg',
-        'house finch': 'https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg',
-        'mourning dove': 'https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg',
-        'myrtle warbler': 'https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg',
-        'northern cardinal': 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg',
-        'northern flicker': 'https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg',
-        'northern mockingbird': 'https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU',
-        'pine warbler': 'https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg',
-        'purple finch': 'https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg',
-        'red-bellied woodpecker': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg',
-        'red-winged blackbird': 'https://www.galveston.com/red-winged-black-bird-by-rose-pool/',
-        'song sparrow': 'https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA',
-        'tufted titmouse': 'https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg',
-        'white-breasted nuthatch': 'https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg',
+        'American Crow': 'https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg',
+        'American Goldfinch': 'https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg',
+        'American Robin': 'https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419',
+        'Barred Owl': 'https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg',
+        'Blue Jay': 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg',
+        'Brown-headed Nuthatch': 'https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg',
+        'Carolina Chickadee': 'https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false',
+        'Carolina Wren': 'https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg',
+        'Cedar Waxwing': 'https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg',
+        'Chipping Sparrow': 'https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png',
+        'Dark-eyed Junco': 'https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024',
+        'Downy Woodpecker': 'https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg',
+        'Eastern Bluebird': 'https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg',
+        'Eastern Kingbird': 'https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg',
+        'Eastern Phoebe': 'https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg',
+        'Eastern Towhee': 'https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg',
+        'Empty': 'https://static.vecteezy.com/system/resources/previews/003/611/449/non_2x/do-not-make-a-loud-noise-no-speaker-no-sound-icon-free-vector.jpg',
+        'House Finch': 'https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg',
+        'Mourning Dove': 'https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg',
+        'Myrtle Warbler': 'https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg',
+        'Northern Cardinal': 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg',
+        'Northern Flicker': 'https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg',
+        'Northern Mockingbird': 'https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU',
+        'Pine Warbler': 'https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg',
+        'Purple Finch': 'https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg',
+        'Red-bellied Woodpecker': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg',
+        'Red-winged Blackbird': 'https://www.galveston.com/red-winged-black-bird-by-rose-pool/',
+        'Song Sparrow': 'https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA',
+        'Tufted Titmouse': 'https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg',
+        'Unknown': 'https://www.pngitem.com/pimgs/m/527-5273123_bird-question-hd-png-download.png',
+        'White-breasted Nuthatch': 'https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg',
     }
     return bird_images.get(bird)
 
@@ -71,16 +73,16 @@ def upload_file(request):
             existing_entry = FileEntry.objects.filter(hash=file_hash).first()
             if existing_entry:
                 image = get_image(existing_entry.bird)
+                image_list = file_handler.get_list_spectrograms(existing_entry.spectrogram_path)
                 return render(request, 'result.html', {
-                    'file_name': existing_entry.file_name,
-                    'file_location': existing_entry.file_location,
-                    'file_length': existing_entry.audio_length,
+                    'duration': existing_entry.duration,
                     'exists': 'Yes',
+                    'num_segments': existing_entry.num_segments,
                     'bird_image': image,
                     'bird': existing_entry.bird,
                     'confidence': existing_entry.confidence,
-                    'hash': existing_entry.hash,
-                    'spectrogram_path': existing_entry.spectrogram_path,
+                    'severity': file_handler.get_severity(existing_entry.confidence),
+                    'image_list': image_list,
                 })
             else:
                 saved_file, cleaned_name = file_handler.save_uploaded_file(uploaded_file)
@@ -95,6 +97,8 @@ def upload_file(request):
                 filename = os.path.basename(saved_file)
                 spectrogram_path = file_handler.compress_spectrograms(os.path.splitext(filename)[0])
 
+                image_list = file_handler.get_list_spectrograms(spectrogram_path)
+
                 db_entry = FileEntry(
                     file_location=zipped_path,
                     file_name=cleaned_name,
@@ -102,23 +106,21 @@ def upload_file(request):
                     hash=file_hash,
                     bird=bird,
                     confidence=confidence,
-                    audio_length=duration,
+                    duration=duration,
                     num_segments=num_segments,
                     spectrogram_path=spectrogram_path,
                     upload_type=upload_type
                 )
                 db_entry.save()
                 return render(request, 'result.html', {
-                    'file_name': db_entry.file_name,
-                    'file_location': db_entry.file_location,
-                    'file_length': db_entry.audio_length,
+                    'duration': db_entry.duration,
                     'exists': 'No',
                     'bird': db_entry.bird,
                     'bird_image': image,
                     'confidence': db_entry.confidence,
-                    'hash': db_entry.hash,
-                    'spectrogram_path': db_entry.spectrogram_path,
                     'num_segments': db_entry.num_segments,
+                    'severity': file_handler.get_severity(confidence),
+                    'image_list': image_list,
                 })
 
         elif download_path is not None:
@@ -133,7 +135,7 @@ def upload_file(request):
                 hash=None,
                 bird=bird,
                 confidence=confidence,
-                audio_length=duration,
+                duration=duration,
                 num_segments=num_segments,
                 spectrogram_path=None,
                 upload_type='macaulay_library'
@@ -144,7 +146,9 @@ def upload_file(request):
                 'bird': db_entry.bird,
                 'confidence': db_entry.confidence,
                 'num_segments': db_entry.num_segments,
-                'bird_image': image
+                'bird_image': image,
+                'severity': file_handler.get_severity(db_entry.confidence),
+                'duration': db_entry.duration,
             })
 
         else:
