@@ -13,6 +13,9 @@ class FileEntry(models.Model):
     duration = models.FloatField()
     num_segments = models.IntegerField()
     spectrogram_path = models.FileField(upload_to='media/spectrograms', null=True)
+    correct = models.BooleanField(null=True)
+    user_bird = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return f"{self.file_name} - {self.hash} {self.confidence:.2f}"
+

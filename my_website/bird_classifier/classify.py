@@ -200,6 +200,8 @@ def get_prediction(file_path, model_path):
     reduce_noise(file_path)
 
     predictions, mel_spectrogram_paths = classify_audio_file(file_path, model, data_transforms, device)
+    for path in mel_spectrogram_paths:
+        print(path)
 
     num_segments = 0
     for i, (pred, mel_path) in enumerate(zip(predictions, mel_spectrogram_paths)):

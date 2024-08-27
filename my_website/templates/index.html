@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="forest">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Personal website of Nicholas Burczyk">
-    <title>Nicholas Burczyk - Personal Website</title>
+    <meta name="home" content="Homepage">
+    <title>Upload File</title>
     {% load static %}
-    <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon-16x16.png' %}">
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
+            rel="stylesheet"
+            type="text/css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-600 via-indigo-800 to-green-500 text-gray-200">
@@ -44,27 +48,54 @@
     <div class="flex justify-between items-center mb-4">
         <span class="text-xl font-bold">Menu</span>
         <button id="close-menu" class="btn btn-ghost btn-circle">
-            <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"/>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
     <ul class="menu">
-        <li><a class="link" target="_blank" id="link-homepage">Homepage</a></li>
-        <li><a class="link" href="https://servermap.minecraft.bz" id="link-map">Server Map</a></li>
-        <li><a class="link" target="_blank" href="#projects" id="link-projects">Projects</a></li>
-        <li><a class="link" target="_blank" href="#contact" id="link-contact">Contact</a></li>
-        <li><a class="link" target="_blank" href="/blog.html">Blog</a>
         <li>
+            <a class="link flex items-center" href="/" id="link-homepage">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+                </svg>
+                Homepage
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center" href="/#projects" id="link-projects">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"/>
+                </svg>
+                Projects
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center" href="#contact" id="link-contact">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                </svg>
+                Contact
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center" href="https://servermap.minecraft.bz" id="link-map">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
+                </svg>
+                Server Map
+            </a>
+        </li>
     </ul>
 </div>
 
@@ -137,20 +168,9 @@
                     <div class="mx-auto max-w-md mt-8 text-center lg:text-left pb-8">
                         <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                             <div class="bg-base-100 p-6 rounded-lg shadow-lg">
-                                <h1 class="text-4xl mb-2 font-bold">Do you like music?</h1>
-                                <p class="text-lg mb-4">If so, check out my blog!</p>
-                                <div class="card-actions justify-center">
-                                    <a href="/blog.html" class="btn btn-primary">Check out my blog!</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mx-auto max-w-md mt-8 text-center lg:text-left pb-8">
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                            <div class="bg-base-100 p-6 rounded-lg shadow-lg">
                                 <h1 class="text-4xl mb-2 font-bold">Link to classifier</h1>
                                 <div class="card-actions justify-center">
-                                    <a href="bird_classifier/upload" class="btn btn-primary">Classifier</a>
+                                    <a href="bird_classifier/upload" class="btn btn-secondary">Classifier</a>
                                 </div>
                             </div>
                         </div>
@@ -242,7 +262,7 @@
 
                             <div class="card-actions justify-end">
                                 <a href="https://github.com/melvinczyk/Waste-detection-drone.git"
-                                   class="btn btn-primary">View
+                                   class="btn btn-secondary">View
                                     Project</a>
                             </div>
                         </div>
@@ -255,7 +275,7 @@
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">What the Flock?
-                                <div class="badge badge-primary text-xs">Webapp!</div>
+                                <div class="badge badge-secondary text-xs">Webapp!</div>
                             </h2>
                             <p>Audio machine learning project that will identify common Alabama bird calls. Will be
                                 exported
@@ -266,7 +286,7 @@
                                 development is now in progress
                                 for a user experience on my website!</p>
                             <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-primary">View
+                                <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-secondary">View
                                     Project</a>
                             </div>
                         </div>
@@ -289,7 +309,7 @@
                                 application.<br><br>File types that are supported are: mp3, wav, flac, ogg, m4a, and aac
                                 with a lot more features planned for the future</p>
                             <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/VisAudio" class="btn btn-primary">View
+                                <a href="https://github.com/melvinczyk/VisAudio" class="btn btn-secondary">View
                                     Project</a>
                             </div>
                         </div>
@@ -312,7 +332,7 @@
                                 allowed for
                                 rapid and responsive frontend development.</p>
                             <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Personal-Website.git" class="btn btn-primary">View
+                                <a href="https://github.com/melvinczyk/Personal-Website.git" class="btn btn-secondary">View
                                     Project</a>
                             </div>
                         </div>
@@ -325,7 +345,7 @@
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">Auto Viper
-                                <div class="badge badge-primary text-xs">Project Lead!</div>
+                                <div class="badge badge-secondary text-xs">Project Lead!</div>
                             </h2>
                             <p>I lead the development of an automated testing framework for Viper Vision software at
                                 Viper Imaging LLC. This framework efficiently conducts comprehensive tests,
@@ -343,7 +363,7 @@
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">Viper Vision
-                                <div class="badge badge-primary">Contribution!</div>
+                                <div class="badge badge-secondary">Contribution!</div>
                             </h2>
                             <p>Working with the team at Viper Imaging LLC on developing and updating our software, Viper
                                 Vision. Viper Vision is a thermal camera hub where you can connect cameras and get data
@@ -371,7 +391,7 @@
                                 various features such as custom mobs, event modifiers, biome and loot modifiers, and
                                 structure generations</p>
                             <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-primary">View
+                                <a href="https://github.com/melvinczyk/Datapacks.git" class="btn btn-secondary">View
                                     Project</a>
                             </div>
                         </div>
@@ -410,7 +430,10 @@
             </svg>
             <h2 class="text-3xl font-bold mb-4 mt-10 text-white">My Server Map</h2>
             <p>This is the map of my Minecraft server rendered using the mod <a
-                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays realtime data from the world including player location.<br><br>You can view a larger version of the map <a href="https://servermap.minecraft.bz" class="green-link" target="_blank"><b><strong>here</strong></b></a></p>
+                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays
+                realtime data from the world including player location.<br><br>You can view a larger version of the map
+                <a href="https://servermap.minecraft.bz" class="green-link" target="_blank"><b><strong>here</strong></b></a>
+            </p>
             <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded sm:rounded-3xl">
                 <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
                     <div class="absolute inset-0 mb-8">

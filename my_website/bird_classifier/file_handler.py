@@ -95,6 +95,7 @@ def save_uploaded_file(uploaded_file):
 def get_list_spectrograms(file_path):
     tmp_path = os.path.join(settings.MEDIA_ROOT, 'spectrograms', 'tmp')
     image_list = []
+    name_list = []
     with zipfile.ZipFile(file_path, 'r') as zip_file:
         zip_file.extractall(tmp_path)
     for root, dirs, files in os.walk(tmp_path):
@@ -103,8 +104,12 @@ def get_list_spectrograms(file_path):
             with open(full_path, 'rb') as img_file:
                 image = Image.open(io.BytesIO(img_file.read()))
                 image_list.append(image_to_64(image))
+                filename = os.path.basename(full_path)
+                parts = filename.split('_')
+                section = os.path.splitext(parts[1])[0]
+                name_list.append(f"Section {section}")
             os.remove(full_path)
-    return image_list
+    return image_list, name_list
 
 def macaulay_list_spectrograms():
     pass
@@ -119,9 +124,9 @@ def get_audio_data(file_path):
     return '%.2f'%duration
 
 def get_severity(number):
-    if float(number) > 80:
+    if float(number) >= 80:
         severity = 'secondary'
-    elif 80 > float(number) > 60:
+    elif 80 > float(number) >= 60:
         severity = 'warning'
     else:
         severity = 'error'
