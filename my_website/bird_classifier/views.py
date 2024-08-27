@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.urls import reverse
 from .models import FileEntry
 from .forms import UploadFileForm
@@ -110,7 +111,7 @@ def get_model_stats():
     return {
         'smallest': (smallest_bird, smallest),
         'largest': (second_largest_bird, second_largest),
-        'average': average
+        'average': round(average, 2)
     }
 
 
@@ -120,8 +121,14 @@ def upload_file(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         text_input = request.POST.get('asset_num')
+        honeypot = request.POST.get('honeypot')
+        honeypot_download = request.POST.get('honeypot_download')
+
         download_path = None
         request_error = None
+
+        if honeypot or honeypot_download:
+            return HttpResponse("Bot detected", status=403)
 
         if text_input:
             try:
@@ -232,12 +239,11 @@ def upload_file(request):
                 file_hash = hasher.hexdigest()
 
             image_list, name_list = file_handler.get_list_spectrograms(spectrogram_path)
-
             acc_severity = file_handler.get_severity(accuracy)
-
             existing_entry = FileEntry.objects.filter(hash=file_hash).first()
-            if existing_entry:
 
+            if existing_entry:
+                os.remove(download_path)
                 request.session['file_hash'] = existing_entry.hash
                 request.session['result'] = {
                     'file_name': os.path.basename(download_path),
@@ -272,7 +278,6 @@ def upload_file(request):
                 correct=None,
             )
             db_entry.save()
-            image_list, name_list = file_handler.get_list_spectrograms(spectrogram_path)
 
             acc_severity = file_handler.get_severity(accuracy)
             if bird == 'Unknown':
@@ -321,10 +326,13 @@ def upload_file(request):
 def result(request):
     if request.method == 'POST':
         try:
+            honeypot = request.POST.get('honeypot')
             hash_value = request.GET.get('hash')
             accuracy = request.POST.get('accuracy')
             species = request.POST.get('species', '')
-            success_message = None
+
+            if honeypot:
+                return HttpResponse("Bot detected", status=403)
 
             print(f'hash_value: {hash_value}')
             print(f'accuracy: {accuracy}')
