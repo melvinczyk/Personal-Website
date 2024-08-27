@@ -16,7 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-sky-600 via-indigo-800 to-green-500 text-gray-200">
+<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-black to-indigo-700 text-gray-200">
 
 <!-- Navbar -->
 <div class="navbar bg-base-100 min-h-20">
@@ -56,7 +56,7 @@
     </div>
     <ul class="menu">
         <li>
-            <a class="link flex items-center" href="/" id="link-homepage">
+            <a class="link flex items-center no-underline" href="/" id="link-homepage">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -66,7 +66,18 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="/#projects" id="link-projects">
+            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+                </svg>
+                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
+                    Bird Classifier</p>
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -76,7 +87,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="#contact" id="link-contact">
+            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -86,7 +97,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="https://servermap.minecraft.bz" id="link-map">
+            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
@@ -129,94 +140,122 @@
 <!-- Main Content -->
 <div class="container mx-auto p-4">
     <!-- Introduction Section -->
-    <div class="bg-white rounded sm:rounded-3xl mt-8">
-        <div class="mx-auto max-w-7xl py-6 sm:py-16 lg:py-20 sm:px-8">
-            <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+    <div class="bg-gradient-to-br from-gray-400 via-gray-200 to-gray-100 rounded-xl sm:rounded-3xl mt-8">
+        <div class="mx-auto max-w-7xl py-8 sm:py-16 lg:py-20 sm:px-8">
+            <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-16 shadow-2xl rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+                <!-- Background Gradient Circles -->
                 <svg viewBox="0 0 1024 1024"
                      class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                      aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                            fill-opacity="0.7"/>
+                    <circle cx="512" cy="512" r="512" fill="url(#gradient-left)" fill-opacity="0.5"/>
                     <defs>
-                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                            <stop stop-color="#0284C7"/>
-                            <stop offset="1" stop-color="#16A34A"/>
+                        <radialGradient id="gradient-left">
+                            <stop stop-color="rgb(55 48 163)"/>
+                            <stop offset="1" stop-color="rgb(99 102 241)"/>
                         </radialGradient>
                     </defs>
                 </svg>
                 <svg viewBox="0 0 1024 1024"
-                     class="absolute left-0.5 top-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                     class="absolute left-0 top-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                     aria-hidden="true">
+                    <circle cx="512" cy="512" r="512" fill="url(#gradient-right)" fill-opacity="0.5"/>
+                    <defs>
+                        <radialGradient id="gradient-right">
+                            <stop stop-color="rgb(55 48 163)"/>
+                            <stop offset="1" stop-color="rgb(99 102 241)"/>
+                        </radialGradient>
+                    </defs>
+                </svg>
+                <svg viewBox="0 0 1024 1024"
+                     class="absolute right-0 top-12  mb-60 -z-10 h-[64rem] w-[64rem] translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
                      aria-hidden="true">
                     <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
                             fill-opacity="0.7"/>
                     <defs>
                         <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                            <stop stop-color="#0284C7"/>
-                            <stop offset="1" stop-color="#16A34A"/>
+                            <stop stop-color="rgb(55 48 163)"/>
+                            <stop offset="1" stop-color="rgb(99 102 241)"/>
                         </radialGradient>
                     </defs>
                 </svg>
+
                 <!-- Left Column -->
                 <div class="lg:w-1/2">
                     <!-- Bio Section -->
-                    <div class="mx-auto max-w-md text-center py-6 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
-                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nicholas Burczyk</h1>
-                        <p class="text-lg">Hey, my name is Nicholas. I'm a Senior Honors Computer Science
-                            student at UAB as well as a music fanatic.</p>
+                    <div class="mx-auto max-w-md text-center py-8 px-6 mt-8 bg-base-100 rounded-lg shadow-lg">
+                        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Nicholas
+                            Burczyk</h1>
+                        <p class="text-lg text-white mt-4">Hey, my name is Nicholas. I'm a Senior Honors Computer
+                            Science
+                            student at UAB.</p>
                     </div>
+
                     <!-- Button Section -->
-                    <div class="mx-auto max-w-md mt-8 text-center lg:text-left pb-8">
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                            <div class="bg-base-100 p-6 rounded-lg shadow-lg">
-                                <h1 class="text-4xl mb-2 font-bold">Link to classifier</h1>
-                                <div class="card-actions justify-center">
-                                    <a href="bird_classifier/upload" class="btn btn-secondary">Classifier</a>
-                                </div>
+                    <div class="mx-auto max-w-md mt-8 mb-8 text-center lg:text-left">
+                        <div class="bg-base-100 p-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                            <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
+                                Deep Learning Bird Classifier</h1>
+                            <p class="text-lg text-white mt-4 mb-4">Try out my latest project!</p>
+                            <div class="flex justify-center lg:justify-start">
+                                <a href="{% url 'upload_file' %}" class="btn btn-secondary">Classifier</a>
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <!-- Right Column -->
                 <div class="relative lg:w-1/2 pb-8 flex justify-center items-center">
-                    <img class="w-40 h-40 sm:w-40 sm:h-40 md:w-40 md:h-40 lg:w-40 lg:h-40 object-contain rounded-full"
-                         src="{% static 'images/nick.jpg' %}" alt="Nick Burczyk">
+                    <img class="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 object-cover rounded-full border-4 border-white shadow-md"
+                         src="{% static 'images/nick.jpg' %}" alt="Nicholas Burczyk">
                 </div>
             </div>
         </div>
     </div>
 
+
     <!-- Overview -->
-    <div class="mx-auto max-w-7xl py-8 sm:py-10 sm:px-8 rounded sm:rounded-3xl">
-        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl rounded sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
+    <div class="mx-auto max-w-7xl py-8 sm:py-10 sm:px-8 rounded-xl sm:rounded-3xl">
+        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-16 shadow-2xl rounded sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
                 <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
+                        fill-opacity="0.8"/>
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
-            <h2 class="text-3xl font-bold mb-4 text-white mt-10">Overview</h2>
-            <p class="text-lg mb-8 mt-8 mx-auto">Welcome to my personal website! Here, I showcase my projects and share
-                insights into my academic journey. I am an Honors Computer Science student at The University of Alabama
-                at Birmingham, expecting to graduate in Spring 2025.<br><br> Currently, I am a software development
-                intern at Viper Imaging LLC, where I contribute by implementing new features in our software and
-                developing innovative solutions to reduce production times.<br><br>This website was built using Django
-                for the backend and TailwindCSS with DaisyUI for the frontend. While I am new to web development, I am
-                passionate about learning new skills to advance my career in technology. I am fascinated with data
-                science and artificial intelligence, I am currently leveraging my machine learning skills, acquired
-                through Udemy courses and practical usage, in my work.</p>
+            <div class="lg:py-16">
+                <h2 class="text-4xl font-extrabold text-white mt-10 lg:mt-0 lg:text-5xl">
+                    Overview
+                </h2>
+                <p class="text-lg leading-relaxed text-gray-300 mt-6">
+                    Welcome to my website! Here, I showcase my projects and share insights into my academic
+                    journey. I am an Honors Computer Science student at The University of Alabama at Birmingham,
+                    expecting to graduate in Spring 2025.
+                </p>
+                <p class="text-lg leading-relaxed text-gray-300 mt-4">
+                    I’m deeply passionate about acquiring new skills and expanding my knowledge across a wide range of
+                    subjects. Recently, I've developed a strong interest in data science and applied my learned skills
+                    to create
+                    a custom spectrogram image classifier model! Using technology to make other people's lives better is
+                    my main goal as I am always happy to apply my skills to help out other people. </p>
+                <p class="text-lg leading-relaxed text-gray-300 mt-4 mb-6">
+                    Currently, I am a software development intern at Viper Imaging LLC, where I contribute by
+                    implementing new features in our software and developing innovative automated testing solutions to
+                    reduce production times.
+                </p>
+            </div>
         </div>
     </div>
 
 
     <!-- Projects Section -->
-    <section id="projects" class="pt-8">
-        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
+    <section id="projects" class="pt-8 rounded-xl sm:rounded-3xl">
+        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
             <svg viewBox="0 0 1024 1024"
                  class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
                  aria-hidden="true">
@@ -224,8 +263,8 @@
                         fill-opacity="0.7"/>
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
@@ -236,13 +275,26 @@
                         fill-opacity="0.7"/>
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
+                    </radialGradient>
+                </defs>
+            </svg>
+            <svg viewBox="0 0 1024 1024"
+                 class="absolute left-1/2 bottom-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 aria-hidden="true">
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
+                <defs>
+                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
             <div class="my-10">
-                <h1 class="text-4xl font-bold mb-8 text-white">Projects</h1>
+                <div class="mx-auto max-w-md text-center py-8 px-6 mt-8 mb-6 bg-base-100 rounded-lg shadow-lg">
+                    <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Projects</h1>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
@@ -274,20 +326,27 @@
                                  alt="Alabama state bird"/>
                         </figure>
                         <div class="card-body">
-                            <h2 class="card-title">What the Flock?
+                            <h2 class="card-title">Backyard Bird Classifier
                                 <div class="badge badge-secondary text-xs">Webapp!</div>
                             </h2>
-                            <p>Audio machine learning project that will identify common Alabama bird calls. Will be
-                                exported
-                                as a web app on my website when completed<br><br>This project uses Convolutional Neural
-                                Networks to identify patterns in spectrogram's and comparing them to known bird chirps
+                            <p>Audio machine learning project that identifies common Alabama bird calls. Recently
+                                implemented into a webapp where you can try it out for yourself!<br><br>This project
+                                uses Convolutional Neural
+                                Networks to identify patterns in spectrograms and compares them to known bird chirps
                                 in
-                                Alabama.<br><br>Currently, the model has been trained and tested thoroughly! Webapp
-                                development is now in progress
-                                for a user experience on my website!</p>
+                                Alabama.</p>
+                            <div class="card-actions justify-end">
+                                <a href="{% url 'upload_file' %}" class="btn btn-info">View
+                                    Webapp</a>
+                            </div>
                             <div class="card-actions justify-end">
                                 <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-secondary">View
-                                    Project</a>
+                                    Model src</a>
+                            </div>
+                            <div class="card-actions justify-end">
+                                <a href="https://github.com/melvinczyk/Personal-Website/tree/main/my_website/bird_classifier"
+                                   class="btn btn-secondary">View
+                                    Webapp src</a>
                             </div>
                         </div>
                     </div>
@@ -307,7 +366,7 @@
                                 manipulation, it also includes a YouTube downloader where you can input any valid
                                 link to get that video's audio. It could do the video but... this is an audio themed
                                 application.<br><br>File types that are supported are: mp3, wav, flac, ogg, m4a, and aac
-                                with a lot more features planned for the future</p>
+                                with a more features planned for the future</p>
                             <div class="card-actions justify-end">
                                 <a href="https://github.com/melvinczyk/VisAudio" class="btn btn-secondary">View
                                     Project</a>
@@ -403,38 +462,49 @@
 
     <!-- MINECRAFT MAP!!! -->
     <section id="map" class="pt-10">
-        <div class="relative isolate overflow-hidden bg-gray-900 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
+        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-0 shadow-2xl rounded-xl sm:rounded-3xl">
+            <!-- Background SVG Gradients -->
             <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 class="absolute left-1/2 bottom-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
                  aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
+                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#00ff37"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
             <svg viewBox="0 0 1024 1024"
-                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
+                 class="absolute left-0 top-0 mt-60 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
                  aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
+                <circle cx="512" cy="512" r="512" fill="url(#gradient-two)" fill-opacity="0.7"/>
                 <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                    <radialGradient id="gradient-two">
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
-            <h2 class="text-3xl font-bold mb-4 mt-10 text-white">My Server Map</h2>
-            <p>This is the map of my Minecraft server rendered using the mod <a
-                    href="https://bluemap.bluecolored.de"><b>Bluemap</b></a>. It is fully interactive and displays
-                realtime data from the world including player location.<br><br>You can view a larger version of the map
-                <a href="https://servermap.minecraft.bz" class="green-link" target="_blank"><b><strong>here</strong></b></a>
+
+            <!-- Section Heading -->
+            <div class="bg-base-100 py-6 px-8 mt-8 rounded-xl shadow-md mx-auto max-w-3xl text-center">
+                <h2 class="text-3xl font-extrabold text-white">My Server Map</h2>
+            </div>
+            <!-- Section Description -->
+            <p class="text-lg text-white mb-8 mt-6 text-center">
+                Explore the interactive map of my Minecraft server, rendered using the <a
+                    href="https://bluemap.bluecolored.de"
+                    class="font-semibold text-green-300 hover:text-green-400 transition-colors">Bluemap</a> mod. This
+                map provides real-time data, including player locations and other world details.
+                <br><br>
+                View a larger version of the map <a href="https://servermap.minecraft.bz"
+                                                    class="text-green-300 font-semibold hover:text-green-400 transition-colors"
+                                                    target="_blank">here</a>.
             </p>
-            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded sm:rounded-3xl">
+
+            <!-- Map Display -->
+            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded-xl sm:rounded-3xl">
                 <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
                     <div class="absolute inset-0 mb-8">
                         <iframe src="https://servermap.minecraft.bz" class="w-full h-full" frameborder="0"></iframe>
@@ -444,11 +514,12 @@
         </div>
     </section>
 
+
     <section id="contact">
         <hr class="border-t-2 border-gray-400 mb-4 mt-4">
         <!-- Contact Section -->
         <!-- div class="mb-8 p-6 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white rounded-lg shadow-lg" -->
-        <div class="relative isolate overflow-hidden bg-gray-900 p-6 shadow-lg rounded-lg text-white">
+        <div class="relative isolate overflow-hidden bg-base-100 p-6 shadow-lg rounded-lg text-white">
             <svg viewBox="0 0 1024 1024"
                  class="absolute right-0 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
                  aria-hidden="true">
@@ -456,30 +527,30 @@
                         fill-opacity="0.7"/>
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute right-0 top-12  mb-60 -z-10 h-[64rem] w-[64rem] translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#0284C7"/>
-                        <stop offset="1" stop-color="#16A34A"/>
+                        <stop stop-color="rgb(55 48 163)"/>
+                        <stop offset="1" stop-color="rgb(99 102 241)"/>
                     </radialGradient>
                 </defs>
             </svg>
             <h2 class="text-3xl font-bold mb-4">Contact Me</h2>
             <p class="mb-4">Feel free to reach out to me via the following channels:</p>
             <div class="flex items-center">
-                <a href="https://www.linkedin.com/in/nicholas-burczyk-360259294/"
-                   class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
-                    <i class="fab fa-linkedin fa-2x mr-2"></i>
-                    <span class="text-xl">My LinkedIn</span>
-                </a>
+                <ul>
+                    <li>
+                        <a href="https://www.linkedin.com/in/nicholas-burczyk-360259294/"
+                           class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
+                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
+                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path fill-rule="evenodd"
+                                      d="M12.51 8.796v1.697a3.738 3.738 0 0 1 3.288-1.684c3.455 0 4.202 2.16 4.202 4.97V19.5h-3.2v-5.072c0-1.21-.244-2.766-2.128-2.766-1.827 0-2.139 1.317-2.139 2.676V19.5h-3.19V8.796h3.168ZM7.2 6.106a1.61 1.61 0 0 1-.988 1.483 1.595 1.595 0 0 1-1.743-.348A1.607 1.607 0 0 1 5.6 4.5a1.601 1.601 0 0 1 1.6 1.606Z"
+                                      clip-rule="evenodd"/>
+                                <path d="M7.2 8.809H4V19.5h3.2V8.809Z"/>
+                            </svg>
+                            LinkedIn
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </section>

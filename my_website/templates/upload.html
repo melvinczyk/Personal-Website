@@ -55,7 +55,7 @@
 
     </style>
 </head>
-<body class="bg-[conic-gradient(at_left,_var(--tw-gradient-stops))] from-blue-500 via-indigo-600 to-purple-700 text-gray-200">
+<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-700 via-violet-900 to-indigo-700 text-gray-200">
 
 <!-- Navbar -->
 <div class="navbar bg-base-100 min-h-20">
@@ -96,7 +96,7 @@
     </div>
     <ul class="menu">
         <li>
-            <a class="link flex items-center" href="/" id="link-homepage">
+            <a class="link flex items-center no-underline" href="/" id="link-homepage">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -106,7 +106,18 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="/#projects" id="link-projects">
+            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+                </svg>
+                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
+                    Bird Classifier</p>
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -116,7 +127,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="#contact" id="link-contact">
+            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -126,7 +137,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="https://servermap.minecraft.bz" id="link-map">
+            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
@@ -275,7 +286,13 @@
                         {% csrf_token %}
                         <div class="mx-auto max-w-md text-center py-6 px-6 bg-base-100 rounded-lg shadow-lg">
                             <div class="flex items-center justify-center">
-                                <button type="button" id="upload-audio" class="btn btn-secondary">Choose Audio File
+                                <button type="button" id="upload-audio" class="btn btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/>
+                                    </svg>
+                                    Upload Audio File
                                 </button>
                                 <input type="file" name="file" id="file-input" accept="audio/*" class="hidden">
                             </div>
@@ -296,10 +313,23 @@
                         </div>
                         <div class="mx-auto max-w-md text-center py-6 px-6 bg-base-100 rounded-lg shadow-lg">
                             <div class="flex items-center justify-center space-x-4">
-                                <button type="button" id="start-recording" class="btn btn-secondary">Start Recording
+                                <button type="button" id="start-recording" class="btn btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+                                    </svg>
+                                    Start
                                 </button>
-                                <button type="button" id="stop-recording" class="btn btn-error" disabled>Stop
-                                    Recording
+                                <button type="button" id="stop-recording" class="btn btn-error" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"/>
+                                    </svg>
+                                    Stop
                                 </button>
                             </div>
                             <audio id="audio-playback" controls class="mt-4 hidden mx-auto"></audio>
@@ -307,7 +337,7 @@
                         </div>
 
                         <div class="flex items-center justify-center space-x-4">
-                            <button type="submit" id="upload-btn" class="btn btn-secondary mt-4 mr-2">Upload</button>
+                            <button type="submit" id="upload-btn" class="btn btn-secondary mt-4 mr-2">Submit</button>
                             <button id="loading-btn" class="btn mt-4 hidden">
                                 <span class="loading loading-spinner"></span>
                                 loading...
@@ -328,17 +358,17 @@
                     {% endfor %}
                     {% endif %}
                     {% if success_message %}
-                    <div role="alert" class="alert alert-info mt-8">
+                    <div role="alert" class="alert alert-success mt-8">
                         <svg
                                 xmlns="http://www.w3.org/2000/svg"
+                                class="h-6 w-6 shrink-0 stroke-current"
                                 fill="none"
-                                viewBox="0 0 24 24"
-                                class="h-6 w-6 shrink-0 stroke-current">
+                                viewBox="0 0 24 24">
                             <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span>Success: {{ success_message }}</span>
                     </div>
@@ -667,28 +697,43 @@
 
         <script>
             function togglePlay(audioId, buttonId) {
-                    var audio = document.getElementById(audioId);
-                    var button = document.getElementById(buttonId);
+                var audio = document.getElementById(audioId);
+                var button = document.getElementById(buttonId);
 
-                    if (audio.paused) {
-                        audio.play();
-                        button.textContent = "Stop Chirp";
-                        button.classList.remove("btn-secondary");
-                        button.classList.add("btn-error");
+                var playIcon = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                              stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                         d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                    </svg>
+                `;
 
-                        audio.onended = function() {
-                            button.textContent = "Play Chirp";
-                            button.classList.remove("btn-error");
-                            button.classList.add("btn-secondary");
-                        };
-                    } else {
-                        audio.pause();
-                        audio.currentTime = 0;
-                        button.textContent = "Play Chirp";
+                var stopIcon = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 inline-block mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M6 6h12v12H6z"/>
+                    </svg>
+                `;
+
+                if (audio.paused) {
+                    audio.play();
+                    button.innerHTML = stopIcon + "Stop Chirp";
+                    button.classList.remove("btn-secondary");
+                    button.classList.add("btn-error");
+
+                    audio.onended = function() {
+                        button.innerHTML = playIcon + "Play Chirp";
                         button.classList.remove("btn-error");
                         button.classList.add("btn-secondary");
-                    }
+                    };
+                } else {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    button.innerHTML = playIcon + "Play Chirp";
+                    button.classList.remove("btn-error");
+                    button.classList.add("btn-secondary");
                 }
+            }
         </script>
 
         <!-- Macaulay download -->
@@ -728,7 +773,15 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-center space-x-4 mb-8 mt-4">
-                            <button type="submit" id="fetch-btn" class="btn btn-lg btn-secondary">Fetch</button>
+                            <button type="submit" id="fetch-btn" class="btn btn-lg btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                                </svg>
+
+                                Fetch
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -773,7 +826,13 @@
                             </td>
                             <th>
                                 <button id="playButton_crow" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_crow', 'playButton_crow')">Play Chirp
+                                        onclick="togglePlay('audio_crow', 'playButton_crow')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_crow" src="{% static 'audio/american_crow.mp3' %}"></audio>
                             </th>
@@ -799,7 +858,13 @@
                             </td>
                             <th>
                                 <button id="playButton_goldfinch" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_goldfinch', 'playButton_goldfinch')">Play Chirp
+                                        onclick="togglePlay('audio_goldfinch', 'playButton_goldfinch')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio>
                             </th>
@@ -825,7 +890,13 @@
                             </td>
                             <th>
                                 <button id="playButton_robin" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_robin', 'playButton_robin')">Play Chirp
+                                        onclick="togglePlay('audio_robin', 'playButton_robin')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_robin" src="{% static 'audio/american_robin.mp3' %}"></audio>
                             </th>
@@ -851,7 +922,13 @@
                             </td>
                             <th>
                                 <button id="playButton_owl" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_owl', 'playButton_owl')">Play Chirp
+                                        onclick="togglePlay('audio_owl', 'playButton_owl')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio>
                             </th>
@@ -875,7 +952,13 @@
                             </td>
                             <th>
                                 <button id="playButton_jay" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_jay', 'playButton_jay')">Play Chirp
+                                        onclick="togglePlay('audio_jay', 'playButton_jay')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio>
                             </th>
@@ -901,7 +984,13 @@
                             </td>
                             <th>
                                 <button id="playButton_nuthatch" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_nuthatch', 'playButton_nuthatch')">Play Chirp
+                                        onclick="togglePlay('audio_nuthatch', 'playButton_nuthatch')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio>
                             </th>
@@ -927,7 +1016,13 @@
                             </td>
                             <th>
                                 <button id="playButton_chickadee" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_chickadee', 'playButton_chickadee')">Play Chirp
+                                        onclick="togglePlay('audio_chickadee', 'playButton_chickadee')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio>
                             </th>
@@ -953,7 +1048,13 @@
                             </td>
                             <th>
                                 <button id="playButton_wren" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_wren', 'playButton_wren')">Play Chirp
+                                        onclick="togglePlay('audio_wren', 'playButton_wren')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_wren" src="{% static 'audio/wren.mp3' %}"></audio>
                             </th>
@@ -979,7 +1080,13 @@
                             </td>
                             <th>
                                 <button id="playButton_waxwing" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_waxwing', 'playButton_waxwing')">Play Chirp
+                                        onclick="togglePlay('audio_waxwing', 'playButton_waxwing')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio>
                             </th>
@@ -1005,7 +1112,13 @@
                             </td>
                             <th>
                                 <button id="playButton_chipping" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_chipping', 'playButton_chipping')">Play Chirp
+                                        onclick="togglePlay('audio_chipping', 'playButton_chipping')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio>
                             </th>
@@ -1031,7 +1144,13 @@
                             </td>
                             <th>
                                 <button id="playButton_dark" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_dark', 'playButton_dark')">Play Chirp
+                                        onclick="togglePlay('audio_dark', 'playButton_dark')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_dark" src="{% static 'audio/junco.mp3' %}"></audio>
                             </th>
@@ -1057,7 +1176,13 @@
                             </td>
                             <th>
                                 <button id="playButton_downy" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_downy', 'playButton_downy')">Play Chirp
+                                        onclick="togglePlay('audio_downy', 'playButton_downy')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio>
                             </th>
@@ -1082,7 +1207,13 @@
                             </td>
                             <th>
                                 <button id="playButton_bluebird" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_bluebird', 'playButton_bluebird')">Play Chirp
+                                        onclick="togglePlay('audio_bluebird', 'playButton_bluebird')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio>
                             </th>
@@ -1108,7 +1239,13 @@
                             </td>
                             <th>
                                 <button id="playButton_kingbird" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_kingbird', 'playButton_kingbird')">Play Chirp
+                                        onclick="togglePlay('audio_kingbird', 'playButton_kingbird')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio>
                             </th>
@@ -1133,7 +1270,13 @@
                             </td>
                             <th>
                                 <button id="playButton_phoebe" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_phoebe', 'playButton_phoebe')">Play Chirp
+                                        onclick="togglePlay('audio_phoebe', 'playButton_phoebe')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio>
                             </th>
@@ -1158,7 +1301,13 @@
                             </td>
                             <th>
                                 <button id="playButton_towhee" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_towhee', 'playButton_towhee')">Play Chirp
+                                        onclick="togglePlay('audio_towhee', 'playButton_towhee')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_towhee" src="{% static 'audio/towhee.mp3' %}"></audio>
                             </th>
@@ -1183,7 +1332,13 @@
                             </td>
                             <th>
                                 <button id="playButton_house" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_house', 'playButton_house')">Play Chirp
+                                        onclick="togglePlay('audio_house', 'playButton_house')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_house" src="{% static 'audio/house_finch.mp3' %}"></audio>
                             </th>
@@ -1208,7 +1363,13 @@
                             </td>
                             <th>
                                 <button id="playButton_dove" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_dove', 'playButton_dove')">Play Chirp
+                                        onclick="togglePlay('audio_dove', 'playButton_dove')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_dove" src="{% static 'audio/mourning.mp3' %}"></audio>
                             </th>
@@ -1233,7 +1394,13 @@
                             </td>
                             <th>
                                 <button id="playButton_myrtle" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_myrtle', 'playButton_myrtle')">Play Chirp
+                                        onclick="togglePlay('audio_myrtle', 'playButton_myrtle')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio>
                             </th>
@@ -1258,7 +1425,13 @@
                             </td>
                             <th>
                                 <button id="playButton_cardinal" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_cardinal', 'playButton_cardinal')">Play Chirp
+                                        onclick="togglePlay('audio_cardinal', 'playButton_cardinal')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio>
                             </th>
@@ -1283,7 +1456,13 @@
                             </td>
                             <th>
                                 <button id="playButton_flicker" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_flicker', 'playButton_flicker')">Play Chirp
+                                        onclick="togglePlay('audio_flicker', 'playButton_flicker')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_flicker" src="{% static 'audio/flicker.mp3' %}"></audio>
                             </th>
@@ -1308,7 +1487,13 @@
                             </td>
                             <th>
                                 <button id="playButton_mock" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_mock', 'playButton_mock')">Play Chirp
+                                        onclick="togglePlay('audio_mock', 'playButton_mock')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio>
                             </th>
@@ -1333,7 +1518,13 @@
                             </td>
                             <th>
                                 <button id="playButton_pine" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_pine', 'playButton_pine')">Play Chirp
+                                        onclick="togglePlay('audio_pine', 'playButton_pine')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_pine" src="{% static 'audio/pine.mp3' %}"></audio>
                             </th>
@@ -1358,7 +1549,13 @@
                             </td>
                             <th>
                                 <button id="playButton_purple" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_purple', 'playButton_purple')">Play Chirp
+                                        onclick="togglePlay('audio_purple', 'playButton_purple')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio>
                             </th>
@@ -1409,7 +1606,13 @@
                             </td>
                             <th>
                                 <button id="playButton_red_wing" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_red_wing', 'playButton_red_wing')">Play Chirp
+                                        onclick="togglePlay('audio_red_wing', 'playButton_red_wing')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio>
                             </th>
@@ -1434,7 +1637,13 @@
                             </td>
                             <th>
                                 <button id="playButton_song" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_song', 'playButton_song')">Play Chirp
+                                        onclick="togglePlay('audio_song', 'playButton_song')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio>
                             </th>
@@ -1459,7 +1668,13 @@
                             </td>
                             <th>
                                 <button id="playButton_titmouse" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_titmouse', 'playButton_titmouse')">Play Chirp
+                                        onclick="togglePlay('audio_titmouse', 'playButton_titmouse')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio>
                             </th>
@@ -1484,7 +1699,13 @@
                             </td>
                             <th>
                                 <button id="playButton_white" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_white', 'playButton_white')">Play Chirp
+                                        onclick="togglePlay('audio_white', 'playButton_white')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                                    </svg>
+                                    Play Chirp
                                 </button>
                                 <audio id="audio_white" src="{% static 'audio/white.mp3' %}"></audio>
                             </th>

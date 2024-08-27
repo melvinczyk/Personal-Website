@@ -10,7 +10,6 @@ import hashlib
 import datetime
 import os
 from django.shortcuts import render, redirect
-from .models import FileEntry
 
 
 def get_image_accuracy(bird):
@@ -217,6 +216,9 @@ def upload_file(request):
                 return redirect(reverse('result') + f'?hash={file_hash}')
 
         elif download_path is not None:
+
+            # TODO: Optimize this
+
             bird, confidence, num_segments, spectrogram_path = classify.get_prediction(
                 download_path, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth')
             )

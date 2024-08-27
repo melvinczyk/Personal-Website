@@ -23,7 +23,7 @@
 }
     </style>
 </head>
-<body class="bg-[conic-gradient(at_left,_var(--tw-gradient-stops))] from-blue-500 via-indigo-600 to-purple-700 text-gray-200">
+<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-700 via-violet-900 to-indigo-700 text-gray-200">
 
 <!-- Navbar -->
 <div class="navbar bg-base-100 min-h-20">
@@ -63,7 +63,7 @@
     </div>
     <ul class="menu">
         <li>
-            <a class="link flex items-center" href="/" id="link-homepage">
+            <a class="link flex items-center no-underline" href="/" id="link-homepage">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -73,7 +73,18 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="/#projects" id="link-projects">
+            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                     stroke="currentColor" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
+                </svg>
+                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
+                    Bird Classifier</p>
+            </a>
+        </li>
+        <li>
+            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -83,7 +94,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="#contact" id="link-contact">
+            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -93,7 +104,7 @@
             </a>
         </li>
         <li>
-            <a class="link flex items-center" href="https://servermap.minecraft.bz" id="link-map">
+            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="size-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
@@ -214,7 +225,7 @@
 
     <div class="relative isolate overflow-hidden bg-base-100 px-6 py-8 pb-8 mt-4 shadow-2xl rounded sm:rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24 flex flex-col items-center">
         <div class="w-full bg-base-100 py-8 px-6 sm:px-8 mb-4 rounded-lg justify-center items-center">
-            <h1 class="text-3xl font-bold tracking-tight text-center sm:text-4xl bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text">
+            <h1 class="text-3xl font-bold tracking-tight text-center sm:text-4xl">
                 Generated Spectrograms</h1>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 bg-indigo-600 rounded-lg">
