@@ -1,72 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="forest">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="home" content="Album Rankings">
+    <title>Album Rankings - Nick Burczyk</title>
+    {% load static %}
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<div class="navbar bg-base-100">
-  <div class="navbar-start">
-    <div class="dropdown">
-      <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h7" />
-        </svg>
-      </div>
-      <ul
-        tabindex="0"
-        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-        <li><a>Homepage</a></li>
-        <li><a>Portfolio</a></li>
-        <li><a>About</a></li>
-      </ul>
+
+<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-black to-indigo-700 text-gray-200">
+
+<!-- Navbar -->
+<div class="navbar bg-base-100 min-h-20">
+    <div class="navbar-start">
+        <button id="menu-button" class="btn btn-ghost btn-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+            </svg>
+        </button>
     </div>
-  </div>
-  <div class="navbar-center">
-    <a class="btn btn-ghost text-xl">daisyUI</a>
-  </div>
-  <div class="navbar-end">
-    <button class="btn btn-ghost btn-circle">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    </button>
-    <button class="btn btn-ghost btn-circle">
-      <div class="indicator">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        <span class="badge badge-xs badge-primary indicator-item"></span>
-      </div>
-    </button>
-  </div>
+    <div class="navbar-center">
+        <a class="btn btn-ghost text-xl">Nick Burczyk</a>
+    </div>
+    <div class="navbar-end"></div>
 </div>
+
+<!-- Side Menu -->
+<div id="side-menu" class="fixed top-0 left-0 z-50 h-full w-64 bg-base-100 p-4 shadow-lg transform -translate-x-full transition-transform">
+    <div class="flex justify-between items-center mb-4">
+        <span class="text-xl font-bold">Menu</span>
+        <button id="close-menu" class="btn btn-ghost btn-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <ul class="menu">
+        <li><a class="link flex items-center no-underline" href="/" id="link-homepage">Homepage</a></li>
+        <li><a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">Bird Classifier</a></li>
+        <li><a class="link flex items-center no-underline" href="#projects" id="link-projects">Projects</a></li>
+        <li><a class="link flex items-center no-underline" href="#contact" id="link-contact">Contact</a></li>
+        <li><a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">Server Map</a></li>
+    </ul>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="fixed inset-0 z-40 bg-black opacity-50 hidden"></div>
+
+<script>
+    const menuButton = document.getElementById('menu-button');
+    const closeMenu = document.getElementById('close-menu');
+    const sideMenu = document.getElementById('side-menu');
+    const overlay = document.getElementById('overlay');
+    const links = document.querySelectorAll('#side-menu .link');
+
+    const toggleMenu = () => {
+        sideMenu.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    };
+
+    if (menuButton) {
+        menuButton.addEventListener('click', toggleMenu);
+    }
+    closeMenu.addEventListener('click', toggleMenu);
+    overlay.addEventListener('click', toggleMenu);
+
+    links.forEach(link => {
+        link.addEventListener('click', toggleMenu);
+    });
+</script>
+
+<!-- Main Content -->
+<div class="container mx-auto p-4">
+    <!-- Page Header -->
+    <header class="text-center py-8">
+        <h1 class="text-4xl font-extrabold text-white">Album Rankings</h1>
+        <p class="text-lg text-gray-300 mt-4">Explore the top-ranked albums based on popularity and reviews.</p>
+    </header>
+
+    <!-- Album Rankings Section -->
+    <section id="album-rankings" class="my-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Album Entry Template -->
+            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                <figure>
+                    <img src="https://via.placeholder.com/400x300" alt="Album Cover"/>
+                </figure>
+                <div class="card-body">
+                    <h2 class="card-title">Album Title</h2>
+                    <p>Artist Name</p>
+                    <p>Release Year</p>
+                    <div class="card-actions justify-end">
+                        <a href="#" class="btn btn-secondary">More Details</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Repeat above div block for each album -->
+
+            <!-- Example: dynamically populated album entries -->
+            {% for album in albums %}
+            <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                <figure>
+                    <img src="{{ album.cover_url }}" alt="Album Cover"/>
+                </figure>
+                <div class="card-body">
+                    <h2 class="card-title">{{ album.title }}</h2>
+                    <p>{{ album.artist }}</p>
+                    <p>{{ album.release_year }}</p>
+                    <div class="card-actions justify-end">
+                        <a href="{{ album.details_url }}" class="btn btn-secondary">More Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Pagination (if necessary) -->
+    <section id="pagination" class="my-8 text-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination flex justify-center gap-2">
+                <li class="page-item">
+                    <a class="page-link btn btn-secondary" href="?page=1">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link btn btn-secondary" href="?page={{ previous_page }}">Previous</a>
+                </li>
+                <li class="page-item">
+                    <span class="page-link">{{ current_page }}</span>
+                </li>
+                <li class="page-item">
+                    <a class="page-link btn btn-secondary" href="?page={{ next_page }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link btn btn-secondary" href="?page={{ total_pages }}">Last</a>
+                </li>
+            </ul>
+        </nav>
+    </section>
+</div>
+
 </body>
 </html>

@@ -4,4 +4,4 @@ from django.shortcuts import render
 from . import views
 
 def index(request):
-	return render(request, 'templates/blog.html')
+	return render(request, 'base.html')
