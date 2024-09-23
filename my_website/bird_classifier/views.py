@@ -176,6 +176,7 @@ def upload_file(request):
                 saved_file, cleaned_name = file_handler.save_uploaded_file(uploaded_file)
                 upload_type = 'recording' if cleaned_name == 'user_recording' else 'file_upload'
                 duration = file_handler.get_audio_data(saved_file)
+                print(f"duration: {duration}\t")
                 bird, confidence, num_segments, spectrogram_path = classify.get_prediction(
                     saved_file, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth')
                 )

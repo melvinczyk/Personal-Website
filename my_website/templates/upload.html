@@ -380,87 +380,110 @@
 
                     <script>
                         document.addEventListener('DOMContentLoaded', () => {
-                        const startRecordingButton = document.getElementById('start-recording');
-                        const stopRecordingButton = document.getElementById('stop-recording');
-                        const audioPlayback = document.getElementById('audio-playback');
-                        const recordedAudioInput = document.getElementById('recorded-audio');
-                        const fileInput = document.getElementById('file-input');
-                        const uploadButton = document.getElementById('upload-btn');
-                        const uploadAudio = document.getElementById('upload-audio');
-                        const resetFormBtn = document.getElementById('reset-form');
-                        const errorAlert = document.querySelector('.alert-error');
-                        let mediaRecorder;
-                        let recordedChunks = [];
-                        let recordedBlob;
+    const startRecordingButton = document.getElementById('start-recording');
+    const stopRecordingButton = document.getElementById('stop-recording');
+    const audioPlayback = document.getElementById('audio-playback');
+    const recordedAudioInput = document.getElementById('recorded-audio');
+    const fileInput = document.getElementById('file-input');
+    const uploadButton = document.getElementById('upload-btn');
+    const uploadAudio = document.getElementById('upload-audio');
+    const resetFormBtn = document.getElementById('reset-form');
+    const errorAlert = document.querySelector('.alert-error');
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordedBlob;
 
-                        startRecordingButton.addEventListener('click', async () => {
-                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                            mediaRecorder = new MediaRecorder(stream);
-                            uploadAudio.disabled = true;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-                            recordedChunks = [];
+    if (isSafari && !localStorage.getItem('safariWarningDisplayed')) {
+        alert("Live recording is disabled on Safari. Please use Chrome for better performance.");
+        localStorage.setItem('safariWarningDisplayed', 'true');
+    }
 
-                            mediaRecorder.ondataavailable = (event) => {
-                                if (event.data.size > 0) {
-                                    recordedChunks.push(event.data);
-                                }
-                            };
+    if (isSafari) {
+        startRecordingButton.disabled = true;
+        stopRecordingButton.disabled = true;
 
-                            mediaRecorder.onstop = () => {
-                                recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
-                                const recordedUrl = URL.createObjectURL(recordedBlob);
-                                audioPlayback.src = recordedUrl;
-                                audioPlayback.classList.remove('hidden');
+        const promptMessage = document.createElement('div');
+        promptMessage.style.color = 'red';
+        promptMessage.innerText = "Live recording is not yet supported in Safari. Please use Chrome or another supported browser.";
+        document.body.prepend(promptMessage);
+    }
 
-                                const file = new File([recordedBlob], "user_recording.wav", { type: 'audio/wav' });
+    startRecordingButton.addEventListener('click', async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        uploadAudio.disabled = true;
 
-                                const dataTransfer = new DataTransfer();
-                                dataTransfer.items.add(file);
-                                fileInput.files = dataTransfer.files;
+        recordedChunks = [];
 
-                                recordedAudioInput.value = recordedUrl;
-                            };
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
 
-                            mediaRecorder.start();
-                            startRecordingButton.disabled = true;
-                            stopRecordingButton.disabled = false;
-                        });
+        mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/mpeg' });
+            const recordedUrl = URL.createObjectURL(recordedBlob);
+            audioPlayback.src = recordedUrl;
+            audioPlayback.classList.remove('hidden');
+            const file = new File([recordedBlob], "user_recording.wav", { type: 'audio/wav' });
 
-                        stopRecordingButton.addEventListener('click', () => {
-                            mediaRecorder.stop();
-                            startRecordingButton.disabled = false;
-                            stopRecordingButton.disabled = true;
-                        });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
 
-                        resetFormBtn.addEventListener('click', () => {
-                            fileInput.value = '';
-                            fileInput.disabled = false;
-                            uploadAudio.disabled = false
-                            startRecordingButton.disabled = false;
-                            stopRecordingButton.disabled = true;
-                            document.getElementById('file-name').textContent = 'No file selected';
-                            recordedAudioInput.value = '';
-                            audioPlayback.classList.add('hidden');
-                            audioPlayback.src = '';
-                            if (errorAlert) {
-                                errorAlert.style.display = 'none';
-                            }
-                        });
+            recordedAudioInput.value = recordedUrl;
+        };
 
-                        fileInput.addEventListener('change', function() {
-                            if (fileInput.files.length > 0) {
-                                startRecordingButton.disabled = true;
-                                stopRecordingButton.disabled = true;
-                                uploadButton.disabled = false;
-                                recordedAudioInput.value = '';
-                                audioPlayback.classList.add('hidden');
-                                audioPlayback.src = '';
-                            } else {
-                                startRecordingButton.disabled = false;
-                                stopRecordingButton.disabled = true;
-                            }
-                        });
-                    });
+        mediaRecorder.start();
+        startRecordingButton.disabled = true;
+        stopRecordingButton.disabled = false;
+    });
+
+    stopRecordingButton.addEventListener('click', () => {
+        mediaRecorder.stop();
+        startRecordingButton.disabled = false;
+        stopRecordingButton.disabled = true;
+    });
+
+    resetFormBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    fileInput.disabled = false;
+    uploadAudio.disabled = false;
+    if (!isSafari) {
+        startRecordingButton.disabled = false;
+    } else {
+        startRecordingButton.disabled = true;
+    }
+
+    stopRecordingButton.disabled = true;
+    document.getElementById('file-name').textContent = 'No file selected';
+    recordedAudioInput.value = '';
+    audioPlayback.classList.add('hidden');
+    audioPlayback.src = '';
+    if (errorAlert) {
+        errorAlert.style.display = 'none';
+    }
+});
+
+
+    fileInput.addEventListener('change', function() {
+        if (fileInput.files.length > 0) {
+            startRecordingButton.disabled = true;
+            stopRecordingButton.disabled = true;
+            uploadButton.disabled = false;
+            recordedAudioInput.value = '';
+            audioPlayback.classList.add('hidden');
+            audioPlayback.src = '';
+        } else {
+            startRecordingButton.disabled = false;
+            stopRecordingButton.disabled = true;
+        }
+    });
+});
+
 
                     </script>
                 </div>

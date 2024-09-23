@@ -61,10 +61,23 @@ def compress_file(wav_file_path):
     return zip_file_path
 
 
+def mp3_to_wav(file_path):
+    try:
+        sound = AudioSegment.from_file(file_path)
+        wav_path = file_path.replace(os.path.splitext(file_path)[1], 'test.wav')
+        sound.export(wav_path, format="wav")
+        return wav_path
+    except Exception as e:
+        print(f"Error converting MP3 to WAV: {e}")
+        return None
+
+
 def save_uploaded_file(uploaded_file):
+    print(f"save_uploaded_file: uploaded_file: {uploaded_file}")
     directory = 'uploads/originals/'
     recorded_directory = 'uploads/recordings'
     filename, ext = os.path.splitext(uploaded_file.name)
+    print(f"save_uploaded_file: filename: {filename}")
     encoded_name = base64_encode_filename(filename) + ext
     if filename == 'user_recording':
         encoded_name = base64_encode_filename(str(datetime.datetime.now())) + ext
@@ -74,22 +87,40 @@ def save_uploaded_file(uploaded_file):
 
     cleaned_name = clean_filename(filename)
 
-    print(f"file_path: {file_path}")
+    print(f"save_uploaded_file: file_path: {file_path}")
 
     saved_path = default_storage.save(file_path, uploaded_file)
-    print(f"saved_path: {saved_path}")
+    print(f"save_uploaded_file: saved_path: {saved_path}")
+
+    print(f"save_uploaded_file: file size before saving {uploaded_file.size}")
     saved_file_path = os.path.join(settings.MEDIA_ROOT, saved_path)
+    print(f"save_uploaded_file: saved_file_path: {saved_file_path}")
+    print(f"save_uploaded_file: file size: {os.path.getsize(saved_file_path)}")
+
+    #duration = get_audio_data(saved_file_path)
+    #print(f"save_uploaded_file: duration:{duration}")
 
     mime_type, _ = mimetypes.guess_type(saved_file_path)
-    print(f"mine_type: {mime_type}")
-    if mime_type != 'audio/wav' and mime_type != 'audio/x-wav':
-        audio = AudioSegment.from_file(saved_file_path)
-        wav_path = os.path.splitext(saved_file_path)[0] + '.wav'
-        audio.export(wav_path, format='wav')
-        os.remove(saved_file_path)
-        return wav_path, cleaned_name
-    print(f"saved_file_path: {saved_file_path}")
-    return saved_file_path, cleaned_name
+    print(f"save_uploaded_file: mine_type: {mime_type}")
+
+
+    if mime_type not in ['audio/wav', 'audio/x-wav']:
+        try:
+            print("Converting file to WAV format...")
+            audio = AudioSegment.from_file(saved_file_path)
+            wav_path = os.path.splitext(saved_file_path)[0] + '.wav'
+            print(f"save_uploaded_file: wav_path: {wav_path}")
+
+            audio.export(wav_path, format='wav')
+            print(f"save_uploaded_file: deleting path: {saved_file_path}")
+            return wav_path, cleaned_name
+        except Exception as e:
+            print(f"Error converting file to WAV: {e}")
+            return None, cleaned_name
+    else:
+        print(f"File saved at: saved_file_path: {saved_file_path}")
+        return saved_file_path, cleaned_name
+
 
 
 def get_list_spectrograms(file_path):
@@ -119,8 +150,13 @@ def image_to_64(image):
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 def get_audio_data(file_path):
+    print(f"get_audio_data: file_path: {file_path}")
+    print(f"get_audio_data: file size: {os.path.getsize(file_path)}")
+    mime_type, _ = mimetypes.guess_type(file_path)
+    print(f"get_audio_data: mine_type: {mime_type}")
     signal, sr = librosa.load(file_path, sr=None)
     duration = librosa.get_duration(y=signal, sr=sr)
+    print(f"get_audio_data: duration: {duration}")
     return '%.2f'%duration
 
 def get_severity(number):
