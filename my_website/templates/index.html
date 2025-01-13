@@ -212,6 +212,84 @@
         </div>
     </div>
 
+    <script>
+        function togglePlay(audioId, buttonId) {
+            var audio = document.getElementById(audioId);
+            var button = document.getElementById(buttonId);
+
+            var playIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                          stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                     d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                </svg>
+            `;
+
+            var stopIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 inline-block mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M6 6h12v12H6z"/>
+                </svg>
+            `;
+
+            if (audio.paused) {
+                audio.play();
+                button.innerHTML = stopIcon;
+                button.classList.remove("btn-secondary");
+                button.classList.add("btn-error");
+
+                audio.onended = function() {
+                    button.innerHTML = playIcon;
+                    button.classList.remove("btn-error");
+                    button.classList.add("btn-secondary");
+                };
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+                button.innerHTML = playIcon;
+                button.classList.remove("btn-error");
+                button.classList.add("btn-secondary");
+            }
+        }
+    </script>
+    <div class="mx-auto max-w-7xl py-8 sm:py-10 mt-10 sm:px-8 rounded-xl sm:rounded-3xl">
+        <h2 class="text-5xl font-extrabold tracking-tight sm:text-4xl mt-4 text-center text-yellow-400 drop-shadow-lg">
+            Pre-save my first single!
+        </h2>
+        <p class="text-lg text-center leading-relaxed text-gray-300 mt-6">
+            R.I.P releases on all platforms on January 24th, 2025!
+        </p>
+        <div class="flex flex-wrap justify-center items-center bg-base-100 p-6 rounded-lg shadow-lg py-10 mt-6">
+            <div class="flex-shrink-0 w-full sm:w-auto mb-4 sm:mb-0 flex justify-center">
+                <img src="{% static 'images/rip.jpg' %}" alt="R.I.P Album Cover"
+                     class="w-48 h-48 rounded-lg object-cover">
+            </div>
+            <div class="flex-grow w-full sm:w-auto sm:ml-8 text-center sm:text-left">
+                <h3 class="text-2xl text-center font-bold">R.I.P to The Meathook Massacre</h3>
+                <p class="text-lg text-center text-gray-600">Zero Barbecue</p>
+
+                <div class="mx-auto max-w-md mt-2 mb-4 flex justify-center">
+                    <button id="playRIP_button" class="btn btn-secondary px-6 py-3 text-lg flex items-center"
+                            onclick="togglePlay('audio_RIP', 'playRIP_button')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="w-8 h-8 mr-2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
+                        </svg>
+                    </button>
+                    <audio id="audio_RIP" src="{% static 'audio/RIP.mp3' %}"></audio>
+                </div>
+                <div class="flex justify-center mt-2 mb-2">
+                    <a href="https://distrokid.com/hyperfollow/zerobarbecue/rip-to-the-meathook-massacre"
+                       class="btn btn-secondary px-6 py-3">
+                        Pre-save
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 
     <!-- Overview -->
     <div class="mx-auto max-w-7xl py-8 sm:py-10 sm:px-8 rounded-xl sm:rounded-3xl">
@@ -429,7 +507,7 @@
                     </div>
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
-                            <img src="https://www.emizentech.com/blog/wp-content/uploads/sites/2/2022/07/Python-web-framework-django.jpg"
+                            <img src="https://www.svgrepo.com/show/353657/django-icon.svg"
                                  alt="Django framework logo"/>
                         </figure>
                         <div class="card-body">
