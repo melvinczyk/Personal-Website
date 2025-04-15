@@ -309,6 +309,25 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
+                            <img src="{% static 'images/quad_depth.png' %}" alt="Motorcycle Depth Map"/>
+                            <img src="{% static 'images/point_cloud.png' %}" alt="Motorcycle Depth Map"/>
+                        </figure>
+                        <div class="card-body">
+                            <h2 class="card-title">Oculusaurus (Senior 499 Capstone)</h2>
+                            <p>A real-time, real-world applied stereo vision application that detects the depth of
+                                anything the user is looking at. This project uses a stereo camera connected to a
+                                Raspberry PI to capture frames, then sends them to a server to do the computations. The
+                                server connects to an app that notifies the user if they are about to collide with
+                                anything.<br><br>This system also allows for real-time monitoring on a local webserver
+                                as well as other options to take screenshots and transform them into a 3D representation
+                                using a point cloud. It also has an object detection module that can be toggled on or
+                                off which detects objects in real-time while also displaying their distance from the
+                                user.<br><br>This project is being built with Python OpenCV, Android Studio, and YOLO11 from Ultralytics</p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
+                        <figure>
                             <img src="https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png"
                                  alt="Waste detection example"/>
                         </figure>
@@ -333,26 +352,6 @@
 
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
-                            <img src="{% static 'images/Figure_1.png' %}" alt="Motorcycle Depth Map"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">Oculusaurus (Senior 499 Capstone)
-                                <div class="badge badge-secondary text-xs">In Development</div>
-                            </h2>
-                            <p>A real-time, real-world applied stereo vision application that detects the depth of
-                                anything the user is looking at. This project uses a stereo camera connected to a
-                                Raspberry PI to capture frames, then sends them to a server to do the computations. The
-                                server connects to an app that notifies the user if they are about to collide with
-                                anything.<br><br>This system also allows for real-time monitoring on a local webserver
-                                as well as other options to take screenshots and transform them into a 3D representation
-                                using a point cloud. It also has an object detection module that can be toggled on or
-                                off which detects objects in real-time while also displaying their distance from the
-                                user.<br><br>This project is being built with Python OpenCV, Android Studio, and YOLO11 from Ultralytics</p>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
                             <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
                                  alt="Alabama state bird"/>
                         </figure>
@@ -360,8 +359,8 @@
                             <h2 class="card-title">Backyard Bird Classifier
                                 <div class="badge badge-secondary text-xs">Webapp!</div>
                             </h2>
-                            <p>Audio machine learning project that identifies common Alabama bird calls. Recently
-                                implemented into a webapp where you can try it out for yourself!<br><br>This project
+                            <p>Audio machine learning project that identifies common Alabama bird calls. I
+                                implemented it into a webapp where you can try it out for yourself!<br><br>This project
                                 uses Convolutional Neural
                                 Networks to identify patterns in spectrograms and compares them to known bird chirps
                                 in
