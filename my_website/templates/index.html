@@ -330,7 +330,8 @@
                                     with Raspberry Pi-powered goggles, cloud computation server, and mobile notification
                                     interface.</p>
                                 <p class="text-sm"><span class="font-semibold">Features:</span> Live depth monitoring,
-                                    3D point cloud visualization, proximity warnings, and optional YOLO object recognition.
+                                    3D point cloud visualization, proximity warnings, and optional YOLO object
+                                    recognition.
                                 </p>
                             </div>
                             <div class="card-actions justify-end">
@@ -344,54 +345,94 @@
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
                             <img src="https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png"
-                                 alt="Waste detection example"/>
+                                 alt="Waste detection demonstration"/>
                         </figure>
                         <div class="card-body">
                             <h2 class="card-title">
                                 Waste Detection Drone
+                                <div class="badge badge-primary text-xs">Computer Vision</div>
                             </h2>
-                            <p>Utilized machine vision AI to program a drone for waste detection, specifically designed
-                                for government waste management. The solution identifies high-concentration waste areas
-                                using the YOLOv5 algorithm from Ultralytics, trained with custom annotated data via
-                                Roboflow.io.<br><br>
-                                Additionally, I employed the Tello SDK to enable automated
-                                drone flights, integrating built-in logging and a screenshot system.</p>
-
-                            <div class="card-actions justify-end">
+                            <p class="text-sm mb-3">
+                                An autonomous drone system utilizing advanced computer vision for environmental waste
+                                monitoring and management.
+                            </p>
+                            <figure>
+                                <img src="{% static 'images/model_ copy.gif' %}"
+                                     alt="Waste detection demonstration live"/>
+                            </figure>
+                            <div class="space-y-2 mt-2">
+                                <p class="text-sm"><span class="font-semibold">AI Model:</span> Custom YOLOv5 object
+                                    detection system trained on annotated waste imagery datasets</p>
+                                <p class="text-sm"><span class="font-semibold">Flight Control:</span> Programmatic
+                                    flight operations using Tello SDK with precision navigation algorithms</p>
+                                <p class="text-sm"><span class="font-semibold">Data Collection:</span> Integrated
+                                    telemetry logging, spatial mapping, and automated classification system</p>
+                            </div>
+                            <div class="card-actions justify-end mt-4">
                                 <a href="https://github.com/melvinczyk/Waste-detection-drone.git"
-                                   class="btn btn-secondary">View
-                                    Project</a>
+                                   class="btn btn-secondary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                         viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                                    </svg>
+                                    Explore Project
+                                </a>
                             </div>
                         </div>
                     </div>
 
                     <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
                         <figure>
-                            <img src="https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg"
-                                 alt="Alabama state bird"/>
+                            <img src="{% static 'images/predict.png' %}" alt="Bird classifier prediction example"/>
                         </figure>
                         <div class="card-body">
-                            <h2 class="card-title">Backyard Bird Classifier
-                                <div class="badge badge-secondary text-xs">Webapp!</div>
+                            <h2 class="card-title">
+                                Backyard Bird Classifier
+                                <div class="badge badge-secondary text-xs">Live Demo</div>
                             </h2>
-                            <p>Audio machine learning project that identifies common Alabama bird calls. I
-                                implemented it into a webapp where you can try it out for yourself!<br><br>This project
-                                uses Convolutional Neural
-                                Networks to identify patterns in spectrograms and compares them to known bird chirps
-                                in
-                                Alabama.</p>
-                            <div class="card-actions justify-end">
-                                <a href="{% url 'upload_file' %}" class="btn btn-info">View
-                                    Webapp</a>
+                            <p class="text-sm mb-3">
+                                An audio classification system that identifies Alabama bird species from their calls,
+                                deployed as an interactive web application.
+                            </p>
+                            <figure>
+                            <img src="{% static 'images/Confusion_matrix.png' %}" alt="Confusion matrix"/>
+                        </figure>
+                            <div class="space-y-2 mt-2">
+                                <p class="text-sm"><span class="font-semibold">Technology:</span> Convolutional Neural
+                                    Networks applied to audio spectrograms for acoustic pattern recognition</p>
+                                <p class="text-sm"><span class="font-semibold">Dataset:</span> Comprehensive collection
+                                    of regional bird calls processed into mel-spectrograms for training</p>
+                                <p class="text-sm"><span class="font-semibold">Implementation:</span> Full-stack web
+                                    application with real-time audio processing and visualization</p>
                             </div>
-                            <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Bird-Classifier.git" class="btn btn-secondary">View
-                                    Model src</a>
-                            </div>
-                            <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/Personal-Website/tree/main/my_website/bird_classifier"
-                                   class="btn btn-secondary">View
-                                    Webapp src</a>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-4 justify-end">
+                                <a href="{% url 'upload_file' %}" class="btn btn-info">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                         viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                                    </svg>
+                                    Try Demo
+                                </a>
+                                <div class="dropdown dropdown-top dropdown-end">
+                                    <label tabindex="0" class="btn btn-secondary">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                             viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                                        </svg>
+                                        View Code
+                                    </label>
+                                    <ul tabindex="0"
+                                        class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                        <li><a href="https://github.com/melvinczyk/Bird-Classifier.git">ML Model
+                                            Repository</a></li>
+                                        <li>
+                                            <a href="https://github.com/melvinczyk/Personal-Website/tree/main/my_website/bird_classifier">Web
+                                                Application Source</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
