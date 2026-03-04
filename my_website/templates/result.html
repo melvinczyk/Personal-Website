@@ -1,367 +1,506 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="forest">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="upload" content="Upload File">
-    <title>Results</title>
-    {% load static %}
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <link
-            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
-            rel="stylesheet"
-            type="text/css"
-    />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .spectrogram-img {
-    width: auto; /* Do not force a specific width */
-    height: auto; /* Maintain the original height and aspect ratio */
-    max-width: 100%; /* Ensure it fits within the container */
-    margin-bottom: 10px; /* Space between images */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nick@burczyk:~$ — bird-classifier results</title>
+{% load static %}
+<link href="{% static 'css/styles.css' %}" rel="stylesheet">
+<link href="{% static 'css/custom.css' %}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#00ff41;--gd:#00aa2a;--gdark:#003b0f;--glow:rgba(0,255,65,0.16);
+  --bg:#020c02;--bg2:#040f04;--bg3:#030a03;--t:#00cc33;--td:#006615;--tb:#00ff41;
 }
-    </style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--t);font-family:'Share Tech Mono',monospace;}
+
+/* CRT effects */
+body::before{content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);}
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.55) 100%);}
+.scanline{position:fixed;left:0;right:0;height:3px;background:rgba(0,255,65,0.05);
+  z-index:998;pointer-events:none;animation:scan 7s linear infinite;}
+@keyframes scan{0%{top:-3px}100%{top:100vh}}
+@keyframes flicker{0%,100%{opacity:1}88%{opacity:1}89%{opacity:.82}90%{opacity:1}96%{opacity:.9}97%{opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 12px 2px var(--glow)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TITLEBAR ── */
+#titlebar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 16px;background:#010801;border-bottom:1px solid #002808;
+  position:sticky;top:0;z-index:50;animation:flicker 10s infinite;
+}
+.dots{display:flex;gap:8px;}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot-r{background:#ff5555;box-shadow:0 0 5px #ff555566;}
+.dot-y{background:#ffbb00;box-shadow:0 0 5px #ffbb0066;}
+.dot-g{background:var(--g);box-shadow:0 0 5px var(--glow);animation:pulse 3s infinite;}
+.ttl{font-family:'VT323',monospace;font-size:17px;color:var(--td);letter-spacing:2px;}
+.clk{font-size:12px;color:var(--td);letter-spacing:1px;}
+
+/* ── NAV BREADCRUMB ── */
+#navback{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:8px 20px;background:#010a01;border-bottom:1px solid #001f05;font-size:12px;
+}
+.nb-link{color:var(--td);text-decoration:none;transition:color .15s;letter-spacing:1px;padding:2px 8px;border:1px solid transparent;border-radius:2px;}
+.nb-link:hover{color:var(--g);border-color:#003810;}
+.nb-sep{color:#002808;}
+.nb-active{color:var(--g);}
+.nb-right{margin-left:auto;display:flex;gap:10px;}
+
+/* ── MAIN ── */
+#main{max-width:1060px;margin:0 auto;padding:24px 20px 60px;}
+
+/* ── TERM SECTION CARD ── */
+.ts{
+  border:1px solid #002808;border-left:3px solid var(--g);
+  background:var(--bg2);border-radius:3px;margin-bottom:20px;
+  overflow:hidden;animation:fadeIn .3s ease forwards;
+}
+.ts-hd{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 16px;background:#010a01;border-bottom:1px solid #001f05;flex-wrap:wrap;
+}
+.ts-title{font-family:'VT323',monospace;font-size:16px;color:var(--g);letter-spacing:2px;}
+.ts-sub{color:var(--td);font-size:11px;margin-left:auto;}
+.ts-bd{padding:20px;}
+
+/* ── RESULT HERO ── */
+.hero{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;}
+.bird-img-wrap{flex-shrink:0;width:210px;}
+.bird-img-wrap img{
+  width:100%;border-radius:3px;border:1px solid #002808;
+  filter:saturate(.75) brightness(.9) sepia(.12) hue-rotate(80deg);
+  transition:filter .35s;box-shadow:0 0 20px rgba(0,255,65,.07);
+}
+.bird-img-wrap img:hover{filter:none;}
+.bird-info{flex:1;min-width:220px;}
+
+.bird-label{font-size:10px;color:var(--td);letter-spacing:3px;margin-bottom:6px;}
+.bird-name{
+  font-family:'VT323',monospace;
+  font-size:clamp(30px,5vw,50px);
+  color:var(--tb);letter-spacing:1px;
+  text-shadow:0 0 20px rgba(0,255,65,.3);line-height:1.1;
+}
+
+/* Confidence bar */
+.conf-label{color:var(--td);font-size:10px;letter-spacing:2px;margin-top:14px;margin-bottom:4px;display:flex;justify-content:space-between;max-width:320px;}
+.conf-track{height:5px;background:#001a05;border-radius:3px;max-width:320px;overflow:hidden;}
+.conf-fill{height:100%;border-radius:3px;background:var(--g);box-shadow:0 0 6px var(--glow);transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:18px;}
+.stat-box{border:1px solid #002808;background:#030803;padding:12px 14px;border-radius:2px;text-align:center;}
+.stat-lbl{color:var(--td);font-size:10px;letter-spacing:2px;margin-bottom:4px;}
+.stat-val{font-family:'VT323',monospace;font-size:34px;line-height:1;}
+.stat-val.s{color:var(--g);text-shadow:0 0 10px var(--glow);}
+.stat-val.w{color:#ccff00;}
+.stat-val.e{color:#ff5555;}
+.stat-dsub{color:var(--td);font-size:11px;margin-top:3px;}
+
+/* Terminal readout lines */
+.readout{margin-top:16px;font-size:12px;color:var(--td);line-height:2.1;}
+.readout .k{color:#002808;}
+.readout .v{color:var(--tb);}
+.readout .vg{color:var(--g);}
+.readout .vy{color:#ccff00;}
+
+/* ── SPECTROGRAM GRID ── */
+.spectro-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:8px;
+}
+.spectro-item{
+  border:1px solid #002808;border-radius:2px;overflow:hidden;
+  background:#010801;transition:border-color .2s;position:relative;cursor:zoom-in;
+}
+.spectro-item:hover{border-color:var(--gd);}
+.spectro-item img{
+  width:100%;height:auto;display:block;
+  filter:saturate(.85) hue-rotate(80deg) brightness(.9);
+  transition:filter .3s;
+}
+.spectro-item:hover img{filter:none;}
+.spectro-badge{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(1,8,1,.88);padding:3px 8px;
+  font-size:10px;color:var(--td);letter-spacing:1px;
+  opacity:0;transition:opacity .2s;
+}
+.spectro-item:hover .spectro-badge{opacity:1;}
+
+/* Lightbox */
+#lightbox{
+  display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.92);align-items:center;justify-content:center;
+  cursor:zoom-out;
+}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:90vw;max-height:90vh;border:1px solid #003810;border-radius:2px;}
+#lightbox .lb-close{
+  position:absolute;top:20px;right:24px;
+  color:var(--g);font-size:24px;cursor:pointer;font-family:'VT323',monospace;
+  letter-spacing:1px;
+}
+
+/* ── FEEDBACK FORM ── */
+.form-row{margin-bottom:16px;}
+.form-lbl{display:block;font-size:11px;color:var(--td);letter-spacing:2px;margin-bottom:7px;}
+
+.term-select{
+  width:100%;max-width:320px;
+  background:#010a01;border:1px solid #003810;
+  color:var(--t);font-family:'Share Tech Mono',monospace;font-size:13px;
+  padding:9px 32px 9px 12px;border-radius:2px;outline:none;
+  cursor:pointer;transition:border-color .15s;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23006615' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+.term-select:focus{border-color:var(--g);box-shadow:0 0 8px var(--glow);}
+.term-select option{background:#010a01;color:var(--t);}
+
+.term-input{
+  width:100%;max-width:320px;
+  background:#010a01;border:1px solid #003810;
+  color:var(--tb);font-family:'Share Tech Mono',monospace;font-size:13px;
+  padding:9px 12px;border-radius:2px;outline:none;
+  transition:all .15s;caret-color:var(--g);
+}
+.term-input:focus{border-color:var(--g);box-shadow:0 0 8px var(--glow);}
+.term-input:disabled{color:var(--td);cursor:not-allowed;opacity:.45;}
+.term-input::placeholder{color:#003810;}
+
+.term-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px solid var(--g);
+  color:var(--g);font-family:'Share Tech Mono',monospace;
+  font-size:13px;padding:9px 22px;border-radius:2px;
+  cursor:pointer;transition:all .2s;letter-spacing:1px;
+}
+.term-btn:hover{background:rgba(0,255,65,.08);box-shadow:0 0 12px rgba(0,255,65,.15);}
+.term-btn:disabled{border-color:var(--td);color:var(--td);cursor:not-allowed;}
+.term-btn:disabled:hover{background:transparent;box-shadow:none;}
+.term-btn.secondary{border-color:#003810;color:var(--td);}
+.term-btn.secondary:hover{border-color:#336633;color:var(--t);}
+
+.loading-row{
+  display:none;align-items:center;gap:10px;
+  color:var(--td);font-size:13px;letter-spacing:1px;
+}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid #003810;border-top-color:var(--g);animation:spin .7s linear infinite;flex-shrink:0;}
+
+.term-alert{
+  display:flex;align-items:flex-start;gap:10px;
+  border:1px solid #ff5555;border-left:3px solid #ff5555;
+  background:rgba(255,85,85,.06);padding:12px 14px;border-radius:2px;
+  margin-bottom:16px;font-size:13px;color:#ff8888;
+}
+
+/* Honeypot */
+.hp{display:none;visibility:hidden;}
+
+/* Bottom prompt */
+.bot-prompt{
+  display:flex;align-items:center;gap:6px;
+  margin-top:16px;font-size:12px;color:var(--td);
+}
+.bot-cur{display:inline-block;width:8px;height:13px;background:var(--g);animation:blink .7s infinite;vertical-align:middle;}
+
+/* ── STATUS BAR ── */
+#statusbar{
+  position:sticky;bottom:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 16px;background:#010801;border-top:1px solid #002808;
+  font-size:11px;color:var(--td);letter-spacing:1px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:620px){
+  .bird-img-wrap{width:100%;}
+  .spectro-grid{grid-template-columns:repeat(2,1fr);}
+  .nb-right{display:none;}
+}
+</style>
 </head>
-<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-700 via-violet-900 to-indigo-700 text-gray-200">
+<body>
+<div class="scanline"></div>
 
-<!-- Navbar -->
-<div class="navbar bg-base-100 min-h-20">
-    <div class="navbar-start">
-        <button id="menu-button" class="btn btn-ghost btn-circle">
-            <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 6h16M4 12h16M4 18h7"/>
-            </svg>
-        </button>
-    </div>
-    <div class="navbar-center">
-        <a class="btn btn-ghost text-xl" href="/">Nick Burczyk</a>
-    </div>
-    <div class="navbar-end"></div>
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <div class="dots">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+  </div>
+  <div class="ttl">nick@burczyk — bird-classifier — inference complete</div>
+  <div class="clk" id="clock">00:00:00</div>
 </div>
 
-<!-- Side Menu -->
-<div id="side-menu"
-     class="fixed top-0 left-0 z-50 h-full w-64 bg-base-100 p-4 shadow-lg transform -translate-x-full transition-transform">
-    <div class="flex justify-between items-center mb-4">
-        <span class="text-xl font-bold">Menu</span>
-        <button id="close-menu" class="btn btn-ghost btn-circle">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-    <ul class="menu">
-        <li>
-            <a class="link flex items-center no-underline" href="/" id="link-homepage">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                </svg>
-                Homepage
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="h-6 w-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
-                </svg>
-                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
-                    Bird Classifier</p>
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"/>
-                </svg>
-                Projects
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
-                </svg>
-                Contact
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
-                </svg>
-                Server Map
-            </a>
-        </li>
-    </ul>
+<!-- BREADCRUMB NAV -->
+<div id="navback">
+  <a href="/" class="nb-link">~/home</a>
+  <span class="nb-sep">/</span>
+  <a href="{% url 'upload_file' %}" class="nb-link">bird-classifier</a>
+  <span class="nb-sep">/</span>
+  <span class="nb-active">results</span>
+  <div class="nb-right">
+    <a href="/" class="nb-link">← home</a>
+    <a href="{% url 'upload_file' %}" class="nb-link">↺ classify another</a>
+  </div>
 </div>
 
-<div id="overlay" class="fixed inset-0 z-40 bg-black opacity-50 hidden"></div>
+<!-- MAIN -->
+<div id="main">
+
+  <!-- ── SECTION 1: RESULT HERO ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">CLASSIFICATION RESULT</span>
+      <span class="ts-sub">model: backyard-bird-cnn-v1 &nbsp;·&nbsp; region: Alabama</span>
+    </div>
+    <div class="ts-bd">
+      <div class="hero">
+
+        <!-- Bird image -->
+        <div class="bird-img-wrap">
+          <img src="{{ result.bird_image }}"
+               alt="{{ result.bird }}"
+               onerror="this.style.opacity='.15'">
+          <div style="text-align:center;color:var(--td);font-size:10px;margin-top:6px;letter-spacing:1px">
+            // reference image — hover to unfilter
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="bird-info">
+          <div class="bird-label">// DETECTED SPECIES</div>
+          <div class="bird-name">{{ result.bird }}</div>
+
+          <!-- Animated confidence bar -->
+          <div class="conf-label">
+            <span>CONFIDENCE</span>
+            <span style="color:{% if result.severity == 'success' %}var(--g){% elif result.severity == 'warning' %}#ccff00{% else %}#ff5555{% endif %}">{{ result.confidence }}%</span>
+          </div>
+          <div class="conf-track">
+            <div class="conf-fill" id="confbar" style="width:0"></div>
+          </div>
+
+          <!-- Stats boxes -->
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-lbl">CONFIDENCE</div>
+              <div class="stat-val {% if result.severity == 'success' %}s{% elif result.severity == 'warning' %}w{% else %}e{% endif %}">{{ result.confidence }}%</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-lbl">SEGMENTS</div>
+              <div class="stat-val s">{{ result.num_segments }}</div>
+              <div class="stat-dsub">{{ result.duration }}s audio</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-lbl">CLASS ACCURACY</div>
+              <div class="stat-val {% if result.acc_severity == 'success' %}s{% elif result.acc_severity == 'warning' %}w{% else %}e{% endif %}">{{ result.accuracy }}%</div>
+            </div>
+          </div>
+
+          <!-- Terminal readout -->
+          <div class="readout">
+            <div><span class="k">$</span> model.predict(audio_input)</div>
+            <div><span class="k">→</span> species: <span class="v">{{ result.bird }}</span></div>
+            <div><span class="k">→</span> confidence: <span class="{% if result.severity == 'success' %}vg{% else %}vy{% endif %}">{{ result.confidence }}%</span></div>
+            <div><span class="k">→</span> segments_examined: <span class="v">{{ result.num_segments }}</span></div>
+            <div><span class="k">→</span> audio_duration: <span class="v">{{ result.duration }}s</span></div>
+            <div><span class="k">→</span> class_accuracy: <span class="{% if result.acc_severity == 'success' %}vg{% else %}vy{% endif %}">{{ result.accuracy }}%</span></div>
+            <div><span class="k">→</span> exit_status: <span class="vg">0 (OK)</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: SPECTROGRAMS ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">GENERATED SPECTROGRAMS</span>
+      <span class="ts-sub">mel-spectrogram · one per segment · click to enlarge</span>
+    </div>
+    <div class="ts-bd">
+      <div style="font-size:11px;color:var(--td);margin-bottom:12px;letter-spacing:1px">
+        // {{ result.num_segments }} segment(s) — hover to unfilter, click to zoom
+      </div>
+      <div class="spectro-grid">
+        {% for image in result.image_list %}
+        <div class="spectro-item" onclick="openLightbox('data:image/png;base64,{{ image }}', 'segment_{{ forloop.counter }}')">
+          <img src="data:image/png;base64,{{ image }}" alt="Spectrogram {{ forloop.counter }}">
+          <div class="spectro-badge">segment_{{ forloop.counter }}.png — click to zoom</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: FEEDBACK FORM ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">HELP IMPROVE THE MODEL</span>
+      <span class="ts-sub">optional · responses used for retraining</span>
+    </div>
+    <div class="ts-bd" style="max-width:540px">
+
+      <div style="font-size:12px;color:var(--td);margin-bottom:20px;line-height:1.9">
+        Was the prediction right? Each response helps retrain and improve the classifier for Alabama bird species. Takes 5 seconds.
+      </div>
+
+      {% if error %}
+      <div class="term-alert">
+        <span style="color:#ff5555;font-size:18px;line-height:1">✖</span>
+        <span>Error: {{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" id="upload-form">
+        {% csrf_token %}
+
+        <!-- Was it accurate? -->
+        <div class="form-row">
+          <label for="accuracy-select" class="form-lbl">// WAS THE PREDICTION ACCURATE?</label>
+          <select id="accuracy-select" name="accuracy" class="term-select">
+            <option disabled selected value="">select an option...</option>
+            <option value="yes">yes — correct species</option>
+            <option value="no">no — wrong species</option>
+            <option value="not-sure">not sure</option>
+          </select>
+        </div>
+
+        <!-- If no, what was it? -->
+        <div class="form-row">
+          <label for="feedback-input" class="form-lbl">// IF INCORRECT — WHAT SPECIES WAS IT?</label>
+          <input
+            id="feedback-input"
+            name="species"
+            type="text"
+            placeholder="e.g. Northern Cardinal..."
+            class="term-input"
+            disabled
+          >
+        </div>
+
+        <!-- Honeypot -->
+        <div class="hp">
+          <label>leave blank</label>
+          <input type="text" name="honeypot" id="honeypot" value="">
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:4px">
+          <button type="submit" id="upload-btn" class="term-btn" disabled>
+            <span>▸</span> submit feedback
+          </button>
+          <div id="loading-btn" class="loading-row">
+            <div class="spinner"></div>
+            <span>submitting...</span>
+          </div>
+          <a href="{% url 'upload_file' %}" class="term-btn secondary">
+            ↺ classify another
+          </a>
+        </div>
+
+      </form>
+
+      <div class="bot-prompt">
+        <span style="color:var(--td)">nick@burczyk:~/bird-classifier$</span>
+        <span class="bot-cur"></span>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <span class="lb-close" onclick="closeLightbox()">[ × close ]</span>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div>
+    <span style="color:var(--g)">●</span>&nbsp; inference complete
+    &nbsp;·&nbsp; species: <span style="color:var(--tb)">{{ result.bird }}</span>
+    &nbsp;·&nbsp; confidence: {{ result.confidence }}%
+    &nbsp;·&nbsp; segments: {{ result.num_segments }}
+  </div>
+  <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
+</div>
 
 <script>
-    const menuButton = document.getElementById('menu-button');
-    const closeMenu = document.getElementById('close-menu');
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.getElementById('overlay');
-    const links = document.querySelectorAll('#side-menu .link');
+// Clock
+function tick(){
+  const t=new Date().toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('clock').textContent=t;
+  document.getElementById('sclk').textContent=t;
+}
+tick();setInterval(tick,1000);
 
-    const toggleMenu = () => {
-        sideMenu.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-    };
-
-    if (menuButton) {
-        menuButton.addEventListener('click', toggleMenu);
-    }
-    closeMenu.addEventListener('click', toggleMenu);
-    overlay.addEventListener('click', toggleMenu);
-
-    links.forEach(link => {
-        link.addEventListener('click', toggleMenu);
-    });
-
-    function displayFileName() {
-    const fileInput = document.getElementById('file-upload');
-    const fileNameDisplay = document.getElementById('file-name-display');
-        if (fileInput.files.length > 0) {
-            fileNameDisplay.textContent = fileInput.files[0].name;
-        } else {
-            fileNameDisplay.textContent = 'No file chosen';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-    const startRecordingButton = document.getElementById('start-recording');
-    const stopRecordingButton = document.getElementById('stop-recording');
-    const audioPlayback = document.getElementById('audio-playback');
-    const recordedAudioInput = document.getElementById('recorded-audio');
-
-    let mediaRecorder;
-    let recordedChunks = [];
-
-    startRecordingButton.addEventListener('click', async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-
-        recordedChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        };
-
-        mediaRecorder.onstop = () => {
-            recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
-            const recordedUrl = URL.createObjectURL(recordedBlob);
-            audioPlayback.src = recordedUrl;
-            audioPlayback.classList.remove('hidden');
-            recordedAudioInput.value = recordedUrl;
-        };
-
-        mediaRecorder.start();
-        startRecordingButton.disabled = true;
-        stopRecordingButton.disabled = false;
-    });
-
-    stopRecordingButton.addEventListener('click', () => {
-        mediaRecorder.stop();
-        startRecordingButton.disabled = false;
-        stopRecordingButton.disabled = true;
-    });
+// Animate confidence bar on load
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.getElementById('confbar').style.width='{{ result.confidence }}%';
+  },300);
 });
 
+// Form logic
+const sel=document.getElementById('accuracy-select');
+const inp=document.getElementById('feedback-input');
+const btn=document.getElementById('upload-btn');
+
+function updateBtn(){
+  const v=sel.value;
+  if(!v){btn.disabled=true;return;}
+  if(v==='no'&&!inp.value.trim()){btn.disabled=true;return;}
+  btn.disabled=false;
+}
+
+sel.addEventListener('change',function(){
+  if(this.value==='no'){inp.disabled=false;inp.focus();}
+  else{inp.disabled=true;inp.value='';}
+  updateBtn();
+});
+inp.addEventListener('input',updateBtn);
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const form=document.getElementById('upload-form');
+  form.addEventListener('submit',()=>{
+    btn.style.display='none';
+    document.getElementById('loading-btn').style.display='inline-flex';
+  });
+});
+
+// Lightbox
+function openLightbox(src,label){
+  document.getElementById('lb-img').src=src;
+  document.getElementById('lb-img').alt=label;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
 </script>
-<div class="container mx-auto p-4">
-    <div class="w-full bg-base-100 py-8 px-6 sm:px-8 rounded-lg justify-center items-center">
-        <h1 class="text-3xl font-bold tracking-tight text-center text-white sm:text-4xl">Detected Bird:</h1>
-        <h1 class="text-3xl font-bold tracking-tight text-center sm:text-4xl bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text">
-            {{ result.bird }}</h1>
-    </div>
-    <div class="stats shadow mt-4 flex justify-center">
-        <div class="stat place-items-center">
-            <div class="stat-title">Confidence</div>
-            <div class="stat-value text-{{ result.severity }}">{{ result.confidence }}%</div>
-        </div>
-
-        <div class="stat place-items-center">
-            <div class="stat-title">Segments Examined</div>
-            <div class="stat-value">{{ result.num_segments }}</div>
-            <div class="stat-desc">File length: {{ result.duration }} seconds</div>
-        </div>
-
-        <div class="stat place-items-center">
-            <div class="stat-title">Class Accuracy</div>
-            <div class="stat-value text-{{ result.acc_severity }}">{{ result.accuracy }}%</div>
-        </div>
-    </div>
-    <div class="mx-auto max-w-7xl sm:px-6 mt-4 lg:px-8 flex justify-center items-center">
-        <div class="relative isolate overflow-hidden bg-base-100 px-6 py-8 pb-8 shadow-2xl rounded sm:rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24">
-            <img src="{{ result.bird_image }}" class="mx-auto block rounded sm:rounded-3xl">
-        </div>
-    </div>
-
-
-    <div class="relative isolate overflow-hidden bg-base-100 px-6 py-8 pb-8 mt-4 shadow-2xl rounded sm:rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24 flex flex-col items-center">
-        <div class="w-full bg-base-100 py-8 px-6 sm:px-8 mb-4 rounded-lg justify-center items-center">
-            <h1 class="text-3xl font-bold tracking-tight text-center sm:text-4xl">
-                Generated Spectrograms</h1>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 bg-indigo-600 rounded-lg">
-            {% for image in result.image_list %}
-            <div class="flex justify-center">
-                <img src="data:image/png;base64,{{ image }}" alt="Spectrogram"
-                     class="w-full h-auto object-cover rounded m-0 p-0 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-full">
-            </div>
-            {% endfor %}
-        </div>
-
-
-    </div>
-
-    <div class="relative isolate mx-auto mt-4 max-w-7xl py-8 sm:px-6 lg:px-8 overflow-hidden bg-base-100 rounded sm:rounded-3xl shadow-2xl flex items-center justify-center">
-        <svg viewBox="0 0 1024 1024"
-             class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-             aria-hidden="true">
-            <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                    fill-opacity="0.7"/>
-            <defs>
-                <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                    <stop stop-color="#24093b"/>
-                    <stop offset="1" stop-color="#971cfc"/>
-                </radialGradient>
-            </defs>
-        </svg>
-        <div class="flex flex-col lg:flex-row justify-center items-center lg:space-x-8 space-y-8 lg:space-y-0">
-            <!-- Upload and Record Form -->
-            <div class="max-w-lg text-center flex-1">
-                <div class="mx-auto max-w-md py-8">
-                    <h1 class="text-3xl font-bold tracking-tight sm:text-3xl bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text">
-                        Help Make the Model Better!</h1>
-                </div>
-                <!-- Form HTML -->
-                <form method="post" enctype="multipart/form-data" id="upload-form">
-                    {% csrf_token %}
-                    <div class="mx-auto max-w-md text-center py-6 px-6 bg-base-100 rounded-lg shadow-lg">
-                        <label for="accuracy-select" class="block text-lg font-semibold mb-2">
-                            Was the prediction accurate?
-                        </label>
-                        <select id="accuracy-select" name="accuracy" class="select select-primary w-full max-w-xs">
-                            <option disabled selected>Select an option</option>
-                            <option value="yes">Yes</option>
-                            <option value="no">No</option>
-                            <option value="not-sure">Not Sure</option>
-                        </select>
-                    </div>
-
-                    <div class="mx-auto max-w-md text-center py-6 mt-2 px-6 bg-base-100 rounded-lg shadow-lg">
-                        <label for="feedback-input" class="block text-lg font-semibold mb-2">
-                            If no, then what species was in the recording?
-                        </label>
-                        <input
-                                id="feedback-input"
-                                name="species"
-                                type="text"
-                                placeholder="What bird species was it?"
-                                class="input input-bordered input-secondary w-full max-w-xs"
-                                disabled/>
-                    </div>
-                    <div style="display:none; visibility:hidden;">
-                        <label for="honeypot">Bot bait</label>
-                        <input type="text" name="honeypot" id="honeypot" value="">
-                    </div>
-
-                    {% if error %}
-                    <div role="alert" class="alert alert-error mt-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span>Error:{{ error }}</span>
-                    </div>
-                    {% endif %}
-
-                    <div class="flex items-center justify-center space-x-4">
-                        <button type="submit" id="upload-btn" class="btn btn-secondary mt-4 mr-2">Submit</button>
-                        <button id="loading-btn" class="btn mt-4 hidden">
-                            <span class="loading loading-spinner"></span>
-                            Loading...
-                        </button>
-                    </div>
-                </form>
-
-                <script>
-                    const selectElement = document.getElementById('accuracy-select');
-                    const feedbackInput = document.getElementById('feedback-input');
-                    const submitButton = document.getElementById('upload-btn');
-
-                    function updateSubmitButton() {
-                        if (selectElement.value === "Select an option") {
-                            submitButton.disabled = true;
-                        } else if (selectElement.value === "no" && feedbackInput.value.trim() === "") {
-                            submitButton.disabled = true;
-                        } else {
-                            submitButton.disabled = false;
-                        }
-                    }
-
-                    submitButton.disabled = true;
-
-                    selectElement.addEventListener('change', function() {
-                        if (selectElement.value === "no") {
-                            feedbackInput.disabled = false;
-                        } else {
-                            feedbackInput.disabled = true;
-                            feedbackInput.value = "";
-                        }
-                        updateSubmitButton();
-                    });
-
-                    feedbackInput.addEventListener('input', updateSubmitButton);
-
-                    document.addEventListener("DOMContentLoaded", function() {
-                        const form = document.getElementById("upload-form");
-                        form.addEventListener("submit", function() {
-                            document.getElementById("upload-btn").classList.add("hidden");
-                            document.getElementById("loading-btn").classList.remove("hidden");
-                        });
-                    });
-
-                </script>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="mt-4 text-center text-sm text-gray-400">
-        <hr class="border-t-2 border-gray-400 mb-4">
-        <p>Nicholas Burczyk. All rights reserved.</p>
-        <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
-                href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
-    </footer>
-</div>
 </body>
 </html>

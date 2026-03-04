@@ -1,1872 +1,756 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="forest">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="upload" content="Upload File">
-    <title>Upload File</title>
-    {% load static %}
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <link
-            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
-            rel="stylesheet"
-            type="text/css"
-    />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .carousel-image-container {
-            width: 100%;
-            height: 100%; /* Adjust as needed */
-            overflow: hidden;
-            position: relative;
-        }
-        .carousel {
-            display: flex;
-            transition: transform 0.5s ease-in-out;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nick@burczyk:~$ — bird-classifier</title>
+{% load static %}
+<link href="{% static 'css/styles.css' %}" rel="stylesheet">
+<link href="{% static 'css/custom.css' %}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#00ff41;--gd:#00aa2a;--gdark:#003b0f;--glow:rgba(0,255,65,0.16);
+  --bg:#020c02;--bg2:#040f04;--bg3:#030a03;--t:#00cc33;--td:#006615;--tb:#00ff41;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--t);font-family:'Share Tech Mono',monospace;}
 
+body::before{content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);}
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,0.5) 100%);}
+.scanline{position:fixed;left:0;right:0;height:3px;background:rgba(0,255,65,0.05);z-index:998;pointer-events:none;animation:scan 7s linear infinite;}
+@keyframes scan{0%{top:-3px}100%{top:100vh}}
+@keyframes flicker{0%,100%{opacity:1}88%{opacity:1}89%{opacity:.82}90%{opacity:1}96%{opacity:.9}97%{opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 12px 2px var(--glow)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+@keyframes slideCarousel{0%{transform:translateX(0)}}
 
-        .carousel-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-        }
+/* ── TITLEBAR ── */
+#titlebar{display:flex;align-items:center;justify-content:space-between;padding:7px 16px;background:#010801;border-bottom:1px solid #002808;position:sticky;top:0;z-index:50;animation:flicker 10s infinite;}
+.dots{display:flex;gap:8px;}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot-r{background:#ff5555;box-shadow:0 0 5px #ff555566;}
+.dot-y{background:#ffbb00;box-shadow:0 0 5px #ffbb0066;}
+.dot-g{background:var(--g);box-shadow:0 0 5px var(--glow);animation:pulse 3s infinite;}
+.ttl{font-family:'VT323',monospace;font-size:17px;color:var(--td);letter-spacing:2px;}
+.clk{font-size:12px;color:var(--td);letter-spacing:1px;}
 
-        .glow-text {
-            color: white;
-            text-shadow:
-                0 0 5px rgba(255, 255, 255, 0.5),
-        }
-        .carousel-text {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            text-align: center;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 1.5rem; /* Adjust font size as needed */
-            font-weight: bold;
-        }
+/* ── NAV ── */
+#navback{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 20px;background:#010a01;border-bottom:1px solid #001f05;font-size:12px;}
+.nb-link{color:var(--td);text-decoration:none;transition:color .15s;letter-spacing:1px;padding:2px 8px;border:1px solid transparent;border-radius:2px;}
+.nb-link:hover{color:var(--g);border-color:#003810;}
+.nb-sep{color:#002808;}
+.nb-active{color:var(--g);}
 
-    </style>
+/* ── MAIN ── */
+#main{max-width:1160px;margin:0 auto;padding:24px 20px 60px;}
+
+/* ── SECTION CARD ── */
+.ts{border:1px solid #002808;border-left:3px solid var(--g);background:var(--bg2);border-radius:3px;margin-bottom:20px;overflow:hidden;animation:fadeIn .3s ease forwards;}
+.ts-hd{display:flex;align-items:center;gap:8px;padding:9px 16px;background:#010a01;border-bottom:1px solid #001f05;flex-wrap:wrap;}
+.ts-title{font-family:'VT323',monospace;font-size:16px;color:var(--g);letter-spacing:2px;}
+.ts-sub{color:var(--td);font-size:11px;margin-left:auto;}
+.ts-bd{padding:20px;}
+
+/* ── STAT BOXES ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:4px;}
+.stat-box{border:1px solid #002808;background:#030803;padding:14px 16px;border-radius:2px;text-align:center;}
+.stat-lbl{color:var(--td);font-size:10px;letter-spacing:2px;margin-bottom:4px;}
+.stat-val{font-family:'VT323',monospace;font-size:28px;line-height:1.2;}
+.stat-val.s{color:var(--g);text-shadow:0 0 10px var(--glow);}
+.stat-val.w{color:#ccff00;}
+.stat-val.e{color:#ff5555;}
+.stat-sub{color:var(--td);font-size:11px;margin-top:2px;}
+
+/* ── UPLOAD / RECORD SECTION ── */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+@media(max-width:720px){.upload-grid{grid-template-columns:1fr;}}
+
+.upload-panel{border:1px solid #002808;background:#030803;padding:18px;border-radius:2px;}
+.panel-label{font-size:10px;color:var(--td);letter-spacing:3px;margin-bottom:14px;}
+.panel-title{font-family:'VT323',monospace;font-size:20px;color:var(--tb);margin-bottom:14px;}
+
+/* File drop zone */
+.drop-zone{
+  border:2px dashed #003810;background:#010a01;border-radius:3px;
+  padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--g);background:rgba(0,255,65,.03);}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:28px;margin-bottom:8px;display:block;}
+.drop-text{font-size:12px;color:var(--td);}
+.drop-text strong{color:var(--g);}
+.file-selected{font-size:12px;color:var(--tb);margin-top:8px;min-height:18px;letter-spacing:1px;}
+
+/* Record buttons */
+.rec-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+
+/* Audio playback */
+audio{width:100%;margin-top:10px;filter:sepia(1) hue-rotate(80deg) saturate(3) brightness(.8);}
+audio::-webkit-media-controls-panel{background:#010a01;}
+
+/* Divider */
+.or-divider{text-align:center;color:var(--td);font-size:11px;letter-spacing:3px;margin:16px 0;position:relative;}
+.or-divider::before,.or-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#002808;}
+.or-divider::before{left:0;}
+.or-divider::after{right:0;}
+
+/* ── BUTTONS ── */
+.term-btn{display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--g);color:var(--g);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 18px;border-radius:2px;cursor:pointer;transition:all .2s;letter-spacing:1px;white-space:nowrap;}
+.term-btn:hover{background:rgba(0,255,65,.08);box-shadow:0 0 12px rgba(0,255,65,.15);}
+.term-btn:disabled{border-color:var(--td);color:var(--td);cursor:not-allowed;opacity:.5;}
+.term-btn:disabled:hover{background:transparent;box-shadow:none;}
+.term-btn.secondary{border-color:#003810;color:var(--td);}
+.term-btn.secondary:hover{border-color:#336633;color:var(--t);}
+.term-btn.danger{border-color:#ff4444;color:#ff4444;}
+.term-btn.danger:hover{background:rgba(255,68,68,.08);}
+.term-btn.lg{font-size:14px;padding:11px 28px;}
+.spinner{width:13px;height:13px;border-radius:50%;border:2px solid #003810;border-top-color:var(--g);animation:spin .7s linear infinite;flex-shrink:0;}
+.loading-row{display:none;align-items:center;gap:8px;color:var(--td);font-size:12px;}
+
+/* ── INPUTS ── */
+.term-input{width:100%;background:#010a01;border:1px solid #003810;color:var(--tb);font-family:'Share Tech Mono',monospace;font-size:13px;padding:9px 12px;border-radius:2px;outline:none;transition:all .15s;caret-color:var(--g);}
+.term-input:focus{border-color:var(--g);box-shadow:0 0 8px var(--glow);}
+.term-input::placeholder{color:#003810;}
+.term-input-row{display:flex;align-items:center;gap:0;border:1px solid #003810;border-radius:2px;overflow:hidden;}
+.term-input-row .prefix{padding:9px 12px;background:#010a01;color:var(--td);font-size:12px;letter-spacing:1px;border-right:1px solid #003810;flex-shrink:0;}
+.term-input-row input{border:none;border-radius:0;flex:1;}
+.term-input-row input:focus{box-shadow:none;}
+
+/* Honeypot */
+.hp{display:none;visibility:hidden;}
+
+/* ── ALERT ── */
+.term-alert-err{display:flex;gap:10px;border:1px solid #ff5555;border-left:3px solid #ff5555;background:rgba(255,85,85,.05);padding:11px 14px;border-radius:2px;margin-bottom:12px;font-size:12px;color:#ff8888;}
+.term-alert-ok{display:flex;gap:10px;border:1px solid var(--g);border-left:3px solid var(--g);background:rgba(0,255,65,.04);padding:11px 14px;border-radius:2px;margin-bottom:12px;font-size:12px;color:#88ffaa;}
+
+/* ── CAROUSEL ── */
+.carousel-wrap{position:relative;overflow:hidden;border:1px solid #002808;border-radius:3px;aspect-ratio:4/3;background:#010a01;}
+.carousel-track{display:flex;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+.carousel-slide{flex-shrink:0;width:100%;}
+.carousel-slide img{width:100%;height:100%;object-fit:cover;filter:saturate(.7) brightness(.85) sepia(.15) hue-rotate(80deg);transition:filter .3s;}
+.carousel-caption{position:absolute;bottom:0;left:0;right:0;padding:8px 14px;background:rgba(1,8,1,.88);font-size:11px;color:var(--td);letter-spacing:2px;}
+.carousel-dots{display:flex;justify-content:center;gap:6px;padding:8px;}
+.cdot{width:6px;height:6px;border-radius:50%;background:#002808;transition:background .2s;cursor:pointer;}
+.cdot.active{background:var(--g);}
+
+/* ── MACAULAY SECTION ── */
+.macaulay-inner{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.macaulay-embed{flex-shrink:0;}
+.macaulay-embed iframe{border:1px solid #002808;border-radius:3px;display:block;}
+.macaulay-form{flex:1;min-width:220px;}
+
+/* ── BIRD TABLE ── */
+.bird-table{width:100%;border-collapse:collapse;}
+.bird-table th{font-size:10px;letter-spacing:3px;color:var(--td);padding:8px 12px;border-bottom:2px solid #002808;text-align:left;background:#010a01;}
+.bird-table tr{border-bottom:1px solid #001805;transition:background .15s;}
+.bird-table tr:hover{background:rgba(0,255,65,.02);}
+.bird-table td{padding:10px 12px;vertical-align:middle;}
+.bird-row{display:flex;align-items:center;gap:12px;}
+.bird-thumb{width:72px;height:52px;object-fit:cover;border-radius:2px;border:1px solid #002808;filter:saturate(.7) brightness(.85) hue-rotate(80deg);transition:filter .3s;flex-shrink:0;}
+.bird-thumb:hover{filter:none;}
+.bird-name{color:var(--tb);font-size:13px;}
+.bird-latin{color:var(--td);font-size:11px;font-style:italic;margin-top:2px;}
+.play-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid #003810;color:var(--td);font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 12px;border-radius:2px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.play-btn:hover{border-color:var(--g);color:var(--g);}
+.play-btn.playing{border-color:#ff4444;color:#ff4444;}
+.play-btn.playing:hover{background:rgba(255,68,68,.06);}
+
+/* Table search */
+.table-search{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.table-search input{flex:1;max-width:280px;}
+.table-count{font-size:11px;color:var(--td);}
+
+/* ── HOW IT WORKS ── */
+.pipeline{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.pipe-step{border:1px solid #002808;border-radius:3px;overflow:hidden;background:#030803;transition:border-color .2s;}
+.pipe-step:hover{border-color:var(--gd);}
+.pipe-step img{width:100%;height:130px;object-fit:cover;filter:saturate(.7) brightness(.8) hue-rotate(80deg);transition:filter .3s;display:block;}
+.pipe-step:hover img{filter:none;}
+.pipe-body{padding:12px 14px;}
+.pipe-num{font-family:'VT323',monospace;font-size:22px;color:var(--g);margin-bottom:4px;}
+.pipe-desc{font-size:12px;color:#88cc88;line-height:1.65;}
+
+/* ── STATUS BAR ── */
+#statusbar{position:sticky;bottom:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:5px 16px;background:#010801;border-top:1px solid #002808;font-size:11px;color:var(--td);letter-spacing:1px;}
+
+/* ── MISC ── */
+a.tl{color:var(--g);text-decoration:none;}
+a.tl:hover{text-shadow:0 0 8px var(--g);text-decoration:underline;}
+.section-comment{font-size:11px;color:var(--td);margin-bottom:14px;letter-spacing:1px;}
+.bot-prompt{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:12px;color:var(--td);}
+.cur{display:inline-block;width:8px;height:13px;background:var(--g);animation:blink .7s infinite;vertical-align:middle;}
+
+@media(max-width:600px){
+  .macaulay-inner{flex-direction:column;}
+  .bird-table{font-size:12px;}
+  .bird-thumb{width:52px;height:38px;}
+}
+</style>
 </head>
-<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-700 via-violet-900 to-indigo-700 text-gray-200">
+<body>
+<div class="scanline"></div>
 
-<!-- Navbar -->
-<div class="navbar bg-base-100 min-h-20">
-    <div class="navbar-start">
-        <button id="menu-button" class="btn btn-ghost btn-circle">
-            <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 6h16M4 12h16M4 18h7"/>
-            </svg>
-        </button>
-    </div>
-    <div class="navbar-center">
-        <a class="btn btn-ghost text-xl" href="/">Nick Burczyk</a>
-    </div>
-    <div class="navbar-end"></div>
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+  <div class="ttl">nick@burczyk — bird-classifier — upload</div>
+  <div class="clk" id="clock">00:00:00</div>
 </div>
 
-
-<!-- Side Menu -->
-<div id="side-menu"
-     class="fixed top-0 left-0 z-50 h-full w-64 bg-base-100 p-4 shadow-lg transform -translate-x-full transition-transform">
-    <div class="flex justify-between items-center mb-4">
-        <span class="text-xl font-bold">Menu</span>
-        <button id="close-menu" class="btn btn-ghost btn-circle">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-    <ul class="menu">
-        <li>
-            <a class="link flex items-center no-underline" href="/" id="link-homepage">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                </svg>
-                Homepage
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="h-6 w-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
-                </svg>
-                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
-                    Bird Classifier</p>
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"/>
-                </svg>
-                Projects
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
-                </svg>
-                Contact
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
-                </svg>
-                Server Map
-            </a>
-        </li>
-    </ul>
+<!-- NAV -->
+<div id="navback">
+  <a href="/" class="nb-link">~/home</a>
+  <span class="nb-sep">/</span>
+  <span class="nb-active">bird-classifier</span>
+  <div style="margin-left:auto;display:flex;gap:10px;">
+    <a href="/" class="nb-link">← home</a>
+  </div>
 </div>
 
+<div id="main">
 
-<!-- Overlay -->
-<div id="overlay" class="fixed inset-0 z-40 bg-black opacity-50 hidden"></div>
+  <!-- ── HEADER + LIVE STATS ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">BACKYARD ALABAMA BIRD DETECTOR</span>
+      <span class="ts-sub">CNN · mel-spectrogram · 30 classes · Alabama species</span>
+    </div>
+    <div class="ts-bd">
+      <div class="section-comment">// deep learning model trained to detect common Alabama bird chirps — live model stats below</div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-lbl">MODEL CLASSES</div>
+          <div class="stat-val s">30</div>
+          <div class="stat-sub">species</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">LIVE MODEL ACCURACY</div>
+          <div class="stat-val {{ model_severity }}">{{ model_accuracy }}%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">MOST ACCURATE</div>
+          <div class="stat-val {{ largest_severity }}">{{ most_accurate_bird }}%</div>
+          <div class="stat-sub">{{ most_accurate }}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">LEAST ACCURATE</div>
+          <div class="stat-val {{ smallest_severity }}">{{ least_accurate_bird }}%</div>
+          <div class="stat-sub">{{ least_accurate }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── UPLOAD + CAROUSEL ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">SUBMIT AUDIO FOR CLASSIFICATION</span>
+      <span class="ts-sub">upload a file or record live · wav/mp3/ogg/m4a accepted</span>
+    </div>
+    <div class="ts-bd">
+      <div class="upload-grid">
+
+        <!-- LEFT: FORM -->
+        <div>
+          <form method="post" enctype="multipart/form-data" id="upload-form">
+            {% csrf_token %}
+
+            <!-- File upload -->
+            <div class="upload-panel" style="margin-bottom:14px;">
+              <div class="panel-label">// OPTION 1 — UPLOAD FILE</div>
+              <div class="drop-zone" id="drop-zone">
+                <input type="file" name="file" id="file-input" accept="audio/*">
+                <span class="drop-icon">🎵</span>
+                <div class="drop-text"><strong>click to browse</strong> or drag &amp; drop audio</div>
+                <div class="file-selected" id="file-name">no file selected</div>
+              </div>
+            </div>
+
+            <div class="or-divider">— OR —</div>
+
+            <!-- Record -->
+            <div class="upload-panel" style="margin-bottom:14px;">
+              <div class="panel-label">// OPTION 2 — RECORD LIVE</div>
+              <div id="safari-warning" style="display:none;color:#ff8888;font-size:11px;margin-bottom:10px;">⚠ Live recording not supported in Safari. Please use Chrome.</div>
+              <div class="rec-row">
+                <button type="button" id="start-recording" class="term-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
+                  ▸ Start Recording
+                </button>
+                <button type="button" id="stop-recording" class="term-btn danger" disabled>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"/></svg>
+                  ■ Stop
+                </button>
+                <span id="rec-indicator" style="display:none;font-size:11px;color:#ff4444;">
+                  <span style="animation:blink .5s infinite;display:inline-block">●</span> REC
+                </span>
+              </div>
+              <audio id="audio-playback" controls class="hidden"></audio>
+              <input type="hidden" id="recorded-audio" name="recorded_audio">
+            </div>
+
+            <div class="hp"><input type="text" name="honeypot" id="honeypot" value=""></div>
+
+            <!-- Messages -->
+            {% if messages %}{% for message in messages %}
+            <div class="term-alert-err"><span style="color:#ff5555">✖</span> Error: {{ message }}</div>
+            {% endfor %}{% endif %}
+            {% if success_message %}
+            <div class="term-alert-ok"><span style="color:var(--g)">✔</span> {{ success_message }}</div>
+            {% endif %}
+
+            <!-- Submit row -->
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+              <button type="submit" id="upload-btn" class="term-btn lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
+                ▸ Classify Bird
+              </button>
+              <div id="loading-btn" class="loading-row">
+                <div class="spinner"></div><span>analyzing audio...</span>
+              </div>
+              <button type="button" id="reset-form" class="term-btn secondary">↺ reset</button>
+            </div>
+
+          </form>
+
+          <div class="bot-prompt">
+            <span>nick@burczyk:~/bird-classifier$</span><span class="cur"></span>
+          </div>
+        </div>
+
+        <!-- RIGHT: CAROUSEL -->
+        <div>
+          <div class="section-comment">// Alabama birds the model recognizes — auto-scrolling</div>
+          <div class="carousel-wrap">
+            <div class="carousel-track" id="carousel-track"></div>
+            <div class="carousel-caption">// 30 detectable Alabama species</div>
+          </div>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MACAULAY LIBRARY ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">FETCH FROM MACAULAY LIBRARY</span>
+      <span class="ts-sub">no birds nearby? pull a recording by ML number</span>
+    </div>
+    <div class="ts-bd">
+      <div class="section-comment">// visit <a class="tl" href="https://macaulaylibrary.org" target="_blank">macaulaylibrary.org</a> — find a bird recording — enter its ML# below</div>
+      <div class="macaulay-inner">
+        <div class="macaulay-embed">
+          <iframe src="https://macaulaylibrary.org/asset/622572493/embed" height="320" width="280" frameborder="0" allowfullscreen style="border-radius:3px;border:1px solid #002808;display:block;"></iframe>
+          <div style="font-size:10px;color:var(--td);margin-top:6px;letter-spacing:1px;text-align:center">// example embed — ML622572493</div>
+        </div>
+        <div class="macaulay-form">
+          <form method="post" id="download-form">
+            {% csrf_token %}
+            <div style="margin-bottom:14px;">
+              <div class="panel-label" style="margin-bottom:8px;">// ENTER ML NUMBER</div>
+              <div class="term-input-row">
+                <span class="prefix">ML#</span>
+                <input type="text" name="asset_num" class="term-input" placeholder="e.g. 622572493">
+              </div>
+            </div>
+            <div class="hp"><input type="text" name="honeypot" id="honeypot_download" value=""></div>
+            <button type="submit" id="fetch-btn" class="term-btn lg">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+              ↓ Fetch &amp; Classify
+            </button>
+            <div style="font-size:11px;color:var(--td);margin-top:10px;line-height:1.8;">
+              // This will download the audio from Macaulay<br>
+              // Library and run it through the classifier.
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BIRD TABLE ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">ALL DETECTABLE SPECIES</span>
+      <span class="ts-sub">30 Alabama birds · click play to hear each chirp</span>
+    </div>
+    <div class="ts-bd">
+      <div class="table-search">
+        <input type="text" class="term-input" id="bird-search" placeholder="filter birds..." style="max-width:280px" oninput="filterBirds()">
+        <span class="table-count" id="bird-count">showing 29 birds</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="bird-table" id="bird-table">
+          <thead>
+            <tr>
+              <th>SPECIES</th>
+              <th>CHIRP</th>
+            </tr>
+          </thead>
+          <tbody id="bird-tbody">
+
+            {% with birds=birds_list %}
+            <tr data-bird="american crow">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg" alt="American Crow" loading="lazy"><div><div class="bird-name">American Crow</div><div class="bird-latin">Corvus brachyrhynchos</div></div></div></td>
+              <td><button class="play-btn" id="pb_crow" onclick="togglePlay('a_crow','pb_crow')">▶ Play Chirp</button><audio id="a_crow" src="{% static 'audio/american_crow.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="american goldfinch">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg" alt="American Goldfinch" loading="lazy"><div><div class="bird-name">American Goldfinch</div><div class="bird-latin">Spinus tristis</div></div></div></td>
+              <td><button class="play-btn" id="pb_goldfinch" onclick="togglePlay('a_goldfinch','pb_goldfinch')">▶ Play Chirp</button><audio id="a_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="american robin">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419" alt="American Robin" loading="lazy"><div><div class="bird-name">American Robin</div><div class="bird-latin">Turdus migratorius</div></div></div></td>
+              <td><button class="play-btn" id="pb_robin" onclick="togglePlay('a_robin','pb_robin')">▶ Play Chirp</button><audio id="a_robin" src="{% static 'audio/american_robin.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="barred owl">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg" alt="Barred Owl" loading="lazy"><div><div class="bird-name">Barred Owl</div><div class="bird-latin">Strix varia</div></div></div></td>
+              <td><button class="play-btn" id="pb_owl" onclick="togglePlay('a_owl','pb_owl')">▶ Play Chirp</button><audio id="a_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="blue jay">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg" alt="Blue Jay" loading="lazy"><div><div class="bird-name">Blue Jay</div><div class="bird-latin">Cyanocitta cristata</div></div></div></td>
+              <td><button class="play-btn" id="pb_jay" onclick="togglePlay('a_jay','pb_jay')">▶ Play Chirp</button><audio id="a_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="brown-headed nuthatch">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg" alt="Brown-headed Nuthatch" loading="lazy"><div><div class="bird-name">Brown-headed Nuthatch</div><div class="bird-latin">Sitta pusilla</div></div></div></td>
+              <td><button class="play-btn" id="pb_nuthatch" onclick="togglePlay('a_nuthatch','pb_nuthatch')">▶ Play Chirp</button><audio id="a_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="carolina chickadee">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false" alt="Carolina Chickadee" loading="lazy"><div><div class="bird-name">Carolina Chickadee</div><div class="bird-latin">Poecile carolinensis</div></div></div></td>
+              <td><button class="play-btn" id="pb_chickadee" onclick="togglePlay('a_chickadee','pb_chickadee')">▶ Play Chirp</button><audio id="a_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="carolina wren">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg" alt="Carolina Wren" loading="lazy"><div><div class="bird-name">Carolina Wren</div><div class="bird-latin">Thryothorus ludovicianus</div></div></div></td>
+              <td><button class="play-btn" id="pb_wren" onclick="togglePlay('a_wren','pb_wren')">▶ Play Chirp</button><audio id="a_wren" src="{% static 'audio/wren.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="cedar waxwing">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg" alt="Cedar Waxwing" loading="lazy"><div><div class="bird-name">Cedar Waxwing</div><div class="bird-latin">Bombycilla cedrorum</div></div></div></td>
+              <td><button class="play-btn" id="pb_waxwing" onclick="togglePlay('a_waxwing','pb_waxwing')">▶ Play Chirp</button><audio id="a_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="chipping sparrow">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png" alt="Chipping Sparrow" loading="lazy"><div><div class="bird-name">Chipping Sparrow</div><div class="bird-latin">Spizella passerina</div></div></div></td>
+              <td><button class="play-btn" id="pb_chipping" onclick="togglePlay('a_chipping','pb_chipping')">▶ Play Chirp</button><audio id="a_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="dark-eyed junco">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024" alt="Dark-eyed Junco" loading="lazy"><div><div class="bird-name">Dark-eyed Junco</div><div class="bird-latin">Junco hyemalis</div></div></div></td>
+              <td><button class="play-btn" id="pb_dark" onclick="togglePlay('a_dark','pb_dark')">▶ Play Chirp</button><audio id="a_dark" src="{% static 'audio/junco.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="downy woodpecker">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg" alt="Downy Woodpecker" loading="lazy"><div><div class="bird-name">Downy Woodpecker</div><div class="bird-latin">Dryobates pubescens</div></div></div></td>
+              <td><button class="play-btn" id="pb_downy" onclick="togglePlay('a_downy','pb_downy')">▶ Play Chirp</button><audio id="a_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="eastern bluebird">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg" alt="Eastern Bluebird" loading="lazy"><div><div class="bird-name">Eastern Bluebird</div><div class="bird-latin">Sialia sialis</div></div></div></td>
+              <td><button class="play-btn" id="pb_bluebird" onclick="togglePlay('a_bluebird','pb_bluebird')">▶ Play Chirp</button><audio id="a_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="eastern kingbird">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg" alt="Eastern Kingbird" loading="lazy"><div><div class="bird-name">Eastern Kingbird</div><div class="bird-latin">Tyrannus tyrannus</div></div></div></td>
+              <td><button class="play-btn" id="pb_kingbird" onclick="togglePlay('a_kingbird','pb_kingbird')">▶ Play Chirp</button><audio id="a_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="eastern phoebe">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg" alt="Eastern Phoebe" loading="lazy"><div><div class="bird-name">Eastern Phoebe</div><div class="bird-latin">Sayornis phoebe</div></div></div></td>
+              <td><button class="play-btn" id="pb_phoebe" onclick="togglePlay('a_phoebe','pb_phoebe')">▶ Play Chirp</button><audio id="a_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="eastern towhee">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg" alt="Eastern Towhee" loading="lazy"><div><div class="bird-name">Eastern Towhee</div><div class="bird-latin">Pipilo erythrophthalmus</div></div></div></td>
+              <td><button class="play-btn" id="pb_towhee" onclick="togglePlay('a_towhee','pb_towhee')">▶ Play Chirp</button><audio id="a_towhee" src="{% static 'audio/towhee.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="house finch">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg" alt="House Finch" loading="lazy"><div><div class="bird-name">House Finch</div><div class="bird-latin">Haemorhous mexicanus</div></div></div></td>
+              <td><button class="play-btn" id="pb_house" onclick="togglePlay('a_house','pb_house')">▶ Play Chirp</button><audio id="a_house" src="{% static 'audio/house_finch.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="mourning dove">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg" alt="Mourning Dove" loading="lazy"><div><div class="bird-name">Mourning Dove</div><div class="bird-latin">Zenaida macroura</div></div></div></td>
+              <td><button class="play-btn" id="pb_dove" onclick="togglePlay('a_dove','pb_dove')">▶ Play Chirp</button><audio id="a_dove" src="{% static 'audio/mourning.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="myrtle warbler">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg" alt="Myrtle Warbler" loading="lazy"><div><div class="bird-name">Myrtle Warbler</div><div class="bird-latin">Setophaga coronata</div></div></div></td>
+              <td><button class="play-btn" id="pb_myrtle" onclick="togglePlay('a_myrtle','pb_myrtle')">▶ Play Chirp</button><audio id="a_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="northern cardinal">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg" alt="Northern Cardinal" loading="lazy"><div><div class="bird-name">Northern Cardinal</div><div class="bird-latin">Cardinalis cardinalis</div></div></div></td>
+              <td><button class="play-btn" id="pb_cardinal" onclick="togglePlay('a_cardinal','pb_cardinal')">▶ Play Chirp</button><audio id="a_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="northern flicker">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg" alt="Northern Flicker" loading="lazy"><div><div class="bird-name">Northern Flicker</div><div class="bird-latin">Colaptes auratus</div></div></div></td>
+              <td><button class="play-btn" id="pb_flicker" onclick="togglePlay('a_flicker','pb_flicker')">▶ Play Chirp</button><audio id="a_flicker" src="{% static 'audio/flicker.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="northern mockingbird">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU" alt="Northern Mockingbird" loading="lazy"><div><div class="bird-name">Northern Mockingbird</div><div class="bird-latin">Mimus polyglottos</div></div></div></td>
+              <td><button class="play-btn" id="pb_mock" onclick="togglePlay('a_mock','pb_mock')">▶ Play Chirp</button><audio id="a_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="pine warbler">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg" alt="Pine Warbler" loading="lazy"><div><div class="bird-name">Pine Warbler</div><div class="bird-latin">Setophaga pinus</div></div></div></td>
+              <td><button class="play-btn" id="pb_pine" onclick="togglePlay('a_pine','pb_pine')">▶ Play Chirp</button><audio id="a_pine" src="{% static 'audio/pine.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="purple finch">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg" alt="Purple Finch" loading="lazy"><div><div class="bird-name">Purple Finch</div><div class="bird-latin">Haemorhous purpureus</div></div></div></td>
+              <td><button class="play-btn" id="pb_purple" onclick="togglePlay('a_purple','pb_purple')">▶ Play Chirp</button><audio id="a_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="red-bellied woodpecker">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg" alt="Red-bellied Woodpecker" loading="lazy"><div><div class="bird-name">Red-bellied Woodpecker</div><div class="bird-latin">Melanerpes carolinus</div></div></div></td>
+              <td><button class="play-btn" id="pb_red_woodpecker" onclick="togglePlay('a_red_woodpecker','pb_red_woodpecker')">▶ Play Chirp</button><audio id="a_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="red-winged blackbird">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Red-winged_Blackbird.jpg" alt="Red-winged Blackbird" loading="lazy"><div><div class="bird-name">Red-winged Blackbird</div><div class="bird-latin">Agelaius phoeniceus</div></div></div></td>
+              <td><button class="play-btn" id="pb_red_wing" onclick="togglePlay('a_red_wing','pb_red_wing')">▶ Play Chirp</button><audio id="a_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="song sparrow">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA" alt="Song Sparrow" loading="lazy"><div><div class="bird-name">Song Sparrow</div><div class="bird-latin">Melospiza melodia</div></div></div></td>
+              <td><button class="play-btn" id="pb_song" onclick="togglePlay('a_song','pb_song')">▶ Play Chirp</button><audio id="a_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="tufted titmouse">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg" alt="Tufted Titmouse" loading="lazy"><div><div class="bird-name">Tufted Titmouse</div><div class="bird-latin">Baeolophus bicolor</div></div></div></td>
+              <td><button class="play-btn" id="pb_titmouse" onclick="togglePlay('a_titmouse','pb_titmouse')">▶ Play Chirp</button><audio id="a_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio></td>
+            </tr>
+            <tr data-bird="white-breasted nuthatch">
+              <td><div class="bird-row"><img class="bird-thumb" src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg" alt="White-breasted Nuthatch" loading="lazy"><div><div class="bird-name">White-breasted Nuthatch</div><div class="bird-latin">Sitta carolinensis</div></div></div></td>
+              <td><button class="play-btn" id="pb_white" onclick="togglePlay('a_white','pb_white')">▶ Play Chirp</button><audio id="a_white" src="{% static 'audio/white.mp3' %}"></audio></td>
+            </tr>
+            {% endwith %}
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HOW IT WORKS ── -->
+  <div class="ts">
+    <div class="ts-hd">
+      <span style="color:var(--td);font-size:11px">//</span>
+      <span class="ts-title">HOW IT WORKS</span>
+      <span class="ts-sub">5-step inference pipeline</span>
+    </div>
+    <div class="ts-bd">
+      <div class="section-comment">// audio → preprocessing → spectrogram → CNN → weighted prediction</div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <img src="{% static '/images/convert.png' %}" alt="Step 1" loading="lazy">
+          <div class="pipe-body">
+            <div class="pipe-num">STEP_01</div>
+            <div class="pipe-desc">File type check and conversion to .wav format for standardized processing.</div>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <img src="{% static '/images/visual.png' %}" alt="Step 2" loading="lazy">
+          <div class="pipe-body">
+            <div class="pipe-num">STEP_02</div>
+            <div class="pipe-desc">Audio resampled to 22050 Hz. Metadata extracted: length, pitch, average frequency.</div>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <img src="{% static 'images/visual_reduced.png' %}" alt="Step 3" loading="lazy">
+          <div class="pipe-body">
+            <div class="pipe-num">STEP_03</div>
+            <div class="pipe-desc">Noise reduction applied to amplify important bird-call frequencies and suppress background.</div>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <img src="{% static 'images/split.png' %}" alt="Step 4" loading="lazy">
+          <div class="pipe-body">
+            <div class="pipe-num">STEP_04</div>
+            <div class="pipe-desc">Mel-spectrogram generated for every 5-second window of audio, producing an array of image segments.</div>
+          </div>
+        </div>
+        <div class="pipe-step">
+          <img src="{% static 'images/predict.png' %}" alt="Step 5" loading="lazy">
+          <div class="pipe-body">
+            <div class="pipe-num">STEP_05</div>
+            <div class="pipe-desc">CNN predicts on each spectrogram. Weighted final prediction combines all segment confidences.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div><span style="color:var(--g)">●</span>&nbsp; bird-classifier v1 · 30 classes · Alabama region</div>
+  <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
+</div>
 
 <script>
-    const menuButton = document.getElementById('menu-button');
-    const closeMenu = document.getElementById('close-menu');
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.getElementById('overlay');
-    const links = document.querySelectorAll('#side-menu .link');
+// ── CLOCK ──────────────────────────────────────────────────
+function tick(){const t=new Date().toLocaleTimeString('en-US',{hour12:false});document.getElementById('clock').textContent=t;document.getElementById('sclk').textContent=t;}
+tick();setInterval(tick,1000);
 
-    const toggleMenu = () => {
-        sideMenu.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-    };
-
-    if (menuButton) {
-        menuButton.addEventListener('click', toggleMenu);
-    }
-    closeMenu.addEventListener('click', toggleMenu);
-    overlay.addEventListener('click', toggleMenu);
-
-    links.forEach(link => {
-        link.addEventListener('click', toggleMenu);
-    });
-
-    function displayFileName() {
-    const fileInput = document.getElementById('file-upload');
-    const fileNameDisplay = document.getElementById('file-name-display');
-        if (fileInput.files.length > 0) {
-            fileNameDisplay.textContent = fileInput.files[0].name;
-        } else {
-            fileNameDisplay.textContent = 'No file chosen';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-    const startRecordingButton = document.getElementById('start-recording');
-    const stopRecordingButton = document.getElementById('stop-recording');
-    const audioPlayback = document.getElementById('audio-playback');
-    const recordedAudioInput = document.getElementById('recorded-audio');
-
-    let mediaRecorder;
-    let recordedChunks = [];
-
-    startRecordingButton.addEventListener('click', async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-
-        recordedChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        };
-
-        mediaRecorder.onstop = () => {
-            recordedBlob = new Blob(recordedChunks, { type: 'audio/wav' });
-            const recordedUrl = URL.createObjectURL(recordedBlob);
-            audioPlayback.src = recordedUrl;
-            audioPlayback.classList.remove('hidden');
-            recordedAudioInput.value = recordedUrl;
-        };
-
-        mediaRecorder.start();
-        startRecordingButton.disabled = true;
-        stopRecordingButton.disabled = false;
-    });
-
-    stopRecordingButton.addEventListener('click', () => {
-        mediaRecorder.stop();
-        startRecordingButton.disabled = false;
-        stopRecordingButton.disabled = true;
-    });
+// ── CAROUSEL ───────────────────────────────────────────────
+const CAROUSEL_IMGS=[
+  'https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg',
+  'https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg',
+  'https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419',
+  'https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg',
+  'https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false',
+  'https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg',
+  'https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg',
+  'https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg',
+  'https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg',
+  'https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg',
+];
+const track=document.getElementById('carousel-track');
+const dotsEl=document.getElementById('carousel-dots');
+let cIdx=0;
+CAROUSEL_IMGS.forEach((src,i)=>{
+  const slide=document.createElement('div');
+  slide.className='carousel-slide';
+  slide.innerHTML=`<img src="${src}" alt="bird ${i+1}" style="width:100%;height:260px;object-fit:cover;display:block;">`;
+  track.appendChild(slide);
+  const dot=document.createElement('div');
+  dot.className='cdot'+(i===0?' active':'');
+  dot.onclick=()=>goSlide(i);
+  dotsEl.appendChild(dot);
 });
+function goSlide(n){
+  cIdx=n;
+  track.style.transform=`translateX(-${cIdx*100}%)`;
+  document.querySelectorAll('.cdot').forEach((d,i)=>d.classList.toggle('active',i===cIdx));
+}
+setInterval(()=>goSlide((cIdx+1)%CAROUSEL_IMGS.length),3500);
 
-</script>
+// ── UPLOAD FORM LOGIC ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  const startBtn=document.getElementById('start-recording');
+  const stopBtn=document.getElementById('stop-recording');
+  const playback=document.getElementById('audio-playback');
+  const recInput=document.getElementById('recorded-audio');
+  const fileInput=document.getElementById('file-input');
+  const fileNameEl=document.getElementById('file-name');
+  const uploadBtn=document.getElementById('upload-btn');
+  const resetBtn=document.getElementById('reset-form');
+  const recIndicator=document.getElementById('rec-indicator');
+  const dropZone=document.getElementById('drop-zone');
 
-<!-- Main Content -->
+  let mediaRecorder,recordedChunks=[],recordedBlob;
+  const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-<div class="container mx-auto p-4">
-    <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-        <div class="w-full bg-base-100 py-8 px-6 sm:px-8 rounded-lg">
-            <h1 class="text-3xl font-bold tracking-tight text-center sm:text-4xl bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text">
-                Backyard Alabama Bird
-                Detector</h1>
-            <h2 class="text-xl sm:text-2xl tracking-tight text-center">Deep learning model trained to detect common
-                Alabama bird chirps</h2>
-            <div class="stats stats-vertical lg:stats-horizontal shadow flex flex-wrap justify-center items-center">
-                <div class="stat flex-grow text-center max-w-[300px]">
-                    <div class="stat-title">Live Model Accuracy</div>
-                    <div class="stat-value">30 classes</div>
-                    <div class="stat-value text-{{model_severity }}">{{ model_accuracy }}%</div>
-                </div>
-                <div class="stat flex-grow text-center max-w-[300px]">
-                    <div class="stat-title">Live Most Accurate Bird</div>
-                    <div class="stat-value">{{ most_accurate }}</div>
-                    <div class="stat-value text-{{largest_severity}}">{{ most_accurate_bird }}%</div>
-                </div>
-                <div class="stat flex-grow text-center max-w-[300px]">
-                    <div class="stat-title">Live Least Accurate Bird</div>
-                    <div class="stat-value">{{ least_accurate }}</div>
-                    <div class="stat-value text-{{smallest_severity}}">{{ least_accurate_bird }}%</div>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="relative isolate mx-auto mt-4 max-w-7xl py-8 sm:px-6 lg:px-8 overflow-hidden bg-base-100 rounded sm:rounded-3xl shadow-2xl flex items-center justify-center">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#24093b"/>
-                        <stop offset="1" stop-color="#971cfc"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <div class="flex flex-col lg:flex-row justify-center items-center lg:space-x-8 space-y-8 lg:space-y-0">
-                <!-- Upload and Record Form -->
-                <div class="max-w-lg text-center flex-1">
-                    <div class="mx-auto max-w-md py-8">
-                        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-3xl">Upload a file or Record
-                            Your Own!</h1>
-                        <h2 class="text-lg tracking-tight text-white">The model recognizes between 29 common Alabama
-                            birds. See a list of them all below!</h2>
-                    </div>
-                    <!-- Form HTML -->
-                    <form method="post" enctype="multipart/form-data" id="upload-form">
-                        {% csrf_token %}
-                        <div class="mx-auto max-w-md text-center py-6 px-6 bg-base-100 rounded-lg shadow-lg">
-                            <div class="flex items-center justify-center">
-                                <button type="button" id="upload-audio" class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/>
-                                    </svg>
-                                    Upload Audio File
-                                </button>
-                                <input type="file" name="file" id="file-input" accept="audio/*" class="hidden">
-                            </div>
-                            <div class="mt-2 text-white" id="file-name">No file selected</div>
-                        </div>
-
-                        <script>
-                            document.getElementById('upload-audio').addEventListener('click', () => {
-                                document.getElementById('file-input').click();
-                            });
-                            document.getElementById('file-input').addEventListener('change', function() {
-                                const fileName = this.files.length > 0 ? this.files[0].name : 'No file selected';
-                                document.getElementById('file-name').textContent = fileName;
-                            });
-                        </script>
-                        <div class="mb-4 mt-4">
-                            <h2 class="text-lg">Or Record Audio</h2>
-                        </div>
-                        <div class="mx-auto max-w-md text-center py-6 px-6 bg-base-100 rounded-lg shadow-lg">
-                            <div class="flex items-center justify-center space-x-4">
-                                <button type="button" id="start-recording" class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
-                                    </svg>
-                                    Start
-                                </button>
-                                <button type="button" id="stop-recording" class="btn btn-error" disabled>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"/>
-                                    </svg>
-                                    Stop
-                                </button>
-                            </div>
-                            <audio id="audio-playback" controls class="mt-4 hidden mx-auto"></audio>
-                            <input type="hidden" id="recorded-audio" name="recorded_audio">
-                        </div>
-                        <div style="display:none; visibility:hidden;">
-                            <label for="honeypot">Bot bait</label>
-                            <input type="text" name="honeypot" id="honeypot" value="">
-                        </div>
-                        <div class="flex items-center justify-center space-x-4">
-                            <button type="submit" id="upload-btn" class="btn btn-secondary mt-4 mr-2">Submit</button>
-                            <button id="loading-btn" class="btn mt-4 hidden">
-                                <span class="loading loading-spinner"></span>
-                                loading...
-                            </button>
-                            <button type="button" id="reset-form" class="btn mt-4">Reset</button>
-                        </div>
-                    </form>
-                    {% if messages %}
-                    {% for message in messages %}
-                    <div role="alert" class="alert alert-error mt-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span>Error:{{ message }}</span>
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                    {% if success_message %}
-                    <div role="alert" class="alert alert-success mt-8">
-                        <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 shrink-0 stroke-current"
-                                fill="none"
-                                viewBox="0 0 24 24">
-                            <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span>Success: {{ success_message }}</span>
-                    </div>
-                    {% endif %}
-
-
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-    const startRecordingButton = document.getElementById('start-recording');
-    const stopRecordingButton = document.getElementById('stop-recording');
-    const audioPlayback = document.getElementById('audio-playback');
-    const recordedAudioInput = document.getElementById('recorded-audio');
-    const fileInput = document.getElementById('file-input');
-    const uploadButton = document.getElementById('upload-btn');
-    const uploadAudio = document.getElementById('upload-audio');
-    const resetFormBtn = document.getElementById('reset-form');
-    const errorAlert = document.querySelector('.alert-error');
-    let mediaRecorder;
-    let recordedChunks = [];
-    let recordedBlob;
-
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-    if (isSafari && !localStorage.getItem('safariWarningDisplayed')) {
-        alert("Live recording is disabled on Safari. Please use Chrome for better performance.");
-        localStorage.setItem('safariWarningDisplayed', 'true');
+  if(isSafari){
+    document.getElementById('safari-warning').style.display='block';
+    startBtn.disabled=true;stopBtn.disabled=true;
+    if(!localStorage.getItem('safariWarn')){
+      alert('Live recording is disabled on Safari. Please use Chrome for best performance.');
+      localStorage.setItem('safariWarn','1');
     }
+  }
 
-    if (isSafari) {
-        startRecordingButton.disabled = true;
-        stopRecordingButton.disabled = true;
-
-        const promptMessage = document.createElement('div');
-        promptMessage.style.color = 'red';
-        promptMessage.innerText = "Live recording is not yet supported in Safari. Please use Chrome or another supported browser.";
-        document.body.prepend(promptMessage);
-    }
-
-    startRecordingButton.addEventListener('click', async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        uploadAudio.disabled = true;
-
-        recordedChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
-            }
-        };
-
-        mediaRecorder.onstop = () => {
-            recordedBlob = new Blob(recordedChunks, { type: 'audio/mpeg' });
-            const recordedUrl = URL.createObjectURL(recordedBlob);
-            audioPlayback.src = recordedUrl;
-            audioPlayback.classList.remove('hidden');
-            const file = new File([recordedBlob], "user_recording.wav", { type: 'audio/wav' });
-
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-
-            recordedAudioInput.value = recordedUrl;
-        };
-
-        mediaRecorder.start();
-        startRecordingButton.disabled = true;
-        stopRecordingButton.disabled = false;
-    });
-
-    stopRecordingButton.addEventListener('click', () => {
-        mediaRecorder.stop();
-        startRecordingButton.disabled = false;
-        stopRecordingButton.disabled = true;
-    });
-
-    resetFormBtn.addEventListener('click', () => {
-    fileInput.value = '';
-    fileInput.disabled = false;
-    uploadAudio.disabled = false;
-    if (!isSafari) {
-        startRecordingButton.disabled = false;
+  // File input
+  fileInput.addEventListener('change',function(){
+    if(this.files.length>0){
+      fileNameEl.textContent='▸ '+this.files[0].name;
+      fileNameEl.style.color='var(--g)';
+      if(!isSafari){startBtn.disabled=true;}
+      stopBtn.disabled=true;
+      recInput.value='';
+      playback.classList.add('hidden');playback.src='';
     } else {
-        startRecordingButton.disabled = true;
+      fileNameEl.textContent='no file selected';
+      fileNameEl.style.color='';
+      if(!isSafari)startBtn.disabled=false;
     }
+  });
 
-    stopRecordingButton.disabled = true;
-    document.getElementById('file-name').textContent = 'No file selected';
-    recordedAudioInput.value = '';
-    audioPlayback.classList.add('hidden');
-    audioPlayback.src = '';
-    if (errorAlert) {
-        errorAlert.style.display = 'none';
-    }
+  // Drag and drop
+  dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});
+  dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');if(e.dataTransfer.files.length){fileInput.files=e.dataTransfer.files;fileInput.dispatchEvent(new Event('change'));}});
+
+  // Recording
+  startBtn.addEventListener('click',async()=>{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream);
+    fileInput.value='';fileInput.disabled=true;
+    fileNameEl.textContent='no file selected';fileNameEl.style.color='';
+    recordedChunks=[];
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data);};
+    mediaRecorder.onstop=()=>{
+      recordedBlob=new Blob(recordedChunks,{type:'audio/mpeg'});
+      const url=URL.createObjectURL(recordedBlob);
+      playback.src=url;playback.classList.remove('hidden');
+      const file=new File([recordedBlob],'user_recording.wav',{type:'audio/wav'});
+      const dt=new DataTransfer();dt.items.add(file);
+      fileInput.files=dt.files;
+      recInput.value=url;
+      fileInput.disabled=false;
+      recIndicator.style.display='none';
+    };
+    mediaRecorder.start();
+    startBtn.disabled=true;stopBtn.disabled=false;
+    recIndicator.style.display='inline-flex';
+  });
+
+  stopBtn.addEventListener('click',()=>{
+    mediaRecorder.stop();
+    startBtn.disabled=false;stopBtn.disabled=true;
+  });
+
+  // Reset
+  resetBtn.addEventListener('click',()=>{
+    fileInput.value='';fileInput.disabled=false;
+    fileNameEl.textContent='no file selected';fileNameEl.style.color='';
+    if(!isSafari)startBtn.disabled=false;
+    stopBtn.disabled=true;
+    recInput.value='';
+    playback.classList.add('hidden');playback.src='';
+    recIndicator.style.display='none';
+    document.querySelectorAll('.term-alert-err').forEach(el=>el.style.display='none');
+  });
+
+  // Submit loading state
+  document.getElementById('upload-form').addEventListener('submit',()=>{
+    uploadBtn.style.display='none';
+    document.getElementById('loading-btn').style.display='inline-flex';
+  });
 });
 
+// ── BIRD TABLE FILTER ─────────────────────────────────────
+function filterBirds(){
+  const q=document.getElementById('bird-search').value.toLowerCase();
+  const rows=document.querySelectorAll('#bird-tbody tr');
+  let shown=0;
+  rows.forEach(r=>{
+    const name=r.getAttribute('data-bird')||'';
+    const vis=name.includes(q);
+    r.style.display=vis?'':'none';
+    if(vis)shown++;
+  });
+  document.getElementById('bird-count').textContent=`showing ${shown} bird${shown!==1?'s':''}`;
+}
 
-    fileInput.addEventListener('change', function() {
-        if (fileInput.files.length > 0) {
-            startRecordingButton.disabled = true;
-            stopRecordingButton.disabled = true;
-            uploadButton.disabled = false;
-            recordedAudioInput.value = '';
-            audioPlayback.classList.add('hidden');
-            audioPlayback.src = '';
-        } else {
-            startRecordingButton.disabled = false;
-            stopRecordingButton.disabled = true;
-        }
-    });
-});
-
-
-                    </script>
-                </div>
-
-                <div class="carousel carousel-center rounded-box w-1/2 relative flex">
-                    <div class="carousel-slider flex transition-transform duration-500">
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://www.galveston.com/red-winged-black-bird-by-rose-pool/"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                        <div class="carousel-item w-1/2">
-                            <div class="carousel-image-container">
-                                <img
-                                        src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg"
-                                        class="carousel-image"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-text">
-                        Hear the birds below
-                    </div>
-                </div>
-                <script>
-                    const slider = document.querySelector('.carousel-slider');
-                    const items = document.querySelectorAll('.carousel-item');
-                    let currentIndex = 0;
-
-                    function slideCarousel() {
-                        currentIndex++;
-                        if (currentIndex >= items.length /2) {
-                            currentIndex = 0;
-                            slider.style.transition = 'none';
-                            slider.style.transform = `translateX(0)`;
-                            slider.offsetHeight;
-                            slider.style.transition = 'transform 500ms ease';
-                        } else {
-                            slider.style.transform = `translateX(-${currentIndex * 100}%)`;
-                        }
-                    }
-
-                    setInterval(slideCarousel, 3000);
-                </script>
-            </div>
-        </div>
-
-        <script>
-            function togglePlay(audioId, buttonId) {
-                var audio = document.getElementById(audioId);
-                var button = document.getElementById(buttonId);
-
-                var playIcon = `
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                              stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                         d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                    </svg>
-                `;
-
-                var stopIcon = `
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 inline-block mr-2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M6 6h12v12H6z"/>
-                    </svg>
-                `;
-
-                if (audio.paused) {
-                    audio.play();
-                    button.innerHTML = stopIcon + "Stop Chirp";
-                    button.classList.remove("btn-secondary");
-                    button.classList.add("btn-error");
-
-                    audio.onended = function() {
-                        button.innerHTML = playIcon + "Play Chirp";
-                        button.classList.remove("btn-error");
-                        button.classList.add("btn-secondary");
-                    };
-                } else {
-                    audio.pause();
-                    audio.currentTime = 0;
-                    button.innerHTML = playIcon + "Play Chirp";
-                    button.classList.remove("btn-error");
-                    button.classList.add("btn-secondary");
-                }
-            }
-        </script>
-
-        <!-- Macaulay download -->
-        <div class="relative isolate overflow-hidden bg-base-100 mt-8 px-6 pt-16 shadow-2xl rounded sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#24093b"/>
-                        <stop offset="1" stop-color="#971cfc"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <div class="w-full text-center mt-8">
-                <div>
-                    <h1 class="text-4xl font-bold tracking-tight sm:text-4xl bg-gradient-to-r from-red-500 via-green-500 to-purple-500 text-transparent bg-clip-text">
-                        No Birds? No problem</h1>
-                    <h2 class="text-2xl tracking-tight">Visit <a class="link link-primary"
-                                                                 href="https://macaulaylibrary.org" target="_blank">Macaulay
-                        Library</a> to find an audio recording, then enter its ML number below.</h2>
-                    <div class="relative flex mt-8 bg-green-600 py-8 px-8 lg:w-1/2 mx-auto rounded sm:rounded-3xl items-center justify-center">
-                        <iframe src="https://macaulaylibrary.org/asset/622572493/embed" height="469" width="320"
-                                frameborder="0" allowfullscreen></iframe>
-                    </div>
-
-                    <form method="post" id="download-form">
-                        {% csrf_token %}
-                        <div class="w-full bg-base-100 py-6 px-6 sm:px-8 mt-8 rounded-lg shadow-lg">
-                            <div class="flex items-center justify-center">
-                                <label class="input input-bordered input-primary flex items-center gap-2">
-                                    ML
-                                    <input type="text" name="asset_num" class="grow" placeholder="#"/>
-                                </label>
-                            </div>
-                        </div>
-                        <div style="display:none; visibility:hidden;">
-                            <label for="honeypot">Bot bait</label>
-                            <input type="text" name="honeypot" id="honeypot_download" value="">
-                        </div>
-                        <div class="flex items-center justify-center space-x-4 mb-8 mt-4">
-                            <button type="submit" id="fetch-btn" class="btn btn-lg btn-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
-                                </svg>
-                                Fetch
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Birds section -->
-        <div class="relative isolate overflow-hidden bg-base-100 mt-10 px-6 shadow-2xl rounded sm:rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24">
-            <div class="w-full mx-auto py-8">
-                <!-- Text above the table -->
-                <div class="w-full bg-base-600 py-8 px-6 sm:px-8 rounded-lg">
-                    <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">All Birds Detectable</h1>
-                    <p class="text-lg">These are all the birds the model can detect</p>
-                </div>
-                <div class="w-full mx-auto py-8">
-                    <table class="table">
-                        <!-- head -->
-                        <thead>
-                        <tr>
-                            <th>Bird</th>
-                            <th>Chirp</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <!-- crow -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg"
-                                                    alt="american crow"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">American Crow</div>
-                                        <div class="text-sm opacity-50">Corvus brachyrhynchos</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_crow" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_crow', 'playButton_crow')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_crow" src="{% static 'audio/american_crow.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- American goldfinch -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg"
-                                                    alt="American Goldfinch"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">American Goldfinch</div>
-                                        <div class="text-sm opacity-50">Spinus tristis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_goldfinch" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_goldfinch', 'playButton_goldfinch')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- American robin -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419"
-                                                    alt="american robin"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">American Robin</div>
-                                        <div class="text-sm opacity-50">Turdus migratorius</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_robin" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_robin', 'playButton_robin')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_robin" src="{% static 'audio/american_robin.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- barred owl -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg"
-                                                    alt="barred owl"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Barred Owl</div>
-                                        <div class="text-sm opacity-50">Strix varia</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_owl" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_owl', 'playButton_owl')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio>
-                            </th>
-                        </tr>
-                        <!-- Blue jay -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg"
-                                                    alt="blue jay"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Blue Jay</div>
-                                        <div class="text-sm opacity-50">Cyanocitta cristata</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_jay" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_jay', 'playButton_jay')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- brow nuthatch -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg"
-                                                    alt="brown nuthcatch"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Brown-headed Nuthatch</div>
-                                        <div class="text-sm opacity-50">Sitta pusilla</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_nuthatch" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_nuthatch', 'playButton_nuthatch')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- carolina chickadee -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false"
-                                                    alt="carolina chickadee"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Carolina Chickadee</div>
-                                        <div class="text-sm opacity-50">Poecile carolinensis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_chickadee" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_chickadee', 'playButton_chickadee')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- carolina wren -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg"
-                                                    alt="carolina wren"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Carolina Wren</div>
-                                        <div class="text-sm opacity-50">Thryothorus ludovicianus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_wren" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_wren', 'playButton_wren')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_wren" src="{% static 'audio/wren.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- cedar waxwing 0-->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg"
-                                                    alt="cedar waxwing"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Cedar Waxwing</div>
-                                        <div class="text-sm opacity-50">Bombycilla cedrorum</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_waxwing" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_waxwing', 'playButton_waxwing')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- chipping sparrow -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png"
-                                                    alt="chipping sparrow"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Chipping Sparrow</div>
-                                        <div class="text-sm opacity-50">Spizella passerina</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_chipping" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_chipping', 'playButton_chipping')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- dark eyed -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024"
-                                                    alt="dark-eyed junco"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Dark-eyed Junco</div>
-                                        <div class="text-sm opacity-50">Junco hyemalis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_dark" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_dark', 'playButton_dark')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_dark" src="{% static 'audio/junco.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- Downy woodpecker -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg"
-                                                    alt="downy woodpecker"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Downy Woodpecker</div>
-                                        <div class="text-sm opacity-50">Dryobates pubescens</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_downy" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_downy', 'playButton_downy')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- eaastern bluebird -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg"
-                                                    alt="eastern bluebird"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Eastern Bluebird</div>
-                                        <div class="text-sm opacity-50">Sialia sialis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_bluebird" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_bluebird', 'playButton_bluebird')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio>
-                            </th>
-
-
-                        </tr>
-                        <!-- eastern kingbird -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg"
-                                                    alt="eastern kingbird"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Eastern Kingbird</div>
-                                        <div class="text-sm opacity-50">Tyrannus tyrannus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_kingbird" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_kingbird', 'playButton_kingbird')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- eastern phoebe -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg"
-                                                    alt="eastern phoebe"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Eastern Phoebe</div>
-                                        <div class="text-sm opacity-50">Sayornis phoebe</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_phoebe" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_phoebe', 'playButton_phoebe')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- eastern towhee -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg"
-                                                    alt="eastern towhee"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Eastern Towhee</div>
-                                        <div class="text-sm opacity-50">Pipilo erythrophthalmus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_towhee" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_towhee', 'playButton_towhee')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_towhee" src="{% static 'audio/towhee.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- house finch -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg"
-                                                    alt="house finch"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">House Finch</div>
-                                        <div class="text-sm opacity-50">Haemorhous mexicanus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_house" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_house', 'playButton_house')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_house" src="{% static 'audio/house_finch.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- mourning dove -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg"
-                                                    alt="barred owl"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Mourning Dove</div>
-                                        <div class="text-sm opacity-50">Zenaida macrouraa</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_dove" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_dove', 'playButton_dove')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_dove" src="{% static 'audio/mourning.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- myrtly warbler -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg"
-                                                    alt="myrtle warbler"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Myrtle Warbler</div>
-                                        <div class="text-sm opacity-50">Setophaga coronata</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_myrtle" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_myrtle', 'playButton_myrtle')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- northern cardinal -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg"
-                                                    alt="northern cardinal"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Northern Cardinal</div>
-                                        <div class="text-sm opacity-50">Cardinalis cardinalis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_cardinal" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_cardinal', 'playButton_cardinal')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- northern flicker -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg"
-                                                    alt="northern flicker"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Northern Flicker</div>
-                                        <div class="text-sm opacity-50">Colaptes auratus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_flicker" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_flicker', 'playButton_flicker')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_flicker" src="{% static 'audio/flicker.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- northern mockingbird -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU"
-                                                    alt="northern mockingbird"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Northern Mockingbird</div>
-                                        <div class="text-sm opacity-50">Mimus polyglottos</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_mock" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_mock', 'playButton_mock')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- pine warbler -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg"
-                                                    alt="pine warbler"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Pine Warbler</div>
-                                        <div class="text-sm opacity-50">Setophaga pinus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_pine" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_pine', 'playButton_pine')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_pine" src="{% static 'audio/pine.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- purple finch -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg"
-                                                    alt="purple finch"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Purple Finch</div>
-                                        <div class="text-sm opacity-50">Haemorhous purpureus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_purple" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_purple', 'playButton_purple')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- Red bellied woodpecker -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg"
-                                                    alt="barred owl"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Red-bellied Woodpecker</div>
-                                        <div class="text-sm opacity-50">Melanerpes carolinus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_red_woodpecker" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_red_woodpecker', 'playButton_red_woodpecker')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- red winged blackbird -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://www.galveston.com/red-winged-black-bird-by-rose-pool/"
-                                                    alt="barred owl"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Red-winged Blackbird</div>
-                                        <div class="text-sm opacity-50">Agelaius phoeniceus</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_red_wing" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_red_wing', 'playButton_red_wing')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- song sparrow -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA"
-                                                    alt="song sparrow"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Song Sparrow</div>
-                                        <div class="text-sm opacity-50">Melospiza melodia</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_song" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_song', 'playButton_song')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- tufted titmouse -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg"
-                                                    alt="tufted titmouse"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold">Tufted Titmouse</div>
-                                        <div class="text-sm opacity-50">Baeolophus bicolor</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_titmouse" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_titmouse', 'playButton_titmouse')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-                        <!-- white breasted nuthatch -->
-                        <tr>
-                            <td>
-                                <div class="flex items-center gap-3">
-                                    <div class="avatar">
-                                        <div class="rounded w-32">
-                                            <img
-                                                    src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg"
-                                                    alt="white breasted nuthatch"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold test-2xl">White-breasted Nuthatch</div>
-                                        <div class="text-sm opacity-50">Sitta carolinensis</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <th>
-                                <button id="playButton_white" class="btn btn-secondary btn"
-                                        onclick="togglePlay('audio_white', 'playButton_white')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5" stroke="currentColor" class="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"/>
-                                    </svg>
-                                    Play Chirp
-                                </button>
-                                <audio id="audio_white" src="{% static 'audio/white.mp3' %}"></audio>
-                            </th>
-
-                        </tr>
-
-                        </tbody>
-                        <!-- foot -->
-                        <tfoot>
-                        <tr>
-                            <th>Bird</th>
-                            <th>Chirp</th>
-                        </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- How it works -->
-        <section id="projects" class="pt-10">
-            <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
-                <svg viewBox="0 0 1024 1024"
-                     class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                     aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                            fill-opacity="0.7"/>
-                    <defs>
-                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                            <stop stop-color="#24093b"/>
-                            <stop offset="1" stop-color="#971cfc"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-                <svg viewBox="0 0 1024 1024"
-                     class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                     aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                            fill-opacity="0.7"/>
-                    <defs>
-                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                            <stop stop-color="#24093b"/>
-                            <stop offset="1" stop-color="#971cfc"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-                <div class="my-10">
-                    <div class="flex justify-center items-center mb-4">
-                        <h1 class="text-4xl font-bold text-center">How it works</h1>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                            <figure>
-                                <img src="{% static '/images/convert.png' %}" alt="Image One"/>
-                            </figure>
-                            <div class="card-body">
-                                <h2 class="card-title">
-                                    Step 1
-                                </h2>
-                                <p>In the first step, the file is checked to see what type it is. If it is an audio file
-                                    then it will be converted to the .wav format.</p>
-                            </div>
-                        </div>
-
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
-                            <figure>
-                                <img src="{% static '/images/visual.png' %}"
-                                     alt="Image Two"/>
-                            </figure>
-                            <div class="card-body">
-                                <h2 class="card-title">Step 2
-                                </h2>
-                                <p>Next, the file is loaded in and resampled to 22050 Hz and various metadata will be
-                                    extracted such as audio length, pitch, and average frequency.</p>
-                            </div>
-                        </div>
-
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
-                            <figure>
-                                <img src="{% static 'images/visual_reduced.png' %}" alt="image 3"/>
-                            </figure>
-                            <div class="card-body">
-                                <h2 class="card-title">Step 3
-                                </h2>
-                                <p>Noise reduction is then applied to the audio file to amplify important
-                                    frequencies.</p>
-                            </div>
-                        </div>
-
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
-                            <figure>
-                                <img src="{% static 'images/split.png' %}"
-                                     alt="Image 4"/>
-                            </figure>
-                            <div class="card-body">
-                                <h2 class="card-title">Step 4</h2>
-                                <p>Next, a mel spectrogram is created for every 5 seconds of the audio. What we have
-                                    left is an array of spectrogram images corresponding to every 5 seconds of the audio
-                                    file.</p>
-                            </div>
-                        </div>
-
-                        <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105 mt-8">
-                            <figure>
-                                <img src="{% static 'images/predict.png' %}"
-                                     alt="Image 5"/>
-                            </figure>
-                            <div class="card-body">
-                                <h2 class="card-title">Step 5
-                                </h2>
-                                <p>The spectrogram images are fed into the model where it makes a prediction based on
-                                    the individual image. Next it makes a weighted prediction for the audio file based
-                                    on the predictions and confidence of each individual spectrogram.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-</div>
-<footer class="mt-8 text-center text-sm text-gray-400">
-    <hr class="border-t-2 border-gray-400 mb-4">
-    <p>Nicholas Burczyk. All rights reserved.</p>
-    <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
-            href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
-</footer>
+// ── AUDIO PLAY/STOP ───────────────────────────────────────
+let currentAudio=null,currentBtn=null;
+function togglePlay(audioId,btnId){
+  const audio=document.getElementById(audioId);
+  const btn=document.getElementById(btnId);
+  if(currentAudio&&currentAudio!==audio){
+    currentAudio.pause();currentAudio.currentTime=0;
+    if(currentBtn){currentBtn.innerHTML='▶ Play Chirp';currentBtn.classList.remove('playing');}
+  }
+  if(audio.paused){
+    audio.play();
+    btn.innerHTML='■ Stop';btn.classList.add('playing');
+    currentAudio=audio;currentBtn=btn;
+    audio.onended=()=>{btn.innerHTML='▶ Play Chirp';btn.classList.remove('playing');currentAudio=null;currentBtn=null;};
+  } else {
+    audio.pause();audio.currentTime=0;
+    btn.innerHTML='▶ Play Chirp';btn.classList.remove('playing');
+    currentAudio=null;currentBtn=null;
+  }
+}
+</script>
 </body>
 </html>

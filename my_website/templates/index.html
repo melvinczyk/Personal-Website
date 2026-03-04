@@ -1,800 +1,764 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="forest">
+{% load static %}
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="home" content="Homepage">
-    <title>Homepage</title>
-    {% load static %}
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <link
-            href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
-            rel="stylesheet"
-            type="text/css"
-    />
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nick@burczyk:~$</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g:   #00ff41;
+  --gd:  #00aa2a;
+  --gdark: #003b0f;
+  --glow: rgba(0,255,65,0.18);
+  --bg:  #020c02;
+  --bg2: #050f05;
+  --bg3: #030a03;
+  --t:   #00cc33;
+  --td:  #006615;
+  --tb:  #00ff41;
+  --o: #ffaa00;
+  --oglow: rgba(255,170,0,0.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:'Share Tech Mono',monospace;overflow:hidden;}
+
+/* CRT scanlines */
+body::before{content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);}
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.65) 100%);}
+
+.scanline{position:fixed;left:0;right:0;height:3px;background:rgba(0,255,65,0.05);z-index:998;pointer-events:none;animation:scan 7s linear infinite;}
+@keyframes scan{0%{top:-3px}100%{top:100vh}}
+@keyframes flicker{0%,100%{opacity:1}88%{opacity:1}89%{opacity:.8}90%{opacity:1}96%{opacity:.92}97%{opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 12px 2px var(--glow)}}
+
+#screen{width:100%;height:100%;display:flex;flex-direction:column;animation:flicker 10s infinite;}
+
+/* ── TITLEBAR ── */
+#titlebar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 16px;background:#010801;border-bottom:1px solid #002808;flex-shrink:0;
+}
+.dots{display:flex;gap:8px;}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot-r{background:#ff5555;box-shadow:0 0 5px #ff555566;}
+.dot-y{background:#ffbb00;box-shadow:0 0 5px #ffbb0066;}
+.dot-g{background:var(--g);box-shadow:0 0 5px var(--glow);animation:pulse 3s infinite;}
+.ttl{font-family:'VT323',monospace;font-size:17px;color:var(--td);letter-spacing:2px;}
+.clk{font-size:12px;color:var(--td);letter-spacing:1px;}
+
+/* ── LAYOUT: sidebar + terminal ── */
+#layout{flex:1;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:220px;flex-shrink:0;
+  background:#010a01;border-right:1px solid #002808;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+#sidebar::-webkit-scrollbar{width:3px;}
+#sidebar::-webkit-scrollbar-thumb{background:var(--gdark);}
+
+.sb-section{padding:10px 12px 4px;font-size:10px;color:var(--td);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid #001f05;}
+.sb-btn{
+  display:flex;align-items:center;gap:8px;
+  width:100%;background:none;border:none;border-bottom:1px solid #001805;
+  padding:9px 14px;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:12px;
+  color:#447744;text-align:left;transition:all .15s;
+}
+.sb-btn:hover{background:#010f01;color:var(--g);padding-left:18px;}
+.sb-btn:hover .sb-arrow{opacity:1;}
+.sb-btn.active{background:#010f01;color:var(--g);border-left:2px solid var(--g);}
+.sb-arrow{color:var(--td);font-size:10px;opacity:0;transition:opacity .15s;margin-left:auto;}
+.sb-btn .sb-icon{font-size:14px;width:16px;text-align:center;}
+
+/* project quick-list in sidebar */
+.sb-proj-btn{
+  display:block;width:100%;background:none;border:none;border-bottom:1px solid #001005;
+  padding:7px 14px 7px 28px;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:#2a5a2a;text-align:left;transition:all .15s;
+}
+.sb-proj-btn:hover{color:var(--g);background:#010f01;padding-left:32px;}
+
+/* ── TERMINAL PANE ── */
+#terminal{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+#output{
+  flex:1;overflow-y:auto;
+  padding:14px 20px 8px;scroll-behavior:smooth;
+}
+#output::-webkit-scrollbar{width:4px;}
+#output::-webkit-scrollbar-track{background:var(--bg);}
+#output::-webkit-scrollbar-thumb{background:var(--gdark);}
+
+/* ── INPUT BAR ── */
+#input-area{flex-shrink:0;background:#010801;border-top:1px solid #002808;}
+
+/* quick-command pill row */
+#quickbar{
+  display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 6px;
+  border-bottom:1px solid #001805;
+}
+.qbtn{
+  background:#010f01;border:1px solid #003810;
+  color:#337733;font-family:'Share Tech Mono',monospace;font-size:11px;
+  padding:3px 10px;border-radius:2px;cursor:pointer;transition:all .15s;
+  white-space:nowrap;
+}
+.qbtn:hover{background:#001f00;color:var(--g);border-color:var(--g);box-shadow:0 0 8px rgba(0,255,65,.12);}
+
+#input-row{display:flex;align-items:center;padding:8px 14px 10px;gap:0;}
+#prompt{color:var(--td);font-size:14px;white-space:nowrap;user-select:none;}
+#prompt .u{color:var(--g);}
+#prompt .h{color:#00dd33;}
+#prompt .s{color:var(--g);margin-right:7px;}
+#cmd-input{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--tb);font-family:'Share Tech Mono',monospace;font-size:14px;
+  caret-color:var(--g);
+}
+
+/* ── OUTPUT ELEMENTS ── */
+.line{font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+.fade-in{animation:fadeIn .2s ease forwards;}
+.green{color:var(--g);}
+.dim{color:var(--td);}
+.bright{color:var(--tb);text-shadow:0 0 8px var(--glow);}
+.white{color:#b8ffb8;}
+.yellow{color:#ccff00;}
+.red{color:#ff5555;}
+.cyan{color:#00ffcc;}
+.blank{height:5px;}
+
+/* ── ASCII ── */
+.ascii{font-family:'VT323',monospace;font-size:16px;color:var(--g);
+  text-shadow:0 0 10px rgba(0,255,65,.35);line-height:1.2;white-space:pre;}
+
+/* ── PROJECT CARD ── */
+.proj-card{
+  border:1px solid #002a08;border-left:3px solid var(--g);
+  background:var(--bg2);border-radius:3px;
+  margin:4px 0 10px;overflow:hidden;
+  animation:fadeIn .25s ease forwards;
+}
+.proj-card-header{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px 8px;border-bottom:1px solid #001f05;
+}
+.proj-card-body{display:flex;gap:0;flex-wrap:wrap;}
+.proj-img-wrap{
+  width:220px;flex-shrink:0;
+  background:#010801;border-right:1px solid #001f05;
+  display:flex;align-items:center;justify-content:center;padding:10px;
+}
+.proj-img-wrap img{
+  width:100%;max-height:160px;object-fit:cover;
+  border-radius:2px;border:1px solid #002a08;
+  filter:none;
+  transition:filter .3s;
+}
+.proj-img-wrap img:hover{filter:saturate(1) brightness(1) sepia(0) hue-rotate(0deg);}
+.proj-info{flex:1;padding:10px 14px;min-width:200px;}
+.proj-name{color:var(--tb);font-family:'VT323',monospace;font-size:18px;letter-spacing:1px;}
+.badge{
+  display:inline-block;border:1px solid var(--gd);color:var(--gd);
+  font-size:10px;padding:0 6px;margin-left:6px;vertical-align:middle;border-radius:1px;
+}
+.badge.award{border-color:#ccff00;color:#ccff00;}
+.badge.live{border-color:#00ffcc;color:#00ffcc;}
+.badge.dev{border-color:#ffaa00;color:#ffaa00;}
+.proj-tech{color:var(--td);font-size:11px;margin-top:5px;}
+.proj-desc{color:#88cc88;font-size:12px;margin-top:8px;line-height:1.65;}
+.proj-tags{margin-top:8px;}
+.tag{color:var(--tdark,#003b0f);font-size:10px;color:#336633;}
+.proj-link{
+  display:inline-block;margin-top:8px;color:var(--g);
+  font-size:12px;text-decoration:none;border:1px solid #003810;
+  padding:3px 10px;border-radius:2px;transition:all .15s;
+}
+.proj-link:hover{background:#001f00;box-shadow:0 0 8px var(--glow);}
+
+/* ── CONTACT ROW ── */
+.contact-row{
+  display:flex;align-items:center;gap:14px;
+  border:1px solid #002008;background:var(--bg2);
+  padding:10px 14px;margin:3px 0;border-radius:2px;
+  transition:all .15s;
+}
+.contact-row:hover{border-color:var(--gd);background:#010f01;}
+.contact-label{color:var(--td);font-size:11px;width:80px;}
+.contact-link{color:var(--g);font-size:12px;text-decoration:none;flex:1;}
+.contact-link:hover{text-shadow:0 0 8px var(--g);}
+
+/* ── INLINE LINK ── */
+a.tl{color:var(--g);text-decoration:none;}
+a.tl:hover{text-shadow:0 0 8px var(--g);text-decoration:underline;}
+
+/* ── WHOAMI CARD ── */
+.who-card{
+  display:flex;gap:20px;flex-wrap:wrap;
+  border:1px solid #002808;border-left:3px solid var(--g);
+  background:var(--bg2);padding:16px;border-radius:3px;margin:4px 0;
+}
+.who-photo{flex-shrink:0;}
+.who-photo img{
+  width:110px;height:110px;object-fit:cover;border-radius:50%;
+  border:2px solid var(--gd);
+  filter:none;
+  box-shadow:0 0 16px rgba(0,255,65,.2);
+}
+.who-info{flex:1;min-width:180px;}
+.who-name{font-family:'VT323',monospace;font-size:26px;color:var(--tb);letter-spacing:1px;text-shadow:0 0 10px var(--glow);}
+.who-row{display:flex;gap:8px;margin-top:5px;font-size:12px;}
+.who-key{color:var(--td);width:72px;flex-shrink:0;}
+.who-val{color:#b8ffb8;}
+.who-status{
+  margin-top:14px;
+  padding:14px 16px;
+  border:1px solid rgba(255,170,0,0.35);
+  border-left:3px solid var(--o);
+  border-radius:12px;
+  background:rgba(40,20,0,0.25);
+  box-shadow:0 0 10px var(--oglow);
+}
+
+.who-status-label{
+  font-size:12px;
+  letter-spacing:0.12em;
+  color:#aa7700;
+  margin-bottom:6px;
+}
+
+.who-status-value{
+  font-size:16px;
+  font-weight:700;
+  color:var(--o);
+}
+
+/* ── MOBILE ── */
+@media(max-width:680px){
+  #sidebar{display:none;}
+  .proj-img-wrap{width:100%;border-right:none;border-bottom:1px solid #001f05;}
+  .who-card{flex-direction:column;}
+}
+</style>
 </head>
+<body>
+<div class="scanline"></div>
+<div id="screen">
 
-<body class="bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-black to-indigo-700 text-gray-200">
-
-<!-- Navbar -->
-<div class="navbar bg-base-100 min-h-20">
-    <div class="navbar-start">
-        <button id="menu-button" class="btn btn-ghost btn-circle">
-            <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
-                <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M4 6h16M4 12h16M4 18h7"/>
-            </svg>
-        </button>
+  <!-- TITLEBAR -->
+  <div id="titlebar">
+    <div class="dots">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
     </div>
-    <div class="navbar-center">
-        <a class="btn btn-ghost text-xl">Nick Burczyk</a>
-    </div>
-    <div class="navbar-end"></div>
-</div>
+    <div class="ttl">nick@burczyk — bash — portfolio</div>
+    <div class="clk" id="clock">00:00:00</div>
+  </div>
 
-<!-- Side Menu -->
-<div id="side-menu"
-     class="fixed top-0 left-0 z-50 h-full w-64 bg-base-100 p-4 shadow-lg transform -translate-x-full transition-transform">
-    <div class="flex justify-between items-center mb-4">
-        <span class="text-xl font-bold">Menu</span>
-        <button id="close-menu" class="btn btn-ghost btn-circle">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-    <ul class="menu">
-        <li>
-            <a class="link flex items-center no-underline" href="/" id="link-homepage">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                </svg>
-                Homepage
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="{% url 'upload_file' %}" id="link-classifier">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="h-6 w-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/>
-                </svg>
-                <p class="bg-gradient-to-r from-orange-500 via-indigo-500 to-green-500 text-transparent bg-clip-text">
-                    Bird Classifier</p>
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="/#projects" id="link-projects">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z"/>
-                </svg>
-                Projects
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="#contact" id="link-contact">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
-                </svg>
-                Contact
-            </a>
-        </li>
-        <li>
-            <a class="link flex items-center no-underline" href="https://servermap.minecraft.bz" id="link-map">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                     stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/>
-                </svg>
-                Server Map
-            </a>
-        </li>
-    </ul>
-</div>
+  <div id="layout">
 
-<!-- Overlay -->
-<div id="overlay" class="fixed inset-0 z-40 bg-black opacity-50 hidden"></div>
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div class="sb-section">Navigation</div>
+      <button class="sb-btn" onclick="runCmd('whoami')"><span class="sb-icon">▸</span>whoami<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('ls projects')"><span class="sb-icon">▸</span>projects<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('music')"><span class="sb-icon">▸</span>music<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('contact')"><span class="sb-icon">▸</span>contact<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('map')"><span class="sb-icon">▸</span>server map<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('bird-classifier')" style="border-left:2px solid #00aa2a;"><span class="sb-icon">▸</span>bird classifier<span class="sb-arrow">↵</span></button>
+
+      <div class="sb-section">Projects</div>
+      <button class="sb-proj-btn" onclick="runCmd('cat project oculosaurus')">oculosaurus</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project waste-drone')">waste-drone</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project bird-classifier')">bird-classifier</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project modpack-updater')">modpack-updater</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project visaudio')">visaudio</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project fretwatch')">fretwatch</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project born-in-spellbooks')">born-in-spellbooks</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project personal-website')">personal-website</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project minecraft-server')">minecraft-server</button>
+
+      <div class="sb-section">System</div>
+      <button class="sb-btn" onclick="runCmd('help')"><span class="sb-icon">?</span>help<span class="sb-arrow">↵</span></button>
+      <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>clear<span class="sb-arrow">↵</span></button>
+    </div>
+
+    <!-- TERMINAL -->
+    <div id="terminal">
+      <div id="output"></div>
+
+      <div id="input-area">
+        <!-- Quick command pills -->
+        <div id="quickbar">
+          <button class="qbtn" onclick="runCmd('whoami')">▸ whoami</button>
+          <button class="qbtn" onclick="runCmd('ls projects')">▸ ls projects</button>
+          <button class="qbtn" onclick="runCmd('music')">▸ music</button>
+          <button class="qbtn" onclick="runCmd('contact')">▸ contact</button>
+          <button class="qbtn" onclick="runCmd('map')">▸ server map</button>
+          <button class="qbtn" onclick="runCmd('bird-classifier')" style="border-color:#00aa2a;color:#00aa2a;">▸ bird classifier</button>
+          <button class="qbtn" onclick="runCmd('help')">▸ help</button>
+          <button class="qbtn" onclick="runCmd('clear')">▸ clear</button>
+        </div>
+        <div id="input-row">
+          <div id="prompt">
+            <span class="u">nick</span><span style="color:var(--td)">@</span><span class="h">burczyk</span><span style="color:var(--td)">:~</span><span class="s">$</span>
+          </div>
+          <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus placeholder="type a command or click above…">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /layout -->
+</div><!-- /screen -->
 
 <script>
-    const menuButton = document.getElementById('menu-button');
-    const closeMenu = document.getElementById('close-menu');
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.getElementById('overlay');
-    const links = document.querySelectorAll('#side-menu .link');
+// ── DATA ─────────────────────────────────────────────────────
+const PROJECTS = [
+  {
+    id:"oculosaurus",
+    name:"OCULOSAURUS",
+    badge:"1ST PLACE AWARD",bc:"award",
+    tech:"Python / OpenCV / Raspberry Pi / YOLO",
+    img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/oculosarus_example.gif",
+    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/CS499OculosarusProject-1.png",
+    desc:"Advanced stereo vision system designed to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.",
+    link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator",
+    tags:["computer-vision","socket-programming","android-app","hardware","Python","YOLO"]
+  },
+  {
+    id:"waste-drone",
+    name:"WASTE DETECTION DRONE",
+    badge:"COMPUTER VISION",bc:"",
+    tech:"Python / YOLOv5 / Tello SDK",
+    img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png",
+    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/model_%20copy.gif",
+    desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.",
+    link:"https://github.com/melvinczyk/Waste-detection-drone",
+    tags:["drone","YOLO","CV","ML","Python"]
+  },
+  {
+    id:"bird-classifier",
+    name:"BACKYARD BIRD CLASSIFIER",
+    badge:"LIVE DEMO",bc:"live",
+    tech:"Python / CNN / Django / mel-spectrogram",
+    img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/predict.png",
+    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/Confusion_matrix.png",
+    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms — achieves strong accuracy. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.",
+    link:"https://github.com/melvinczyk/Bird-Classifier",
+    tags:["ML","audio","CNN","Django","spectrograms"]
+  },
+  {
+    id:"modpack-updater",
+    name:"MINECRAFT MODPACK UPDATER",
+    badge:"TOOL",bc:"",
+    tech:"Java / JavaFX / Amazon S3 / Gradle",
+    img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41",
+    img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267",
+    desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click 'Update' for clients. Cross-platform (Win/macOS/Linux).",
+    link:"https://github.com/melvinczyk/ModpackUpdater",
+    tags:["Java","AWS","S3","JavaFX","Gradle"]
+  },
+  {
+    id:"visaudio",
+    name:"VISAUDIO",
+    badge:"TOOL",bc:"",
+    tech:"Python / librosa / PyQt",
+    img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true",
+    img2:null,
+    desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac. Visual EQ generator in progress.",
+    link:"https://github.com/melvinczyk/VisAudio",
+    tags:["Python","audio","librosa","PyQt","YT-DLP"]
+  },
+  {
+    id:"fretwatch",
+    name:"FRETWATCH",
+    badge:"IN DEV",bc:"dev",
+    tech:"Python / OpenCV / PyTorch / librosa",
+    img:"https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png",
+    img2:null,
+    desc:"Live guitar note detection from video and audio. Signal processing extracts audio features to detect notes and chords being played. Combines librosa for audio analysis and OpenCV for live video frame manipulation.",
+    link:"https://github.com/melvinczyk/FretWatch",
+    tags:["CV","audio","PyTorch","OpenCV","music"]
+  },
+  {
+    id:"born-in-spellbooks",
+    name:"BORN IN SPELLBOOKS MOD",
+    badge:"ALPHA",bc:"dev",
+    tech:"Java / Minecraft Forge 1.20.1",
+    img:"https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png",
+    img2:null,
+    desc:"Open source Minecraft Forge compatibility mod combining Iron's Spells & Spellbooks with Born In Chaos. 17+ spells coded with custom rendering, animation layering, entity sharing. Community-supported with open-source texture/model contributions. Three alpha releases.",
+    link:"https://github.com/melvinczyk/Born_in_spellbooks",
+    tags:["Java","Minecraft","Forge","modding"]
+  },
+  {
+    id:"personal-website",
+    name:"NICHOLASBURCZYK.COM",
+    badge:"LIVE",bc:"live",
+    tech:"Django / Tailwind CSS / DaisyUI / Python",
+    img:"https://www.svgrepo.com/show/353657/django-icon.svg",
+    img2:null,
+    desc:"This website (in its Django form). Built on Django for a secure backend, Tailwind CSS + DaisyUI for rapid responsive frontend, and deployed ML model inference for the bird classifier. The terminal you're using is a redesign of it.",
+    link:"https://github.com/melvinczyk/Personal-Website",
+    tags:["Django","Tailwind","Python","web","DaisyUI"]
+  },
+  {
+    id:"minecraft-server",
+    name:"MINECRAFT SERVER & MODPACK",
+    badge:"ONGOING",bc:"",
+    tech:"Java / JSON / mcscript / Linux server admin",
+    img:"https://i.ibb.co/7KCwNZr/minecraft.png",
+    img2:null,
+    desc:"Custom modpack with curated mods, resource & data packs. Server admin duties: config management, real-time troubleshooting, script management, networking. Custom data packs with JSON/mcscript for custom mobs, biomes, loot tables, and structure generation.",
+    link:"https://github.com/melvinczyk/Datapacks",
+    tags:["Java","Minecraft","sysadmin","scripting","JSON"]
+  },
+];
 
-    const toggleMenu = () => {
-        sideMenu.classList.toggle('-translate-x-full');
-        overlay.classList.toggle('hidden');
-    };
+// ── STATE ─────────────────────────────────────────────────────
+let hist=[], hIdx=-1;
 
-    if (menuButton) {
-        menuButton.addEventListener('click', toggleMenu);
-    }
-    closeMenu.addEventListener('click', toggleMenu);
-    overlay.addEventListener('click', toggleMenu);
+// ── CLOCK ─────────────────────────────────────────────────────
+setInterval(()=>{
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+},1000);
 
-    links.forEach(link => {
-        link.addEventListener('click', toggleMenu);
-    });
+// ── OUTPUT HELPERS ────────────────────────────────────────────
+const out = document.getElementById('output');
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function ln(html='', cls='line'){
+  const d=document.createElement('div');
+  d.className=`line ${cls} fade-in`;
+  d.innerHTML=html;
+  out.appendChild(d);
+  out.scrollTop=out.scrollHeight;
+}
+function bl(){const d=document.createElement('div');d.className='blank fade-in';out.appendChild(d);out.scrollTop=out.scrollHeight;}
+function html(h){
+  const d=document.createElement('div');
+  d.className='fade-in';
+  d.innerHTML=h;
+  out.appendChild(d);
+  out.scrollTop=out.scrollHeight;
+}
+function echo(cmd){
+  ln(`<span style="color:var(--td)">nick@burczyk:~$</span> <span style="color:#00cc33">${esc(cmd)}</span>`);
+}
+
+// ── COMMANDS ─────────────────────────────────────────────────
+const CMDS = {
+
+help(){
+  bl();
+  ln('┌──────────────────────────────────────────────────────────────┐','green');
+  ln('│                 NICK BURCZYK — COMMAND REFERENCE                    │','green');
+  ln('└──────────────────────────────────────────────────────────────┘','green');
+  bl();
+  [
+    ['whoami',            'identity + current status'],
+    ['ls projects',       'list all projects'],
+    ['cat project [id]',  'view a project  (e.g.  cat project bird-classifier)'],
+    ['music',             'Zero Barbecue — Spotify / Bandcamp'],
+    ['contact',           'socials and links'],
+    ['map',               'live Minecraft server map'],
+    ['bird-classifier',   'launch the bird classifier demo'],
+    ['clear',             'clear terminal'],
+    ['help',              'this menu'],
+  ].forEach(([c,d])=>{
+    ln(`  <span style="color:var(--g);display:inline-block;min-width:200px">${esc(c)}</span><span style="color:#3a6a3a">${d}</span>`);
+  });
+},
+
+
+whoami(){
+  bl();
+  html(`
+    <div class="who-card fade-in">
+      <div class="who-photo">
+        <img src="https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/nick.jpg"
+             onerror="this.style.display='none'"
+             alt="Nicholas Burczyk">
+      </div>
+
+      <div class="who-info">
+        <div class="who-name">NICK BURCZYK</div>
+
+        <div class="who-row"><span class="who-key">school</span><span class="who-val">MSCS @ UAB — Spring 2027</span></div>
+        <div class="who-row"><span class="who-key">work</span><span class="who-val">Software Developer @ Viper Imaging</span></div>
+        <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA — Software Development @ UAB</span></div>
+        <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration, embedded systems</span></div>
+        <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ — embedded, performance computing, low-level work</span></div>
+        <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue — producer / artist</span></div>
+        <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft — modding guru, custom server, multiple modpacks, Forge mods</span></div>
+        <div class="who-row"><span class="who-key">location</span><span class="who-val">Birmingham, AL</span></div>
+
+        <!-- Enforced status block -->
+        <div class="who-status">
+          <div class="who-status-label">STATUS</div>
+          <div class="who-status-value"><span style="color:var(--o)">●</span> LEARNING EMBEDDED SYSTEMS</div>
+        </div>
+
+      </div>
+    </div>
+  `);
+
+  bl();
+  ln(`  <span style="color:var(--g)">ls projects</span> to explore work`,'dim');
+  bl();
+},
+
+'ls projects'(){
+  bl();
+  ln(`total ${PROJECTS.length}  <span style="color:var(--td)">(click a name or type: cat project [id])</span>`,'dim');
+  bl();
+  PROJECTS.forEach((p,i)=>{
+    const n=String(i+1).padStart(2,'0');
+    const badge=p.badge?` <span style="color:var(--td)">[${esc(p.badge)}]</span>`:'';
+    ln(`  <span style="color:var(--tdark,#003b0f)">${n}</span>  `+
+       `<span style="color:var(--g);cursor:pointer;text-decoration:underline" onclick="runCmd('cat project ${p.id}')">${p.id.padEnd(22)}</span>`+
+       `<span style="color:#447744">${esc(p.name)}</span>${badge}`);
+  });
+  bl();
+},
+
+'cat project'(id){
+  id=(id||'').trim().toLowerCase();
+  if(!id){ln(`  Usage: cat project [id]  — run <span style="color:var(--g)">ls projects</span> to see all IDs`,'red');return;}
+  const p=PROJECTS.find(x=>x.id===id||x.name.toLowerCase().includes(id));
+  if(!p){ln(`  bash: ${esc(id)}: no such project. Run <span style="color:var(--g)">ls projects</span>`,'red');return;}
+  bl();
+  const img2html = p.img2
+    ? `<img src="${p.img2}" alt="secondary" style="width:100%;margin-top:8px;max-height:120px;object-fit:cover;border-radius:2px;border:1px solid #002a08;filter:none;">`
+    : '';
+  html(`
+    <div class="proj-card">
+      <div class="proj-card-header">
+        <span class="proj-name">${esc(p.name)}</span>
+        <span class="badge ${p.bc}">${esc(p.badge)}</span>
+      </div>
+      <div class="proj-card-body">
+        <div class="proj-img-wrap">
+          <div style="width:100%">
+            <img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">
+            ${img2html}
+          </div>
+        </div>
+        <div class="proj-info">
+          <div class="proj-tech">stack: <span style="color:#88cc88">${esc(p.tech)}</span></div>
+          <div class="proj-desc">${esc(p.desc)}</div>
+          <div class="proj-tags" style="margin-top:8px">
+            ${p.tags.map(t=>`<span style="color:var(--td);font-size:11px">#${t} </span>`).join('')}
+          </div>
+          <a class="proj-link" href="${p.link}" target="_blank">→ github: ${p.link.replace('https://github.com/','')}</a>
+        </div>
+      </div>
+    </div>
+  `);
+  bl();
+},
+
+music(){
+  bl();
+  ln('── music ─────────────────────────────────────────────────────','dim');
+  bl();
+  ln('  Artist:  <span style="color:var(--g)">Zero Barbecue</span>','line');
+  ln('  My first single is out now!','white');
+  bl();
+  ln('  <span style="color:#1DB954">●</span> Spotify  → <a class="tl" href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy" target="_blank">open.spotify.com/artist/Zero-Barbecue</a>');
+  ln('  <span style="color:#1da0c3">●</span> Bandcamp → <a class="tl" href="https://zerobarbecue.bandcamp.com" target="_blank">zerobarbecue.bandcamp.com</a>');
+  bl();
+  html(`
+    <div style="padding:4px 20px 8px;max-width:620px">
+      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
+        <div style="color:var(--td);font-size:11px;margin-bottom:8px">// spotify — album player</div>
+        <iframe style="border-radius:4px;border:none;display:block"
+          src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0"
+          width="100%" height="200" allowfullscreen=""
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+      </div>
+    </div>
+  `);
+  bl();
+},
+
+contact(){
+  bl();
+  ln('── contact ───────────────────────────────────────────────────','dim');
+  bl();
+  [
+    ['LinkedIn', 'https://www.linkedin.com/in/nicholas-burczyk/','#0077B5'],
+    ['GitHub',   'https://github.com/melvinczyk',                '#00ff88'],
+    ['Bandcamp', 'https://zerobarbecue.bandcamp.com',            '#1da0c3'],
+    ['Spotify',  'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy','#1DB954'],
+  ].forEach(([label,url,col])=>{
+    html(`
+      <div class="contact-row fade-in" style="margin:3px 20px;max-width:600px">
+        <span class="contact-label">${label}</span>
+        <a class="contact-link" style="color:${col}" href="${url}" target="_blank">${url}</a>
+      </div>
+    `);
+  });
+  bl();
+  ln('  Reach out on LinkedIn or GitHub anytime!','dim');
+  bl();
+},
+
+map(){
+  bl();
+  ln('── minecraft server map ─────────────────────────────────────','dim');
+  bl();
+  ln('  Live Bluemap render — real-time player locations and world data','white');
+  ln('  Full view → <a class="tl" href="http://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
+  bl();
+  html(`
+    <div style="padding:4px 20px 10px;max-width:700px">
+      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
+        <div style="color:var(--td);font-size:11px;margin-bottom:8px">// bluemap — live iframe</div>
+        <iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective"
+          width="100%" height="360" frameborder="0"
+          style="border-radius:3px;border:1px solid #002808;display:block;"></iframe>
+      </div>
+    </div>
+  `);
+  bl();
+},
+
+clear(){out.innerHTML='';},
+
+'bird-classifier'(){
+  bl();
+  ln('── bird-classifier ──────────────────────────────────────────','dim');
+  bl();
+  ln('  <span style="color:var(--tb)">Backyard Alabama Bird Detector</span>','line');
+  ln('  CNN · mel-spectrogram · 30 Alabama species · live demo','white');
+  bl();
+  ln('  <span style="color:var(--td)">→</span> Redirecting to classifier in <span style="color:var(--g)" id="countdown">3</span>...','line');
+  bl();
+  html(`
+    <div style="padding:0 20px 8px;max-width:480px">
+      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px 16px;background:var(--bg2);border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div style="color:var(--g);font-family:'VT323',monospace;font-size:18px;letter-spacing:1px">🎵 BIRD CLASSIFIER</div>
+          <div style="color:var(--td);font-size:11px;margin-top:4px">Upload or record a bird call to classify it</div>
+        </div>
+        <a href="{% url 'upload_file' %}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--g);color:var(--g);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 16px;border-radius:2px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,65,.08)'" onmouseout="this.style.background='transparent'">
+          ▸ Launch Now
+        </a>
+      </div>
+    </div>
+  `);
+  bl();
+  // countdown then redirect
+  let n=3;
+  const cd=document.getElementById('countdown');
+  const t=setInterval(()=>{
+    n--;
+    if(cd)cd.textContent=n;
+    if(n<=0){clearInterval(t);window.location.href='{% url "upload_file" %}';}
+  },1000);
+},
+};
+
+// Aliases
+CMDS['ls']=CMDS['ls projects'];
+CMDS['projects']=CMDS['ls projects'];
+CMDS['classifier']=CMDS['bird-classifier'];
+CMDS['classify']=CMDS['bird-classifier'];
+
+// ── RUNNER ────────────────────────────────────────────────────
+function runCmd(raw){
+  const input=document.getElementById('cmd-input');
+  const trimmed=raw!==undefined?raw:input.value.trim();
+  if(raw===undefined)input.value='';
+
+  echo(trimmed);
+  if(!trimmed){bl();return;}
+
+  hist.push(trimmed);hIdx=hist.length;
+
+  const lo=trimmed.toLowerCase();
+
+  if(lo.startsWith('cat project')){
+    CMDS['cat project'](trimmed.slice('cat project'.length).trim());
+    return;
+  }
+
+  const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
+  if(fn){fn(trimmed.split(' ').slice(1).join(' '));}
+  else{
+    ln(`  bash: <span style="color:#ff5555">${esc(trimmed)}</span>: command not found`);
+    ln(`  Type <span style="color:var(--g)">help</span> or click a button above`,'dim');
+    bl();
+  }
+}
+
+// ── TAB COMPLETE ──────────────────────────────────────────────
+const ALL=['help','whoami','cat project ','ls projects','music','contact','map','bird-classifier','clear'];
+const PIDS=PROJECTS.map(p=>p.id);
+
+function tabComp(v){
+  const lo=v.toLowerCase();
+  if(lo.startsWith('cat project ')){
+    const frag=lo.slice('cat project '.length);
+    const m=PIDS.find(id=>id.startsWith(frag));
+    return m?'cat project '+m:v;
+  }
+  const m=ALL.find(c=>c.startsWith(lo)&&c!==lo);
+  return m||v;
+}
+
+// ── INPUT EVENTS ──────────────────────────────────────────────
+document.getElementById('cmd-input').addEventListener('keydown',e=>{
+  const inp=e.target;
+  if(e.key==='Enter'){runCmd();}
+  else if(e.key==='Tab'){e.preventDefault();inp.value=tabComp(inp.value);}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(hIdx>0){hIdx--;inp.value=hist[hIdx];}}
+  else if(e.key==='ArrowDown'){e.preventDefault();if(hIdx<hist.length-1){hIdx++;inp.value=hist[hIdx];}else{hIdx=hist.length;inp.value='';}}
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('a')&&!e.target.closest('button')&&!e.target.closest('iframe'))
+    document.getElementById('cmd-input').focus();
+});
+
+// ── BOOT ──────────────────────────────────────────────────────
+(async()=>{
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const boots=[
+    [0,   'dim',  'BIOS v4.2.1 — POST check...'],
+    [120, 'dim',  'Memory: 16384 MB [OK]'],
+    [230, 'dim',  'GPU: NVIDIA RTX 4070 [OK]'],
+    [340, 'dim',  'Kernel 6.6.0-custom loaded.'],
+    [460, 'dim',  'Mounting /home/nick... [OK]'],
+    [580, 'dim',  'Starting portfolio.service...'],
+    [700, 'line', '████████████████████████████████  100%'],
+  ];
+  boots.forEach(([d,c,t])=>setTimeout(()=>ln(t,c),d));
+  setTimeout(()=>{
+    bl();
+    html(`<pre class="ascii fade-in" style="padding:0 4px">
+ ███╗   ██╗██╗ ██████╗██╗  ██╗
+ ████╗  ██║██║██╔════╝██║ ██╔╝  <span style="color:var(--td);font-size:13px">NICHOLAS BURCZYK</span>
+ ██╔██╗ ██║██║██║     █████╔╝   <span style="color:var(--td);font-size:13px">Software Engineer · Vision · ML · Audio · Embedded</span>
+ ██║╚██╗██║██║██║     ██╔═██╗   <span style="color:#002808;font-size:13px">UAB MSCS · Viper Imaging · Birmingham AL</span>
+ ██║ ╚████║██║╚██████╗██║  ██╗
+ ╚═╝  ╚═══╝╚═╝ ╚═════╝╚═╝  ╚═╝</pre>`);
+    bl();
+    ln("  Welcome to <span style='color:var(--g)'>nick@burczyk</span>",'line');
+    bl();
+    document.getElementById('cmd-input').focus();
+  }, 900);
+})();
 </script>
-
-
-<!-- Main Content -->
-<div class="container mx-auto p-4">
-    <!-- Introduction Section -->
-    <div class="bg-gradient-to-br from-gray-400 via-gray-200 to-gray-100 rounded-xl sm:rounded-3xl mt-8">
-        <div class="mx-auto max-w-7xl py-8 sm:py-16 lg:py-20 sm:px-8">
-            <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-16 shadow-2xl rounded-3xl sm:px-16 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
-                <!-- Background Gradient Circles -->
-                <svg viewBox="0 0 1024 1024"
-                     class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                     aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#gradient-left)" fill-opacity="0.5"/>
-                    <defs>
-                        <radialGradient id="gradient-left">
-                            <stop stop-color="rgb(55 48 163)"/>
-                            <stop offset="1" stop-color="rgb(99 102 241)"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-                <svg viewBox="0 0 1024 1024"
-                     class="absolute left-0 top-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                     aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#gradient-right)" fill-opacity="0.5"/>
-                    <defs>
-                        <radialGradient id="gradient-right">
-                            <stop stop-color="rgb(55 48 163)"/>
-                            <stop offset="1" stop-color="rgb(99 102 241)"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-                <svg viewBox="0 0 1024 1024"
-                     class="absolute right-0 top-12  mb-60 -z-10 h-[64rem] w-[64rem] translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                     aria-hidden="true">
-                    <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                            fill-opacity="0.7"/>
-                    <defs>
-                        <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                            <stop stop-color="rgb(55 48 163)"/>
-                            <stop offset="1" stop-color="rgb(99 102 241)"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-
-                <!-- Left Column (Modernized Hero + Oculosarus Section) -->
-                <div class="lg:w-1/2 space-y-8">
-                    <!-- Bio Section -->
-                    <div class="text-center lg:text-left bg-base-100 p-8 rounded-xl shadow-lg">
-                        <h1 class="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-orange-400 via-indigo-500 to-green-400 text-transparent bg-clip-text">
-                            Nicholas Burczyk
-                        </h1>
-                        <p class="mt-4 text-lg text-gray-300">
-                            Senior Honors Computer Science student at UAB with a passion for deep learning, vision
-                            systems, and creative applications of AI.
-                        </p>
-                    </div>
-
-                    <!-- Bird Classifier CTA -->
-                    <div class="bg-gradient-to-br from-indigo-700 to-purple-900 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-transform">
-                        <h2 class="text-2xl font-bold text-white mb-2">🎯 Try the Bird Classifier!</h2>
-                        <p class="text-white mb-4">Check out my audio spectrogram ML project that classifies bird
-                            species.</p>
-                        <a href="{% url 'upload_file' %}" class="btn btn-secondary">Launch Classifier</a>
-                    </div>
-                </div>
-
-
-                <!-- Right Column -->
-                <div class="relative lg:w-1/2 pb-8 flex justify-center items-center">
-                    <img class="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 object-cover rounded-full border-4 border-white shadow-md"
-                         src="{% static 'images/nick.jpg' %}" alt="Nicholas Burczyk">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mx-auto max-w-7xl py-8 sm:py-10 mt-10 sm:px-8 rounded-xl sm:rounded-3xl">
-        <h2 class="text-5xl font-extrabold tracking-tight sm:text-4xl mb-4 text-center text-yellow-400 drop-shadow-lg">
-            Check out my first single!!!
-        </h2>
-        <iframe style="border-radius:12px"
-                src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0"
-                width="100%" height="352" frameBorder="0" allowfullscreen=""
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"></iframe>
-    </div>
-
-
-    <!-- Overview -->
-    <div class="mx-auto max-w-7xl py-8 sm:py-10 sm:px-8 rounded-xl sm:rounded-3xl">
-        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-16 shadow-2xl rounded sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.8"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <div class="lg:py-16">
-                <h2 class="text-4xl font-extrabold text-white mt-10 lg:mt-0 lg:text-5xl">
-                    About Me
-                </h2>
-                <p class="text-lg leading-relaxed text-gray-300 mt-6">
-                    Welcome to my website! Here, I showcase my projects and share insights into my academic
-                    journey. I am an MSCS student at The University of Alabama at Birmingham,
-                    expecting to graduate in Spring 2027.
-                </p>
-                <p class="text-lg leading-relaxed text-gray-300 mt-4">
-                    I’m deeply passionate about acquiring new skills and expanding my knowledge across a wide range of
-                    subjects. Recently, I've developed a strong interest in data science and applied my learned skills
-                    to create
-                    a custom spectrogram image classifier model! Using technology to make other people's lives better is
-                    my main goal as I am always happy to apply my skills to help out other people. </p>
-                <p class="text-lg leading-relaxed text-gray-300 mt-4 mb-6">
-                    Currently, I am a software development intern at Viper Imaging, where I contribute by
-                    implementing new features in our software and developing innovative automated testing solutions to
-                    reduce production times.
-                </p>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Projects Section -->
-    <section id="projects" class="pt-8 rounded-xl sm:rounded-3xl">
-        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-0 shadow-2xl rounded sm:rounded-3xl">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-0.5 top-0 mt-60 -z-10 h-[86rem] w-[86rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 bottom-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <div class="my-10">
-                <div class="mx-auto max-w-md text-center py-8 px-6 mt-8 mb-6 bg-base-100 rounded-lg shadow-lg">
-                    <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Projects</h1>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="{% static 'images/oculosarus_example.gif' %}" alt="Oculosaurus example"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                Oculosaurus
-                                <div class="badge badge-secondary text-xs">1st Place Award</div>
-                            </h2>
-                            <p class="text-sm mb-3">
-                                An advanced stereo vision system designed to assist visually impaired individuals by
-                                providing spatial awareness through depth perception.
-                            </p>
-                            <figure>
-                                <img src="{% static 'images/CS499OculosarusProject-1.png' %}" alt="Oculosaurus poster"/>
-                            </figure>
-                            <div class="space-y-2 mt-2">
-                                <p class="text-sm"><span class="font-semibold">Core Technology:</span> Real-time depth
-                                    estimation using calibrated stereo cameras and custom computer vision algorithms.
-                                </p>
-                                <p class="text-sm"><span class="font-semibold">Architecture:</span> Distributed system
-                                    with Raspberry Pi-powered goggles, cloud computation server, and mobile notification
-                                    interface.</p>
-                                <p class="text-sm"><span class="font-semibold">Features:</span> Live depth monitoring,
-                                    3D point cloud visualization, proximity warnings, and optional YOLO object
-                                    recognition.
-                                </p>
-                            </div>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/nsdevoss/cs499"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png"
-                                 alt="Waste detection demonstration"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                Waste Detection Drone
-                                <div class="badge badge-primary text-xs">Computer Vision</div>
-                            </h2>
-                            <p class="text-sm mb-3">
-                                An autonomous drone system utilizing advanced computer vision for environmental waste
-                                monitoring and management.
-                            </p>
-                            <figure>
-                                <img src="{% static 'images/model_ copy.gif' %}"
-                                     alt="Waste detection demonstration live"/>
-                            </figure>
-                            <div class="space-y-2 mt-2">
-                                <p class="text-sm"><span class="font-semibold">AI Model:</span> Custom YOLOv5 object
-                                    detection system trained on annotated waste imagery datasets</p>
-                                <p class="text-sm"><span class="font-semibold">Flight Control:</span> Programmatic
-                                    flight operations using Tello SDK with precision navigation algorithms</p>
-                                <p class="text-sm"><span class="font-semibold">Data Collection:</span> Integrated
-                                    telemetry logging, spatial mapping, and automated classification system</p>
-                            </div>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/Waste-detection-drone.git"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="{% static 'images/predict.png' %}" alt="Bird classifier prediction example"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                Backyard Bird Classifier
-                                <div class="badge badge-secondary text-xs">Live Demo</div>
-                            </h2>
-                            <p class="text-sm mb-3">
-                                An audio classification system that identifies Alabama bird species from their calls,
-                                deployed as an interactive web application.
-
-                                Developed from common birds and their chirps found in Alabama. This system is able to
-                                classify 30 different species and their different calls! You can try this out yourself
-                                as I implemented it into a webapp on my website. You can be able to see what bird made
-                                the chirp along with similar guesses and a visual spectrogram of what the chirp sounded
-                                like.
-                            </p>
-                            <figure>
-                                <img src="{% static 'images/Confusion_matrix.png' %}" alt="Confusion matrix"/>
-                            </figure>
-                            <div class="space-y-2 mt-2">
-                                <p class="text-sm"><span class="font-semibold">Technology:</span> Convolutional Neural
-                                    Networks applied to audio spectrograms for acoustic pattern recognition</p>
-                                <p class="text-sm"><span class="font-semibold">Dataset:</span> Comprehensive collection
-                                    of regional bird calls processed into mel-spectrograms for training</p>
-                                <p class="text-sm"><span class="font-semibold">Implementation:</span> Full-stack web
-                                    application with real-time audio processing and visualization</p>
-                            </div>
-                            <div class="flex flex-col sm:flex-row gap-2 mt-4 justify-end">
-                                <a href="{% url 'upload_file' %}" class="btn btn-info">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
-                                    </svg>
-                                    Try Demo
-                                </a>
-                                <div class="dropdown dropdown-top dropdown-end">
-                                    <label tabindex="0" class="btn btn-secondary">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                             viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                        </svg>
-                                        View Code
-                                    </label>
-                                    <ul tabindex="0"
-                                        class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                                        <li><a href="https://github.com/melvinczyk/Bird-Classifier.git">ML Model
-                                            Repository</a></li>
-                                        <li>
-                                            <a href="https://github.com/melvinczyk/Personal-Website/tree/main/my_website/bird_classifier">Web
-                                                Application Source</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41"
-                                 alt="Modpack Updater home page"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">
-                                Minecraft Server Modpack Updater
-                            </h2>
-                            <p class="text-sm mb-3">
-                                An application that uses an Amazon S3 bucket to host the latest version of your modpack
-                                with a
-                                manifest to track changes. It provides a centralized version for everyone to sync to,
-                                eliminating manual work. All your friends need to do is click “Update”.
-                            </p>
-                            <figure>
-                                <img src="https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267"
-                                     alt="Modpack Updater admin page"/>
-                            </figure>
-                            <div class="space-y-2 mt-2">
-                                <p class="text-sm"><span class="font-semibold">Technology:</span> Amazon S3 buckets for
-                                    hosting,
-                                    Java Gradle for building, Javafx for GUI design</p>
-                                <p class="text-sm"><span class="font-semibold">Running:</span> This is able to run on
-                                    Windows and macOS/Linux.
-                                    By using a launcher script it runs the jar on your computer. Downloads are available
-                                    on my GitHub.</p>
-                                <p class="text-sm"><span class="font-semibold">Features:</span> Configurable client S3
-                                    Bucket settings, ability to migrate old modpacks to a server modpack to start
-                                    tracking, ability to create a brand-new local modpack and update to any server
-                                    modpack, Git-style tracking of changes, ability to update existing added modpacks to
-                                    latest version, ability to view changelogs of the modpacks, full admin panel equiped
-                                    with update pushes, new folder tracking declarations, and
-                                    new server modpack additions</p>
-                            </div>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/ModpackUpdater.git"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true"
-                                 alt="VisAudio menu"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">VisAudio
-                            </h2>
-                            <p>VisAudio is a desktop app that I made for myself to deal with audio file manipulation,
-                                and YouTube audio downloading for all of my projects I deal with. I also added
-                                mel-spectrogram and waveform graphs for some audio visualization, with a visual EQ
-                                generator currently being worked on.<br><br>Some features include file type conversion,
-                                bit-rate resampling, noise reduction, and visual graph downloads. Along with file
-                                manipulation, it also includes a YouTube downloader where you can input any valid
-                                link to get that video's audio. It could do the video but... this is an audio themed
-                                application.<br><br>File types that are supported are: mp3, wav, flac, ogg, m4a, and aac
-                                with a more features planned for the future</p>
-                            <div class="card-actions justify-end">
-                                <a href="https://github.com/melvinczyk/VisAudio" class="btn btn-secondary">View
-                                    Project</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png"
-                                 alt="Screenshot-2024-10-02-at-5-08-12-PM" border="0">
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">FretWatch
-                                <div class="badge badge-secondary text-xs">In dev</div>
-                            </h2>
-                            <p>FretWatch is an OpenCV and PyTorch project centered around live guitar note
-                                documentation. FretWatch will be able to take in video or live feed and audio and will
-                                document the notes and chords played.<br><br>This project uses various signal processing
-                                techniques to extract data in a meaningful way. Using librosa as an audio signal
-                                processor and opencv for image manipulation, I can use these tools to extract audio
-                                features currently to detect certain notes played.
-                            </p>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/FretWatch"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png" alt="2024-10-07-09-39-39"
-                                 border="0">
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">Born in Spellbooks 1.20.1
-                                <div class="badge badge-secondary text-xs">Alpha</div>
-                            </h2>
-                            <p>Born In Spellbooks is an open source Minecraft forge 1.20.1 mod for <a
-                                    href="https://www.curseforge.com/minecraft/mc-mods/irons-spells-n-spellbooks"
-                                    class="font-semibold text-green-300 hover:text-green-400 transition-colors">Iron's
-                                Spells & Spellbooks</a> that I am working on. It is a compatibility mod combining Irons
-                                Spellbooks with the mod <a
-                                        href="https://www.curseforge.com/minecraft/mc-mods/born-in-chaos"
-                                        class="font-semibold text-green-300 hover:text-green-400 transition-colors">Born
-                                    In Chaos</a>. I used decompiling methods to learn the project structure of both mods
-                                and with this knowledge I am making a mod combining the two. The project is in alpha
-                                with around 17 spells coded in with three releases so far, but none are public yet. This
-                                is a community supported mod with other people helping me make textures/models for each
-                                spell, along with spell ideas and open source contributions.<br><br>This
-                                project is heavily focused on learning both codebases and figuring out ways to combine
-                                them. With problems such as model rendering, entity sharing, animation layering, and
-                                entity/spell/effect/etc registration.
-                            </p>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/Born_in_spellbooks"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://www.svgrepo.com/show/353657/django-icon.svg"
-                                 alt="Django framework logo"/>
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">nicholasburczyk.com</h2>
-                            <p>I have engineered this website utilizing the Django web framework, leveraging its robust
-                                capabilities to establish a secure and reliable backend infrastructure. While no web
-                                applications have been deployed yet, Django stands as a solid foundation
-                                for future deployment.<br><br>In conjunction with the Django web framework, I
-                                have integrated Tailwind CSS for the frontend design. Additionally, I have utilized the
-                                DaisyUI component
-                                library, which extends Tailwind with a diverse set of pre-built components, which
-                                allowed for
-                                rapid and responsive frontend development.</p>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/Personal-Website"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card bg-base-100 shadow-xl transition-transform transform hover:scale-105">
-                        <figure>
-                            <img src="https://i.ibb.co/7KCwNZr/minecraft.png" alt="minecraft">
-                        </figure>
-                        <div class="card-body">
-                            <h2 class="card-title">My Minecraft Server/Modpack</h2>
-                            <p>Minecraft mod pack designed by me using various mods and custom scripts as well as
-                                resource
-                                and data packs. I also manage my own server where I make sure everything runs smoothly.
-                                Server duties include accurate config management, real-time troubleshooting, script
-                                management, client-server networking, and many, many... more.<br><br>Includes custom
-                                data packs developed with json and mcscript to
-                                generate
-                                various features such as custom mobs, event modifiers, biome and loot modifiers, error
-                                handling, memory management, and
-                                structure generation</p>
-                            <div class="card-actions justify-end mt-4">
-                                <a href="https://github.com/melvinczyk/Datapacks"
-                                   class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
-                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    View Project
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- MINECRAFT MAP!!! -->
-    <section id="map" class="pt-10">
-        <div class="relative isolate overflow-hidden bg-base-100 px-6 pt-0 shadow-2xl rounded-xl sm:rounded-3xl">
-            <!-- Background SVG Gradients -->
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-1/2 bottom-0 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute left-0 top-0 mt-60 -z-10 h-[64rem] w-[64rem] -translate-x-1/2 -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)]"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#gradient-two)" fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="gradient-two">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-
-            <!-- Section Heading -->
-            <div class="bg-base-100 py-6 px-8 mt-8 rounded-xl shadow-md mx-auto max-w-3xl text-center">
-                <h2 class="text-3xl font-extrabold text-white">My Server Map</h2>
-            </div>
-            <!-- Section Description -->
-            <p class="text-lg text-white mb-8 mt-6 text-center">
-                Explore the interactive map of my Minecraft server, rendered using the <a
-                    href="https://bluemap.bluecolored.de"
-                    class="font-semibold text-green-300 hover:text-green-400 transition-colors">Bluemap</a> mod. This
-                map provides real-time data, including player locations and other world details.
-                <br><br>
-                View a larger version of the map <a href="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective"
-                                                    class="text-green-300 font-semibold hover:text-green-400 transition-colors"
-                                                    target="_blank">here</a>.
-            </p>
-
-            <!-- Map Display -->
-            <div class="mx-auto max-w-7xl pt-10 bg-base-100 mt-8 mb-8 sm:px-8 rounded-xl sm:rounded-3xl">
-                <div class="relative isolate overflow-hidden shadow-2xl sm:rounded-3xl min-h-screen">
-                    <div class="absolute inset-0 mb-8">
-                        <iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" class="w-full h-full" frameborder="0"></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-    <section id="contact">
-        <hr class="border-t-2 border-gray-400 mb-4 mt-4">
-        <!-- Contact Section -->
-        <div class="relative isolate overflow-hidden bg-base-100 p-6 shadow-lg rounded-lg text-white">
-            <svg viewBox="0 0 1024 1024"
-                 class="absolute right-0 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
-                 aria-hidden="true">
-                <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-                        fill-opacity="0.7"/>
-                <defs>
-                    <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="rgb(55 48 163)"/>
-                        <stop offset="1" stop-color="rgb(99 102 241)"/>
-                    </radialGradient>
-                </defs>
-            </svg>
-            <h2 class="text-3xl font-bold mb-4">Socials</h2>
-            <p class="mb-4">Feel free to reach out to me via the following channels:</p>
-            <div class="flex items-center">
-                <ul>
-                    <li>
-                        <a href="https://www.linkedin.com/in/nicholas-burczyk/"
-                           class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
-                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
-                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                                 viewBox="0 0 24 24">
-                                <path fill-rule="evenodd"
-                                      d="M12.51 8.796v1.697a3.738 3.738 0 0 1 3.288-1.684c3.455 0 4.202 2.16 4.202 4.97V19.5h-3.2v-5.072c0-1.21-.244-2.766-2.128-2.766-1.827 0-2.139 1.317-2.139 2.676V19.5h-3.19V8.796h3.168ZM7.2 6.106a1.61 1.61 0 0 1-.988 1.483 1.595 1.595 0 0 1-1.743-.348A1.607 1.607 0 0 1 5.6 4.5a1.601 1.601 0 0 1 1.6 1.606Z"
-                                      clip-rule="evenodd"/>
-                                <path d="M7.2 8.809H4V19.5h3.2V8.809Z"/>
-                            </svg>
-                            LinkedIn
-                        </a>
-                        <a href="https://github.com/melvinczyk"
-                           class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
-                            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true"
-                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                                 viewBox="0 0 24 24">
-                                <path fill-rule="evenodd"
-                                      d="M12.006 2a9.847 9.847 0 0 0-6.484 2.44 10.32 10.32 0 0 0-3.393 6.17 10.48 10.48 0 0 0 1.317 6.955 10.045 10.045 0 0 0 5.4 4.418c.504.095.683-.223.683-.494 0-.245-.01-1.052-.014-1.908-2.78.62-3.366-1.21-3.366-1.21a2.711 2.711 0 0 0-1.11-1.5c-.907-.637.07-.621.07-.621.317.044.62.163.885.346.266.183.487.426.647.71.135.253.318.476.538.655a2.079 2.079 0 0 0 2.37.196c.045-.52.27-1.006.635-1.37-2.219-.259-4.554-1.138-4.554-5.07a4.022 4.022 0 0 1 1.031-2.75 3.77 3.77 0 0 1 .096-2.713s.839-.275 2.749 1.05a9.26 9.26 0 0 1 5.004 0c1.906-1.325 2.74-1.05 2.74-1.05.37.858.406 1.828.101 2.713a4.017 4.017 0 0 1 1.029 2.75c0 3.939-2.339 4.805-4.564 5.058a2.471 2.471 0 0 1 .679 1.897c0 1.372-.012 2.477-.012 2.814 0 .272.18.592.687.492a10.05 10.05 0 0 0 5.388-4.421 10.473 10.473 0 0 0 1.313-6.948 10.32 10.32 0 0 0-3.39-6.165A9.847 9.847 0 0 0 12.007 2Z"
-                                      clip-rule="evenodd"/>
-                            </svg>
-                            Github
-                        </a>
-                        <a href="https://zerobarbecue.bandcamp.com"
-                           class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="currentColor"
-                                 class="w-6 h-6 text-gray-800" width="24" height="24"
-                                 viewBox="0,0,300,150">
-                                <g fill="#ffffff" fill-rule="nonzero" stroke="none" stroke-width="1"
-                                   stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10"
-                                   stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none"
-                                   font-size="none" text-anchor="none" style="mix-blend-mode: normal">
-                                    <g transform="scale(5.12,5.12)">
-                                        <path d="M25,2c-12.6907,0 -23,10.3093 -23,23c0,12.69071 10.3093,23 23,23c12.69071,0 23,-10.30929 23,-23c0,-12.6907 -10.30929,-23 -23,-23zM25,4c11.60982,0 21,9.39018 21,21c0,11.60982 -9.39018,21 -21,21c-11.60982,0 -21,-9.39018 -21,-21c0,-11.60982 9.39018,-21 21,-21zM20.64063,18l-7.64062,14h16.35938l7.64063,-14zM21.82617,20h11.80469l-5.45703,10h-11.80469z"></path>
-                                    </g>
-                                </g>
-                            </svg>
-                            Bandcamp
-                        </a>
-                        <a href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy?si=rhq2aXqcSmaepZrX7Sk7vw"
-                           class="text-white hover:text-gray-200 transition-colors duration-200 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24"
-                                 viewBox="0,0,256,256">
-                                <g fill-opacity="0" fill="#000000" fill-rule="nonzero" stroke="none" stroke-width="1"
-                                   stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10"
-                                   stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none"
-                                   font-size="none" text-anchor="none" style="mix-blend-mode: normal">
-                                    <g transform="scale(8.53333,8.53333)">
-                                        <path d="M15,3c-6.6,0 -12,5.4 -12,12c0,6.6 5.4,12 12,12c6.6,0 12,-5.4 12,-12c0,-6.6 -5.4,-12 -12,-12zM19.731,21c-0.22,0 -0.33,-0.11 -0.55,-0.22c-1.65,-0.991 -3.74,-1.54 -5.94,-1.54c-1.21,0 -2.53,0.22 -3.63,0.44c-0.22,0 -0.44,0.11 -0.55,0.11c-0.44,0 -0.77,-0.33 -0.77,-0.77c0,-0.44 0.22,-0.77 0.66,-0.77c1.43,-0.33 2.861,-0.55 4.401,-0.55c2.53,0 4.84,0.66 6.82,1.76c0.22,0.22 0.44,0.33 0.44,0.77c-0.222,0.55 -0.552,0.77 -0.881,0.77zM20.94,17.921c-0.22,0 -0.44,-0.11 -0.66,-0.22c-1.87,-1.21 -4.511,-1.87 -7.37,-1.87c-1.43,0 -2.751,0.22 -3.74,0.44c-0.22,0.11 -0.33,0.11 -0.55,0.11c-0.55,0 -0.881,-0.44 -0.881,-0.881c0,-0.55 0.22,-0.77 0.77,-0.991c1.32,-0.33 2.641,-0.66 4.511,-0.66c3.08,0 5.94,0.77 8.361,2.2c0.33,0.22 0.55,0.55 0.55,0.881c-0.111,0.55 -0.44,0.991 -0.991,0.991zM22.37,14.4c-0.22,0 -0.33,-0.11 -0.66,-0.22c-2.2,-1.21 -5.39,-1.98 -8.47,-1.98c-1.54,0 -3.19,0.22 -4.621,0.55c-0.22,0 -0.33,0.11 -0.66,0.11c-0.66,0.111 -1.1,-0.44 -1.1,-1.099c0,-0.659 0.33,-0.991 0.77,-1.1c1.761,-0.441 3.631,-0.661 5.611,-0.661c3.41,0 6.93,0.77 9.681,2.2c0.33,0.22 0.66,0.55 0.66,1.1c-0.11,0.66 -0.551,1.1 -1.211,1.1z"></path>
-                                    </g>
-                                </g>
-                            </svg>
-                            Spotify
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="mt-4 text-center text-sm text-gray-400">
-        <hr class="border-t-2 border-gray-400 mb-4">
-        <p>Designed with <a href="https://tailwindcss.com/" class="underline" target="_blank">Tailwind CSS</a> and <a
-                href="https://daisyui.com/" class="underline" target="_blank">DaisyUI</a>.</p>
-    </footer>
-</div>
 </body>
-
 </html>
