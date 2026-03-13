@@ -425,6 +425,94 @@ const PROJECTS = [
   },
 ];
 
+// ── AUDIO SYSTEM ──────────────────────────────────────────────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+let hoverBuffer = null;
+let clickBuffer = null;
+let errorBuffer = null;
+let bgMusic = null;
+let bgMusicSource = null;
+
+async function loadSound(url) {
+  try {
+    const res = await fetch(url);
+    const arr = await res.arrayBuffer();
+    return await audioCtx.decodeAudioData(arr);
+  } catch (err) {
+    console.warn(`Failed to load sound: ${url}`, err);
+    return null;
+  }
+}
+
+function playBuffer(buffer, volume = 0.3) {
+  if (!buffer) return;
+  audioCtx.resume().then(() => {
+    const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+    gain.gain.value = volume;
+    source.buffer = buffer;
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+    source.start(0);
+  });
+}
+
+function playBackgroundMusic() {
+  if (!bgMusic || bgMusicSource) return;
+
+  audioCtx.resume().then(() => {
+    bgMusicSource = audioCtx.createBufferSource();
+    const gainNode = audioCtx.createGain();
+
+    bgMusicSource.buffer = bgMusic;
+    bgMusicSource.loop = true;
+    gainNode.gain.value = 0.15; // Background music volume
+
+    bgMusicSource.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    bgMusicSource.start(0);
+  });
+}
+
+// Load ALL sounds immediately and wait for them
+(async () => {
+  console.log('Loading sounds...');
+  [hoverBuffer, clickBuffer, errorBuffer, bgMusic] = await Promise.all([
+    loadSound("{% static 'audio/hover.mp3' %}"),
+    loadSound("{% static 'audio/click.mp3' %}"),
+    loadSound("{% static 'audio/error.mp3' %}"),
+    loadSound("{% static 'audio/menu.mp3' %}")
+  ]);
+  console.log('All sounds loaded and ready!');
+})();
+
+// Start background music on first user interaction
+let musicStarted = false;
+document.addEventListener('click', () => {
+  if (!musicStarted) {
+    playBackgroundMusic();
+    musicStarted = true;
+  }
+}, { once: false });
+
+function playHoverBeep()  { playBuffer(hoverBuffer, 0.3); }
+function playClickSound() { playBuffer(clickBuffer, 0.4); }
+function playErrorSound() { playBuffer(errorBuffer, 0.5); }
+
+// ── SOUND EVENT DELEGATION ────────────────────────────────────
+document.addEventListener('mouseenter', e => {
+  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn')) {
+    playHoverBeep();
+  }
+}, true); // true = capture phase, catches all events before onclick
+
+document.addEventListener('click', e => {
+  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn')) {
+    playClickSound();
+  }
+}, true);
+
 // ── STATE ─────────────────────────────────────────────────────
 let hist=[], hIdx=-1;
 
@@ -678,29 +766,33 @@ CMDS['classify']=CMDS['bird-classifier'];
 
 // ── RUNNER ────────────────────────────────────────────────────
 function runCmd(raw){
-  const input=document.getElementById('cmd-input');
-  const trimmed=raw!==undefined?raw:input.value.trim();
-  if(raw===undefined)input.value='';
+      const input=document.getElementById('cmd-input');
+      const trimmed=raw!==undefined?raw:input.value.trim();
+      if(raw===undefined)input.value='';
 
-  echo(trimmed);
-  if(!trimmed){bl();return;}
+      echo(trimmed);
+      if(!trimmed){bl();return;}
 
-  hist.push(trimmed);hIdx=hist.length;
+      hist.push(trimmed);hIdx=hist.length;
 
-  const lo=trimmed.toLowerCase();
+      const lo=trimmed.toLowerCase();
 
-  if(lo.startsWith('cat project')){
-    CMDS['cat project'](trimmed.slice('cat project'.length).trim());
-    return;
-  }
+      if(lo.startsWith('cat project')){
+        CMDS['cat project'](trimmed.slice('cat project'.length).trim());
+        return;
+      }
 
-  const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
-  if(fn){fn(trimmed.split(' ').slice(1).join(' '));}
-  else{
-    ln(`  bash: <span style="color:#ff5555">${esc(trimmed)}</span>: command not found`);
-    ln(`  Type <span style="color:var(--g)">help</span> or click a button above`,'dim');
-    bl();
-  }
+    const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
+    if(fn){
+      playClickSound();
+      fn(trimmed.split(' ').slice(1).join(' '));
+    }
+    else{
+      playErrorSound();
+      ln(`  bash: <span style="color:#ff5555">${esc(trimmed)}</span>: command not found`);
+      ln(`  Type <span style="color:var(--g)">help</span> or click a button above`,'dim');
+      bl();
+    }
 }
 
 // ── TAB COMPLETE ──────────────────────────────────────────────
