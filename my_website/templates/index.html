@@ -656,6 +656,67 @@ whoami(){
   bl();
 },
 
+invisible(){
+  bl();
+  html(`
+    <div id="invisible-video-container" style="padding:4px 20px 10px;max-width:700px">
+      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
+        <video
+          id="invisible-video"
+          src="{% static 'video/invisible.mp4' %}"
+          width="100%"
+          style="border-radius:3px;border:1px solid #002808;display:block;max-height:500px;"
+          autoplay
+          controls>
+        </video>
+      </div>
+    </div>
+  `);
+  bl();
+
+  setTimeout(() => {
+    const video = document.getElementById('invisible-video');
+    const container = document.getElementById('invisible-video-container');
+    if (video) {
+      video.addEventListener('ended', () => {
+        if (container) {
+          container.remove();
+        }
+      });
+    }
+  }, 100);
+},
+
+liquid(){
+  bl();
+  html(`
+    <div id="liquid-video-container" style="padding:4px 20px 10px;max-width:700px">
+      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
+        <video
+          id="liquid-video"
+          src="{% static 'video/liquid.mp4' %}"
+          width="100%"
+          style="border-radius:3px;border:1px solid #002808;display:block;max-height:500px;"
+          autoplay
+          controls>
+        </video>
+      </div>
+    </div>
+  `);
+  bl();
+
+  setTimeout(() => {
+    const video = document.getElementById('liquid-video');
+    const container = document.getElementById('liquid-video-container');
+    if (video) {
+      video.addEventListener('ended', () => {
+        if (container) {
+          container.remove();
+        }
+      });
+    }
+  }, 100);
+},
 music(){
   bl();
   ln('── music ─────────────────────────────────────────────────────','dim');
