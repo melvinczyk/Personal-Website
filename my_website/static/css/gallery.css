@@ -1,0 +1,341 @@
+/* ── PAGE BASE ── */
+#screen { opacity: 1; overflow: hidden; }
+html, body { height: 100%; overflow: hidden; }
+
+/* ── LAYOUT ── */
+#layout { flex: 1; display: flex; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: 220px; flex-shrink: 0;
+  background: rgba(0,15,15,0.95);
+  border-right: 3px solid var(--mgs-cyan);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 3px 0 20px var(--glow-cyan);
+  position: relative;
+}
+#sidebar::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,255,204,0.03) 4px, rgba(0,255,204,0.03) 8px);
+}
+#sidebar::-webkit-scrollbar { width: 3px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--mgs-border); }
+
+.sb-section {
+  padding: 10px 12px 4px; font-size: 10px;
+  color: var(--mgs-cyan); letter-spacing: 2px; text-transform: uppercase;
+  border-bottom: 2px solid rgba(0,170,136,0.3);
+  font-family: 'Orbitron', monospace;
+}
+.sb-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; background: none; border: none;
+  border-bottom: 1px solid rgba(0,136,136,0.15);
+  border-left: 3px solid transparent;
+  padding: 9px 14px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 10px;
+  color: var(--mgs-border); text-align: left; transition: all .15s;
+  text-decoration: none;
+}
+.sb-btn:hover { background: rgba(0,255,204,0.06); color: var(--mgs-cyan); padding-left: 18px; border-left-color: var(--mgs-cyan); }
+.sb-btn.active { color: var(--mgs-cyan); border-left-color: var(--mgs-cyan); background: rgba(0,255,204,0.08); }
+.sb-arrow { color: var(--mgs-cyan); font-size: 10px; opacity: 0; transition: opacity .15s; margin-left: auto; }
+.sb-btn:hover .sb-arrow { opacity: 1; }
+.sb-btn .sb-icon { font-size: 12px; width: 16px; text-align: center; }
+
+.sb-season-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: none; border: none;
+  border-bottom: 1px solid rgba(0,80,60,0.15);
+  padding: 7px 14px 7px 28px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 10px;
+  color: rgba(0,170,136,0.6); text-align: left; transition: all .15s;
+}
+.sb-season-btn:hover { color: var(--mgs-cyan); background: rgba(0,255,204,0.06); padding-left: 32px; }
+.sb-season-btn.open { color: var(--mgs-cyan); border-left: 2px solid var(--mgs-cyan); }
+
+/* ── MAIN ── */
+#main {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px 40px;
+  scroll-behavior: smooth;
+}
+#main::-webkit-scrollbar { width: 4px; }
+#main::-webkit-scrollbar-track { background: var(--mgs-bg); }
+#main::-webkit-scrollbar-thumb { background: var(--mgs-cyan); }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex; align-items: center; gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid rgba(0,170,136,0.3);
+  margin-bottom: 28px;
+  animation: fadeIn .3s ease forwards;
+}
+.page-header-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 22px; color: var(--mgs-cyan);
+  letter-spacing: 3px; font-weight: 900;
+  text-shadow: 0 0 15px var(--glow-cyan);
+}
+.page-header-sub { color: var(--mgs-border); font-size: 11px; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: 2px solid rgba(0,170,136,0.4);
+  color: var(--mgs-border); font-family: 'Orbitron', monospace; font-size: 10px;
+  padding: 5px 12px; cursor: pointer;
+  text-decoration: none; transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.back-btn:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); background: rgba(0,255,204,0.06); box-shadow: 0 0 12px var(--glow-cyan); }
+
+/* ── SEASON BLOCK ── */
+.season-block { margin-bottom: 12px; animation: fadeIn .35s ease forwards; }
+
+/* ── SEASON HEADER (clickable toggle) ── */
+.season-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 20px;
+  border: 2px solid var(--mgs-border);
+  border-left: 4px solid var(--mgs-cyan);
+  background: rgba(0,15,15,0.8);
+  cursor: pointer;
+  transition: background .2s, box-shadow .2s;
+  position: relative; user-select: none;
+}
+.season-header::before, .season-header::after {
+  content: ''; position: absolute;
+  width: 12px; height: 12px; border: 1.5px solid var(--mgs-cyan);
+}
+.season-header::before { top: 0; right: 0; border-left: none; border-bottom: none; }
+.season-header::after  { bottom: 0; left: 4px; border-right: none; border-top: none; }
+.season-header:hover { background: rgba(0,255,204,0.04); box-shadow: 0 0 20px rgba(0,255,204,0.06); }
+.season-block.open .season-header { border-bottom: none; }
+
+.season-logo {
+  flex-shrink: 0; width: 100px; height: 100px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,10,10,0.9);
+  border: 2px solid var(--mgs-border); overflow: hidden;
+}
+.season-logo img {
+  width: 100%; height: 100%; object-fit: contain;
+  animation: logoPulse 4s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { filter: drop-shadow(0 0 4px var(--glow-cyan)); }
+  50%      { filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+}
+.season-logo-placeholder {
+  font-family: 'Orbitron', monospace; font-size: 26px;
+  color: var(--mgs-border); font-weight: 900;
+}
+
+.season-meta { flex: 1; min-width: 0; }
+.season-name {
+  font-family: 'Orbitron', monospace; font-size: 15px;
+  color: var(--mgs-cyan); letter-spacing: 2px; font-weight: 700;
+}
+.season-desc { color: #99ddcc; font-size: 11px; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
+.season-stats { display: flex; gap: 14px; margin-top: 5px; flex-wrap: wrap; }
+.season-stat { color: var(--mgs-border); font-size: 10px; font-family: 'Share Tech Mono', monospace; }
+.season-stat span { color: var(--mgs-cyan); }
+
+.season-toggle {
+  flex-shrink: 0; font-family: 'Orbitron', monospace;
+  font-size: 10px; color: var(--mgs-border);
+  display: flex; align-items: center; gap: 5px;
+  transition: color .2s; white-space: nowrap;
+}
+.chevron {
+  display: inline-block; transition: transform .3s ease; font-style: normal;
+}
+.season-block.open .chevron { transform: rotate(180deg); }
+.season-block.open .season-toggle { color: var(--mgs-cyan); }
+
+/* ── SEASON BODY (collapsible) ── */
+.season-body {
+  display: none;
+  border: 2px solid var(--mgs-border);
+  border-top: none;
+  border-left: 4px solid var(--mgs-cyan);
+  background: rgba(0,8,8,0.6);
+  padding: 16px;
+}
+.season-block.open .season-body {
+  display: block;
+  animation: fadeIn .25s ease forwards;
+}
+
+/* ── TABS ── */
+.media-tabs {
+  display: flex; gap: 0; margin-bottom: 16px;
+  border-bottom: 2px solid rgba(0,170,136,0.3);
+}
+.media-tab {
+  padding: 7px 18px; cursor: pointer;
+  font-family: 'Orbitron', monospace; font-size: 10px;
+  color: var(--mgs-border); letter-spacing: 1px;
+  border: none; background: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all .15s;
+}
+.media-tab:hover { color: var(--mgs-cyan); }
+.media-tab.active { color: var(--mgs-cyan); border-bottom-color: var(--mgs-cyan); }
+.tab-count {
+  font-size: 9px; color: var(--mgs-border);
+  background: rgba(0,170,136,0.12);
+  padding: 1px 5px; margin-left: 5px;
+  font-family: 'Share Tech Mono', monospace;
+}
+.media-tab.active .tab-count { color: var(--mgs-cyan); background: rgba(0,255,204,0.1); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.empty-msg {
+  color: rgba(0,170,136,0.4); font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  padding: 16px 0;
+}
+
+/* ── MASONRY GRID ── */
+.masonry-grid {
+  columns: 4 180px;
+  column-gap: 8px;
+}
+@media(max-width: 960px) { .masonry-grid { columns: 3 160px; } }
+@media(max-width: 640px) { .masonry-grid { columns: 2 130px; } }
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 8px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border: 2px solid rgba(0,170,136,0.2);
+  transition: border-color .15s, box-shadow .15s;
+  background: rgba(0,10,10,0.9);
+}
+.masonry-item:hover {
+  border-color: var(--mgs-cyan);
+  box-shadow: 0 0 12px rgba(0,255,204,0.14);
+}
+.masonry-item img {
+  width: 100%; height: auto; display: block;
+  filter: brightness(0.82) saturate(0.88);
+  transition: filter .2s;
+}
+.masonry-item:hover img { filter: brightness(1) saturate(1); }
+
+.masonry-overlay {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity .15s;
+  display: flex; align-items: flex-end;
+}
+.masonry-item:hover .masonry-overlay { opacity: 1; }
+.masonry-label {
+  width: 100%; padding: 5px 8px;
+  background: rgba(0,6,6,0.9);
+  border-top: 1px solid rgba(0,170,136,0.25);
+  font-size: 9px; color: var(--mgs-border);
+  font-family: 'Share Tech Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── VIDEO GRID ── */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.video-tile {
+  border: 2px solid rgba(0,170,136,0.2);
+  background: rgba(0,10,10,0.9);
+  overflow: hidden; cursor: pointer;
+  transition: border-color .15s, box-shadow .15s; position: relative;
+}
+.video-tile:hover { border-color: var(--mgs-cyan); box-shadow: 0 0 12px rgba(0,255,204,0.14); }
+.video-tile video { width: 100%; height: 150px; object-fit: cover; display: block; filter: brightness(0.82); transition: filter .2s; }
+.video-tile:hover video { filter: brightness(1); }
+.video-tile-overlay {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 150px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,255,204,0.03); opacity: 0; transition: opacity .15s;
+}
+.video-tile:hover .video-tile-overlay { opacity: 1; }
+.play-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2px solid var(--mgs-cyan);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--mgs-cyan); font-size: 14px;
+}
+.video-tile-label {
+  padding: 6px 10px; font-size: 10px; color: var(--mgs-border);
+  border-top: 1px solid rgba(0,170,136,0.2);
+  font-family: 'Share Tech Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tile-type-badge {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(0,8,8,0.9);
+  border: 1px solid #ffaa00; color: #ffaa00;
+  font-size: 9px; padding: 1px 5px;
+  font-family: 'Orbitron', monospace; letter-spacing: 1px;
+}
+
+/* ── LIGHTBOX ── */
+#lightbox {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,3,3,0.97);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+}
+#lightbox.open { display: flex; }
+
+#lightbox-media-wrap {
+  display: flex; align-items: center; justify-content: center;
+  max-width: 92vw; max-height: 80vh;
+}
+#lightbox-media-wrap img {
+  max-width: 92vw; max-height: 80vh;
+  border: 2px solid var(--mgs-border); display: block;
+  object-fit: contain;
+}
+#lightbox-media-wrap video {
+  max-width: 92vw; max-height: 80vh;
+  border: 2px solid var(--mgs-border);
+}
+
+#lightbox-caption {
+  color: var(--mgs-border); font-size: 10px;
+  letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; text-align: center;
+}
+#lightbox-close {
+  position: fixed; top: 14px; right: 18px;
+  background: none; border: 2px solid rgba(0,170,136,0.35);
+  color: var(--mgs-border); font-family: 'Orbitron', monospace;
+  font-size: 10px; padding: 5px 14px; cursor: pointer;
+  transition: all .15s; letter-spacing: 1px;
+}
+#lightbox-close:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); }
+#lightbox-counter {
+  position: fixed; top: 14px; left: 18px;
+  color: var(--mgs-border); font-family: 'Orbitron', monospace;
+  font-size: 10px; letter-spacing: 2px;
+}
+#lightbox-nav { display: flex; gap: 12px; }
+.lb-nav-btn {
+  background: none; border: 2px solid rgba(0,170,136,0.35);
+  color: var(--mgs-border); font-family: 'Orbitron', monospace;
+  font-size: 10px; padding: 7px 22px; cursor: pointer;
+  transition: all .15s; letter-spacing: 1px;
+}
+.lb-nav-btn:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); box-shadow: 0 0 10px var(--glow-cyan); }
+
+@media(max-width: 680px) {
+  #sidebar { display: none; }
+  .season-header { flex-direction: row; flex-wrap: wrap; gap: 10px; }
+  .masonry-grid { columns: 2 120px; }
+}

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nick@burczyk:~$ — bird-classifier</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% static 'css/bird_classifier.css' %}">
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<div id="screen">
+
+  <!-- TITLEBAR -->
+  <div id="titlebar">
+    <div class="ttl">NICK BURCZYK — BIRD CLASSIFIER</div>
+    <div class="clk" id="clock">00:00:00</div>
+  </div>
+
+  <!-- NAV -->
+  <div id="navback">
+    <a href="/" class="nb-link">~/home</a>
+    <span class="nb-sep">/</span>
+    <span class="nb-active">bird-classifier</span>
+    <div style="margin-left:auto;">
+      <a href="/" class="nb-link">← home</a>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- HEADER + STATS -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
+        <span class="ts-title">BACKYARD ALABAMA BIRD DETECTOR</span>
+        <span class="ts-sub">CNN · mel-spectrogram · 30 classes · Alabama species</span>
+      </div>
+      <div class="ts-bd">
+        <div class="section-comment">// deep learning model trained to detect common Alabama bird chirps — live model stats below</div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-lbl">MODEL CLASSES</div>
+            <div class="stat-val s">30</div>
+            <div class="stat-sub">species</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">LIVE MODEL ACCURACY</div>
+            <div class="stat-val {{ model_severity }}">{{ model_accuracy }}%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">MOST ACCURATE</div>
+            <div class="stat-val {{ largest_severity }}">{{ most_accurate_bird }}%</div>
+            <div class="stat-sub">{{ most_accurate }}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">LEAST ACCURATE</div>
+            <div class="stat-val {{ smallest_severity }}">{{ least_accurate_bird }}%</div>
+            <div class="stat-sub">{{ least_accurate }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD + CAROUSEL -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
+        <span class="ts-title">SUBMIT AUDIO FOR CLASSIFICATION</span>
+        <span class="ts-sub">upload a file or record live · wav/mp3/ogg/m4a accepted</span>
+      </div>
+      <div class="ts-bd">
+        <div class="upload-grid">
+
+          <!-- LEFT: FORM -->
+          <div>
+            <form method="post" enctype="multipart/form-data" id="upload-form">
+              {% csrf_token %}
+
+              <div class="upload-panel">
+                <div class="panel-label">// OPTION 1 — UPLOAD FILE</div>
+                <div class="drop-zone" id="drop-zone">
+                  <input type="file" name="file" id="file-input" accept="audio/*">
+                  <span class="drop-icon">🎵</span>
+                  <div class="drop-text"><strong>click to browse</strong> or drag &amp; drop audio</div>
+                  <div class="file-selected" id="file-name">no file selected</div>
+                </div>
+              </div>
+
+              <div class="or-divider">— OR —</div>
+
+              <div class="upload-panel">
+                <div class="panel-label">// OPTION 2 — RECORD LIVE</div>
+                <div id="safari-warning" style="display:none;color:var(--alert-red);font-size:11px;margin-bottom:10px;font-family:'Share Tech Mono',monospace;">⚠ Live recording not supported in Safari. Please use Chrome.</div>
+                <div class="rec-row">
+                  <button type="button" id="start-recording" class="term-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z"/></svg>
+                    ▸ START RECORDING
+                  </button>
+                  <button type="button" id="stop-recording" class="term-btn danger" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z"/></svg>
+                    ■ STOP
+                  </button>
+                  <span id="rec-indicator" style="display:none;font-size:11px;color:var(--alert-red);font-family:'Share Tech Mono',monospace;">
+                    <span style="animation:blink .5s infinite;display:inline-block">●</span> REC
+                  </span>
+                </div>
+                <audio id="audio-playback" controls class="hidden"></audio>
+                <input type="hidden" id="recorded-audio" name="recorded_audio">
+              </div>
+
+              <div class="hp"><input type="text" name="honeypot" id="honeypot" value=""></div>
+
+              {% if messages %}{% for message in messages %}
+              <div class="term-alert-err"><span style="color:var(--alert-red)">✖</span> Error: {{ message }}</div>
+              {% endfor %}{% endif %}
+              {% if success_message %}
+              <div class="term-alert-ok"><span style="color:var(--mgs-cyan)">✔</span> {{ success_message }}</div>
+              {% endif %}
+
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+                <button type="submit" id="upload-btn" class="term-btn lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
+                  ▸ CLASSIFY BIRD
+                </button>
+                <div id="loading-btn" class="loading-row">
+                  <div class="spinner"></div><span>analyzing audio...</span>
+                </div>
+                <button type="button" id="reset-form" class="term-btn secondary">↺ RESET</button>
+              </div>
+
+            </form>
+
+            <div class="bot-prompt">
+              <span>nick@burczyk:~/bird-classifier$</span><span class="cur"></span>
+            </div>
+          </div>
+
+          <!-- RIGHT: CAROUSEL -->
+          <div>
+            <div class="section-comment">// Alabama birds the model recognizes — auto-scrolling</div>
+            <div class="carousel-wrap">
+              <div class="carousel-track" id="carousel-track"></div>
+              <div class="carousel-caption">// 30 detectable Alabama species</div>
+            </div>
+            <div class="carousel-dots" id="carousel-dots"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MACAULAY LIBRARY -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
+        <span class="ts-title">FETCH FROM MACAULAY LIBRARY</span>
+        <span class="ts-sub">no birds nearby? pull a recording by ML number</span>
+      </div>
+      <div class="ts-bd">
+        <div class="section-comment">// visit <a class="tl" href="https://macaulaylibrary.org" target="_blank">macaulaylibrary.org</a> — find a bird recording — enter its ML# below</div>
+        <div class="macaulay-inner">
+          <div class="macaulay-embed">
+            <iframe src="https://macaulaylibrary.org/asset/622572493/embed" height="320" width="280" frameborder="0" allowfullscreen></iframe>
+            <div style="font-size:10px;color:var(--mgs-border);margin-top:6px;letter-spacing:1px;text-align:center;font-family:'Share Tech Mono',monospace">// example embed — ML622572493</div>
+          </div>
+          <div class="macaulay-form">
+            <form method="post" id="download-form">
+              {% csrf_token %}
+              <div style="margin-bottom:14px;">
+                <div class="panel-label" style="margin-bottom:8px;">// ENTER ML NUMBER</div>
+                <div class="term-input-row">
+                  <span class="prefix">ML#</span>
+                  <input type="text" name="asset_num" class="term-input" placeholder="e.g. 622572493">
+                </div>
+              </div>
+              <div class="hp"><input type="text" name="honeypot" id="honeypot_download" value=""></div>
+              <button type="submit" id="fetch-btn" class="term-btn lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                ↓ FETCH &amp; CLASSIFY
+              </button>
+              <div style="font-size:11px;color:var(--mgs-border);margin-top:10px;line-height:1.8;font-family:'Share Tech Mono',monospace;">
+                // This will download the audio from Macaulay<br>
+                // Library and run it through the classifier.
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIRD TABLE -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
+        <span class="ts-title">ALL DETECTABLE SPECIES</span>
+        <span class="ts-sub">30 Alabama birds · click play to hear each chirp</span>
+      </div>
+      <div class="ts-bd">
+        <div class="table-search">
+          <input type="text" class="term-input" id="bird-search" placeholder="filter birds..." oninput="filterBirds()">
+          <span class="table-count" id="bird-count">showing 29 birds</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="bird-table" id="bird-table">
+            <thead>
+              <tr>
+                <th>SPECIES</th>
+                <th>CHIRP</th>
+              </tr>
+            </thead>
+            <tbody id="bird-tbody">
+
+              <tr data-bird="american crow">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg" alt="American Crow" loading="lazy"><div><div class="bird-name">American Crow</div><div class="bird-latin">Corvus brachyrhynchos</div></div></div></td>
+                <td><button class="play-btn" id="pb_crow" onclick="togglePlay('a_crow','pb_crow')">▶ PLAY</button><audio id="a_crow" src="{% static 'audio/american_crow.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="american goldfinch">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg" alt="American Goldfinch" loading="lazy"><div><div class="bird-name">American Goldfinch</div><div class="bird-latin">Spinus tristis</div></div></div></td>
+                <td><button class="play-btn" id="pb_goldfinch" onclick="togglePlay('a_goldfinch','pb_goldfinch')">▶ PLAY</button><audio id="a_goldfinch" src="{% static 'audio/american_goldfinch.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="american robin">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://static.wikia.nocookie.net/birds/images/1/15/Am_robin.jpg/revision/latest?cb=20070731192419" alt="American Robin" loading="lazy"><div><div class="bird-name">American Robin</div><div class="bird-latin">Turdus migratorius</div></div></div></td>
+                <td><button class="play-btn" id="pb_robin" onclick="togglePlay('a_robin','pb_robin')">▶ PLAY</button><audio id="a_robin" src="{% static 'audio/american_robin.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="barred owl">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://bpraptorcenter.org/wp-content/uploads/2018/10/Barred-Owl.jpg" alt="Barred Owl" loading="lazy"><div><div class="bird-name">Barred Owl</div><div class="bird-latin">Strix varia</div></div></div></td>
+                <td><button class="play-btn" id="pb_owl" onclick="togglePlay('a_owl','pb_owl')">▶ PLAY</button><audio id="a_owl" src="{% static 'audio/barred_owl.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="blue jay">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/f/f4/Blue_jay_in_PP_%2830960%29.jpg" alt="Blue Jay" loading="lazy"><div><div class="bird-name">Blue Jay</div><div class="bird-latin">Cyanocitta cristata</div></div></div></td>
+                <td><button class="play-btn" id="pb_jay" onclick="togglePlay('a_jay','pb_jay')">▶ PLAY</button><audio id="a_jay" src="{% static 'audio/blue_jay.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="brown-headed nuthatch">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://objects.liquidweb.services/images/202312/inat_657788b2b07e05.26918231.jpg" alt="Brown-headed Nuthatch" loading="lazy"><div><div class="bird-name">Brown-headed Nuthatch</div><div class="bird-latin">Sitta pusilla</div></div></div></td>
+                <td><button class="play-btn" id="pb_nuthatch" onclick="togglePlay('a_nuthatch','pb_nuthatch')">▶ PLAY</button><audio id="a_nuthatch" src="{% static 'audio/brown_head.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="carolina chickadee">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.nps.gov/chat/learn/nature/images/chickadee.jpg?maxwidth=650&autorotate=false" alt="Carolina Chickadee" loading="lazy"><div><div class="bird-name">Carolina Chickadee</div><div class="bird-latin">Poecile carolinensis</div></div></div></td>
+                <td><button class="play-btn" id="pb_chickadee" onclick="togglePlay('a_chickadee','pb_chickadee')">▶ PLAY</button><audio id="a_chickadee" src="{% static 'audio/chickadee.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="carolina wren">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://i.natgeofe.com/n/9dfeaf41-ccd8-4234-a59a-e8f107fff63c/carolina-wren_3x4.jpg" alt="Carolina Wren" loading="lazy"><div><div class="bird-name">Carolina Wren</div><div class="bird-latin">Thryothorus ludovicianus</div></div></div></td>
+                <td><button class="play-btn" id="pb_wren" onclick="togglePlay('a_wren','pb_wren')">▶ PLAY</button><audio id="a_wren" src="{% static 'audio/wren.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="cedar waxwing">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/7/73/Cedar_Waxwing_-_Bombycilla_cedrorum%2C_George_Washington%27s_Birthplace_National_Monument%2C_Colonial_Beach%2C_Virginia_%2839997434862%29.jpg" alt="Cedar Waxwing" loading="lazy"><div><div class="bird-name">Cedar Waxwing</div><div class="bird-latin">Bombycilla cedrorum</div></div></div></td>
+                <td><button class="play-btn" id="pb_waxwing" onclick="togglePlay('a_waxwing','pb_waxwing')">▶ PLAY</button><audio id="a_waxwing" src="{% static 'audio/waxwing.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="chipping sparrow">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.wintuaudubon.org/wp-content/uploads/2022/05/ChSp-DBogenerX700-1.png" alt="Chipping Sparrow" loading="lazy"><div><div class="bird-name">Chipping Sparrow</div><div class="bird-latin">Spizella passerina</div></div></div></td>
+                <td><button class="play-btn" id="pb_chipping" onclick="togglePlay('a_chipping','pb_chipping')">▶ PLAY</button><audio id="a_chipping" src="{% static 'audio/sparrow.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="dark-eyed junco">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.readingeagle.com/wp-content/uploads/migration/2014/03/854df37f69f90bfbc0e463cbfa794349.jpg?w=1024" alt="Dark-eyed Junco" loading="lazy"><div><div class="bird-name">Dark-eyed Junco</div><div class="bird-latin">Junco hyemalis</div></div></div></td>
+                <td><button class="play-btn" id="pb_dark" onclick="togglePlay('a_dark','pb_dark')">▶ PLAY</button><audio id="a_dark" src="{% static 'audio/junco.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="downy woodpecker">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/60397941-480px.jpg" alt="Downy Woodpecker" loading="lazy"><div><div class="bird-name">Downy Woodpecker</div><div class="bird-latin">Dryobates pubescens</div></div></div></td>
+                <td><button class="play-btn" id="pb_downy" onclick="togglePlay('a_downy','pb_downy')">▶ PLAY</button><audio id="a_downy" src="{% static 'audio/downy_woodpecker.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="eastern bluebird">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://nestwatch.org/wp-content/uploads/2019/10/EABL_GenaFlanigen-935x1024.jpg" alt="Eastern Bluebird" loading="lazy"><div><div class="bird-name">Eastern Bluebird</div><div class="bird-latin">Sialia sialis</div></div></div></td>
+                <td><button class="play-btn" id="pb_bluebird" onclick="togglePlay('a_bluebird','pb_bluebird')">▶ PLAY</button><audio id="a_bluebird" src="{% static 'audio/eastern_bluebird.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="eastern kingbird">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kingbird_Profile.jpg" alt="Eastern Kingbird" loading="lazy"><div><div class="bird-name">Eastern Kingbird</div><div class="bird-latin">Tyrannus tyrannus</div></div></div></td>
+                <td><button class="play-btn" id="pb_kingbird" onclick="togglePlay('a_kingbird','pb_kingbird')">▶ PLAY</button><audio id="a_kingbird" src="{% static 'audio/kingbird.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="eastern phoebe">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/301877791-480px.jpg" alt="Eastern Phoebe" loading="lazy"><div><div class="bird-name">Eastern Phoebe</div><div class="bird-latin">Sayornis phoebe</div></div></div></td>
+                <td><button class="play-btn" id="pb_phoebe" onclick="togglePlay('a_phoebe','pb_phoebe')">▶ PLAY</button><audio id="a_phoebe" src="{% static 'audio/phoebe.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="eastern towhee">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.thebiofiles.com/img/1/202010/inat_1603124226-5f8dd33184e801.85622326.jpg" alt="Eastern Towhee" loading="lazy"><div><div class="bird-name">Eastern Towhee</div><div class="bird-latin">Pipilo erythrophthalmus</div></div></div></td>
+                <td><button class="play-btn" id="pb_towhee" onclick="togglePlay('a_towhee','pb_towhee')">▶ PLAY</button><audio id="a_towhee" src="{% static 'audio/towhee.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="house finch">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/306327811-480px.jpg" alt="House Finch" loading="lazy"><div><div class="bird-name">House Finch</div><div class="bird-latin">Haemorhous mexicanus</div></div></div></td>
+                <td><button class="play-btn" id="pb_house" onclick="togglePlay('a_house','pb_house')">▶ PLAY</button><audio id="a_house" src="{% static 'audio/house_finch.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="mourning dove">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://inaturalist-open-data.s3.amazonaws.com/photos/513309/large.jpg" alt="Mourning Dove" loading="lazy"><div><div class="bird-name">Mourning Dove</div><div class="bird-latin">Zenaida macroura</div></div></div></td>
+                <td><button class="play-btn" id="pb_dove" onclick="togglePlay('a_dove','pb_dove')">▶ PLAY</button><audio id="a_dove" src="{% static 'audio/mourning.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="myrtle warbler">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://wildlife-species.canada.ca/bird-status/statique-static/oiseau-bird/YRWA_Jukka_Jantunen.jpg" alt="Myrtle Warbler" loading="lazy"><div><div class="bird-name">Myrtle Warbler</div><div class="bird-latin">Setophaga coronata</div></div></div></td>
+                <td><button class="play-btn" id="pb_myrtle" onclick="togglePlay('a_myrtle','pb_myrtle')">▶ PLAY</button><audio id="a_myrtle" src="{% static 'audio/myrtle.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="northern cardinal">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Male_northern_cardinal_in_Central_Park_%2852612%29.jpg" alt="Northern Cardinal" loading="lazy"><div><div class="bird-name">Northern Cardinal</div><div class="bird-latin">Cardinalis cardinalis</div></div></div></td>
+                <td><button class="play-btn" id="pb_cardinal" onclick="togglePlay('a_cardinal','pb_cardinal')">▶ PLAY</button><audio id="a_cardinal" src="{% static 'audio/cardinal.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="northern flicker">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/60403261-480px.jpg" alt="Northern Flicker" loading="lazy"><div><div class="bird-name">Northern Flicker</div><div class="bird-latin">Colaptes auratus</div></div></div></td>
+                <td><button class="play-btn" id="pb_flicker" onclick="togglePlay('a_flicker','pb_flicker')">▶ PLAY</button><audio id="a_flicker" src="{% static 'audio/flicker.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="northern mockingbird">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://lh5.googleusercontent.com/proxy/1AmgeTOj3a2rnvEenWkMoTVaNpGKAbzLpjep2X6pcLhseYGtdSqHs_ux9v_EkGvJH7jxE4PyauRXSKwBaWJQce2AGtrSo9HG7YAM0bU" alt="Northern Mockingbird" loading="lazy"><div><div class="bird-name">Northern Mockingbird</div><div class="bird-latin">Mimus polyglottos</div></div></div></td>
+                <td><button class="play-btn" id="pb_mock" onclick="togglePlay('a_mock','pb_mock')">▶ PLAY</button><audio id="a_mock" src="{% static 'audio/mockingbird.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="pine warbler">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://feederwatch.org/wp-content/uploads/2010/12/pinwar_u228216_11a.jpg" alt="Pine Warbler" loading="lazy"><div><div class="bird-name">Pine Warbler</div><div class="bird-latin">Setophaga pinus</div></div></div></td>
+                <td><button class="play-btn" id="pb_pine" onclick="togglePlay('a_pine','pb_pine')">▶ PLAY</button><audio id="a_pine" src="{% static 'audio/pine.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="purple finch">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://www.allaboutbirds.org/guide/assets/photo/306334001-480px.jpg" alt="Purple Finch" loading="lazy"><div><div class="bird-name">Purple Finch</div><div class="bird-latin">Haemorhous purpureus</div></div></div></td>
+                <td><button class="play-btn" id="pb_purple" onclick="togglePlay('a_purple','pb_purple')">▶ PLAY</button><audio id="a_purple" src="{% static 'audio/purple_finch.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="red-bellied woodpecker">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Red-bellied_Woodpecker-27527.jpg/800px-Red-bellied_Woodpecker-27527.jpg" alt="Red-bellied Woodpecker" loading="lazy"><div><div class="bird-name">Red-bellied Woodpecker</div><div class="bird-latin">Melanerpes carolinus</div></div></div></td>
+                <td><button class="play-btn" id="pb_red_woodpecker" onclick="togglePlay('a_red_woodpecker','pb_red_woodpecker')">▶ PLAY</button><audio id="a_red_woodpecker" src="{% static 'audio/red_woodpecker.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="red-winged blackbird">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Red-winged_Blackbird.jpg" alt="Red-winged Blackbird" loading="lazy"><div><div class="bird-name">Red-winged Blackbird</div><div class="bird-latin">Agelaius phoeniceus</div></div></div></td>
+                <td><button class="play-btn" id="pb_red_wing" onclick="togglePlay('a_red_wing','pb_red_wing')">▶ PLAY</button><audio id="a_red_wing" src="{% static 'audio/blackbird.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="song sparrow">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://seasonwatch.umn.edu/sites/seasonwatch.umn.edu/files/styles/folwell_slideshow/public/2022-09/02_song_sparrow_05_04_c_andrea_kingsley_some_rights_reserved_cc-by-nc.jpg?itok=41i9V3wA" alt="Song Sparrow" loading="lazy"><div><div class="bird-name">Song Sparrow</div><div class="bird-latin">Melospiza melodia</div></div></div></td>
+                <td><button class="play-btn" id="pb_song" onclick="togglePlay('a_song','pb_song')">▶ PLAY</button><audio id="a_song" src="{% static 'audio/song_sparrow.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="tufted titmouse">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://inaturalist-open-data.s3.amazonaws.com/photos/898/large.jpg" alt="Tufted Titmouse" loading="lazy"><div><div class="bird-name">Tufted Titmouse</div><div class="bird-latin">Baeolophus bicolor</div></div></div></td>
+                <td><button class="play-btn" id="pb_titmouse" onclick="togglePlay('a_titmouse','pb_titmouse')">▶ PLAY</button><audio id="a_titmouse" src="{% static 'audio/titmouse.mp3' %}"></audio></td>
+              </tr>
+              <tr data-bird="white-breasted nuthatch">
+                <td><div class="bird-row"><img class="bird-thumb" src="https://media.audubon.org/nas_birdapi_hero/aud_gbbc-2016_white-breasted-nuthatch_35889_kk_mi_photo-joan-tisdale_adult-male.jpg" alt="White-breasted Nuthatch" loading="lazy"><div><div class="bird-name">White-breasted Nuthatch</div><div class="bird-latin">Sitta carolinensis</div></div></div></td>
+                <td><button class="play-btn" id="pb_white" onclick="togglePlay('a_white','pb_white')">▶ PLAY</button><audio id="a_white" src="{% static 'audio/white.mp3' %}"></audio></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
+        <span class="ts-title">HOW IT WORKS</span>
+        <span class="ts-sub">5-step inference pipeline</span>
+      </div>
+      <div class="ts-bd">
+        <div class="section-comment">// audio → preprocessing → spectrogram → CNN → weighted prediction</div>
+        <div class="pipeline">
+          <div class="pipe-step">
+            <img src="{% static '/images/convert.png' %}" alt="Step 1" loading="lazy">
+            <div class="pipe-body"><div class="pipe-num">STEP_01</div><div class="pipe-desc">File type check and conversion to .wav format for standardized processing.</div></div>
+          </div>
+          <div class="pipe-step">
+            <img src="{% static '/images/visual.png' %}" alt="Step 2" loading="lazy">
+            <div class="pipe-body"><div class="pipe-num">STEP_02</div><div class="pipe-desc">Audio resampled to 22050 Hz. Metadata extracted: length, pitch, average frequency.</div></div>
+          </div>
+          <div class="pipe-step">
+            <img src="{% static 'images/visual_reduced.png' %}" alt="Step 3" loading="lazy">
+            <div class="pipe-body"><div class="pipe-num">STEP_03</div><div class="pipe-desc">Noise reduction applied to amplify important bird-call frequencies and suppress background.</div></div>
+          </div>
+          <div class="pipe-step">
+            <img src="{% static 'images/split.png' %}" alt="Step 4" loading="lazy">
+            <div class="pipe-body"><div class="pipe-num">STEP_04</div><div class="pipe-desc">Mel-spectrogram generated for every 5-second window of audio, producing an array of image segments.</div></div>
+          </div>
+          <div class="pipe-step">
+            <img src="{% static 'images/predict.png' %}" alt="Step 5" loading="lazy">
+            <div class="pipe-body"><div class="pipe-num">STEP_05</div><div class="pipe-desc">CNN predicts on each spectrogram. Weighted final prediction combines all segment confidences.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div><span style="color:var(--mgs-cyan)">●</span>&nbsp; bird-classifier v1 · 30 classes · Alabama region</div>
+    <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
+  </div>
+
+</div><!-- /screen -->
+
+<script src="{% static 'scripts/bird_classifier.js' %}"></script>
+</body>
+</html>

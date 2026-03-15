@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'compressor',
     "bird_classifier.apps.BirdClassifierConfig",
+    'minecraft',
 ]
 
 COMPRESS_ROOT = BASE_DIR / 'static'

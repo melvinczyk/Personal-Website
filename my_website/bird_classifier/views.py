@@ -311,7 +311,7 @@ def upload_file(request):
                 messages.error(request, error_message)
             return redirect('upload_file')
 
-    return render(request, 'upload.html', {
+    return render(request, 'bird_classifier_upload.html', {
         'model_accuracy': model_stats.get('average'),
         'most_accurate_bird': model_stats.get('largest')[1],
         'most_accurate': model_stats.get('largest')[0],

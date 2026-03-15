@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nick@burczyk:~$ — server gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% static 'css/gallery.css' %}">
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<div id="screen">
+
+  <!-- TITLEBAR -->
+  <div id="titlebar">
+    <div class="ttl">NICK BURCZYK — SERVER GALLERY</div>
+    <div class="clk" id="clock">00:00:00</div>
+  </div>
+
+  <div id="layout">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div class="sb-section">Navigation</div>
+      <a class="sb-btn" href="{% url 'index' %}">
+        <span class="sb-icon">◆</span>HOME<span class="sb-arrow">►</span>
+      </a>
+
+      <div class="sb-section">Seasons</div>
+      {% for season in seasons %}
+      <button class="sb-season-btn" id="sb-season-{{ season.number }}"
+              onclick="scrollToSeason({{ season.number }})">
+        ▸ Season {{ season.number }}
+        <span style="font-size:9px;opacity:0.5">{{ season.screenshot_count }}+{{ season.video_count }}</span>
+      </button>
+      {% endfor %}
+
+      <div class="sb-section">System</div>
+      <button class="sb-btn" onclick="document.getElementById('main').scrollTo({top:0,behavior:'smooth'})">
+        <span class="sb-icon">↑</span>TOP<span class="sb-arrow">►</span>
+      </button>
+    </div>
+
+    <!-- MAIN -->
+    <div id="main">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <div>
+          <div class="page-header-title">SERVER GALLERY</div>
+          <div class="page-header-sub">minecraft server · screenshots &amp; clips · all seasons · click a season to expand</div>
+        </div>
+        <a class="back-btn" href="{% url 'index' %}">◂ BACK TO TERMINAL</a>
+      </div>
+
+      <!-- SEASONS -->
+      {% for season in seasons %}
+      <div class="season-block" id="season-{{ season.number }}">
+
+        <!-- HEADER (click to toggle) -->
+        <div class="season-header" onclick="toggleSeason({{ season.number }})">
+
+          <div class="season-logo">
+            {% if season.has_logo %}
+            <img src="{% static 'minecraft/season' %}{{ season.number }}/{{ season.logo_file }}"
+                 onerror="this.parentElement.innerHTML='<div class=\'season-logo-placeholder\'>S{{ season.number }}</div>'"
+                 alt="Season {{ season.number }}">
+            {% else %}
+            <div class="season-logo-placeholder">S{{ season.number }}</div>
+            {% endif %}
+          </div>
+
+          <div class="season-meta">
+            <div class="season-name">SEASON {{ season.number }}</div>
+            <div class="season-desc">{{ season.description }}</div>
+            <div class="season-stats">
+              <div class="season-stat">screenshots: <span>{{ season.screenshot_count }}</span></div>
+              <div class="season-stat">videos: <span>{{ season.video_count }}</span></div>
+            </div>
+          </div>
+
+          <div class="season-toggle">
+            EXPAND <i class="chevron">▼</i>
+          </div>
+
+        </div>
+
+        <!-- BODY (hidden until opened) -->
+        <div class="season-body" id="body-{{ season.number }}">
+
+          <!-- TABS -->
+          <div class="media-tabs">
+            <button class="media-tab active" data-tab="screenshots"
+                    onclick="switchTab({{ season.number }}, 'screenshots')">
+              SCREENSHOTS <span class="tab-count">{{ season.screenshot_count }}</span>
+            </button>
+            <button class="media-tab" data-tab="videos"
+                    onclick="switchTab({{ season.number }}, 'videos')">
+              VIDEOS <span class="tab-count">{{ season.video_count }}</span>
+            </button>
+          </div>
+
+          <!-- SCREENSHOTS PANEL -->
+          <div class="tab-panel active" data-panel="screenshots">
+            {% if season.screenshots %}
+            <div class="masonry-grid">
+              {% for item in season.screenshots %}
+              <div class="masonry-item"
+                   onclick="openLightbox('season{{ season.number }}', 'screenshots', {{ forloop.counter0 }})">
+                <img src="{{ item.url }}" alt="{{ item.label }}" loading="lazy">
+                <div class="masonry-overlay">
+                  <div class="masonry-label">{{ item.label }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-msg">// no screenshots for this season yet</div>
+            {% endif %}
+          </div>
+
+          <!-- VIDEOS PANEL -->
+          <div class="tab-panel" data-panel="videos">
+            {% if season.videos %}
+            <div class="video-grid">
+              {% for item in season.videos %}
+              <div class="video-tile"
+                   onclick="openLightbox('season{{ season.number }}', 'videos', {{ forloop.counter0 }})">
+                <video muted preload="metadata">
+                  <source src="{{ item.url }}" type="video/mp4">
+                </video>
+                <div class="video-tile-overlay">
+                  <div class="play-circle">▶</div>
+                </div>
+                <div class="tile-type-badge">VID</div>
+                <div class="video-tile-label">{{ item.label }}</div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-msg">// no videos for this season yet</div>
+            {% endif %}
+          </div>
+
+        </div><!-- /season-body -->
+      </div><!-- /season-block -->
+      {% endfor %}
+
+    </div><!-- /main -->
+  </div><!-- /layout -->
+
+  <!-- LIGHTBOX -->
+  <div id="lightbox">
+    <div id="lightbox-counter">1 / 1</div>
+    <button id="lightbox-close" onclick="closeLightbox()">[ × CLOSE ] ESC</button>
+    <div id="lightbox-media-wrap"></div>
+    <div id="lightbox-caption"></div>
+    <div id="lightbox-nav">
+      <button class="lb-nav-btn" onclick="lbStep(-1)">◂ PREV</button>
+      <button class="lb-nav-btn" onclick="lbStep(1)">NEXT ▸</button>
+    </div>
+  </div>
+
+</div><!-- /screen -->
+
+<!-- Django data → JS -->
+<script>
+const GALLERY_URLS = {
+  hover: "{% static 'audio/hover.mp3' %}",
+  click: "{% static 'audio/click.mp3' %}",
+};
+
+// Full media index for lightbox — all images/videos per season, not just visible page
+const GALLERY_DATA = {
+  {% for season in seasons %}
+  "season{{ season.number }}": {
+    "screenshots": [
+      {% for item in season.screenshots %}
+      { "type": "img", "url": "{{ item.url }}", "label": "{{ item.label }}" }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ],
+    "videos": [
+      {% for item in season.videos %}
+      { "type": "video", "url": "{{ item.url }}", "label": "{{ item.label }}" }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+};
+</script>
+<script src="{% static 'scripts/gallery.js' %}"></script>
+</body>
+</html>

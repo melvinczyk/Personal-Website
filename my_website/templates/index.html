@@ -4,914 +4,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nick@burczyk:~$</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
-<style>
-:root {
-  --g:   #00ff41;
-  --gd:  #00aa2a;
-  --gdark: #003b0f;
-  --glow: rgba(0,255,65,0.18);
-  --bg:  #020c02;
-  --bg2: #050f05;
-  --bg3: #030a03;
-  --t:   #00cc33;
-  --td:  #006615;
-  --tb:  #00ff41;
-  --o: #ffaa00;
-  --oglow: rgba(255,170,0,0.25);
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;background:var(--bg);color:var(--t);font-family:'Share Tech Mono',monospace;overflow:hidden;}
-
-/* CRT scanlines */
-body::before{content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);}
-body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;
-  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.65) 100%);}
-
-.scanline{position:fixed;left:0;right:0;height:3px;background:rgba(0,255,65,0.05);z-index:998;pointer-events:none;animation:scan 7s linear infinite;}
-@keyframes scan{0%{top:-3px}100%{top:100vh}}
-@keyframes flicker{0%,100%{opacity:1}88%{opacity:1}89%{opacity:.8}90%{opacity:1}96%{opacity:.92}97%{opacity:1}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 12px 2px var(--glow)}}
-
-#screen{width:100%;height:100%;display:flex;flex-direction:column;animation:flicker 10s infinite;}
-
-/* ── TITLEBAR ── */
-#titlebar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 16px;background:#010801;border-bottom:1px solid #002808;flex-shrink:0;
-}
-.dots{display:flex;gap:8px;}
-.dot{width:12px;height:12px;border-radius:50%;}
-.dot-r{background:#ff5555;box-shadow:0 0 5px #ff555566;}
-.dot-y{background:#ffbb00;box-shadow:0 0 5px #ffbb0066;}
-.dot-g{background:var(--g);box-shadow:0 0 5px var(--glow);animation:pulse 3s infinite;}
-.ttl{font-family:'VT323',monospace;font-size:17px;color:var(--td);letter-spacing:2px;}
-.clk{font-size:12px;color:var(--td);letter-spacing:1px;}
-
-/* ── LAYOUT: sidebar + terminal ── */
-#layout{flex:1;display:flex;overflow:hidden;}
-
-/* ── SIDEBAR ── */
-#sidebar{
-  width:220px;flex-shrink:0;
-  background:#010a01;border-right:1px solid #002808;
-  display:flex;flex-direction:column;overflow-y:auto;
-}
-#sidebar::-webkit-scrollbar{width:3px;}
-#sidebar::-webkit-scrollbar-thumb{background:var(--gdark);}
-
-.sb-section{padding:10px 12px 4px;font-size:10px;color:var(--td);letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid #001f05;}
-.sb-btn{
-  display:flex;align-items:center;gap:8px;
-  width:100%;background:none;border:none;border-bottom:1px solid #001805;
-  padding:9px 14px;cursor:pointer;
-  font-family:'Share Tech Mono',monospace;font-size:12px;
-  color:#447744;text-align:left;transition:all .15s;
-}
-.sb-btn:hover{background:#010f01;color:var(--g);padding-left:18px;}
-.sb-btn:hover .sb-arrow{opacity:1;}
-.sb-btn.active{background:#010f01;color:var(--g);border-left:2px solid var(--g);}
-.sb-arrow{color:var(--td);font-size:10px;opacity:0;transition:opacity .15s;margin-left:auto;}
-.sb-btn .sb-icon{font-size:14px;width:16px;text-align:center;}
-
-/* project quick-list in sidebar */
-.sb-proj-btn{
-  display:block;width:100%;background:none;border:none;border-bottom:1px solid #001005;
-  padding:7px 14px 7px 28px;cursor:pointer;
-  font-family:'Share Tech Mono',monospace;font-size:11px;
-  color:#2a5a2a;text-align:left;transition:all .15s;
-}
-.sb-proj-btn:hover{color:var(--g);background:#010f01;padding-left:32px;}
-
-/* ── TERMINAL PANE ── */
-#terminal{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-
-#output{
-  flex:1;overflow-y:auto;
-  padding:14px 20px 8px;scroll-behavior:smooth;
-}
-#output::-webkit-scrollbar{width:4px;}
-#output::-webkit-scrollbar-track{background:var(--bg);}
-#output::-webkit-scrollbar-thumb{background:var(--gdark);}
-
-/* ── INPUT BAR ── */
-#input-area{flex-shrink:0;background:#010801;border-top:1px solid #002808;}
-
-/* quick-command pill row */
-#quickbar{
-  display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 6px;
-  border-bottom:1px solid #001805;
-}
-.qbtn{
-  background:#010f01;border:1px solid #003810;
-  color:#337733;font-family:'Share Tech Mono',monospace;font-size:11px;
-  padding:3px 10px;border-radius:2px;cursor:pointer;transition:all .15s;
-  white-space:nowrap;
-}
-.qbtn:hover{background:#001f00;color:var(--g);border-color:var(--g);box-shadow:0 0 8px rgba(0,255,65,.12);}
-
-#input-row{display:flex;align-items:center;padding:8px 14px 10px;gap:0;}
-#prompt{color:var(--td);font-size:14px;white-space:nowrap;user-select:none;}
-#prompt .u{color:var(--g);}
-#prompt .h{color:#00dd33;}
-#prompt .s{color:var(--g);margin-right:7px;}
-#cmd-input{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--tb);font-family:'Share Tech Mono',monospace;font-size:14px;
-  caret-color:var(--g);
-}
-
-/* ── OUTPUT ELEMENTS ── */
-.line{font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
-.fade-in{animation:fadeIn .2s ease forwards;}
-.green{color:var(--g);}
-.dim{color:var(--td);}
-.bright{color:var(--tb);text-shadow:0 0 8px var(--glow);}
-.white{color:#b8ffb8;}
-.yellow{color:#ccff00;}
-.red{color:#ff5555;}
-.cyan{color:#00ffcc;}
-.blank{height:5px;}
-
-/* ── ASCII ── */
-.ascii{font-family:'VT323',monospace;font-size:16px;color:var(--g);
-  text-shadow:0 0 10px rgba(0,255,65,.35);line-height:1.2;white-space:pre;}
-
-/* ── PROJECT CARD ── */
-.proj-card{
-  border:1px solid #002a08;border-left:3px solid var(--g);
-  background:var(--bg2);border-radius:3px;
-  margin:4px 0 10px;overflow:hidden;
-  animation:fadeIn .25s ease forwards;
-}
-.proj-card-header{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 14px 8px;border-bottom:1px solid #001f05;
-}
-.proj-card-body{display:flex;gap:0;flex-wrap:wrap;}
-.proj-img-wrap{
-  width:220px;flex-shrink:0;
-  background:#010801;border-right:1px solid #001f05;
-  display:flex;align-items:center;justify-content:center;padding:10px;
-}
-.proj-img-wrap img{
-  width:100%;max-height:160px;object-fit:cover;
-  border-radius:2px;border:1px solid #002a08;
-  filter:none;
-  transition:filter .3s;
-}
-.proj-img-wrap img:hover{filter:saturate(1) brightness(1) sepia(0) hue-rotate(0deg);}
-.proj-info{flex:1;padding:10px 14px;min-width:200px;}
-.proj-name{color:var(--tb);font-family:'VT323',monospace;font-size:18px;letter-spacing:1px;}
-.badge{
-  display:inline-block;border:1px solid var(--gd);color:var(--gd);
-  font-size:10px;padding:0 6px;margin-left:6px;vertical-align:middle;border-radius:1px;
-}
-.badge.award{border-color:#ccff00;color:#ccff00;}
-.badge.live{border-color:#00ffcc;color:#00ffcc;}
-.badge.dev{border-color:#ffaa00;color:#ffaa00;}
-.proj-tech{color:var(--td);font-size:11px;margin-top:5px;}
-.proj-desc{color:#88cc88;font-size:12px;margin-top:8px;line-height:1.65;}
-.proj-tags{margin-top:8px;}
-.tag{color:var(--tdark,#003b0f);font-size:10px;color:#336633;}
-.proj-link{
-  display:inline-block;margin-top:8px;color:var(--g);
-  font-size:12px;text-decoration:none;border:1px solid #003810;
-  padding:3px 10px;border-radius:2px;transition:all .15s;
-}
-.proj-link:hover{background:#001f00;box-shadow:0 0 8px var(--glow);}
-
-/* ── CONTACT ROW ── */
-.contact-row{
-  display:flex;align-items:center;gap:14px;
-  border:1px solid #002008;background:var(--bg2);
-  padding:10px 14px;margin:3px 0;border-radius:2px;
-  transition:all .15s;
-}
-.contact-row:hover{border-color:var(--gd);background:#010f01;}
-.contact-label{color:var(--td);font-size:11px;width:80px;}
-.contact-link{color:var(--g);font-size:12px;text-decoration:none;flex:1;}
-.contact-link:hover{text-shadow:0 0 8px var(--g);}
-
-/* ── INLINE LINK ── */
-a.tl{color:var(--g);text-decoration:none;}
-a.tl:hover{text-shadow:0 0 8px var(--g);text-decoration:underline;}
-
-/* ── WHOAMI CARD ── */
-.who-card{
-  display:flex;gap:20px;flex-wrap:wrap;
-  border:1px solid #002808;border-left:3px solid var(--g);
-  background:var(--bg2);padding:16px;border-radius:3px;margin:4px 0;
-}
-.who-photo{flex-shrink:0;}
-.who-photo img{
-  width:110px;height:110px;object-fit:cover;border-radius:50%;
-  border:2px solid var(--gd);
-  filter:none;
-  box-shadow:0 0 16px rgba(0,255,65,.2);
-}
-.who-info{flex:1;min-width:180px;}
-.who-name{font-family:'VT323',monospace;font-size:26px;color:var(--tb);letter-spacing:1px;text-shadow:0 0 10px var(--glow);}
-.who-row{display:flex;gap:8px;margin-top:5px;font-size:12px;}
-.who-key{color:var(--td);width:72px;flex-shrink:0;}
-.who-val{color:#b8ffb8;}
-.who-status{
-  margin-top:14px;
-  padding:14px 16px;
-  border:1px solid rgba(255,170,0,0.35);
-  border-left:3px solid var(--o);
-  border-radius:12px;
-  background:rgba(40,20,0,0.25);
-  box-shadow:0 0 10px var(--oglow);
-}
-
-.who-status-label{
-  font-size:12px;
-  letter-spacing:0.12em;
-  color:#aa7700;
-  margin-bottom:6px;
-}
-
-.who-status-value{
-  font-size:16px;
-  font-weight:700;
-  color:var(--o);
-}
-
-/* ── MOBILE ── */
-@media(max-width:680px){
-  #sidebar{display:none;}
-  .proj-img-wrap{width:100%;border-right:none;border-bottom:1px solid #001f05;}
-  .who-card{flex-direction:column;}
-}
-</style>
+<title>Nick Burczyk</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
 </head>
 <body>
+<div class="grid-overlay"></div>
 <div class="scanline"></div>
-<div id="screen">
 
-  <!-- TITLEBAR -->
-  <div id="titlebar">
-    <div class="dots">
-      <div class="dot dot-r"></div>
-      <div class="dot dot-y"></div>
-      <div class="dot dot-g"></div>
+<!-- CODEC INTRO -->
+<div id="codec-screen">
+  <div class="codec-inner">
+    <div class="codec-call-box">
+      <div class="codec-call-text">CALL</div>
     </div>
-    <div class="ttl">nick@burczyk — bash — portfolio</div>
+    <div class="codec-sub">PUSH SELECT</div>
+    <button class="codec-btn" id="codec-btn" onclick="enterSite()">[ SELECT ]</button>
+  </div>
+</div>
+
+<!-- SOLITON RADAR -->
+<div class="radar-display">
+  <div class="radar-label">SOLITON RADAR</div>
+  <div class="radar-map">
+    <svg width="148" height="148" viewBox="0 0 148 148" fill="none">
+      <rect x="8"   y="8"   width="60" height="40" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="8"   y="52"  width="24" height="36" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="36"  y="52"  width="32" height="56" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="8"   y="92"  width="24" height="48" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="72"  y="8"   width="68" height="52" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="72"  y="64"  width="36" height="36" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="112" y="64"  width="28" height="76" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="72"  y="104" width="36" height="36" stroke="#00aa88" stroke-width="1.2"/>
+      <line x1="68"  y1="28"  x2="72"  y2="28"  stroke="#00aa88" stroke-width="1.2"/>
+      <line x1="32"  y1="52"  x2="36"  y2="52"  stroke="#00aa88" stroke-width="1.2"/>
+      <line x1="68"  y1="82"  x2="72"  y2="82"  stroke="#00aa88" stroke-width="1.2"/>
+      <line x1="108" y1="100" x2="112" y2="100" stroke="#00aa88" stroke-width="1.2"/>
+      <rect x="1" y="1" width="146" height="146" stroke="#00331f" stroke-width="0.5"/>
+    </svg>
+    <div class="player-dot"></div>
+    <div class="enemy-dot" style="top:18%;left:60%;"></div>
+    <div class="enemy-dot" style="top:70%;left:28%;animation-delay:.5s;"></div>
+  </div>
+  <div class="radar-footer">RADAR : NORMAL</div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="screen">
+  <div id="titlebar">
+    <div class="ttl">NICK BURCZYK</div>
     <div class="clk" id="clock">00:00:00</div>
   </div>
 
   <div id="layout">
-
-    <!-- SIDEBAR -->
     <div id="sidebar">
-      <div class="sb-section">Navigation</div>
-      <button class="sb-btn" onclick="runCmd('whoami')"><span class="sb-icon">▸</span>whoami<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('ls projects')"><span class="sb-icon">▸</span>projects<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('music')"><span class="sb-icon">▸</span>music<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('contact')"><span class="sb-icon">▸</span>contact<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('map')"><span class="sb-icon">▸</span>server map<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('bird-classifier')" style="border-left:2px solid #00aa2a;"><span class="sb-icon">▸</span>bird classifier<span class="sb-arrow">↵</span></button>
+      <div class="sb-section">NAVIGATION</div>
+      <button class="sb-btn" onclick="runCmd('whoami')"><span class="sb-icon">◆</span>ABOUT<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('ls projects')"><span class="sb-icon">◆</span>PROJECTS<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('music')"><span class="sb-icon">◆</span>MUSIC<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('contact')"><span class="sb-icon">◆</span>CONTACT<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('map')"><span class="sb-icon">◆</span>MC SERVER MAP<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('bird-classifier')"><span class="sb-icon">◆</span>CLASSIFIER<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('gallery')"><span class="sb-icon">◆</span>MC GALLERY<span class="sb-arrow">►</span></button>
 
-      <div class="sb-section">Projects</div>
-      <button class="sb-proj-btn" onclick="runCmd('cat project oculosaurus')">oculosaurus</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project waste-drone')">waste-drone</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project bird-classifier')">bird-classifier</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project modpack-updater')">modpack-updater</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project visaudio')">visaudio</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project fretwatch')">fretwatch</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project born-in-spellbooks')">born-in-spellbooks</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project personal-website')">personal-website</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project minecraft-server')">minecraft-server</button>
+      <div class="sb-section">PROJECTS</div>
+      <button class="sb-proj-btn" onclick="runCmd('cat project oculosaurus')">OCULOSAURUS</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project waste-drone')">WASTE-DRONE</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project bird-classifier')">BIRD-CLASSIFIER</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project modpack-updater')">MODPACK-UPDATER</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project visaudio')">VISAUDIO</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project fretwatch')">FRETWATCH</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project born-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project personal-website')">PERSONAL-WEBSITE</button>
+      <button class="sb-proj-btn" onclick="runCmd('cat project minecraft-server')">MINECRAFT-SERVER</button>
 
-      <div class="sb-section">System</div>
-      <button class="sb-btn" onclick="runCmd('help')"><span class="sb-icon">?</span>help<span class="sb-arrow">↵</span></button>
-      <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>clear<span class="sb-arrow">↵</span></button>
+      <div class="sb-section">SYSTEM</div>
+      <button class="sb-btn" onclick="runCmd('help')"><span class="sb-icon">?</span>HELP<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>CLEAR<span class="sb-arrow">►</span></button>
     </div>
 
-    <!-- TERMINAL -->
     <div id="terminal">
       <div id="output"></div>
-
       <div id="input-area">
-        <!-- Quick command pills -->
         <div id="quickbar">
-          <button class="qbtn" onclick="runCmd('whoami')">▸ whoami</button>
-          <button class="qbtn" onclick="runCmd('ls projects')">▸ ls projects</button>
-          <button class="qbtn" onclick="runCmd('music')">▸ music</button>
-          <button class="qbtn" onclick="runCmd('contact')">▸ contact</button>
-          <button class="qbtn" onclick="runCmd('map')">▸ server map</button>
-          <button class="qbtn" onclick="runCmd('bird-classifier')" style="border-color:#00aa2a;color:#00aa2a;">▸ bird classifier</button>
-          <button class="qbtn" onclick="runCmd('help')">▸ help</button>
-          <button class="qbtn" onclick="runCmd('clear')">▸ clear</button>
+          <button class="qbtn" onclick="runCmd('whoami')">▸ ABOUT</button>
+          <button class="qbtn" onclick="runCmd('ls projects')">▸ PROJECTS</button>
+          <button class="qbtn" onclick="runCmd('music')">▸ MUSIC</button>
+          <button class="qbtn" onclick="runCmd('contact')">▸ CONTACT</button>
+          <button class="qbtn" onclick="runCmd('map')">▸ MC MAP</button>
+          <button class="qbtn" onclick="runCmd('bird-classifier')" style="border-color:#00aa88;color:#00aa88;">▸ CLASSIFIER</button>
+          <button class="qbtn" onclick="runCmd('gallery')">▸ MC GALLERY</button>
+          <button class="qbtn" onclick="runCmd('help')">▸ HELP</button>
+          <button class="qbtn" onclick="runCmd('clear')">▸ CLEAR</button>
         </div>
         <div id="input-row">
           <div id="prompt">
-            <span class="u">nick</span><span style="color:var(--td)">@</span><span class="h">burczyk</span><span style="color:var(--td)">:~</span><span class="s">$</span>
+            <span class="u">nick</span><span style="color:var(--mgs-border)">@</span><span class="h">burczyk</span><span style="color:var(--mgs-border)">:~</span><span class="s">$</span>
           </div>
-          <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus placeholder="type a command or click above…">
+          <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="enter command...">
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-  </div><!-- /layout -->
-</div><!-- /screen -->
-
+<!-- Pass Django static URLs to JavaScript -->
 <script>
-// ── DATA ─────────────────────────────────────────────────────
-const PROJECTS = [
-  {
-    id:"oculosaurus",
-    name:"OCULOSAURUS",
-    badge:"1ST PLACE AWARD",bc:"award",
-    tech:"Python / OpenCV / Raspberry Pi / YOLO",
-    img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/oculosarus_example.gif",
-    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/CS499OculosarusProject-1.png",
-    desc:"Advanced stereo vision system designed to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.",
-    link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator",
-    tags:["computer-vision","socket-programming","android-app","hardware","Python","YOLO"]
-  },
-  {
-    id:"waste-drone",
-    name:"WASTE DETECTION DRONE",
-    badge:"COMPUTER VISION",bc:"",
-    tech:"Python / YOLOv5 / Tello SDK",
-    img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png",
-    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/model_%20copy.gif",
-    desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.",
-    link:"https://github.com/melvinczyk/Waste-detection-drone",
-    tags:["drone","YOLO","CV","ML","Python"]
-  },
-  {
-    id:"bird-classifier",
-    name:"BACKYARD BIRD CLASSIFIER",
-    badge:"LIVE DEMO",bc:"live",
-    tech:"Python / CNN / Django / mel-spectrogram",
-    img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/predict.png",
-    img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/Confusion_matrix.png",
-    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms — achieves strong accuracy. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.",
-    link:"https://github.com/melvinczyk/Bird-Classifier",
-    tags:["ML","audio","CNN","Django","spectrograms"]
-  },
-  {
-    id:"modpack-updater",
-    name:"MINECRAFT MODPACK UPDATER",
-    badge:"TOOL",bc:"",
-    tech:"Java / JavaFX / Amazon S3 / Gradle",
-    img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41",
-    img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267",
-    desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click 'Update' for clients. Cross-platform (Win/macOS/Linux).",
-    link:"https://github.com/melvinczyk/ModpackUpdater",
-    tags:["Java","AWS","S3","JavaFX","Gradle"]
-  },
-  {
-    id:"visaudio",
-    name:"VISAUDIO",
-    badge:"TOOL",bc:"",
-    tech:"Python / librosa / PyQt",
-    img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true",
-    img2:null,
-    desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac. Visual EQ generator in progress.",
-    link:"https://github.com/melvinczyk/VisAudio",
-    tags:["Python","audio","librosa","PyQt","YT-DLP"]
-  },
-  {
-    id:"fretwatch",
-    name:"FRETWATCH",
-    badge:"IN DEV",bc:"dev",
-    tech:"Python / OpenCV / PyTorch / librosa",
-    img:"https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png",
-    img2:null,
-    desc:"Live guitar note detection from video and audio. Signal processing extracts audio features to detect notes and chords being played. Combines librosa for audio analysis and OpenCV for live video frame manipulation.",
-    link:"https://github.com/melvinczyk/FretWatch",
-    tags:["CV","audio","PyTorch","OpenCV","music"]
-  },
-  {
-    id:"born-in-spellbooks",
-    name:"BORN IN SPELLBOOKS MOD",
-    badge:"ALPHA",bc:"dev",
-    tech:"Java / Minecraft Forge 1.20.1",
-    img:"https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png",
-    img2:null,
-    desc:"Open source Minecraft Forge compatibility mod combining Iron's Spells & Spellbooks with Born In Chaos. 17+ spells coded with custom rendering, animation layering, entity sharing. Community-supported with open-source texture/model contributions. Three alpha releases.",
-    link:"https://github.com/melvinczyk/Born_in_spellbooks",
-    tags:["Java","Minecraft","Forge","modding"]
-  },
-  {
-    id:"personal-website",
-    name:"NICHOLASBURCZYK.COM",
-    badge:"LIVE",bc:"live",
-    tech:"Django / Tailwind CSS / DaisyUI / Python",
-    img:"https://www.svgrepo.com/show/353657/django-icon.svg",
-    img2:null,
-    desc:"This website (in its Django form). Built on Django for a secure backend, Tailwind CSS + DaisyUI for rapid responsive frontend, and deployed ML model inference for the bird classifier. The terminal you're using is a redesign of it.",
-    link:"https://github.com/melvinczyk/Personal-Website",
-    tags:["Django","Tailwind","Python","web","DaisyUI"]
-  },
-  {
-    id:"minecraft-server",
-    name:"MINECRAFT SERVER & MODPACK",
-    badge:"ONGOING",bc:"",
-    tech:"Java / JSON / mcscript / Linux server admin",
-    img:"https://i.ibb.co/7KCwNZr/minecraft.png",
-    img2:null,
-    desc:"Custom modpack with curated mods, resource & data packs. Server admin duties: config management, real-time troubleshooting, script management, networking. Custom data packs with JSON/mcscript for custom mobs, biomes, loot tables, and structure generation.",
-    link:"https://github.com/melvinczyk/Datapacks",
-    tags:["Java","Minecraft","sysadmin","scripting","JSON"]
-  },
-];
-
-// ── AUDIO SYSTEM ──────────────────────────────────────────────
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-let hoverBuffer = null;
-let clickBuffer = null;
-let errorBuffer = null;
-let bgMusic = null;
-let bgMusicSource = null;
-
-async function loadSound(url) {
-  try {
-    const res = await fetch(url);
-    const arr = await res.arrayBuffer();
-    return await audioCtx.decodeAudioData(arr);
-  } catch (err) {
-    console.warn(`Failed to load sound: ${url}`, err);
-    return null;
-  }
-}
-
-function playBuffer(buffer, volume = 0.3) {
-  if (!buffer) return;
-  audioCtx.resume().then(() => {
-    const source = audioCtx.createBufferSource();
-    const gain = audioCtx.createGain();
-    gain.gain.value = volume;
-    source.buffer = buffer;
-    source.connect(gain);
-    gain.connect(audioCtx.destination);
-    source.start(0);
-  });
-}
-
-function playBackgroundMusic() {
-  if (!bgMusic || bgMusicSource) return;
-
-  audioCtx.resume().then(() => {
-    bgMusicSource = audioCtx.createBufferSource();
-    const gainNode = audioCtx.createGain();
-
-    bgMusicSource.buffer = bgMusic;
-    bgMusicSource.loop = true;
-    gainNode.gain.value = 0.15; // Background music volume
-
-    bgMusicSource.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    bgMusicSource.start(0);
-  });
-}
-
-// Load ALL sounds immediately and wait for them
-(async () => {
-  console.log('Loading sounds...');
-  [hoverBuffer, clickBuffer, errorBuffer, bgMusic] = await Promise.all([
-    loadSound("{% static 'audio/hover.mp3' %}"),
-    loadSound("{% static 'audio/click.mp3' %}"),
-    loadSound("{% static 'audio/error.mp3' %}"),
-    loadSound("{% static 'audio/menu.mp3' %}")
-  ]);
-  console.log('All sounds loaded and ready!');
-})();
-
-// Start background music on first user interaction
-let musicStarted = false;
-document.addEventListener('click', () => {
-  if (!musicStarted) {
-    playBackgroundMusic();
-    musicStarted = true;
-  }
-}, { once: false });
-
-function playHoverBeep()  { playBuffer(hoverBuffer, 0.3); }
-function playClickSound() { playBuffer(clickBuffer, 0.4); }
-function playErrorSound() { playBuffer(errorBuffer, 0.5); }
-
-// ── SOUND EVENT DELEGATION ────────────────────────────────────
-document.addEventListener('mouseenter', e => {
-  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn')) {
-    playHoverBeep();
-  }
-}, true); // true = capture phase, catches all events before onclick
-
-document.addEventListener('click', e => {
-  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn')) {
-    playClickSound();
-  }
-}, true);
-
-// ── STATE ─────────────────────────────────────────────────────
-let hist=[], hIdx=-1;
-
-// ── CLOCK ─────────────────────────────────────────────────────
-setInterval(()=>{
-  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
-},1000);
-
-// ── OUTPUT HELPERS ────────────────────────────────────────────
-const out = document.getElementById('output');
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-function ln(html='', cls='line'){
-  const d=document.createElement('div');
-  d.className=`line ${cls} fade-in`;
-  d.innerHTML=html;
-  out.appendChild(d);
-  out.scrollTop=out.scrollHeight;
-}
-function bl(){const d=document.createElement('div');d.className='blank fade-in';out.appendChild(d);out.scrollTop=out.scrollHeight;}
-function html(h){
-  const d=document.createElement('div');
-  d.className='fade-in';
-  d.innerHTML=h;
-  out.appendChild(d);
-  out.scrollTop=out.scrollHeight;
-}
-function echo(cmd){
-  ln(`<span style="color:var(--td)">nick@burczyk:~$</span> <span style="color:#00cc33">${esc(cmd)}</span>`);
-}
-
-// ── COMMANDS ─────────────────────────────────────────────────
-const CMDS = {
-
-help(){
-  bl();
-  ln('┌──────────────────────────────────────────────────────────────┐','green');
-  ln('│                 NICK BURCZYK — COMMAND REFERENCE                    │','green');
-  ln('└──────────────────────────────────────────────────────────────┘','green');
-  bl();
-  [
-    ['whoami',            'identity + current status'],
-    ['ls projects',       'list all projects'],
-    ['cat project [id]',  'view a project  (e.g.  cat project bird-classifier)'],
-    ['music',             'Zero Barbecue — Spotify / Bandcamp'],
-    ['contact',           'socials and links'],
-    ['map',               'live Minecraft server map'],
-    ['bird-classifier',   'launch the bird classifier demo'],
-    ['clear',             'clear terminal'],
-    ['help',              'this menu'],
-  ].forEach(([c,d])=>{
-    ln(`  <span style="color:var(--g);display:inline-block;min-width:200px">${esc(c)}</span><span style="color:#3a6a3a">${d}</span>`);
-  });
-},
-
-
-whoami(){
-  bl();
-  html(`
-    <div class="who-card fade-in">
-      <div class="who-photo">
-        <img src="https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/nick.jpg"
-             onerror="this.style.display='none'"
-             alt="Nicholas Burczyk">
-      </div>
-
-      <div class="who-info">
-        <div class="who-name">NICK BURCZYK</div>
-
-        <div class="who-row"><span class="who-key">school</span><span class="who-val">MSCS @ UAB — Spring 2027</span></div>
-        <div class="who-row"><span class="who-key">work</span><span class="who-val">Software Developer @ Viper Imaging</span></div>
-        <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA — Software Development @ UAB</span></div>
-        <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration, embedded systems</span></div>
-        <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ — embedded, performance computing, low-level work</span></div>
-        <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue — producer / artist</span></div>
-        <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft — modding guru, custom server, multiple modpacks, Forge mods</span></div>
-        <div class="who-row"><span class="who-key">location</span><span class="who-val">Birmingham, AL</span></div>
-
-        <!-- Enforced status block -->
-        <div class="who-status">
-          <div class="who-status-label">STATUS</div>
-          <div class="who-status-value"><span style="color:var(--o)">●</span> LEARNING EMBEDDED SYSTEMS</div>
-        </div>
-
-      </div>
-    </div>
-  `);
-
-  bl();
-  ln(`  <span style="color:var(--g)">ls projects</span> to explore work`,'dim');
-  bl();
-},
-
-'ls projects'(){
-  bl();
-  ln(`total ${PROJECTS.length}  <span style="color:var(--td)">(click a name or type: cat project [id])</span>`,'dim');
-  bl();
-  PROJECTS.forEach((p,i)=>{
-    const n=String(i+1).padStart(2,'0');
-    const badge=p.badge?` <span style="color:var(--td)">[${esc(p.badge)}]</span>`:'';
-    ln(`  <span style="color:var(--tdark,#003b0f)">${n}</span>  `+
-       `<span style="color:var(--g);cursor:pointer;text-decoration:underline" onclick="runCmd('cat project ${p.id}')">${p.id.padEnd(22)}</span>`+
-       `<span style="color:#447744">${esc(p.name)}</span>${badge}`);
-  });
-  bl();
-},
-
-'cat project'(id){
-  id=(id||'').trim().toLowerCase();
-  if(!id){ln(`  Usage: cat project [id]  — run <span style="color:var(--g)">ls projects</span> to see all IDs`,'red');return;}
-  const p=PROJECTS.find(x=>x.id===id||x.name.toLowerCase().includes(id));
-  if(!p){ln(`  bash: ${esc(id)}: no such project. Run <span style="color:var(--g)">ls projects</span>`,'red');return;}
-  bl();
-  const img2html = p.img2
-    ? `<img src="${p.img2}" alt="secondary" style="width:100%;margin-top:8px;max-height:120px;object-fit:cover;border-radius:2px;border:1px solid #002a08;filter:none;">`
-    : '';
-  html(`
-    <div class="proj-card">
-      <div class="proj-card-header">
-        <span class="proj-name">${esc(p.name)}</span>
-        <span class="badge ${p.bc}">${esc(p.badge)}</span>
-      </div>
-      <div class="proj-card-body">
-        <div class="proj-img-wrap">
-          <div style="width:100%">
-            <img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">
-            ${img2html}
-          </div>
-        </div>
-        <div class="proj-info">
-          <div class="proj-tech">stack: <span style="color:#88cc88">${esc(p.tech)}</span></div>
-          <div class="proj-desc">${esc(p.desc)}</div>
-          <div class="proj-tags" style="margin-top:8px">
-            ${p.tags.map(t=>`<span style="color:var(--td);font-size:11px">#${t} </span>`).join('')}
-          </div>
-          <a class="proj-link" href="${p.link}" target="_blank">→ github: ${p.link.replace('https://github.com/','')}</a>
-        </div>
-      </div>
-    </div>
-  `);
-  bl();
-},
-
-invisible(){
-  bl();
-  html(`
-    <div id="invisible-video-container" style="padding:4px 20px 10px;max-width:700px">
-      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
-        <video
-          id="invisible-video"
-          src="{% static 'video/invisible.mp4' %}"
-          width="100%"
-          style="border-radius:3px;border:1px solid #002808;display:block;max-height:500px;"
-          autoplay
-          controls>
-        </video>
-      </div>
-    </div>
-  `);
-  bl();
-
-  setTimeout(() => {
-    const video = document.getElementById('invisible-video');
-    const container = document.getElementById('invisible-video-container');
-    if (video) {
-      video.addEventListener('ended', () => {
-        if (container) {
-          container.remove();
-        }
-      });
-    }
-  }, 100);
-},
-
-liquid(){
-  bl();
-  html(`
-    <div id="liquid-video-container" style="padding:4px 20px 10px;max-width:700px">
-      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
-        <video
-          id="liquid-video"
-          src="{% static 'video/liquid.mp4' %}"
-          width="100%"
-          style="border-radius:3px;border:1px solid #002808;display:block;max-height:500px;"
-          autoplay
-          controls>
-        </video>
-      </div>
-    </div>
-  `);
-  bl();
-
-  setTimeout(() => {
-    const video = document.getElementById('liquid-video');
-    const container = document.getElementById('liquid-video-container');
-    if (video) {
-      video.addEventListener('ended', () => {
-        if (container) {
-          container.remove();
-        }
-      });
-    }
-  }, 100);
-},
-music(){
-  bl();
-  ln('── music ─────────────────────────────────────────────────────','dim');
-  bl();
-  ln('  Artist:  <span style="color:var(--g)">Zero Barbecue</span>','line');
-  ln('  My first single is out now!','white');
-  bl();
-  ln('  <span style="color:#1DB954">●</span> Spotify  → <a class="tl" href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy" target="_blank">open.spotify.com/artist/Zero-Barbecue</a>');
-  ln('  <span style="color:#1da0c3">●</span> Bandcamp → <a class="tl" href="https://zerobarbecue.bandcamp.com" target="_blank">zerobarbecue.bandcamp.com</a>');
-  bl();
-  html(`
-    <div style="padding:4px 20px 8px;max-width:620px">
-      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
-        <div style="color:var(--td);font-size:11px;margin-bottom:8px">// spotify — album player</div>
-        <iframe style="border-radius:4px;border:none;display:block"
-          src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0"
-          width="100%" height="200" allowfullscreen=""
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-      </div>
-    </div>
-  `);
-  bl();
-},
-
-contact(){
-  bl();
-  ln('── contact ───────────────────────────────────────────────────','dim');
-  bl();
-  [
-    ['LinkedIn', 'https://www.linkedin.com/in/nicholas-burczyk/','#0077B5'],
-    ['GitHub',   'https://github.com/melvinczyk',                '#00ff88'],
-    ['Bandcamp', 'https://zerobarbecue.bandcamp.com',            '#1da0c3'],
-    ['Spotify',  'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy','#1DB954'],
-  ].forEach(([label,url,col])=>{
-    html(`
-      <div class="contact-row fade-in" style="margin:3px 20px;max-width:600px">
-        <span class="contact-label">${label}</span>
-        <a class="contact-link" style="color:${col}" href="${url}" target="_blank">${url}</a>
-      </div>
-    `);
-  });
-  bl();
-  ln('  Reach out on LinkedIn or GitHub anytime!','dim');
-  bl();
-},
-
-map(){
-  bl();
-  ln('── minecraft server map ─────────────────────────────────────','dim');
-  bl();
-  ln('  Live Bluemap render — real-time player locations and world data','white');
-  ln('  Full view → <a class="tl" href="http://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
-  bl();
-  html(`
-    <div style="padding:4px 20px 10px;max-width:700px">
-      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px;background:var(--bg2);border-radius:3px">
-        <div style="color:var(--td);font-size:11px;margin-bottom:8px">// bluemap — live iframe</div>
-        <iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective"
-          width="100%" height="360" frameborder="0"
-          style="border-radius:3px;border:1px solid #002808;display:block;"></iframe>
-      </div>
-    </div>
-  `);
-  bl();
-},
-
-clear(){out.innerHTML='';},
-
-'bird-classifier'(){
-  bl();
-  ln('── bird-classifier ──────────────────────────────────────────','dim');
-  bl();
-  ln('  <span style="color:var(--tb)">Backyard Alabama Bird Detector</span>','line');
-  ln('  CNN · mel-spectrogram · 30 Alabama species · live demo','white');
-  bl();
-  ln('  <span style="color:var(--td)">→</span> Redirecting to classifier in <span style="color:var(--g)" id="countdown">3</span>...','line');
-  bl();
-  html(`
-    <div style="padding:0 20px 8px;max-width:480px">
-      <div style="border:1px solid #002808;border-left:3px solid var(--g);padding:12px 16px;background:var(--bg2);border-radius:3px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-        <div>
-          <div style="color:var(--g);font-family:'VT323',monospace;font-size:18px;letter-spacing:1px">🎵 BIRD CLASSIFIER</div>
-          <div style="color:var(--td);font-size:11px;margin-top:4px">Upload or record a bird call to classify it</div>
-        </div>
-        <a href="{% url 'upload_file' %}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--g);color:var(--g);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 16px;border-radius:2px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,65,.08)'" onmouseout="this.style.background='transparent'">
-          ▸ Launch Now
-        </a>
-      </div>
-    </div>
-  `);
-  bl();
-  // countdown then redirect
-  let n=3;
-  const cd=document.getElementById('countdown');
-  const t=setInterval(()=>{
-    n--;
-    if(cd)cd.textContent=n;
-    if(n<=0){clearInterval(t);window.location.href='{% url "upload_file" %}';}
-  },1000);
-},
+const STATIC_URLS = {
+  ring:       "{% static 'audio/ring.mp3' %}",
+  hover:      "{% static 'audio/hover.mp3' %}",
+  click:      "{% static 'audio/click.mp3' %}",
+  error:      "{% static 'audio/error.mp3' %}",
+  menu:       "{% static 'audio/menu.mp3' %}",
+  open:       "{% static 'audio/open.mp3' %}",
+  uploadFile: "{% url 'upload_file' %}",
+  gallery:    "{% url 'gallery' %}",
 };
-
-// Aliases
-CMDS['ls']=CMDS['ls projects'];
-CMDS['projects']=CMDS['ls projects'];
-CMDS['classifier']=CMDS['bird-classifier'];
-CMDS['classify']=CMDS['bird-classifier'];
-
-// ── RUNNER ────────────────────────────────────────────────────
-function runCmd(raw){
-      const input=document.getElementById('cmd-input');
-      const trimmed=raw!==undefined?raw:input.value.trim();
-      if(raw===undefined)input.value='';
-
-      echo(trimmed);
-      if(!trimmed){bl();return;}
-
-      hist.push(trimmed);hIdx=hist.length;
-
-      const lo=trimmed.toLowerCase();
-
-      if(lo.startsWith('cat project')){
-        CMDS['cat project'](trimmed.slice('cat project'.length).trim());
-        return;
-      }
-
-    const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
-    if(fn){
-      playClickSound();
-      fn(trimmed.split(' ').slice(1).join(' '));
-    }
-    else{
-      playErrorSound();
-      ln(`  bash: <span style="color:#ff5555">${esc(trimmed)}</span>: command not found`);
-      ln(`  Type <span style="color:var(--g)">help</span> or click a button above`,'dim');
-      bl();
-    }
-}
-
-// ── TAB COMPLETE ──────────────────────────────────────────────
-const ALL=['help','whoami','cat project ','ls projects','music','contact','map','bird-classifier','clear'];
-const PIDS=PROJECTS.map(p=>p.id);
-
-function tabComp(v){
-  const lo=v.toLowerCase();
-  if(lo.startsWith('cat project ')){
-    const frag=lo.slice('cat project '.length);
-    const m=PIDS.find(id=>id.startsWith(frag));
-    return m?'cat project '+m:v;
-  }
-  const m=ALL.find(c=>c.startsWith(lo)&&c!==lo);
-  return m||v;
-}
-
-// ── INPUT EVENTS ──────────────────────────────────────────────
-document.getElementById('cmd-input').addEventListener('keydown',e=>{
-  const inp=e.target;
-  if(e.key==='Enter'){runCmd();}
-  else if(e.key==='Tab'){e.preventDefault();inp.value=tabComp(inp.value);}
-  else if(e.key==='ArrowUp'){e.preventDefault();if(hIdx>0){hIdx--;inp.value=hist[hIdx];}}
-  else if(e.key==='ArrowDown'){e.preventDefault();if(hIdx<hist.length-1){hIdx++;inp.value=hist[hIdx];}else{hIdx=hist.length;inp.value='';}}
-});
-document.addEventListener('click',e=>{
-  if(!e.target.closest('a')&&!e.target.closest('button')&&!e.target.closest('iframe'))
-    document.getElementById('cmd-input').focus();
-});
-
-// ── BOOT ──────────────────────────────────────────────────────
-(async()=>{
-  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const boots=[
-    [0,   'dim',  'BIOS v4.2.1 — POST check...'],
-    [120, 'dim',  'Memory: 16384 MB [OK]'],
-    [230, 'dim',  'GPU: NVIDIA RTX 4070 [OK]'],
-    [340, 'dim',  'Kernel 6.6.0-custom loaded.'],
-    [460, 'dim',  'Mounting /home/nick... [OK]'],
-    [580, 'dim',  'Starting portfolio.service...'],
-    [700, 'line', '████████████████████████████████  100%'],
-  ];
-  boots.forEach(([d,c,t])=>setTimeout(()=>ln(t,c),d));
-  setTimeout(()=>{
-    bl();
-    html(`<pre class="ascii fade-in" style="padding:0 4px">
- ███╗   ██╗██╗ ██████╗██╗  ██╗
- ████╗  ██║██║██╔════╝██║ ██╔╝  <span style="color:var(--td);font-size:13px">NICHOLAS BURCZYK</span>
- ██╔██╗ ██║██║██║     █████╔╝   <span style="color:var(--td);font-size:13px">Software Engineer · Vision · ML · Audio · Embedded</span>
- ██║╚██╗██║██║██║     ██╔═██╗   <span style="color:#002808;font-size:13px">UAB MSCS · Viper Imaging · Birmingham AL</span>
- ██║ ╚████║██║╚██████╗██║  ██╗
- ╚═╝  ╚═══╝╚═╝ ╚═════╝╚═╝  ╚═╝</pre>`);
-    bl();
-    ln("  Welcome to <span style='color:var(--g)'>nick@burczyk</span>",'line');
-    bl();
-    document.getElementById('cmd-input').focus();
-  }, 900);
-})();
 </script>
+<script src="{% static 'scripts/portfolio.js' %}"></script>
 </body>
 </html>
