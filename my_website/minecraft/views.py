@@ -11,6 +11,11 @@ SEASON_DESCRIPTIONS = {
     4: "Groid Pack Seven Seas - pirates PvP",
 }
 
+SEASON_NAMES = {
+    3: "SEASON 3 (PART 1)",
+    4: "SEVEN SEAS",
+}
+
 IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 VIDEO_EXTS = {'.mp4', '.webm', '.mov'}
 
@@ -78,6 +83,7 @@ def gallery(request):
 
         seasons.append({
             'number':           season_num,
+            'name':             SEASON_NAMES.get(season_num, f'SEASON {season_num}'),
             'description':      SEASON_DESCRIPTIONS.get(season_num, f'Season {season_num}.'),
             'has_logo':         has_logo,
             'logo_file':        logo_file,

@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>nick@burczyk:~$ — server gallery</title>
+<title>Minecraft Server Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
 <link rel="stylesheet" href="{% static 'css/gallery.css' %}">
@@ -34,7 +34,7 @@
       {% for season in seasons %}
       <button class="sb-season-btn" id="sb-season-{{ season.number }}"
               onclick="scrollToSeason({{ season.number }})">
-        ▸ Season {{ season.number }}
+        ▸ {{ season.name }}
         <span style="font-size:9px;opacity:0.5">{{ season.screenshot_count }}+{{ season.video_count }}</span>
       </button>
       {% endfor %}
@@ -68,14 +68,14 @@
             {% if season.has_logo %}
             <img src="{% static 'minecraft/season' %}{{ season.number }}/{{ season.logo_file }}"
                  onerror="this.parentElement.innerHTML='<div class=\'season-logo-placeholder\'>S{{ season.number }}</div>'"
-                 alt="Season {{ season.number }}">
+                 alt="{{ season.name }}">
             {% else %}
             <div class="season-logo-placeholder">S{{ season.number }}</div>
             {% endif %}
           </div>
 
           <div class="season-meta">
-            <div class="season-name">SEASON {{ season.number }}</div>
+            <div class="season-name">GROID PACK {{ season.name }}</div>
             <div class="season-desc">{{ season.description }}</div>
             <div class="season-stats">
               <div class="season-stat">screenshots: <span>{{ season.screenshot_count }}</span></div>
@@ -174,7 +174,6 @@ const GALLERY_URLS = {
   click: "{% static 'audio/click.mp3' %}",
 };
 
-// Full media index for lightbox — all images/videos per season, not just visible page
 const GALLERY_DATA = {
   {% for season in seasons %}
   "season{{ season.number }}": {
