@@ -5,13 +5,14 @@ from django.conf import settings
 
 # Edit season descriptions here
 SEASON_DESCRIPTIONS = {
-    1: "Groid Pack season 1 - the first modpack",
-    2: "Groid Pack season 2 - spells and dragons ",
-    3: "Groid Pack season 3 PART 1 - guns and machinery",
-    4: "Groid Pack Seven Seas - pirates PvP",
+    1: "Groid Pack season 1 - The First Modpack",
+    2: "Groid Pack season 2 - Spells and Dragons",
+    3: "Groid Pack season 3 PART 1 - Guns and Factories",
+    4: "Groid Pack Seven Seas - Pirates PvP",
 }
 
 SEASON_NAMES = {
+    2: "SEASON 2 - Spells and Dragons",
     3: "SEASON 3 (PART 1)",
     4: "SEVEN SEAS",
 }

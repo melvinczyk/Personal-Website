@@ -140,13 +140,12 @@ help(){
 whoami(){
   bl();
   addHtml(`<div class="who-card fade-in">
-    <div class="who-photo"><img src="https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/nick.jpg" onerror="this.style.display='none'" alt="Nick"></div>
     <div class="who-info">
       <div class="who-name">NICK BURCZYK</div>
       <div class="who-row"><span class="who-key">school</span><span class="who-val">MSCS @ UAB — Spring 2027</span></div>
       <div class="who-row"><span class="who-key">work</span><span class="who-val">Software Developer @ Viper Imaging</span></div>
       <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA — Software Development @ UAB</span></div>
-      <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration, embedded systems</span></div>
+      <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration</span></div>
       <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ — embedded, performance computing, low-level work</span></div>
       <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue — producer / artist</span></div>
       <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft — modding, custom server, Forge mods</span></div>
@@ -218,7 +217,7 @@ contact(){
 map(){
   bl();
   ln('  Live Bluemap render — real-time world data','white');
-  ln('  Full view → <a class="tl" href="http://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
+  ln('  Full view → <a class="tl" href="https://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
   bl();
   addHtml(`<div style="padding:4px 20px 10px;max-width:700px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px;background:rgba(0,25,25,0.5)"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" width="100%" height="360" frameborder="0" style="border:1px solid var(--mgs-border);display:block;"></iframe></div></div>`);
   bl();
