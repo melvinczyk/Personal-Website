@@ -16,11 +16,41 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 from .views import index
+
+def robots_txt(request):
+    lines = [
+        "User-agent: GPTBot",
+        "Disallow: /",
+        "",
+        "User-agent: ClaudeBot",
+        "Disallow: /",
+        "",
+        "User-agent: Google-Extended",
+        "Disallow: /",
+        "",
+        "User-agent: CCBot",
+        "Disallow: /",
+        "",
+        "User-agent: Bytespider",
+        "Disallow: /",
+        "",
+        "User-agent: Omgilibot",
+        "Disallow: /",
+        "",
+        "User-agent: anthropic-ai",
+        "Disallow: /",
+        "",
+        "User-agent: *",
+        "Disallow:",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
 
 urlpatterns = [
     path("", index, name='index'),
     path("", include('minecraft.urls')),
     path("admin/", admin.site.urls),
-    path("bird_classifier/", include("bird_classifier.urls"))
+    path("bird_classifier/", include("bird_classifier.urls")),
+    path("robots.txt", robots_txt),
 ]

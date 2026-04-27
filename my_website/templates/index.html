@@ -4,6 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noai, noimageai">
+<meta name="robots" content="noindex, nofollow">
 <title>Nick Burczyk</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -60,8 +62,8 @@
   <div id="layout">
     <div id="sidebar">
       <div class="sb-section">NAVIGATION</div>
-      <button class="sb-btn" onclick="runCmd('whoami')"><span class="sb-icon">◆</span>ABOUT<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('ls projects')"><span class="sb-icon">◆</span>PROJECTS<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('about')"><span class="sb-icon">◆</span>ABOUT<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('projects')"><span class="sb-icon">◆</span>PROJECTS<span class="sb-arrow">►</span></button>
       <button class="sb-btn" onclick="runCmd('music')"><span class="sb-icon">◆</span>MUSIC<span class="sb-arrow">►</span></button>
       <button class="sb-btn" onclick="runCmd('contact')"><span class="sb-icon">◆</span>CONTACT<span class="sb-arrow">►</span></button>
       <button class="sb-btn" onclick="runCmd('map')"><span class="sb-icon">◆</span>MC SERVER MAP<span class="sb-arrow">►</span></button>
@@ -69,15 +71,16 @@
       <button class="sb-btn" onclick="runCmd('gallery')"><span class="sb-icon">◆</span>MC GALLERY<span class="sb-arrow">►</span></button>
 
       <div class="sb-section">PROJECTS</div>
-      <button class="sb-proj-btn" onclick="runCmd('cat project oculosaurus')">OCULOSAURUS</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project waste-drone')">WASTE-DRONE</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project bird-classifier')">BIRD-CLASSIFIER</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project modpack-updater')">MODPACK-UPDATER</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project visaudio')">VISAUDIO</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project fretwatch')">FRETWATCH</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project born-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project personal-website')">PERSONAL-WEBSITE</button>
-      <button class="sb-proj-btn" onclick="runCmd('cat project minecraft-server')">MINECRAFT-SERVER</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectoculosaurus')">OCULOSAURUS</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectwaste-drone')">WASTE-DRONE</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectsong-visualizer')">SONG-VISUALIZER</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectbird-classifier')">BIRD-CLASSIFIER</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectmodpack-updater')">MODPACK-UPDATER</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectvisaudio')">VISAUDIO</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectfretwatch')">FRETWATCH</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectborn-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectpersonal-website')">PERSONAL-WEBSITE</button>
+      <button class="sb-proj-btn" onclick="runCmd('projectminecraft-server')">MINECRAFT-SERVER</button>
 
       <div class="sb-section">SYSTEM</div>
       <button class="sb-btn" onclick="runCmd('help')"><span class="sb-icon">?</span>HELP<span class="sb-arrow">►</span></button>
@@ -88,8 +91,8 @@
       <div id="output"></div>
       <div id="input-area">
         <div id="quickbar">
-          <button class="qbtn" onclick="runCmd('whoami')">▸ ABOUT</button>
-          <button class="qbtn" onclick="runCmd('ls projects')">▸ PROJECTS</button>
+          <button class="qbtn" onclick="runCmd('about')">▸ ABOUT</button>
+          <button class="qbtn" onclick="runCmd('projects')">▸ PROJECTS</button>
           <button class="qbtn" onclick="runCmd('music')">▸ MUSIC</button>
           <button class="qbtn" onclick="runCmd('contact')">▸ CONTACT</button>
           <button class="qbtn" onclick="runCmd('map')">▸ MC MAP</button>

@@ -132,12 +132,12 @@ help(){
   ln('║                  NICK BURCZYK — COMMANDS                        ║','green');
   ln('╚══════════════════════════════════════════════════════════╝','green');
   bl();
-  [['whoami','about me'],['ls projects','list all projects'],['cat project [id]','view a project'],['music','Zero Barbecue — Spotify / Bandcamp'],['contact','links and socials'],['map','live Minecraft server map'],['bird-classifier','launch the bird classifier'],['clear','clear terminal'],['help','this menu']].forEach(([c,d])=>{
+  [['about','about me'],['projects','list all projects'],['project [id]','view a project'],['music','Zero Barbecue — Spotify / Bandcamp'],['contact','links and socials'],['map','live Minecraft server map'],['bird-classifier','launch the bird classifier'],['clear','clear terminal'],['help','this menu']].forEach(([c,d])=>{
     ln(`  <span style="color:var(--mgs-cyan);display:inline-block;min-width:200px">${esc(c)}</span><span style="color:var(--mgs-border)">${d}</span>`);
   });
 },
 
-whoami(){
+about(){
   bl();
   addHtml(`<div class="who-card fade-in">
     <div class="who-info">
@@ -150,34 +150,26 @@ whoami(){
       <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue — producer / artist</span></div>
       <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft — modding, custom server, Forge mods</span></div>
       <div class="who-row"><span class="who-key">location</span><span class="who-val">Birmingham, AL</span></div>
-      <div class="who-status">
-        <div class="who-status-label">STATUS</div>
-        <div class="who-status-value">● LEARNING EMBEDDED SYSTEMS</div>
-      </div>
     </div>
   </div>`);
   bl();
-  ln(`  type <span style="color:var(--mgs-cyan)">ls projects</span> to explore work`,'dim');
-  bl();
 },
 
-'ls projects'(){
-  bl();
-  ln(`total ${PROJECTS.length}  <span style="color:var(--mgs-border)">(click a name or: cat project [id])</span>`,'dim');
+projects(){
   bl();
   PROJECTS.forEach((p,i)=>{
     const n=String(i+1).padStart(2,'0');
     const badge=p.badge?` <span style="color:var(--mgs-border)">[${esc(p.badge)}]</span>`:'';
-    ln(`  <span style="color:#225544">${n}</span>  <span style="color:var(--mgs-cyan);cursor:pointer;text-decoration:underline" onclick="runCmd('cat project ${p.id}')">${p.id.padEnd(22)}</span><span style="color:#559988">${esc(p.name)}</span>${badge}`);
+    ln(`  <span style="color:#225544">${n}</span>  <span style="color:var(--mgs-cyan);cursor:pointer;text-decoration:underline" onclick="runCmd('project ${p.id}')">${p.id.padEnd(22)}</span><span style="color:#559988">${esc(p.name)}</span>${badge}`);
   });
   bl();
 },
 
-'cat project'(id){
+project(id){
   id=(id||'').trim().toLowerCase();
-  if(!id){ln(`  Usage: cat project [id]  — run <span style="color:var(--mgs-cyan)">ls projects</span>`,'red');return;}
+  if(!id){ln(`  Usage: project [id]  — run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
   const p=PROJECTS.find(x=>x.id===id||x.name.toLowerCase().includes(id));
-  if(!p){ln(`  not found: ${esc(id)}. Run <span style="color:var(--mgs-cyan)">ls projects</span>`,'red');return;}
+  if(!p){ln(`  Not found: ${esc(id)}. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
   bl();
   const img2html=p.img2?`<img src="${p.img2}" alt="secondary" style="width:100%;margin-top:8px;max-height:120px;object-fit:cover;border:2px solid var(--mgs-border);filter:grayscale(0.3) contrast(1.1);">` :'';
   addHtml(`<div class="proj-card">
@@ -185,7 +177,7 @@ whoami(){
     <div class="proj-card-body">
       <div class="proj-img-wrap"><div style="width:100%"><img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">${img2html}</div></div>
       <div class="proj-info">
-        <div class="proj-tech">stack: <span style="color:#99ddcc">${esc(p.tech)}</span></div>
+        <div class="proj-tech">tech: <span style="color:#99ddcc">${esc(p.tech)}</span></div>
         <div class="proj-desc">${esc(p.desc)}</div>
         <a class="proj-link" href="${p.link}" target="_blank">→ GITHUB: ${p.link.replace('https://github.com/','')}</a>
       </div>
@@ -254,8 +246,6 @@ clear(){ out.innerHTML=''; },
 },
 };
 
-CMDS['ls']=CMDS['ls projects'];
-CMDS['projects']=CMDS['ls projects'];
 CMDS['classifier']=CMDS['bird-classifier'];
 CMDS['classify']=CMDS['bird-classifier'];
 CMDS['gallery']=CMDS['gallery'];
@@ -272,7 +262,7 @@ function runCmd(raw){
   if(!trimmed){bl();return;}
   hist.push(trimmed); hIdx=hist.length;
   const lo=trimmed.toLowerCase();
-  if(lo.startsWith('cat project')){ CMDS['cat project'](trimmed.slice('cat project'.length).trim()); return; }
+  if(lo==='project'||lo.startsWith('project ')){ CMDS['project'](trimmed.slice('project'.length).trim()); return; }
   const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
   if(fn){ fn(trimmed.split(' ').slice(1).join(' ')); }
   else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>  — type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
@@ -281,11 +271,11 @@ function runCmd(raw){
 // ══════════════════════════════════════════
 // TAB COMPLETION
 // ══════════════════════════════════════════
-const ALL_CMDS=['help','whoami','cat project ','ls projects','music','contact','map','bird-classifier','gallery','clear'];
+const ALL_CMDS=['help','about','project ','projects','music','contact','map','bird-classifier','gallery','clear'];
 const PIDS=PROJECTS.map(p=>p.id);
 function tabComp(v){
   const lo=v.toLowerCase();
-  if(lo.startsWith('cat project ')){const frag=lo.slice('cat project '.length);const m=PIDS.find(id=>id.startsWith(frag));return m?'cat project '+m:v;}
+  if(lo.startsWith('project ')){const frag=lo.slice('project '.length);const m=PIDS.find(id=>id.startsWith(frag));return m?'project '+m:v;}
   const m=ALL_CMDS.find(c=>c.startsWith(lo)&&c!==lo);
   return m||v;
 }
@@ -317,12 +307,11 @@ function bootTerminal(){
         bl();
         addHtml(`<div class="fade-in" style="padding:0 4px;">
           <pre class="ascii" style="line-height:1.2;">
- ███╗   ██╗██╗ ██████╗██╗  ██╗
- ████╗  ██║██║██╔════╝██║ ██╔╝
- ██╔██╗ ██║██║██║     █████╔╝
- ██║╚██╗██║██║██║     ██╔═██╗
- ██║ ╚████║██║╚██████╗██║  ██╗
- ╚═╝ ╚════╝╚═╝╚═════╝╚═╝  ╚═╝</pre>
+ _   _ ___ ____  _  __
+| \\ | |_ _/ ___|| |/ /
+|  \\| || | |    | ' /
+| |\\  || | |___ | . \\
+|_| \\_|___\\____ |_|\\_\\</pre>
           <div style="margin-top:10px;padding-left:2px;border-left:3px solid var(--mgs-cyan);">
             <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--mgs-cyan);letter-spacing:3px;padding-left:10px;">NICHOLAS BURCZYK</div>
             <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mgs-border);margin-top:5px;padding-left:10px;">Software Engineer · Vision · ML · Audio · Embedded</div>
