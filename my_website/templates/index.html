@@ -9,7 +9,7 @@
 <title>Nick Burczyk</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}?v=2">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -61,26 +61,19 @@
 
   <div id="layout">
     <div id="sidebar">
-      <div class="sb-section">NAVIGATION</div>
-      <button class="sb-btn" onclick="runCmd('about')"><span class="sb-icon">◆</span>ABOUT<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('projects')"><span class="sb-icon">◆</span>PROJECTS<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('music')"><span class="sb-icon">◆</span>MUSIC<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('contact')"><span class="sb-icon">◆</span>CONTACT<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('map')"><span class="sb-icon">◆</span>MC SERVER MAP<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('bird-classifier')"><span class="sb-icon">◆</span>CLASSIFIER<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('gallery')"><span class="sb-icon">◆</span>MC GALLERY<span class="sb-arrow">►</span></button>
+      <div class="sb-section">TERMINAL</div>
+      <button class="sb-btn" onclick="runCmd('about')">ABOUT<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('projects')">PROJECTS<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('music')">MUSIC<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('contact')">CONTACT<span class="sb-arrow">►</span></button>
+      <button class="sb-btn" onclick="runCmd('map')">MC SERVER MAP<span class="sb-arrow">►</span></button>
+
+      <div class="sb-section">PAGES</div>
+      <button class="sb-btn sb-btn--page" onclick="runCmd('bird-classifier')">CLASSIFIER<span class="sb-arrow">►</span></button>
+      <button class="sb-btn sb-btn--page" onclick="runCmd('gallery')">MC GALLERY<span class="sb-arrow">►</span></button>
 
       <div class="sb-section">PROJECTS</div>
-      <button class="sb-proj-btn" onclick="runCmd('project oculosaurus')">OCULOSAURUS</button>
-      <button class="sb-proj-btn" onclick="runCmd('project waste-drone')">WASTE-DRONE</button>
-      <button class="sb-proj-btn" onclick="runCmd('project song-visualizer')">SONG-VISUALIZER</button>
-      <button class="sb-proj-btn" onclick="runCmd('project bird-classifier')">BIRD-CLASSIFIER</button>
-      <button class="sb-proj-btn" onclick="runCmd('project modpack-updater')">MODPACK-UPDATER</button>
-      <button class="sb-proj-btn" onclick="runCmd('project visaudio')">VISAUDIO</button>
-      <button class="sb-proj-btn" onclick="runCmd('project fretwatch')">FRETWATCH</button>
-      <button class="sb-proj-btn" onclick="runCmd('project born-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
-      <button class="sb-proj-btn" onclick="runCmd('project personal-website')">PERSONAL-WEBSITE</button>
-      <button class="sb-proj-btn" onclick="runCmd('project minecraft-server')">MINECRAFT-SERVER</button>
+      <div id="sb-projects"></div>
 
       <div class="sb-section">SYSTEM</div>
       <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>CLEAR<span class="sb-arrow">►</span></button>

@@ -1,14 +1,34 @@
 const PROJECTS = [
-  { id:"oculosaurus", name:"OCULOSAURUS", badge:"1ST PLACE", bc:"award", tech:"Python / OpenCV / Raspberry Pi / YOLO", img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/oculosarus_example.gif", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/CS499OculosarusProject-1.png", desc:"Stereo vision system to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.", link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator"},
-  { id:"waste-drone", name:"WASTE DETECTION DRONE", badge:"CV", bc:"", tech:"Python / YOLOv5 / Tello SDK", img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/model_%20copy.gif", desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.", link:"https://github.com/melvinczyk/Waste-detection-drone"},
-  { id:"bird-classifier", name:"BACKYARD BIRD CLASSIFIER", badge:"LIVE", bc:"live", tech:"Python / CNN / Django / mel-spectrogram", img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/predict.png", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/Confusion_matrix.png", desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
-  { id:"modpack-updater", name:"MINECRAFT MODPACK UPDATER", badge:"TOOL", bc:"", tech:"Java / JavaFX / Amazon S3 / Gradle", img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41", img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267", desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click update for clients. Cross-platform.", link:"https://github.com/melvinczyk/ModpackUpdater"},
-  { id:"visaudio", name:"VISAUDIO", badge:"TOOL", bc:"", tech:"Python / librosa / PyQt", img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true", img2:null, desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac.", link:"https://github.com/melvinczyk/VisAudio"},
-  { id:"fretwatch", name:"FRETWATCH", badge:"IN DEV", bc:"dev", tech:"Python / OpenCV / PyTorch / librosa", img:"https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png", img2:null, desc:"Live guitar note detection from video and audio. Signal processing extracts audio features to detect notes and chords being played. Combines librosa for audio analysis and OpenCV for live video frame manipulation.", link:"https://github.com/melvinczyk/FretWatch"},
-  { id:"born-in-spellbooks", name:"BORN IN SPELLBOOKS MOD", badge:"ALPHA", bc:"dev", tech:"Java / Minecraft Forge 1.20.1", img:"https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png", img2:null, desc:"Open source Minecraft Forge compatibility mod combining Iron's Spells & Spellbooks with Born In Chaos. 17+ spells coded with custom rendering, animation layering, entity sharing. Three alpha releases.", link:"https://github.com/melvinczyk/Born_in_spellbooks"},
-  { id:"personal-website", name:"NICHOLASBURCZYK.COM", badge:"LIVE", bc:"live", tech:"Django / Tailwind CSS / DaisyUI / Python", img:"https://www.svgrepo.com/show/353657/django-icon.svg", img2:null, desc:"This website. Built on Django for a secure backend, Tailwind CSS + DaisyUI for the frontend, and deployed ML model inference for the bird classifier.", link:"https://github.com/melvinczyk/Personal-Website"},
-  { id:"minecraft-server", name:"MINECRAFT SERVER & MODPACK", badge:"ONGOING", bc:"", tech:"Java / JSON / mcscript / Linux server admin", img:"https://i.ibb.co/7KCwNZr/minecraft.png", img2:null, desc:"Custom modpack with curated mods, resource & data packs. Server admin: config management, real-time troubleshooting, networking. Custom data packs with JSON/mcscript for custom mobs, biomes, loot tables, and structure generation.", link:"https://github.com/melvinczyk/Datapacks"},
+  { id:"oculosaurus", name:"OCULOSAURUS", badge:"1ST PLACE", bc:"award", tags:["HARDWARE"], tech:"Python / OpenCV / Raspberry Pi / YOLO", img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/oculosarus_example.gif", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/CS499OculosarusProject-1.png", desc:"Stereo vision system to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.", link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator"},
+  { id:"song2vec", name:"SONG2VEC", tags:["ML/DL"], tech:"Python / PyTorch", img:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/multi_blobs.png", img2:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png", desc:"Skip-gram based embedding model that learns vector representations of genres, tags, and songs in a shared latent space. It also makes visualizations of musical relationships and computes the most optimized path between songs based on learned similarity in latent space.", link:"https://github.com/melvinczyk/Song2Vec"},
+  { id:"echo-scout", name:"ECHO SCOUT", badge:"IN DEV", bc:"dev", tags:["EMBEDDED"], tech:"C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF / IMU", img:"https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946", img2:null, desc:"Compact 2.8\" handheld device that detects people and maps out rooms in real time. The mmWave radar covers an 80 degree area in front of the user, while the 8x8 ToF sensor builds a 3D point cloud of the surrounding space. Orientation and heading tracked via IMU with a live compass on the touchscreen display.", link:"https://github.com/melvinczyk/Heartbeat-Sensor"},
+  { id:"bird-classifier", name:"BACKYARD BIRD CLASSIFIER", badge:"LIVE", bc:"live", tags:["ML/DL"], tech:"Python / CNN / Django / mel-spectrogram", img:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/predict.png", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/Confusion_matrix.png", desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
+  { id:"waste-drone", name:"WASTE DETECTION DRONE", tags:["ML/DL","HARDWARE"], tech:"Python / YOLOv5 / Tello SDK", img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png", img2:"https://github.com/melvinczyk/Personal-Website/raw/main/my_website/static/images/model_%20copy.gif", desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.", link:"https://github.com/melvinczyk/Waste-detection-drone"},
+  { id:"modpack-updater", name:"MINECRAFT MODPACK UPDATER", tags:[], tech:"Java / JavaFX / Amazon S3 / Gradle", img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41", img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267", desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click update for clients. Cross-platform.", link:"https://github.com/melvinczyk/ModpackUpdater"},
+  { id:"personal-website", name:"NICHOLASBURCZYK.COM", badge:"LIVE", bc:"live", tags:[], tech:"Django / Python", img:"https://www.svgrepo.com/show/353657/django-icon.svg", img2:null, desc:"This website. Built on Django for a secure backend, Tailwind CSS + DaisyUI for the frontend, and deployed ML model inference for the bird classifier.", link:"https://github.com/melvinczyk/Personal-Website"},
+  { id:"visaudio", name:"VISAUDIO", tags:[], tech:"Python / librosa / PyQt", img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true", img2:null, desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac.", link:"https://github.com/melvinczyk/VisAudio"},
+  { id:"born-in-spellbooks", name:"BORN IN SPELLBOOKS MOD", tags:[], tech:"Java / Minecraft Forge 1.20.1", img:"https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png", img2:null, desc:"Open source Minecraft Forge compatibility mod combining Iron's Spells & Spellbooks with Born In Chaos. 17+ spells coded with custom rendering, animation layering, entity sharing. Three alpha releases.", link:"https://github.com/melvinczyk/Born_in_spellbooks"},
+  { id:"fretwatch", name:"FRETWATCH", badge:"IN DEV", bc:"dev", tags:["ML/DL"], tech:"Python / OpenCV / PyTorch / librosa", img:"https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png", img2:null, desc:"Live guitar note detection from video and audio. Signal processing extracts audio features to detect notes and chords being played. Combines librosa for audio analysis and OpenCV for live video frame manipulation.", link:"https://github.com/melvinczyk/FretWatch"},
+  { id:"minecraft-server", name:"MINECRAFT SERVER & MODPACK", badge:"ONGOING", bc:"ongoing", tags:[], tech:"Java / JSON / mcscript / Linux server admin", img:"https://i.ibb.co/7KCwNZr/minecraft.png", img2:null, desc:"Custom modpack with curated mods, resource & data packs. Server admin: config management, real-time troubleshooting, networking. Custom data packs with JSON/mcscript for custom mobs, biomes, loot tables, and structure generation.", link:"https://github.com/melvinczyk/Datapacks"},
 ];
+
+// ══════════════════════════════════════════
+// SIDEBAR PROJECT LIST
+// ══════════════════════════════════════════
+function buildSidebarProjects() {
+  const container = document.getElementById('sb-projects');
+  if (!container) return;
+  container.innerHTML = '';
+  PROJECTS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'sb-proj-btn';
+    btn.onclick = () => runCmd(`project ${p.id}`);
+    btn.textContent = p.id.toUpperCase();
+    container.appendChild(btn);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', buildSidebarProjects);
 
 // ══════════════════════════════════════════
 // AUDIO
@@ -136,14 +156,13 @@ about(){
   addHtml(`<div class="who-card fade-in">
     <div class="who-info">
       <div class="who-name">NICK BURCZYK</div>
-      <div class="who-row"><span class="who-key">school</span><span class="who-val">MSCS @ UAB — Spring 2027</span></div>
+      <div class="who-row"><span class="who-key">school</span><span class="who-val">MSAI @ UAB - Spring 2027</span></div>
       <div class="who-row"><span class="who-key">work</span><span class="who-val">Software Developer @ Viper Imaging</span></div>
-      <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA — Software Development @ UAB</span></div>
+      <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA - Software Development @ UAB</span></div>
       <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration</span></div>
-      <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ — embedded, performance computing, low-level work</span></div>
-      <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue — producer / artist</span></div>
-      <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft — modding, custom server, Forge mods</span></div>
-      <div class="who-row"><span class="who-key">location</span><span class="who-val">Birmingham, AL</span></div>
+      <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ - embedded, performance computing, low-level work</span></div>
+      <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue - producer / artist</span></div>
+      <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft - modding, custom server, Forge mods</span></div>
     </div>
   </div>`);
   bl();
@@ -166,8 +185,11 @@ project(id){
   if(!p){ln(`  Not found: ${esc(id)}. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
   bl();
   const img2html=p.img2?`<img src="${p.img2}" alt="secondary" style="width:100%;margin-top:8px;max-height:120px;object-fit:cover;border:2px solid var(--mgs-border);filter:grayscale(0.3) contrast(1.1);">` :'';
+  const TAG_CLASS = { 'ML/DL':'ai', 'EMBEDDED':'embedded', 'HARDWARE':'hardware' };
+  const badgeHtml = p.badge ? `<span class="badge ${p.bc}">${esc(p.badge)}</span>` : '';
+  const tagHtml   = (p.tags||[]).map(t=>`<span class="badge ${TAG_CLASS[t]||'ai'}">${esc(t)}</span>`).join('');
   addHtml(`<div class="proj-card">
-    <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span><span class="badge ${p.bc}">${esc(p.badge)}</span></div>
+    <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${badgeHtml}${tagHtml}</div>
     <div class="proj-card-body">
       <div class="proj-img-wrap"><div style="width:100%"><img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">${img2html}</div></div>
       <div class="proj-info">
