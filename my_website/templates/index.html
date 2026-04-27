@@ -71,42 +71,56 @@
       <button class="sb-btn" onclick="runCmd('gallery')"><span class="sb-icon">◆</span>MC GALLERY<span class="sb-arrow">►</span></button>
 
       <div class="sb-section">PROJECTS</div>
-      <button class="sb-proj-btn" onclick="runCmd('projectoculosaurus')">OCULOSAURUS</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectwaste-drone')">WASTE-DRONE</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectsong-visualizer')">SONG-VISUALIZER</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectbird-classifier')">BIRD-CLASSIFIER</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectmodpack-updater')">MODPACK-UPDATER</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectvisaudio')">VISAUDIO</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectfretwatch')">FRETWATCH</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectborn-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectpersonal-website')">PERSONAL-WEBSITE</button>
-      <button class="sb-proj-btn" onclick="runCmd('projectminecraft-server')">MINECRAFT-SERVER</button>
+      <button class="sb-proj-btn" onclick="runCmd('project oculosaurus')">OCULOSAURUS</button>
+      <button class="sb-proj-btn" onclick="runCmd('project waste-drone')">WASTE-DRONE</button>
+      <button class="sb-proj-btn" onclick="runCmd('project song-visualizer')">SONG-VISUALIZER</button>
+      <button class="sb-proj-btn" onclick="runCmd('project bird-classifier')">BIRD-CLASSIFIER</button>
+      <button class="sb-proj-btn" onclick="runCmd('project modpack-updater')">MODPACK-UPDATER</button>
+      <button class="sb-proj-btn" onclick="runCmd('project visaudio')">VISAUDIO</button>
+      <button class="sb-proj-btn" onclick="runCmd('project fretwatch')">FRETWATCH</button>
+      <button class="sb-proj-btn" onclick="runCmd('project born-in-spellbooks')">BORN-IN-SPELLBOOKS</button>
+      <button class="sb-proj-btn" onclick="runCmd('project personal-website')">PERSONAL-WEBSITE</button>
+      <button class="sb-proj-btn" onclick="runCmd('project minecraft-server')">MINECRAFT-SERVER</button>
 
       <div class="sb-section">SYSTEM</div>
-      <button class="sb-btn" onclick="runCmd('help')"><span class="sb-icon">?</span>HELP<span class="sb-arrow">►</span></button>
       <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>CLEAR<span class="sb-arrow">►</span></button>
     </div>
 
     <div id="terminal">
       <div id="output"></div>
-      <div id="input-area">
-        <div id="quickbar">
-          <button class="qbtn" onclick="runCmd('about')">▸ ABOUT</button>
-          <button class="qbtn" onclick="runCmd('projects')">▸ PROJECTS</button>
-          <button class="qbtn" onclick="runCmd('music')">▸ MUSIC</button>
-          <button class="qbtn" onclick="runCmd('contact')">▸ CONTACT</button>
-          <button class="qbtn" onclick="runCmd('map')">▸ MC MAP</button>
-          <button class="qbtn" onclick="runCmd('bird-classifier')" style="border-color:#00aa88;color:#00aa88;">▸ CLASSIFIER</button>
-          <button class="qbtn" onclick="runCmd('gallery')">▸ MC GALLERY</button>
-          <button class="qbtn" onclick="runCmd('help')">▸ HELP</button>
-          <button class="qbtn" onclick="runCmd('clear')">▸ CLEAR</button>
-        </div>
-        <div id="input-row">
-          <div id="prompt">
-            <span class="u">nick</span><span style="color:var(--mgs-border)">@</span><span class="h">burczyk</span><span style="color:var(--mgs-border)">:~</span><span class="s">$</span>
+      <div id="nav-bar">
+        <div class="nav-group">
+          <div class="nav-group-label">ME</div>
+          <div class="nav-group-btns">
+            <button class="nbtn" onclick="runCmd('about')">ABOUT</button>
+            <button class="nbtn" onclick="runCmd('contact')">CONTACT</button>
           </div>
-          <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="enter command...">
         </div>
+        <div class="nbtn-divider"></div>
+        <div class="nav-group">
+          <div class="nav-group-label">PROJECTS</div>
+          <div class="nav-group-btns">
+            <button class="nbtn" onclick="runCmd('projects')">ALL</button>
+            <button class="nbtn nbtn-live" onclick="runCmd('bird-classifier')">CLASSIFIER</button>
+          </div>
+        </div>
+        <div class="nbtn-divider"></div>
+        <div class="nav-group">
+          <div class="nav-group-label">MUSIC</div>
+          <div class="nav-group-btns">
+            <button class="nbtn" onclick="runCmd('music')">ZERO BARBECUE</button>
+          </div>
+        </div>
+        <div class="nbtn-divider"></div>
+        <div class="nav-group">
+          <div class="nav-group-label">MINECRAFT</div>
+          <div class="nav-group-btns">
+            <button class="nbtn" onclick="runCmd('map')">MAP</button>
+            <button class="nbtn" onclick="runCmd('gallery')">GALLERY</button>
+          </div>
+        </div>
+        <div class="nbtn-divider nbtn-divider-push"></div>
+        <button class="nbtn nbtn-dim" onclick="runCmd('clear')">CLEAR</button>
       </div>
     </div>
   </div>

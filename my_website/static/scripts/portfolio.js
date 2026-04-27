@@ -102,7 +102,6 @@ async function enterSite() {
       codec.style.display = 'none';
       setTimeout(playBackgroundMusic, 300);
       bootTerminal();
-      document.getElementById('cmd-input').focus();
     }, { once: true });
   }, 1800);
 }
@@ -114,29 +113,17 @@ setInterval(() => {
 // ══════════════════════════════════════════
 // TERMINAL HELPERS
 // ══════════════════════════════════════════
-let hist=[], hIdx=-1;
 const out = document.getElementById('output');
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function ln(html='',cls='line'){const d=document.createElement('div');d.className=`line ${cls} fade-in`;d.innerHTML=html;out.appendChild(d);out.scrollTop=out.scrollHeight;}
 function bl(){const d=document.createElement('div');d.className='blank fade-in';out.appendChild(d);out.scrollTop=out.scrollHeight;}
 function addHtml(h){const d=document.createElement('div');d.className='fade-in';d.innerHTML=h;out.appendChild(d);out.scrollTop=out.scrollHeight;}
-function echo(cmd){ln(`<span style="color:var(--mgs-border)">nick@burczyk:~$</span> <span style="color:var(--mgs-cyan)">${esc(cmd)}</span>`);}
+function echo(cmd){ln(`<span style="color:var(--mgs-border)">>></span> <span style="color:var(--mgs-cyan)">${esc(cmd)}</span>`);}
 
 // ══════════════════════════════════════════
 // COMMANDS
 // ══════════════════════════════════════════
 const CMDS = {
-help(){
-  bl();
-  ln('╔══════════════════════════════════════════════════════════╗','green');
-  ln('║                  NICK BURCZYK — COMMANDS                        ║','green');
-  ln('╚══════════════════════════════════════════════════════════╝','green');
-  bl();
-  [['about','about me'],['projects','list all projects'],['project [id]','view a project'],['music','Zero Barbecue — Spotify / Bandcamp'],['contact','links and socials'],['map','live Minecraft server map'],['bird-classifier','launch the bird classifier'],['clear','clear terminal'],['help','this menu']].forEach(([c,d])=>{
-    ln(`  <span style="color:var(--mgs-cyan);display:inline-block;min-width:200px">${esc(c)}</span><span style="color:var(--mgs-border)">${d}</span>`);
-  });
-},
-
 about(){
   bl();
   addHtml(`<div class="who-card fade-in">
@@ -255,12 +242,9 @@ CMDS['mc-gallery']=CMDS['gallery'];
 // COMMAND RUNNER
 // ══════════════════════════════════════════
 function runCmd(raw){
-  const input=document.getElementById('cmd-input');
-  const trimmed=raw!==undefined?raw:input.value.trim();
-  if(raw===undefined) input.value='';
+  const trimmed=(raw||'').trim();
   echo(trimmed);
   if(!trimmed){bl();return;}
-  hist.push(trimmed); hIdx=hist.length;
   const lo=trimmed.toLowerCase();
   if(lo==='project'||lo.startsWith('project ')){ CMDS['project'](trimmed.slice('project'.length).trim()); return; }
   const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
@@ -268,32 +252,6 @@ function runCmd(raw){
   else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>  — type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
 }
 
-// ══════════════════════════════════════════
-// TAB COMPLETION
-// ══════════════════════════════════════════
-const ALL_CMDS=['help','about','project ','projects','music','contact','map','bird-classifier','gallery','clear'];
-const PIDS=PROJECTS.map(p=>p.id);
-function tabComp(v){
-  const lo=v.toLowerCase();
-  if(lo.startsWith('project ')){const frag=lo.slice('project '.length);const m=PIDS.find(id=>id.startsWith(frag));return m?'project '+m:v;}
-  const m=ALL_CMDS.find(c=>c.startsWith(lo)&&c!==lo);
-  return m||v;
-}
-
-// ══════════════════════════════════════════
-// INPUT
-// ══════════════════════════════════════════
-document.getElementById('cmd-input').addEventListener('keydown',e=>{
-  const inp=e.target;
-  if(e.key==='Enter'){runCmd();}
-  else if(e.key==='Tab'){e.preventDefault();inp.value=tabComp(inp.value);}
-  else if(e.key==='ArrowUp'){e.preventDefault();if(hIdx>0){hIdx--;inp.value=hist[hIdx];}}
-  else if(e.key==='ArrowDown'){e.preventDefault();if(hIdx<hist.length-1){hIdx++;inp.value=hist[hIdx];}else{hIdx=hist.length;inp.value='';}}
-});
-document.addEventListener('click',e=>{
-  if(!e.target.closest('a')&&!e.target.closest('button')&&!e.target.closest('iframe'))
-    document.getElementById('cmd-input').focus();
-});
 
 // ══════════════════════════════════════════
 // BOOT TERMINAL
