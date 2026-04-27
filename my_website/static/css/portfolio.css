@@ -263,6 +263,7 @@ body::after {
   transition: all 0.2s; white-space: nowrap; text-transform: uppercase; letter-spacing: 1.5px;
 }
 .nbtn:hover { background: rgba(0,255,204,0.15); color: var(--mgs-cyan); border-color: var(--mgs-cyan); box-shadow: 0 0 15px var(--glow-cyan); }
+.btn-flash { background: rgba(255,220,0,0.2) !important; color: #ffd700 !important; border-color: #ffd700 !important; box-shadow: 0 0 18px rgba(255,215,0,0.6) !important; transition: none !important; }
 .nbtn-live { border-color: var(--mgs-cyan); color: var(--mgs-cyan); }
 .nbtn-dim { border-color: rgba(0,170,136,0.25); color: rgba(0,170,136,0.5); }
 .nbtn-dim:hover { border-color: var(--mgs-cyan); color: var(--mgs-cyan); }

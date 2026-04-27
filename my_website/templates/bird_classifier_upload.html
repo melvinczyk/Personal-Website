@@ -24,7 +24,7 @@
 
   <!-- NAV -->
   <div id="navback">
-    <a href="/" class="nb-link">~/home</a>
+    <a href="/" class="nb-link">home</a>
     <span class="nb-sep">/</span>
     <span class="nb-active">bird-classifier</span>
     <div style="margin-left:auto;">
@@ -37,12 +37,11 @@
     <!-- HEADER + STATS -->
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
-        <span class="ts-title">BACKYARD ALABAMA BIRD DETECTOR</span>
+<span class="ts-title">BACKYARD ALABAMA BIRD DETECTOR</span>
         <span class="ts-sub">CNN · mel-spectrogram · 30 classes · Alabama species</span>
       </div>
       <div class="ts-bd">
-        <div class="section-comment">// deep learning model trained to detect common Alabama bird chirps — live model stats below</div>
+        <div class="section-comment">Deep learning model trained to detect common Alabama bird chirps — live model stats below</div>
         <div class="stats-row">
           <div class="stat-box">
             <div class="stat-lbl">MODEL CLASSES</div>
@@ -70,8 +69,7 @@
     <!-- UPLOAD + CAROUSEL -->
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
-        <span class="ts-title">SUBMIT AUDIO FOR CLASSIFICATION</span>
+<span class="ts-title">SUBMIT AUDIO FOR CLASSIFICATION</span>
         <span class="ts-sub">upload a file or record live · wav/mp3/ogg/m4a accepted</span>
       </div>
       <div class="ts-bd">
@@ -83,7 +81,7 @@
               {% csrf_token %}
 
               <div class="upload-panel">
-                <div class="panel-label">// OPTION 1 — UPLOAD FILE</div>
+                <div class="panel-label">UPLOAD FILE</div>
                 <div class="drop-zone" id="drop-zone">
                   <input type="file" name="file" id="file-input" accept="audio/*">
                   <span class="drop-icon">🎵</span>
@@ -95,7 +93,7 @@
               <div class="or-divider">— OR —</div>
 
               <div class="upload-panel">
-                <div class="panel-label">// OPTION 2 — RECORD LIVE</div>
+                <div class="panel-label">RECORD LIVE</div>
                 <div id="safari-warning" style="display:none;color:var(--alert-red);font-size:11px;margin-bottom:10px;font-family:'Share Tech Mono',monospace;">⚠ Live recording not supported in Safari. Please use Chrome.</div>
                 <div class="rec-row">
                   <button type="button" id="start-recording" class="term-btn">
@@ -136,17 +134,14 @@
 
             </form>
 
-            <div class="bot-prompt">
-              <span>nick@burczyk:~/bird-classifier$</span><span class="cur"></span>
-            </div>
           </div>
 
           <!-- RIGHT: CAROUSEL -->
           <div>
-            <div class="section-comment">// Alabama birds the model recognizes — auto-scrolling</div>
+            <div class="section-comment">Alabama birds the model recognizes — auto-scrolling</div>
             <div class="carousel-wrap">
               <div class="carousel-track" id="carousel-track"></div>
-              <div class="carousel-caption">// 30 detectable Alabama species</div>
+              <div class="carousel-caption">30 DETECTABLE ALABAMA SPECIES</div>
             </div>
             <div class="carousel-dots" id="carousel-dots"></div>
           </div>
@@ -158,22 +153,21 @@
     <!-- MACAULAY LIBRARY -->
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
-        <span class="ts-title">FETCH FROM MACAULAY LIBRARY</span>
+<span class="ts-title">FETCH FROM MACAULAY LIBRARY</span>
         <span class="ts-sub">no birds nearby? pull a recording by ML number</span>
       </div>
       <div class="ts-bd">
-        <div class="section-comment">// visit <a class="tl" href="https://macaulaylibrary.org" target="_blank">macaulaylibrary.org</a> — find a bird recording — enter its ML# below</div>
+        <div class="section-comment">Visit <a class="tl" href="https://macaulaylibrary.org" target="_blank">macaulaylibrary.org</a>, find a bird recording, and enter its ML number below</div>
         <div class="macaulay-inner">
           <div class="macaulay-embed">
             <iframe src="https://macaulaylibrary.org/asset/622572493/embed" height="320" width="280" frameborder="0" allowfullscreen></iframe>
-            <div style="font-size:10px;color:var(--mgs-border);margin-top:6px;letter-spacing:1px;text-align:center;font-family:'Share Tech Mono',monospace">// example embed — ML622572493</div>
+            <div style="font-size:10px;color:var(--mgs-border);margin-top:6px;letter-spacing:1px;text-align:center;font-family:'Share Tech Mono',monospace">example embed — ML622572493</div>
           </div>
           <div class="macaulay-form">
             <form method="post" id="download-form">
               {% csrf_token %}
               <div style="margin-bottom:14px;">
-                <div class="panel-label" style="margin-bottom:8px;">// ENTER ML NUMBER</div>
+                <div class="panel-label" style="margin-bottom:8px;">ENTER ML NUMBER</div>
                 <div class="term-input-row">
                   <span class="prefix">ML#</span>
                   <input type="text" name="asset_num" class="term-input" placeholder="e.g. 622572493">
@@ -185,8 +179,7 @@
                 ↓ FETCH &amp; CLASSIFY
               </button>
               <div style="font-size:11px;color:var(--mgs-border);margin-top:10px;line-height:1.8;font-family:'Share Tech Mono',monospace;">
-                // This will download the audio from Macaulay<br>
-                // Library and run it through the classifier.
+                Downloads the audio from Macaulay Library and runs it through the classifier.
               </div>
             </form>
           </div>
@@ -197,8 +190,7 @@
     <!-- BIRD TABLE -->
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
-        <span class="ts-title">ALL DETECTABLE SPECIES</span>
+<span class="ts-title">ALL DETECTABLE SPECIES</span>
         <span class="ts-sub">30 Alabama birds · click play to hear each chirp</span>
       </div>
       <div class="ts-bd">
@@ -342,32 +334,31 @@
     <!-- HOW IT WORKS -->
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
-        <span class="ts-title">HOW IT WORKS</span>
+<span class="ts-title">HOW IT WORKS</span>
         <span class="ts-sub">5-step inference pipeline</span>
       </div>
       <div class="ts-bd">
-        <div class="section-comment">// audio → preprocessing → spectrogram → CNN → weighted prediction</div>
+        <div class="section-comment">audio → preprocessing → spectrogram → CNN → weighted prediction</div>
         <div class="pipeline">
           <div class="pipe-step">
             <img src="{% static '/images/convert.png' %}" alt="Step 1" loading="lazy">
-            <div class="pipe-body"><div class="pipe-num">STEP_01</div><div class="pipe-desc">File type check and conversion to .wav format for standardized processing.</div></div>
+            <div class="pipe-body"><div class="pipe-num">STEP 01</div><div class="pipe-desc">File type check and conversion to .wav format for standardized processing.</div></div>
           </div>
           <div class="pipe-step">
             <img src="{% static '/images/visual.png' %}" alt="Step 2" loading="lazy">
-            <div class="pipe-body"><div class="pipe-num">STEP_02</div><div class="pipe-desc">Audio resampled to 22050 Hz. Metadata extracted: length, pitch, average frequency.</div></div>
+            <div class="pipe-body"><div class="pipe-num">STEP 02</div><div class="pipe-desc">Audio resampled to 22050 Hz. Metadata extracted: length, pitch, average frequency.</div></div>
           </div>
           <div class="pipe-step">
             <img src="{% static 'images/visual_reduced.png' %}" alt="Step 3" loading="lazy">
-            <div class="pipe-body"><div class="pipe-num">STEP_03</div><div class="pipe-desc">Noise reduction applied to amplify important bird-call frequencies and suppress background.</div></div>
+            <div class="pipe-body"><div class="pipe-num">STEP 03</div><div class="pipe-desc">Noise reduction applied to amplify important bird-call frequencies and suppress background.</div></div>
           </div>
           <div class="pipe-step">
             <img src="{% static 'images/split.png' %}" alt="Step 4" loading="lazy">
-            <div class="pipe-body"><div class="pipe-num">STEP_04</div><div class="pipe-desc">Mel-spectrogram generated for every 5-second window of audio, producing an array of image segments.</div></div>
+            <div class="pipe-body"><div class="pipe-num">STEP 04</div><div class="pipe-desc">Mel-spectrogram generated for every 5-second window of audio, producing an array of image segments.</div></div>
           </div>
           <div class="pipe-step">
             <img src="{% static 'images/predict.png' %}" alt="Step 5" loading="lazy">
-            <div class="pipe-body"><div class="pipe-num">STEP_05</div><div class="pipe-desc">CNN predicts on each spectrogram. Weighted final prediction combines all segment confidences.</div></div>
+            <div class="pipe-body"><div class="pipe-num">STEP 05</div><div class="pipe-desc">CNN predicts on each spectrogram. Weighted final prediction combines all segment confidences.</div></div>
           </div>
         </div>
       </div>
@@ -384,5 +375,14 @@
 </div><!-- /screen -->
 
 <script src="{% static 'scripts/bird_classifier.js' %}"></script>
+<script>
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (btn && !btn.disabled) {
+    btn.classList.add('btn-flash');
+    setTimeout(() => btn.classList.remove('btn-flash'), 350);
+  }
+}, true);
+</script>
 </body>
 </html>

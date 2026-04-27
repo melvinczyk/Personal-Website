@@ -67,7 +67,14 @@ document.addEventListener('mouseenter', e => {
   if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn')) playHoverBeep();
 }, true);
 document.addEventListener('click', e => {
-  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn') && e.target.id !== 'codec-btn') playClickSound();
+  if (e.target.matches('button, a, .qbtn, .sb-btn, .sb-proj-btn') && e.target.id !== 'codec-btn') {
+    playClickSound();
+    const btn = e.target.closest('button');
+    if (btn) {
+      btn.classList.add('btn-flash');
+      setTimeout(() => btn.classList.remove('btn-flash'), 350);
+    }
+  }
 }, true);
 
 // ══════════════════════════════════════════
