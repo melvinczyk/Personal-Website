@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Song2Vec</title>
+<link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% static 'css/bird_classifier.css' %}">
+<link rel="stylesheet" href="{% static 'css/song2vec.css' %}">
+</head>
+<body>
+<div class="grid-overlay"></div>
+
+<div id="screen">
+
+  <!-- TITLEBAR -->
+  <div id="titlebar">
+    <div class="ttl">NICK BURCZYK · SONG2VEC</div>
+    <div class="clk" id="clock">00:00:00</div>
+  </div>
+
+  <!-- NAV -->
+  <div id="navback">
+    <a href="/" class="nb-link">home</a>
+    <span class="nb-sep">/</span>
+    <span class="nb-active">song2vec</span>
+    <div style="margin-left:auto;">
+      <a href="/" class="nb-link">← home</a>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- HEADER + STATS -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span class="ts-title">SONG2VEC</span>
+        <span class="ts-sub">VAE · PCA · genre embeddings · mood tags</span>
+      </div>
+      <div class="ts-bd">
+        <div class="section-comment">Each song produces a unique blob image. Position and colour come from PCA projections of 1,305 genre and 985 tag embedding vectors.</div>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-lbl">SONGS</div>
+            <div class="stat-val s">203K</div>
+            <div class="stat-sub">unique tracks</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">GENRES</div>
+            <div class="stat-val s">1,305</div>
+            <div class="stat-sub">32-dim vectors</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">MOOD TAGS</div>
+            <div class="stat-val s">985</div>
+            <div class="stat-sub">64-dim vectors</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">LATENT DIM</div>
+            <div class="stat-val s">16</div>
+            <div class="stat-sub">VAE bottleneck</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH + VISUALIZER -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span class="ts-title">SEARCH</span>
+        <span class="ts-sub">203,842 songs</span>
+      </div>
+      <div class="ts-bd">
+        <div class="sv-grid">
+
+          <!-- LEFT: search + meta -->
+          <div class="sv-left">
+            <div class="sv-search-wrap">
+              <div class="term-input-row">
+                <span class="prefix">⌕</span>
+                <input type="text" id="sv-input" class="term-input" placeholder="e.g. Bohemian Rhapsody, Kendrick..." autocomplete="off" spellcheck="false">
+              </div>
+              <div class="sv-results" id="sv-results"></div>
+            </div>
+
+            <!-- Selected song info -->
+            <div class="sv-song-info" id="sv-song-info" style="display:none">
+              <div class="sv-song-title" id="sv-song-title"></div>
+              <div class="sv-song-artist" id="sv-song-artist"></div>
+
+              <div class="sv-chips-block">
+                <div class="sv-chips-label">GENRES</div>
+                <div class="sv-chips-row" id="sv-genres"></div>
+              </div>
+              <div class="sv-chips-block">
+                <div class="sv-chips-label">MOOD TAGS</div>
+                <div class="sv-chips-row" id="sv-tags"></div>
+              </div>
+            </div>
+
+            <!-- Idle hint -->
+            <div class="sv-idle-hint" id="sv-idle-hint">
+              <div class="sv-hint-line">◈ type a song or artist</div>
+              <div class="sv-hint-line">◈ select from the dropdown</div>
+              <div class="sv-hint-line">◈ blob renders from embeddings</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: blob canvas -->
+          <div class="sv-right">
+            <div class="sv-canvas-wrap">
+              <canvas id="sv-canvas" width="400" height="400"></canvas>
+              <div class="sv-canvas-overlay" id="sv-canvas-overlay">
+                <span id="sv-canvas-msg">SEARCH A SONG</span>
+              </div>
+            </div>
+            <div class="sv-canvas-caption" id="sv-caption"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- VECTOR SPACE -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span class="ts-title">EMBEDDING SPACE</span>
+        <span class="ts-sub">PCA projection · genre + tag vectors</span>
+      </div>
+      <div class="ts-bd">
+        <div class="sv-scatter-single">
+          <div class="sv-scatter-label">GENRE SPACE</div>
+          <canvas id="sv-scatter-genre" width="900" height="600"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="ts">
+      <div class="ts-hd">
+        <span class="ts-title">PIPELINE</span>
+        <span class="ts-sub">embedding lookup · PCA · blob synthesis · post-processing</span>
+      </div>
+      <div class="ts-bd">
+        <div class="pipeline">
+          <div class="pipe-step">
+            <div class="pipe-icon">①</div>
+            <div class="pipe-body">
+              <div class="pipe-num">EMBEDDING LOOKUP</div>
+              <div class="pipe-desc">Genres and tags are looked up in 32-dim and 64-dim tables built from Last.fm co-occurrence data.</div>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-icon">②</div>
+            <div class="pipe-body">
+              <div class="pipe-num">PCA PROJECTION</div>
+              <div class="pipe-desc">Four PCA transforms reduce embeddings to 2D (position) and 3D (RGB). <code>tanh</code> stretching spreads blobs across the canvas.</div>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-icon">③</div>
+            <div class="pipe-body">
+              <div class="pipe-num">BLOB SYNTHESIS</div>
+              <div class="pipe-desc">Each genre/tag places a radial blob with quadratic falloff. Blobs accumulate additively on a float32 canvas.</div>
+            </div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-icon">④</div>
+            <div class="pipe-body">
+              <div class="pipe-num">POST-PROCESSING</div>
+              <div class="pipe-desc">Lightness capped at 0.78, gamma 0.85 applied per channel. Output is a 400x400 PNG unique to the song.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div><span style="color:var(--mgs-cyan)">●</span>&nbsp; song2vec · 203K songs · 1305 genres · 985 tags</div>
+    <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
+  </div>
+
+</div><!-- /screen -->
+
+<script>
+const BLOB_DATA_URL = "{% static 'scripts/blob_data.json' %}";
+</script>
+<script src="{% static 'scripts/song2vec.js' %}"></script>
+<script>
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (btn && !btn.disabled) {
+    btn.classList.add('btn-flash');
+    setTimeout(() => btn.classList.remove('btn-flash'), 350);
+  }
+}, true);
+</script>
+</body>
+</html>

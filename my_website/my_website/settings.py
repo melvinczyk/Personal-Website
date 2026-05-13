@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'compressor',
     "bird_classifier.apps.BirdClassifierConfig",
     'minecraft',
+    'song2vec.apps.Song2VecConfig',
 ]
 
 COMPRESS_ROOT = BASE_DIR / 'static'

@@ -52,5 +52,6 @@ urlpatterns = [
     path("", include('minecraft.urls')),
     path("admin/", admin.site.urls),
     path("bird_classifier/", include("bird_classifier.urls")),
+    path("song2vec/", include("song2vec.urls")),
     path("robots.txt", robots_txt),
 ]
