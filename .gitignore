@@ -7,3 +7,6 @@ db.sqlite3
 media
 .bak
 .idea/**
+node_modules/
+.DS_Store
+*/temp_mels/

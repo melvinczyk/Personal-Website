@@ -5,6 +5,7 @@ const TAG_CLASS = {
 
 const PROJECTS = [
   { id:"oculosaurus",      name:"OCULOSAURUS",                tags:["1ST PLACE","HARDWARE","NETWORKING"], tech:"Python / OpenCV / Raspberry Pi / YOLO",              img:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/example.gif",  img2:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/point_cloud.png", desc:"Stereo vision system to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.", link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator"},
+  { id:"memprobe",         name:"MEMPROBE",                   tags:["EMBEDDED","WEB","LIVE"],         tech:"Django / Modal / PostgreSQL / pyelftools / Click CLI", img:"https://memprobe.dev/static/og-image.png", img2:null, desc:"Online ELF analyzer for embedded firmware. Upload a compiled binary and instantly see where flash and RAM go: per-section and per-symbol breakdown, treemap, address map, and memory warnings, with build-over-build size tracking. A Django web app with serverless ELF/DWARF parsing on Modal, a Postgres-backed build history, and a pip-installable CLI that gates firmware size in CI.", link:"https://memprobe.dev"},
   { id:"echo-scout",       name:"ECHO SCOUT",                 tags:["EMBEDDED","HARDWARE", "NETWORKING","IN DEV"],            tech:"C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF / IMU", img:"https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946",                img2:null,                                                                                                         desc:"Compact 2.8\" handheld device that detects people and maps out rooms in real time. The mmWave radar covers an 80 degree area in front of the user, while the 8x8 ToF sensor builds a 3D point cloud of the surrounding space. Orientation and heading tracked via IMU with a live compass on the touchscreen display.", link:"https://github.com/melvinczyk/Heartbeat-Sensor"},
   { id:"song2vec",         name:"SONG2VEC",                   tags:["ML/DL","LIVE"],                  tech:"Python / PyTorch / VAE / PCA / scikit-learn",        img:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/multi_blobs.png",                                  img2:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png", desc:"Skip-gram based embedding model that learns vector representations of genres, tags, and songs in a shared latent space. Includes a VAE that maps songs into a 16-dimensional latent space and synthesizes unique colour blob images driven by genre and mood embeddings. PCA projects 1,305 genre and 985 tag vectors into colour+layout space.", link:"https://github.com/melvinczyk/Song2Vec"},
   { id:"bird-classifier",  name:"BACKYARD BIRD CLASSIFIER",   tags:["ML/DL", "LIVE"],                 tech:"Python / CNN / Django / mel-spectrogram",             img:"https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg",             img2:"https://github.com/melvinczyk/Bird-classifier/blob/main/final_matrix.png?raw=true",    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
@@ -231,7 +232,14 @@ project(id){
         <span class="proj-demo-sim">203K SONGS · 1305 GENRES · 985 TAGS</span>
       </div>
       <a href="/song2vec/" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN SONG2VEC DEMO /song2vec/</a>
-    </div>` : '');
+    </div>` : (p.id==='memprobe' ? `
+    <div class="proj-demo-outer" style="padding:16px 20px;">
+      <div class="proj-demo-hdr" style="margin-bottom:10px;">
+        <span>◈ LIVE SAAS</span>
+        <span class="proj-demo-sim">ELF · DWARF · FLASH / RAM</span>
+      </div>
+      <a href="https://memprobe.dev" target="_blank" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN MEMPROBE memprobe.dev</a>
+    </div>` : ''));
   addHtml(`<div class="proj-card">
     <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${tagsHtml}</div>
     <div class="proj-card-body">
@@ -239,7 +247,7 @@ project(id){
       <div class="proj-info">
         <div class="proj-tech">tech: <span style="color:#99ddcc">${esc(p.tech)}</span></div>
         <div class="proj-desc">${esc(p.desc)}</div>
-        <a class="proj-link" href="${p.link}" target="_blank">→ GITHUB: ${p.link.replace('https://github.com/','')}</a>
+        <a class="proj-link" href="${p.link}" target="_blank">→ ${p.link.includes('github.com') ? `GITHUB: ${p.link.replace('https://github.com/','')}` : `LIVE: ${p.link.replace(/^https?:\/\//,'')}`}</a>
       </div>
     </div>
     ${demoSection}
