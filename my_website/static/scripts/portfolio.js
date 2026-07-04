@@ -281,7 +281,7 @@ contact(){
 map(){
   bl();
   ln('  Live Bluemap render: real-time world data','white');
-  ln('  Full view → <a class="tl" href="https://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
+  ln('  Full view → <a class="tl" href="http://216.219.93.66:8100/" target="_blank">216.219.93.66:8100/</a>');
   bl();
   addHtml(`<div style="padding:4px 20px 10px;max-width:700px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px;background:rgba(0,25,25,0.5)"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" width="100%" height="360" frameborder="0" style="border:1px solid var(--mgs-border);display:block;"></iframe></div></div>`);
   bl();
