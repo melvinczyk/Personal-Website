@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODEC mock</title>
+<style>
+@font-face {
+  font-family: 'DSEG7';
+  src: url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/fonts/DSEG7-Classic/DSEG7Classic-Italic.woff2') format('woff2');
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #000; overflow: hidden; }
+
+/* CRT flicker + vignette over everything */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.22) 2px 4px);
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 91; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,10,5,0.75) 100%);
+}
+
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  width: 960px; height: 720px;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+}
+
+/* ── main codec row ── */
+#codec-row {
+  position: absolute; left: 0; right: 0; top: 150px;
+  display: flex; align-items: center; justify-content: center; gap: 34px;
+}
+
+.portrait {
+  width: 172px; height: 232px;
+  border: 2px solid #63e690;
+  border-radius: 8px;
+  box-shadow: 0 0 14px rgba(80,230,140,0.55), 0 0 40px rgba(60,200,120,0.18), inset 0 0 6px rgba(0,0,0,0.9);
+  background: #010502;
+  position: relative; overflow: hidden;
+}
+.portrait img {
+  position: absolute; inset: 4px;
+  width: calc(100% - 8px); height: calc(100% - 8px);
+  /* fill, not cover: the PS1 displayed these 52x89 sprites stretched
+     ~1.27x wider (non-square pixels): stretching is the authentic look */
+  object-fit: fill;
+  image-rendering: pixelated;
+  filter: brightness(1.02);
+}
+/* scanlines + drifting interference band inside portraits */
+.portrait::before {
+  content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px);
+}
+.portrait::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 26px; z-index: 4; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(160,255,200,0.10), transparent);
+  animation: drift 4.6s linear infinite;
+}
+@keyframes drift { 0% { top: -30px; } 100% { top: 240px; } }
+
+.portrait.static img { display: none; }
+.portrait.static { background: #030a05; }
+.portrait.static .noise { display: block; }
+.noise {
+  display: none; position: absolute; inset: 4px; z-index: 2;
+  background-image: repeating-conic-gradient(#0a2416 0% .0002%, #051208 .0002% .0004%, #123c22 .0004% .0006%);
+  background-size: 7px 5px;
+  animation: nz .12s steps(2) infinite;
+}
+@keyframes nz { 0% { background-position: 0 0; } 100% { background-position: 9px 5px; } }
+
+/* ── frequency device ── */
+#device-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.ptt {
+  font-family: 'Arial Black', 'Arial', sans-serif; font-size: 15px; font-weight: 900;
+  letter-spacing: 10px; color: #2e7a4d; text-indent: 10px;
+  text-shadow: 0 0 6px rgba(46,150,90,0.35);
+}
+.device-wrap { display: flex; align-items: center; gap: 18px; }
+
+.arrow {
+  width: 0; height: 0; cursor: pointer;
+  border-top: 15px solid transparent; border-bottom: 15px solid transparent;
+  filter: drop-shadow(0 0 5px rgba(80,230,140,0.5));
+  transition: filter .1s;
+}
+.arrow:hover { filter: drop-shadow(0 0 10px rgba(120,255,170,0.9)); }
+.arrow.left  { border-right: 22px solid #58d88a; }
+.arrow.right { border-left: 22px solid #58d88a; }
+.arrow:active { transform: scale(0.9); }
+
+#device {
+  width: 250px; height: 110px;
+  background: #060d08;
+  border: 2px solid #63e690;
+  border-radius: 10px;
+  box-shadow: 0 0 14px rgba(80,230,140,0.5), inset 0 0 14px rgba(0,0,0,0.85);
+  display: flex; align-items: center;
+  padding: 12px 16px; gap: 14px;
+  position: relative;
+}
+#device::before {
+  content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 1px, transparent 1px 3px);
+}
+
+#bars { display: flex; align-items: flex-end; gap: 4px; height: 72px; }
+#bars span {
+  width: 9px; background: #4ddc85;
+  box-shadow: 0 0 5px rgba(80,230,140,0.6);
+}
+
+#freq {
+  font-family: 'DSEG7', monospace;
+  font-size: 30px; line-height: 1;
+  position: relative; flex: 1; height: 32px;
+}
+/* ghost segments and live digits share identical absolute geometry,
+   so they overlap perfectly and center together in the panel */
+#freq .ghost, #freq #freq-num {
+  position: absolute; inset: 0; text-align: center; line-height: 32px;
+}
+#freq .ghost { color: rgba(120,255,170,0.10); }
+#freq #freq-num { color: #b8ffd2; text-shadow: 0 0 10px rgba(120,255,170,0.65); }
+
+.memory {
+  font-family: 'Arial Black', 'Arial', sans-serif; font-size: 13px; font-weight: 900;
+  letter-spacing: 7px; color: #2e7a4d; text-indent: 7px;
+  border: 1.5px solid #2e7a4d; border-radius: 6px;
+  padding: 3px 14px 2px;
+  text-shadow: 0 0 6px rgba(46,150,90,0.3);
+}
+
+/* ── contact name under freq (subtle, not in game but tiny aid) ── */
+#contact-name {
+  position: absolute; left: 0; right: 0; top: 435px;
+  text-align: center;
+  font-family: 'Arial', sans-serif; font-size: 12px; letter-spacing: 5px;
+  color: #21593a;
+}
+
+/* ── subtitle text ── */
+#subtitle {
+  position: absolute; left: 50%; top: 488px; transform: translateX(-50%);
+  width: 620px; min-height: 120px;
+  font-family: 'Trebuchet MS', 'Verdana', sans-serif;
+  font-size: 23px; line-height: 1.55; font-weight: 600;
+  color: #d2ecd9;
+  text-shadow: 0 1px 0 #000, 0 0 12px rgba(140,255,180,0.12);
+}
+
+/* ── press-select intro overlay ── */
+#call-overlay {
+  position: absolute; inset: 0; z-index: 50;
+  background: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+}
+#call-overlay.hidden { display: none; }
+#call-box {
+  border: 2px solid #b03a2e; padding: 8px 34px 7px; position: relative;
+}
+#call-box::before, #call-box::after {
+  content: ''; position: absolute; width: 11px; height: 11px; border: 1.5px solid #b03a2e;
+}
+#call-box::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+#call-box::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+#call-box span {
+  font-family: 'Arial Black', sans-serif; font-size: 26px; font-weight: 900;
+  letter-spacing: 9px; color: #c0392b; text-indent: 9px;
+}
+#call-overlay .hint {
+  font-family: 'Trebuchet MS', sans-serif; font-size: 13px; letter-spacing: 4px;
+  color: #6b6b6b; animation: blink 1.2s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0.25; } }
+#call-overlay button {
+  background: none; border: 1.5px solid #444; color: #777;
+  font-family: 'Trebuchet MS', sans-serif; font-size: 13px; letter-spacing: 4px;
+  padding: 9px 26px; cursor: pointer; text-transform: uppercase;
+}
+#call-overlay button:hover { border-color: #c0392b; color: #c0392b; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="codec-row">
+    <div class="portrait" id="portrait-l">
+      <img id="campbell" src="campbell_f00.png" alt="Colonel">
+      <div class="noise"></div>
+    </div>
+
+    <div id="device-col">
+      <div class="ptt">PTT</div>
+      <div class="device-wrap">
+        <div class="arrow left" onclick="tune(-1)"></div>
+        <div id="device">
+          <div id="bars"></div>
+          <div id="freq"><span class="ghost">888.88</span><span id="freq-num">140.85</span></div>
+        </div>
+        <div class="arrow right" onclick="tune(1)"></div>
+      </div>
+      <div class="memory">MEMORY</div>
+    </div>
+
+    <div class="portrait" id="portrait-r">
+      <img src="snake_front.png" alt="Visitor">
+      <div class="noise"></div>
+    </div>
+  </div>
+
+  <div id="contact-name">COLONEL</div>
+  <div id="subtitle"></div>
+
+  <div id="call-overlay">
+    <div id="call-box"><span>CALL</span></div>
+    <div class="hint">PUSH SELECT</div>
+    <button onclick="startCall()">[ SELECT ]</button>
+  </div>
+</div>
+
+<script>
+// ── scale 4:3 stage to viewport ──
+function fit() {
+  const s = Math.min(innerWidth / 980, innerHeight / 740);
+  document.getElementById('stage').style.transform =
+    `translate(-50%,-50%) scale(${s})`;
+}
+addEventListener('resize', fit); fit();
+
+// ── signal bars (ascending wedge) ──
+const bars = document.getElementById('bars');
+[14, 24, 34, 46, 58, 72].forEach(h => {
+  const b = document.createElement('span');
+  b.style.height = h + 'px';
+  bars.appendChild(b);
+});
+
+// ── contacts ──
+const CONTACTS = [
+  { freq: '140.15', name: '',        live: false },
+  { freq: '140.85', name: 'COLONEL', live: true  },
+  { freq: '141.12', name: '',        live: false },
+];
+let ci = 1;
+
+const LINES = [
+  "Snake, do you read me? You've reached Nick's new frequency.",
+  "From here, every part of the portfolio is a codec contact. Projects, music, contact info: you tune to them.",
+  "Snake! Pay attention. Every frame you're seeing is the genuine sprite work.",
+  "This screen is just a mock-up. If it looks right... give the word, and we'll build the real thing.",
+];
+
+// ── talking animation (real ripped frames, multiple pose sets) ──
+// The Colonel has four distinct poses from the sheet; he switches pose per
+// line like in the game, and within a line the mouth is driven by the
+// character at the typewriter cursor (rough viseme), pacing to syllables.
+const campbell = document.getElementById('campbell');
+const F = id => `campbell_f${id}.png`;
+// each pose: [closed, half, open, wide]
+const POSES = {
+  front:    [F('00'), F('02'), F('04'), F('07')],
+  alt:      [F('14'), F('15'), F('16'), F('16')],
+  tilted:   [F('12'), F('13'), F('11'), F('11')],
+  emphatic: [F('10'), F('09'), F('08'), F('08')],
+};
+Object.values(POSES).flat().forEach(f => { const i = new Image(); i.src = f; }); // preload
+// the emphatic set reads best at this scale: the others barely open.
+// (front/alt/tilted kept above for future expression work)
+const NEUTRAL = F('00');            // calm face whenever he isn't speaking
+let pose = POSES.emphatic;
+let lastFrame = 0, lastSwap = 0;
+
+function setPoseForLine(text, lineIdx) {
+  pose = POSES.emphatic;
+  lastFrame = 0;
+  campbell.src = NEUTRAL;
+}
+
+function visemeFor(ch) {
+  ch = ch.toLowerCase();
+  if ('ao'.includes(ch))     return 3;  // wide vowels → wide open
+  if ('eiuy'.includes(ch))   return 2;  // narrow vowels → open
+  if ('mbpfvw'.includes(ch)) return 0;  // bilabials/labiodentals → lips shut
+  if (ch >= 'a' && ch <= 'z') return 1; // other consonants → half
+  return 0;                             // space & punctuation → closed
+}
+
+function speakChar(ch) {
+  const v = visemeFor(ch);
+  const now = performance.now();
+  // throttle: hold each mouth shape ≥60ms so it paces like syllables,
+  // but let closures (v=0) land immediately; they read as word breaks
+  if (v === lastFrame) return;
+  if (v !== 0 && now - lastSwap < 60) return;
+  lastFrame = v; lastSwap = now;
+  campbell.src = pose[v];
+}
+
+function stopTalking() {
+  lastFrame = 0;
+  campbell.src = NEUTRAL;
+}
+
+// ── typewriter subtitles ──
+const sub = document.getElementById('subtitle');
+let lineIdx = 0, typing = false;
+function typeLine(text, done) {
+  typing = true; sub.textContent = '';
+  setPoseForLine(text, lineIdx);       // new posture for each line
+  let i = 0;
+  const t = setInterval(() => {
+    sub.textContent = text.slice(0, ++i);
+    speakChar(text[i - 1]);            // mouth follows the typed character
+    if (i >= text.length) {
+      clearInterval(t); stopTalking(); typing = false;
+      if (done) setTimeout(done, 1600);
+    }
+  }, 34);
+}
+function playScript() {
+  if (lineIdx >= LINES.length) { lineIdx = 0; }
+  typeLine(LINES[lineIdx], () => {
+    lineIdx++;
+    if (lineIdx < LINES.length) playScript();
+  });
+}
+
+// ── tuning ──
+function tune(dir) {
+  ci = (ci + dir + CONTACTS.length) % CONTACTS.length;
+  const c = CONTACTS[ci];
+  document.getElementById('freq-num').textContent = c.freq;
+  document.getElementById('contact-name').textContent = c.name;
+  const pl = document.getElementById('portrait-l');
+  const pr = document.getElementById('portrait-r');
+  stopTalking(); sub.textContent = '';
+  if (c.live) {
+    pl.classList.remove('static'); pr.classList.remove('static');
+    lineIdx = 0; setTimeout(playScript, 500);
+  } else {
+    pl.classList.add('static'); pr.classList.add('static');
+    sub.textContent = '. . . no response . . .';
+  }
+}
+
+// ── call intro ──
+function startCall() {
+  const audio = new Audio('codec.mp3');
+  audio.volume = 0.5;
+  audio.play().catch(() => {});
+  // flash only the CALL box (like the game): the overlay stays solid
+  // black until the codec cuts in, so the screen never strobes through
+  const box = document.getElementById('call-box');
+  let flashes = 0;
+  const f = setInterval(() => {
+    box.style.visibility = box.style.visibility === 'hidden' ? 'visible' : 'hidden';
+    if (++flashes > 7) {
+      clearInterval(f);
+      box.style.visibility = 'visible';
+      document.getElementById('call-overlay').classList.add('hidden');
+      setTimeout(playScript, 700);
+    }
+  }, 160);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') tune(-1);
+  if (e.key === 'ArrowRight') tune(1);
+  if (e.key === 'Enter' && !document.getElementById('call-overlay').classList.contains('hidden')) startCall();
+});
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.urls import reverse
 from .models import FileEntry
 from .forms import UploadFileForm
-from . import file_handler, classify
+from . import file_handler
 import hashlib
 import datetime
 import os
@@ -177,6 +177,7 @@ def upload_file(request):
                 upload_type = 'recording' if cleaned_name == 'user_recording' else 'file_upload'
                 duration = file_handler.get_audio_data(saved_file)
                 print(f"duration: {duration}\t")
+                from . import classify  # lazy: pulls in torch only when actually classifying
                 bird, confidence, num_segments, spectrogram_path = classify.get_prediction(
                     saved_file, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth')
                 )
@@ -227,6 +228,7 @@ def upload_file(request):
 
             # TODO: Optimize this
 
+            from . import classify  # lazy: pulls in torch only when actually classifying
             bird, confidence, num_segments, spectrogram_path = classify.get_prediction(
                 download_path, os.path.join(settings.BASE_DIR, 'bird_classifier', 'bird_classifier_best_model.pth')
             )

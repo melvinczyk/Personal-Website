@@ -9,7 +9,7 @@
 <title>Nick Burczyk</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -26,102 +26,47 @@
   </div>
 </div>
 
-<!-- SOLITON RADAR -->
-<div class="radar-display">
-  <div class="radar-label">SOLITON RADAR</div>
-  <div class="radar-map">
-    <svg width="148" height="148" viewBox="0 0 148 148" fill="none">
-      <rect x="8"   y="8"   width="60" height="40" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="8"   y="52"  width="24" height="36" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="36"  y="52"  width="32" height="56" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="8"   y="92"  width="24" height="48" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="72"  y="8"   width="68" height="52" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="72"  y="64"  width="36" height="36" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="112" y="64"  width="28" height="76" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="72"  y="104" width="36" height="36" stroke="#00aa88" stroke-width="1.2"/>
-      <line x1="68"  y1="28"  x2="72"  y2="28"  stroke="#00aa88" stroke-width="1.2"/>
-      <line x1="32"  y1="52"  x2="36"  y2="52"  stroke="#00aa88" stroke-width="1.2"/>
-      <line x1="68"  y1="82"  x2="72"  y2="82"  stroke="#00aa88" stroke-width="1.2"/>
-      <line x1="108" y1="100" x2="112" y2="100" stroke="#00aa88" stroke-width="1.2"/>
-      <rect x="1" y="1" width="146" height="146" stroke="#00331f" stroke-width="0.5"/>
-    </svg>
-    <div class="player-dot"></div>
-    <div class="enemy-dot" style="top:18%;left:60%;"></div>
-    <div class="enemy-dot" style="top:70%;left:28%;animation-delay:.5s;"></div>
-  </div>
-  <div class="radar-footer">RADAR : NORMAL</div>
-</div>
-
-<!-- MAIN SCREEN -->
+<!-- CODEC MAIN SCREEN -->
 <div id="screen">
-  <div id="titlebar">
+  <div id="cx-top">
     <div class="ttl">NICK BURCZYK</div>
     <div class="clk" id="clock">00:00:00</div>
   </div>
 
-  <div id="layout">
-    <div id="sidebar">
-      <div class="sb-section">TERMINAL</div>
-      <button class="sb-btn" onclick="runCmd('about')">ABOUT<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('projects')">PROJECTS<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('music')">MUSIC<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('contact')">CONTACT<span class="sb-arrow">►</span></button>
-      <button class="sb-btn" onclick="runCmd('map')">MC SERVER MAP<span class="sb-arrow">►</span></button>
-
-      <hr class="sb-divider">
-      <div class="sb-section">PAGES</div>
-      <button class="sb-btn sb-btn--page" onclick="runCmd('bird-classifier')">CLASSIFIER<span class="sb-arrow">►</span></button>
-      <button class="sb-btn sb-btn--page" onclick="runCmd('song2vec')">SONG2VEC<span class="sb-arrow">►</span></button>
-      <button class="sb-btn sb-btn--page" onclick="runCmd('gallery')">MC GALLERY<span class="sb-arrow">►</span></button>
-
-      <hr class="sb-divider">
-      <div class="sb-section">PROJECTS</div>
-      <div id="sb-projects"></div>
-
-      <hr class="sb-divider">
-      <div class="sb-section">SYSTEM</div>
-      <button class="sb-btn" onclick="runCmd('clear')"><span class="sb-icon">×</span>CLEAR<span class="sb-arrow">►</span></button>
+  <div id="cx-codec">
+    <div class="cx-portrait" id="cx-portrait-l">
+      <img id="campbell" src="{% static 'codec/campbell_f00.png' %}" alt="Colonel">
+      <div class="cx-noise"></div>
     </div>
 
-    <div id="terminal">
-      <div id="output"></div>
-      <div id="nav-bar">
-        <div class="nav-group">
-          <div class="nav-group-label">ME</div>
-          <div class="nav-group-btns">
-            <button class="nbtn" onclick="runCmd('about')">ABOUT</button>
-            <button class="nbtn" onclick="runCmd('contact')">CONTACT</button>
-          </div>
+    <div class="cx-device-col">
+      <div class="cx-ptt">PTT</div>
+      <div class="cx-device-wrap">
+        <button class="cx-arrow left" onclick="tuneStep(-1)" aria-label="Previous frequency"></button>
+        <div class="cx-device">
+          <div class="cx-bars" id="cx-bars"></div>
+          <div class="cx-freq"><span class="ghost">888.88</span><span id="freq-num">140.85</span></div>
         </div>
-        <div class="nbtn-divider"></div>
-        <div class="nav-group">
-          <div class="nav-group-label">PROJECTS</div>
-          <div class="nav-group-btns">
-            <button class="nbtn" onclick="runCmd('projects')">ALL</button>
-            <button class="nbtn nbtn-live" onclick="runCmd('project memprobe')">MEMPROBE</button>
-            <button class="nbtn nbtn-live" onclick="runCmd('bird-classifier')">CLASSIFIER</button>
-            <button class="nbtn nbtn-live" onclick="runCmd('song2vec')">SONG2VEC</button>
-          </div>
-        </div>
-        <div class="nbtn-divider"></div>
-        <div class="nav-group">
-          <div class="nav-group-label">MUSIC</div>
-          <div class="nav-group-btns">
-            <button class="nbtn" onclick="runCmd('music')">ZERO BARBECUE</button>
-          </div>
-        </div>
-        <div class="nbtn-divider"></div>
-        <div class="nav-group">
-          <div class="nav-group-label">MINECRAFT</div>
-          <div class="nav-group-btns">
-            <button class="nbtn" onclick="runCmd('map')">MAP</button>
-            <button class="nbtn" onclick="runCmd('gallery')">GALLERY</button>
-          </div>
-        </div>
-        <div class="nbtn-divider nbtn-divider-push"></div>
-        <button class="nbtn nbtn-dim" onclick="runCmd('clear')">CLEAR</button>
+        <button class="cx-arrow right" onclick="tuneStep(1)" aria-label="Next frequency"></button>
       </div>
+      <button class="cx-memory" onclick="toggleMemory()">MEMORY</button>
     </div>
+
+    <div class="cx-portrait" id="cx-portrait-r">
+      <img src="{% static 'codec/snake_front.png' %}" alt="Visitor">
+      <div class="cx-noise"></div>
+    </div>
+  </div>
+
+  <div id="cx-contact-name">COLONEL</div>
+  <div id="cx-dialogue" onclick="skipTyping()" title="Click to skip"></div>
+
+  <div id="cx-content"><div id="output"></div></div>
+
+  <div id="cx-memory-panel">
+    <div class="cx-mem-title">◈ MEMORY</div>
+    <div id="cx-mem-list"></div>
+    <div class="cx-mem-foot">◄ ► TUNE &nbsp;·&nbsp; M MEMORY &nbsp;·&nbsp; ESC CLOSE</div>
   </div>
 </div>
 
@@ -136,8 +81,10 @@ const STATIC_URLS = {
   open:       "{% static 'audio/open.mp3' %}",
   uploadFile: "{% url 'upload_file' %}",
   gallery:    "{% url 'gallery' %}",
+  codecBase:  "{% static 'codec' %}",
+  voiceBase:  "{% static 'audio/codec' %}",
 };
 </script>
-<script src="{% static 'scripts/portfolio.js' %}"></script>
+<script src="{% static 'scripts/portfolio.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>

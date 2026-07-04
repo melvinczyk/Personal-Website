@@ -1,0 +1,34 @@
+QWEN3-TTS VOICE CLONE CHECKLIST
+Space: https://huggingface.co/spaces/Qwen/Qwen3-TTS  ->  "Voice Clone" tab
+
+REFERENCE AUDIO (upload once):  my_website/tools/ref/campbell_ref.wav
+REFERENCE TEXT (paste once):
+Tomorrow, the president and his Russian counterpart are scheduled to sign the START-3 Accord. Get back to the control room, and use that key to re-input the power codes. Stop that launch! Right now your job is to stop Metal Gear.
+
+Settings: Language = English, model = 1.7B, xvector-only = off
+
+For each line below: paste the text as Target Text, generate, download,
+and save the file with the exact name shown (wav or m4a both fine).
+Drop them all in one folder (e.g. ~/Downloads/codec_voices) and tell Claude.
+
+c0_l0      | Snake, this is Nick Burczyk. Software engineer: vision, M L, audio, embedded.
+c0_l1      | Everything he's built is on this codec. Tune around, or open memory for the full contact list.
+c1_l0      | His operation record. Eleven missions on file.
+c1_l1      | Select a target below for the full briefing.
+c2_l0      | He's also half of a band called Zero Barbecue.
+c2_l1      | First single's out now. Listen below.
+c3_l0      | A private Minecraft world: custom modpack, custom server.
+c3_l1      | The map below is rendering live.
+c4_l0      | Direct lines to Nick. Pick your channel.
+proj_oculosaurus       | OCULOSAURUS. Python operation. Briefing below.
+proj_memprobe          | MEMPROBE. Django operation. Briefing below.
+proj_echo-scout        | ECHO SCOUT. C plus plus operation. Briefing below.
+proj_song2vec          | SONG TO VEC. Python operation. Briefing below.
+proj_bird-classifier   | BACKYARD BIRD CLASSIFIER. Python operation. Briefing below.
+proj_personal-website  | Nicholas Burczyk dot com. Django operation. Briefing below.
+proj_waste-drone       | WASTE DETECTION DRONE. Python operation. Briefing below.
+proj_modpack-updater   | MINECRAFT MODPACK UPDATER. Java operation. Briefing below.
+proj_visaudio          | VIS AUDIO. Python operation. Briefing below.
+proj_born-in-spellbooks| BORN IN SPELLBOOKS MOD. Java operation. Briefing below.
+proj_fretwatch         | FRETWATCH. Python operation. Briefing below.
+proj_minecraft-server  | MINECRAFT SERVER AND MODPACK. Java operation. Briefing below.

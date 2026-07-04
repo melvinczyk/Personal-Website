@@ -118,6 +118,7 @@ async function enterSite() {
 
   btn.disabled = true;
   btn.textContent = '[ CONNECTING... ]';
+  cxUnlockVoice();   // prime the voice element while we're in a user gesture
   codec.classList.add('codec-entering');
 
   const ringBuffer = await loadSound(STATIC_URLS.ring);
@@ -134,12 +135,13 @@ async function enterSite() {
 
   setTimeout(() => {
     codec.classList.add('fade-out');
-    screen.classList.add('visible');
     playBuffer(openBuffer, 0.7);
     codec.addEventListener('animationend', () => {
       codec.style.display = 'none';
+      // reveal happens entirely through the CRT line-open animation
+      screen.classList.add('visible', 'crt-open');
       setTimeout(playBackgroundMusic, 300);
-      bootTerminal();
+      initCodec();
     }, { once: true });
   }, 1800);
 }
@@ -168,7 +170,7 @@ about(){
     <div class="who-info">
       <div class="who-name">NICK BURCZYK</div>
       <div class="who-row"><span class="who-key">school</span><span class="who-val">MSAI @ UAB - Spring 2027</span></div>
-      <div class="who-row"><span class="who-key">work</span><span class="who-val">Software Developer @ Viper Imaging</span></div>
+      <div class="who-row"><span class="who-key">work</span><span class="who-val">TITANS-SW R&amp;D Intern @ Sandia National Labs</span></div>
       <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA - Software Development @ UAB</span></div>
       <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration</span></div>
       <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ - embedded, performance computing, low-level work</span></div>
@@ -190,7 +192,7 @@ projects(){
 
 project(id){
   id=(id||'').trim().toLowerCase();
-  if(!id){ln(`  Usage: project [id]  — run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
+  if(!id){ln(`  Usage: project [id]. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
   const p=PROJECTS.find(x=>x.id===id||x.name.toLowerCase().includes(id));
   if(!p){ln(`  Not found: ${esc(id)}. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
   bl();
@@ -278,7 +280,7 @@ contact(){
 
 map(){
   bl();
-  ln('  Live Bluemap render — real-time world data','white');
+  ln('  Live Bluemap render: real-time world data','white');
   ln('  Full view → <a class="tl" href="https://servermap.minecraft.bz:8100" target="_blank">servermap.minecraft.bz:8100</a>');
   bl();
   addHtml(`<div style="padding:4px 20px 10px;max-width:700px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px;background:rgba(0,25,25,0.5)"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" width="100%" height="360" frameborder="0" style="border:1px solid var(--mgs-border);display:block;"></iframe></div></div>`);
@@ -346,12 +348,12 @@ function runCmd(raw){
   if(lo==='project'||lo.startsWith('project ')){ CMDS['project'](trimmed.slice('project'.length).trim()); return; }
   const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
   if(fn){ fn(trimmed.split(' ').slice(1).join(' ')); }
-  else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>  — type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
+  else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>. Type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
 }
 
 
 // ══════════════════════════════════════════
-// ECHO SCOUT LIVE DEMO — full device emulator
+// ECHO SCOUT LIVE DEMO: full device emulator
 // ══════════════════════════════════════════
 let _esDemoRAF = null;
 
@@ -1169,30 +1171,303 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
 
 
 // ══════════════════════════════════════════
-// BOOT TERMINAL
+// CODEC MAIN SCREEN
+// Frequencies are sections; the MEMORY panel is the readable menu.
+// The Colonel talks with real ripped frames, mouth driven by visemes.
 // ══════════════════════════════════════════
-function bootTerminal(){
-  setTimeout(()=>{
-    ln('loading...','dim');
-    setTimeout(()=>{
-      ln('████████████████████████████████  100%','line');
-      setTimeout(()=>{
-        bl();
-        addHtml(`<div class="fade-in" style="padding:0 4px;">
-          <pre class="ascii" style="line-height:1.2;">
- _   _ ___ ____  _  __
-| \\ | |_ _/ ___|| |/ /
-|  \\| || | |    | ' /
-| |\\  || | |___ | . \\
-|_| \\_|___\\____ |_|\\_\\</pre>
-          <div style="margin-top:10px;padding-left:2px;border-left:3px solid var(--mgs-cyan);">
-            <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--mgs-cyan);letter-spacing:3px;padding-left:10px;">NICHOLAS BURCZYK</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--mgs-border);margin-top:5px;padding-left:10px;">Software Engineer · Vision · ML · Audio · Embedded</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,170,136,0.45);margin-top:3px;padding-left:10px;">UAB MSCS · Viper Imaging · Birmingham AL</div>
-          </div>
-        </div>`);
-        bl();
-      }, 400);
-    }, 300);
-  }, 100);
+const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png`;
+const CX_NEUTRAL = CX_F('00');
+const CX_POSE = [CX_F('10'), CX_F('09'), CX_F('08'), CX_F('08')]; // closed/half/open/wide
+
+const CX_CONTACTS = [
+  { freq:'140.85', name:'COLONEL',
+    lines:["Snake, this is Nick Burczyk. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a TITANS software R&D intern.",
+           "Everything we've gathered on him is laid out on this codec. For specific information look through different channels, or open MEMORY for the full contact list."],
+    render(){ CMDS.about(); } },
+  { freq:'141.12', name:'PROJECTS',
+    lines:["His operation records. Twelve declassified projects on file.",
+           "Select a target below for the full briefing."],
+    render(){ cxRenderProjectIndex(); } },
+  { freq:'141.52', name:'MUSIC',
+    lines:["He also records as Zero Barbecue. A one-man operation.",
+           "First single's out now. Listen below."],
+    render(){ CMDS.music(); } },
+  { freq:'140.07', name:'MC WORLD',
+    lines:["A private Minecraft world: custom modpack, custom server.",
+           "We gathered enough information to make a 3D reconstruction. The map below is rendering live."],
+    render(){ cxRenderMinecraft(); } },
+  { freq:'140.15', name:'CONTACT',
+    lines:["These are his direct channels. They're secure. Use them."],
+    render(){ CMDS.contact(); } },
+];
+let cxIdx = 0;
+let cxBooted = false;
+
+// ── talking: typewriter + Qwen3-TTS voice lines + viseme mouth ──
+// Each line may carry a voice key (static/audio/codec/<key>.m4a). Typing
+// drives the mouth; if the voice runs past the typing, the mouth keeps
+// flapping until the audio ends. The next line waits for both.
+let cxLastFrame = 0, cxLastSwap = 0, cxTypeTimer = null, cxFlapTimer = null;
+let cxQueue = [], cxCurrentLine = '', cxVoice = null;
+// extra per-line typing lead (ms before audio end that typing finishes)
+const CX_TYPE_LEAD = { 'c0_l1': 1500 };
+// One reusable element for all voice lines. It gets 'unlocked' during the
+// SELECT click (Safari only allows play() from a user gesture until an
+// element has played once), then plays freely for the rest of the session.
+const cxVoiceEl = new Audio();
+function cxUnlockVoice(){
+  cxVoiceEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
+  cxVoiceEl.play().catch(() => {});
+}
+let cxTypeDone = true, cxVoiceDone = true, cxAdvanceTimer = null;
+
+function cxViseme(ch){
+  ch = (ch || '').toLowerCase();
+  if ('ao'.includes(ch))      return 3;
+  if ('eiuy'.includes(ch))    return 2;
+  if ('mbpfvw'.includes(ch))  return 0;
+  if (ch >= 'a' && ch <= 'z') return 1;
+  return 0;
+}
+function cxSpeakChar(ch){
+  const img = document.getElementById('campbell');
+  if (!img) return;
+  const v = cxViseme(ch);
+  const now = performance.now();
+  if (v === cxLastFrame) return;
+  if (v !== 0 && now - cxLastSwap < 60) return;
+  cxLastFrame = v; cxLastSwap = now;
+  img.src = CX_POSE[v];
+}
+function cxRest(){
+  const img = document.getElementById('campbell');
+  if (img) img.src = CX_NEUTRAL;
+  cxLastFrame = 0;
+}
+function cxStopVoice(){
+  if (cxVoice) { cxVoice.pause(); cxVoice = null; }
+  if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+  cxVoiceDone = true;
+}
+function cxHardStop(){
+  if (cxTypeTimer) { clearInterval(cxTypeTimer); cxTypeTimer = null; }
+  if (cxAdvanceTimer) { clearTimeout(cxAdvanceTimer); cxAdvanceTimer = null; }
+  cxStopVoice();
+  cxQueue = [];
+  cxTypeDone = true;
+  cxRest();
+}
+function cxStartFlap(){
+  // voice is still speaking after the text finished: keep the mouth going
+  if (cxFlapTimer) return;
+  cxFlapTimer = setInterval(() => {
+    const img = document.getElementById('campbell');
+    if (!img) return;
+    let n;
+    do { n = Math.random() < 0.3 ? 0 : 1 + Math.floor(Math.random() * 3); }
+    while (n === cxLastFrame);
+    cxLastFrame = n;
+    img.src = CX_POSE[n];
+  }, 110);
+}
+function cxMaybeAdvance(){
+  if (!cxTypeDone || !cxVoiceDone) return;
+  cxRest();
+  if (cxQueue.length) {
+    cxAdvanceTimer = setTimeout(() => {
+      cxAdvanceTimer = null;
+      if (cxTypeDone && cxVoiceDone) cxTypeNext();
+    }, 800);
+  }
+}
+function cxTypeNext(){
+  const dlg = document.getElementById('cx-dialogue');
+  if (!dlg || cxQueue.length === 0) { cxRest(); return; }
+  const item = cxQueue.shift();
+  cxCurrentLine = item.text;
+  cxTypeDone = false;
+  cxStopVoice();
+  dlg.textContent = '';
+  let i = 0;
+  const startedAt = performance.now();
+  const tick = () => {
+    dlg.textContent = cxCurrentLine.slice(0, ++i);
+    cxSpeakChar(cxCurrentLine[i - 1]);
+    if (i >= cxCurrentLine.length) {
+      clearInterval(cxTypeTimer); cxTypeTimer = null;
+      cxTypeDone = true;
+      if (!cxVoiceDone) cxStartFlap(); else cxRest();
+      cxMaybeAdvance();
+    }
+  };
+  const startTicking = ms => {
+    if (cxTypeTimer) clearInterval(cxTypeTimer);
+    cxTypeTimer = setInterval(tick, ms);
+  };
+  startTicking(30);
+  if (item.key) {
+    const a = cxVoiceEl;
+    a.volume = 0.9;
+    cxVoice = a; cxVoiceDone = false;
+    // pace the typewriter to the voice: finish typing ~0.5s before the
+    // audio ends, however long the clip actually is
+    a.onloadedmetadata = (() => {
+      if (!cxTypeTimer || cxTypeDone || !isFinite(a.duration)) return;
+      // finish typing ahead of the audio ending, so the text leads the
+      // voice like subtitles. Per-line leads can be tuned in CX_TYPE_LEAD.
+      const lead = CX_TYPE_LEAD[item.key] || 1000;
+      const remainMs = a.duration * 1000 - (performance.now() - startedAt) - lead;
+      const remainChars = cxCurrentLine.length - i;
+      if (remainChars > 0 && remainMs > 200) {
+        startTicking(Math.min(38, Math.max(10, remainMs / remainChars)));
+      }
+    });
+    a.onended = () => {
+      if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+      cxVoiceDone = true; cxMaybeAdvance();
+    };
+    a.onerror = () => { cxVoiceDone = true; cxMaybeAdvance(); };
+    a.src = `${STATIC_URLS.voiceBase}/${item.key}.m4a`;
+    a.play().catch(() => { cxVoiceDone = true; });   // file missing: text-only
+  }
+}
+function cxSay(lines, keys){
+  cxHardStop();
+  cxQueue = lines.map((text, i) => ({ text, key: keys && keys[i] }));
+  cxTypeNext();
+}
+function skipTyping(){
+  const dlg = document.getElementById('cx-dialogue');
+  if (!dlg) return;
+  if (cxTypeTimer) {
+    // finish the text instantly and cut the voice: he goes quiet
+    // until the next line starts
+    clearInterval(cxTypeTimer); cxTypeTimer = null;
+    dlg.textContent = cxCurrentLine;
+    cxTypeDone = true;
+    cxStopVoice();
+    cxRest();
+    cxMaybeAdvance();
+  } else if (cxQueue.length) {
+    // jump to the next line, cutting off the current voice
+    if (cxAdvanceTimer) { clearTimeout(cxAdvanceTimer); cxAdvanceTimer = null; }
+    cxStopVoice();
+    cxTypeNext();
+  } else if (!cxVoiceDone) {
+    // text done, voice still going: silence him
+    cxStopVoice();
+    cxRest();
+  }
+}
+
+// ── tuning ──
+function cxOpenContact(i){
+  cxIdx = (i + CX_CONTACTS.length) % CX_CONTACTS.length;
+  const c = CX_CONTACTS[cxIdx];
+  cxHardStop();                 // silence any previous line immediately
+  document.getElementById('freq-num').textContent = c.freq;
+  document.getElementById('cx-contact-name').textContent = c.name;
+  // brief static burst on both portraits, like retuning
+  ['cx-portrait-l','cx-portrait-r'].forEach(id => {
+    const p = document.getElementById(id);
+    p.classList.add('static');
+    setTimeout(() => p.classList.remove('static'), 280);
+  });
+  // content renders immediately; dialogue is flavor, not a gate
+  out.innerHTML = '';
+  const panel = document.getElementById('cx-content');
+  panel.classList.remove('visible');
+  c.render();
+  requestAnimationFrame(() => panel.classList.add('visible'));
+  const idx = cxIdx;
+  // longer beat on the very first call so the CRT power-on lands first
+  const delay = cxBooted ? 320 : 2000;
+  cxBooted = true;
+  setTimeout(() => {
+    if (idx !== cxIdx) return;  // user already retuned
+    cxSay(c.lines, c.lines.map((_, j) => `c${idx}_l${j}`));
+  }, delay);
+  cxUpdateMemoryHighlight();
+}
+function tuneStep(dir){
+  playClickSound();
+  cxOpenContact(cxIdx + dir);
+}
+
+// ── memory panel (the readable menu) ──
+function cxBuildMemory(){
+  const list = document.getElementById('cx-mem-list');
+  if (!list) return;
+  list.innerHTML = '';
+  CX_CONTACTS.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'cx-mem-row';
+    b.innerHTML = `<span class="cx-mem-freq">${c.freq}</span><span class="cx-mem-name">${c.name}</span>`;
+    b.onclick = () => { playClickSound(); cxOpenContact(i); toggleMemory(false); };
+    list.appendChild(b);
+  });
+}
+function cxUpdateMemoryHighlight(){
+  document.querySelectorAll('.cx-mem-row').forEach((r, i) =>
+    r.classList.toggle('active', i === cxIdx));
+}
+function toggleMemory(force){
+  const p = document.getElementById('cx-memory-panel');
+  if (!p) return;
+  const open = typeof force === 'boolean' ? force : !p.classList.contains('open');
+  p.classList.toggle('open', open);
+}
+
+// ── section content ──
+function cxRenderProjectIndex(){
+  addHtml(`<div class="fade-in">${PROJECTS.map((p, i) => `
+    <button class="cx-proj-row" onclick="cxOpenProject('${p.id}')">
+      <span class="cx-proj-freq">141.${String(13 + i).padStart(2,'0')}</span>
+      <span class="cx-proj-name">${esc(p.name)}</span>
+      ${(p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('')}
+    </button>`).join('')}</div>`);
+}
+function cxOpenProject(id){
+  playClickSound();
+  out.innerHTML = '';
+  addHtml(`<button class="cx-back-row" onclick="cxBackToProjects()">◂ ALL PROJECTS</button>`);
+  CMDS.project(id);
+  document.getElementById('cx-content').scrollIntoView({ behavior:'smooth', block:'start' });
+  const p = PROJECTS.find(x => x.id === id);
+  // projects open silently: no dialogue, no voice
+  cxHardStop();
+  const dlg = document.getElementById('cx-dialogue');
+  if (dlg) dlg.textContent = '';
+}
+function cxBackToProjects(){
+  playClickSound();
+  out.innerHTML = '';
+  cxRenderProjectIndex();
+}
+function cxRenderMinecraft(){
+  CMDS.map();
+  addHtml(`<div style="padding:0 20px 8px;">
+    <a class="proj-link" href="${STATIC_URLS.gallery}">→ SCREENSHOT GALLERY: ALL SEASONS</a>
+  </div>`);
+}
+
+// ── init ──
+function initCodec(){
+  // preload talk frames
+  [CX_NEUTRAL, ...CX_POSE].forEach(src => { const im = new Image(); im.src = src; });
+  // signal bars
+  const bars = document.getElementById('cx-bars');
+  if (bars) [12, 21, 30, 40, 51, 62].forEach(h => {
+    const s = document.createElement('span');
+    s.style.height = h + 'px';
+    bars.appendChild(s);
+  });
+  cxBuildMemory();
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  tuneStep(-1);
+    if (e.key === 'ArrowRight') tuneStep(1);
+    if (e.key === 'm' || e.key === 'M') toggleMemory();
+    if (e.key === 'Escape') toggleMemory(false);
+  });
+  cxOpenContact(0);
 }

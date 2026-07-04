@@ -5,8 +5,6 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-from . import data as d
-
 
 def index(request):
     return render(request, 'song2vec.html')
@@ -18,6 +16,8 @@ def search(request):
     GET /song2vec/search/?q=bohemian
     Returns up to 10 matching songs from the dataset.
     """
+    from . import data as d  # lazy: keeps heavy numerical imports off the boot path
+
     q = request.GET.get('q', '').strip().lower()
     if len(q) < 2:
         return JsonResponse({'results': []})
@@ -45,11 +45,12 @@ def render_song(request):
     GET /song2vec/render/?id=<spotify_id>
     Returns JSON with genres, tags, and a base64-encoded PNG blob image.
     """
+    from . import data as d  # lazy: keeps heavy numerical imports off the boot path
+
     sid = request.GET.get('id', '').strip()
+    d._load()
     if not sid or sid not in d.SONGS:
         return JsonResponse({'error': 'Song not found'}, status=404)
-
-    d._load()
     song = d.SONGS[sid]
 
     genres = sorted(song['genres'])
