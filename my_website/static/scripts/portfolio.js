@@ -1176,8 +1176,17 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
 // The Colonel talks with real ripped frames, mouth driven by visemes.
 // ══════════════════════════════════════════
 const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png`;
-const CX_NEUTRAL = CX_F('00');
-const CX_POSE = [CX_F('10'), CX_F('09'), CX_F('08'), CX_F('08')]; // closed/half/open/wide
+const SN_F = n => `${STATIC_URLS.codecBase}/snake_f${n}.png`;
+// Two codec speakers, each with a neutral face and a closed/half/open/wide
+// viseme set of real ripped frames. Lines choose their speaker; default is
+// the Colonel. (Left portrait = colonel, right = snake.)
+const CX_SPEAKERS = {
+  colonel: { imgId: 'campbell', neutral: CX_F('00'),
+             pose: [CX_F('10'), CX_F('09'), CX_F('08'), CX_F('08')] },
+  snake:   { imgId: 'snake',    neutral: SN_F('00'),
+             pose: [SN_F('00'), SN_F('02'), SN_F('07'), SN_F('08')] },
+};
+let cxSpeaker = CX_SPEAKERS.colonel;
 
 const CX_CONTACTS = [
   { freq:'140.85', name:'COLONEL',
@@ -1197,7 +1206,8 @@ const CX_CONTACTS = [
            "We gathered enough information to make a 3D reconstruction. The map below is rendering live."],
     render(){ cxRenderMinecraft(); } },
   { freq:'140.15', name:'CONTACT',
-    lines:["These are his direct channels. They're secure. Use them."],
+    lines:["These are his direct channels. They're secure. Use them.",
+           { text:"Got it. I'll make contact.", speaker:'snake' }],
     render(){ CMDS.contact(); } },
 ];
 let cxIdx = 0;
@@ -1230,18 +1240,21 @@ function cxViseme(ch){
   return 0;
 }
 function cxSpeakChar(ch){
-  const img = document.getElementById('campbell');
+  const img = document.getElementById(cxSpeaker.imgId);
   if (!img) return;
   const v = cxViseme(ch);
   const now = performance.now();
   if (v === cxLastFrame) return;
   if (v !== 0 && now - cxLastSwap < 60) return;
   cxLastFrame = v; cxLastSwap = now;
-  img.src = CX_POSE[v];
+  img.src = cxSpeaker.pose[v];
 }
 function cxRest(){
-  const img = document.getElementById('campbell');
-  if (img) img.src = CX_NEUTRAL;
+  // both portraits back to neutral so a speaker swap never leaves a stuck mouth
+  Object.values(CX_SPEAKERS).forEach(sp => {
+    const img = document.getElementById(sp.imgId);
+    if (img) img.src = sp.neutral;
+  });
   cxLastFrame = 0;
 }
 function cxStopVoice(){
@@ -1261,13 +1274,13 @@ function cxStartFlap(){
   // voice is still speaking after the text finished: keep the mouth going
   if (cxFlapTimer) return;
   cxFlapTimer = setInterval(() => {
-    const img = document.getElementById('campbell');
+    const img = document.getElementById(cxSpeaker.imgId);
     if (!img) return;
     let n;
     do { n = Math.random() < 0.3 ? 0 : 1 + Math.floor(Math.random() * 3); }
     while (n === cxLastFrame);
     cxLastFrame = n;
-    img.src = CX_POSE[n];
+    img.src = cxSpeaker.pose[n];
   }, 110);
 }
 function cxMaybeAdvance(){
@@ -1285,8 +1298,10 @@ function cxTypeNext(){
   if (!dlg || cxQueue.length === 0) { cxRest(); return; }
   const item = cxQueue.shift();
   cxCurrentLine = item.text;
+  cxSpeaker = item.speaker || CX_SPEAKERS.colonel;
   cxTypeDone = false;
   cxStopVoice();
+  cxRest();
   dlg.textContent = '';
   let i = 0;
   const startedAt = performance.now();
@@ -1333,7 +1348,11 @@ function cxTypeNext(){
 }
 function cxSay(lines, keys){
   cxHardStop();
-  cxQueue = lines.map((text, i) => ({ text, key: keys && keys[i] }));
+  cxQueue = lines.map((l, i) => {
+    const o = typeof l === 'string' ? { text: l } : l;
+    return { text: o.text, key: keys && keys[i],
+             speaker: CX_SPEAKERS[o.speaker] || CX_SPEAKERS.colonel };
+  });
   cxTypeNext();
 }
 function skipTyping(){
@@ -1454,7 +1473,8 @@ function cxRenderMinecraft(){
 // ── init ──
 function initCodec(){
   // preload talk frames
-  [CX_NEUTRAL, ...CX_POSE].forEach(src => { const im = new Image(); im.src = src; });
+  Object.values(CX_SPEAKERS).forEach(sp =>
+    [sp.neutral, ...sp.pose].forEach(src => { const im = new Image(); im.src = src; }));
   // signal bars
   const bars = document.getElementById('cx-bars');
   if (bars) [12, 21, 30, 40, 51, 62].forEach(h => {

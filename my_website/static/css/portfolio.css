@@ -580,7 +580,9 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 }
 
 .cx-portrait {
-  width: 150px; height: 202px; flex-shrink: 0;
+  /* inner image area matches the native 52:89 sprite ratio so faces
+     aren't stretched wide (114x194 ≈ 0.588, native 0.584) */
+  width: 122px; height: 202px; flex-shrink: 0;
   border: 2px solid #63e690; border-radius: 8px;
   box-shadow: 0 0 14px rgba(80,230,140,0.55), 0 0 40px rgba(60,200,120,0.18), inset 0 0 6px rgba(0,0,0,0.9);
   background: #010502; position: relative; overflow: hidden;
@@ -588,7 +590,7 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 .cx-portrait img {
   position: absolute; inset: 4px;
   width: calc(100% - 8px); height: calc(100% - 8px);
-  object-fit: fill;              /* PS1 non-square-pixel stretch */
+  object-fit: fill;              /* container is native ratio, so no distortion */
   image-rendering: pixelated;
 }
 .cx-portrait::before {
@@ -726,7 +728,7 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 .cx-mem-foot { margin-top: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 1px; color: rgba(0,170,136,0.5); text-align: center; }
 
 @media (max-width: 680px) {
-  .cx-portrait { width: 104px; height: 140px; }
+  .cx-portrait { width: 85px; height: 140px; }
   .cx-device { width: 180px; height: 84px; }
   .cx-freq { font-size: 21px; }
   #cx-dialogue { font-size: 16px; min-height: 90px; }
