@@ -1276,7 +1276,7 @@ function cxMeterStart(key){
 }
 function cxMeterStop(){
   if (cxMeterRAF){ cancelAnimationFrame(cxMeterRAF); cxMeterRAF = null; }
-  cxBarEls.forEach(el => { el.style.opacity = el._base; });   // idle: bottom-bright gradient
+  cxBarEls.forEach(el => { el.style.opacity = el._base; });   // idle: dim wedge, no audio
 }
 
 function cxViseme(ch){
@@ -1530,8 +1530,9 @@ function initCodec(){
   // concave (log-like) curve, top bar longest — matches the real codec
   const bars = document.getElementById('cx-bars');
   cxBarEls = [];   // ordered top -> bottom
-  // concave curve: one long bar at the top, dropping fast then leveling off
-  const widths = [58, 52, 47, 43, 40, 37, 35, 34, 33, 32, 31, 30, 29];
+  // one unified stack, all left-aligned: full-width top bar, then a concave
+  // drop that levels off — sized to fill the display like the real codec
+  const widths = [196, 118, 92, 78, 68, 61, 56, 52, 49];
   if (bars) widths.forEach((w) => {
     const s = document.createElement('span');
     s.style.width = w + 'px';
