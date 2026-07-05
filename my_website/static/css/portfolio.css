@@ -641,24 +641,19 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
   width: 224px; height: 96px;
   background: #060d08; border: 2px solid #63e690; border-radius: 10px;
   box-shadow: 0 0 14px rgba(80,230,140,0.5), inset 0 0 14px rgba(0,0,0,0.85);
-  display: flex; align-items: flex-start; padding: 11px 14px 9px; gap: 6px; position: relative;
+  position: relative;
 }
 .cx-device::before {
   content: ''; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0,0,0,0.25) 0 1px, transparent 1px 3px);
 }
-/* full-width rail line across the top of the display */
-.cx-rail {
-  position: absolute; top: 8px; left: 12px; right: 12px; height: 2px;
-  background: #4ddc85; box-shadow: 0 0 4px rgba(80,230,140,0.6);
-}
 /* dense log-curve meter, hangs from the top rail, top bar longest */
-.cx-bars { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; flex-shrink: 0; margin-top: 5px; }
-.cx-bars span { height: 3px; background: #4ddc85; box-shadow: 0 0 4px rgba(80,230,140,0.6); opacity: 0.9; transition: opacity .05s linear; }
+.cx-bars { position: absolute; left: 12px; top: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.cx-bars span { height: 6px; background: #4ddc85; box-shadow: 0 0 4px rgba(80,230,140,0.6); opacity: 0.28; transition: opacity .05s linear; }
 
 .cx-freq {
   font-family: 'DSEG7', monospace; font-size: 30px; line-height: 1;
-  position: relative; flex: 1; height: 32px; align-self: center; margin-top: 5px;
+  position: absolute; right: 12px; top: 42px; width: 118px; height: 32px;
 }
 .cx-freq .ghost, .cx-freq #freq-num {
   position: absolute; inset: 0; text-align: center; line-height: 32px;
