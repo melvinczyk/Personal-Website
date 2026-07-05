@@ -146,9 +146,6 @@ async function enterSite() {
   }, 1800);
 }
 
-setInterval(() => {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
-}, 1000);
 
 // ══════════════════════════════════════════
 // TERMINAL HELPERS
@@ -1231,6 +1228,57 @@ function cxUnlockVoice(){
 }
 let cxTypeDone = true, cxVoiceDone = true, cxAdvanceTimer = null;
 
+// ── signal-meter VU: wedge reacts to the voice via a precomputed amplitude
+// envelope, synced by playback time (no rerouting of the audio element) ──
+let cxBarEls = [], cxMeterRAF = null, cxEnvCache = {};
+function cxLoadEnvelope(key){
+  if (cxEnvCache[key] !== undefined) return Promise.resolve(cxEnvCache[key]);
+  return fetch(`${STATIC_URLS.voiceBase}/${key}.m4a`)
+    .then(r => r.arrayBuffer())
+    .then(b => getAudioCtx().decodeAudioData(b))
+    .then(audio => {
+      const data = audio.getChannelData(0);
+      const hop = Math.max(1, Math.floor(audio.sampleRate * 0.03));  // 30ms frames
+      const env = [];
+      for (let i = 0; i < data.length; i += hop){
+        let s = 0, n = 0;
+        for (let j = i; j < i + hop && j < data.length; j++){ s += data[j] * data[j]; n++; }
+        env.push(Math.sqrt(s / (n || 1)));
+      }
+      let peak = 0.0001;
+      for (const v of env) if (v > peak) peak = v;
+      const e = { frames: env.map(v => v / peak), step: 0.03 };
+      cxEnvCache[key] = e;
+      return e;
+    })
+    .catch(() => { cxEnvCache[key] = null; return null; });
+}
+function cxMeterStart(key){
+  if (!cxBarEls.length) return;
+  cxLoadEnvelope(key).then(env => {
+    if (cxMeterRAF) cancelAnimationFrame(cxMeterRAF);
+    const loop = () => {
+      if (!cxVoice || cxVoice.paused || cxVoice.ended){ cxMeterStop(); return; }
+      let level = 0.45;
+      if (env){ const idx = Math.min(env.frames.length - 1, Math.floor(cxVoice.currentTime / env.step)); level = env.frames[idx] || 0; }
+      // fill from the bottom up: loud speech lights higher bars, quiet leaves
+      // only the bottom lit — bottom is lit most, top least
+      const lit = Math.round(level * cxBarEls.length);
+      const n = cxBarEls.length;
+      cxBarEls.forEach((el, i) => {
+        const fromBottomIdx = n - 1 - i;               // 0 = bottom bar
+        el.style.opacity = fromBottomIdx < lit ? '1' : String(el._base);
+      });
+      cxMeterRAF = requestAnimationFrame(loop);
+    };
+    loop();
+  });
+}
+function cxMeterStop(){
+  if (cxMeterRAF){ cancelAnimationFrame(cxMeterRAF); cxMeterRAF = null; }
+  cxBarEls.forEach(el => { el.style.opacity = el._base; });   // idle: bottom-bright gradient
+}
+
 function cxViseme(ch){
   ch = (ch || '').toLowerCase();
   if ('ao'.includes(ch))      return 3;
@@ -1260,6 +1308,7 @@ function cxRest(){
 function cxStopVoice(){
   if (cxVoice) { cxVoice.pause(); cxVoice = null; }
   if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+  cxMeterStop();
   cxVoiceDone = true;
 }
 function cxHardStop(){
@@ -1339,11 +1388,13 @@ function cxTypeNext(){
     });
     a.onended = () => {
       if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+      cxMeterStop();
       cxVoiceDone = true; cxMaybeAdvance();
     };
     a.onerror = () => { cxVoiceDone = true; cxMaybeAdvance(); };
     a.src = `${STATIC_URLS.voiceBase}/${item.key}.m4a`;
-    a.play().catch(() => { cxVoiceDone = true; });   // file missing: text-only
+    const vkey = item.key;
+    a.play().then(() => cxMeterStart(vkey)).catch(() => { cxVoiceDone = true; });   // file missing: text-only
   }
 }
 function cxSay(lines, keys){
@@ -1475,12 +1526,19 @@ function initCodec(){
   // preload talk frames
   Object.values(CX_SPEAKERS).forEach(sp =>
     [sp.neutral, ...sp.pose].forEach(src => { const im = new Image(); im.src = src; }));
-  // signal bars
+  // signal meter: dense stack of horizontal bars whose lengths follow a
+  // concave (log-like) curve, top bar longest — matches the real codec
   const bars = document.getElementById('cx-bars');
-  if (bars) [12, 21, 30, 40, 51, 62].forEach(h => {
+  cxBarEls = [];   // ordered top -> bottom
+  // concave curve: one long bar at the top, dropping fast then leveling off
+  const widths = [58, 52, 47, 43, 40, 37, 35, 34, 33, 32, 31, 30, 29];
+  if (bars) widths.forEach((w) => {
     const s = document.createElement('span');
-    s.style.height = h + 'px';
+    s.style.width = w + 'px';
+    s._base = 0.28;                 // dim at rest; bars light up with the audio
+    s.style.opacity = s._base;
     bars.appendChild(s);
+    cxBarEls.push(s);
   });
   cxBuildMemory();
   document.addEventListener('keydown', e => {
