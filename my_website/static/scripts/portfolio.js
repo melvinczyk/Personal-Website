@@ -1172,18 +1172,41 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
 // Frequencies are sections; the MEMORY panel is the readable menu.
 // The Colonel talks with real ripped frames, mouth driven by visemes.
 // ══════════════════════════════════════════
-const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png`;
-const SN_F = n => `${STATIC_URLS.codecBase}/snake_f${n}.png`;
-// Two codec speakers, each with a neutral face and a closed/half/open/wide
-// viseme set of real ripped frames. Lines choose their speaker; default is
-// the Colonel. (Left portrait = colonel, right = snake.)
+// Sprites/voice load without Django's ?t= cache-buster, so the browser caches
+// them hard: replacing a frame on disk isn't enough, the stale one keeps
+// showing. Stamp every codec asset URL with a per-load token so a plain reload
+// always pulls the current art and audio.
+const CX_BUST = Date.now();
+const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png?v=${CX_BUST}`;
+const SN_F = n => `${STATIC_URLS.codecBase}/snake_f${n}.png?v=${CX_BUST}`;
+const OT_F = n => `${STATIC_URLS.codecBase}/otacon_f${n}.png?v=${CX_BUST}`;
+const CX_VOICE_URL = key => `${STATIC_URLS.voiceBase}/${key}.m4a?v=${CX_BUST}`;
+// Codec speakers, each with a neutral face and a closed/half/open/wide viseme
+// set of real ripped frames. Lines choose their speaker; default is the
+// Colonel. The Colonel and Otacon share the left portrait slot ('campbell');
+// Snake is the right slot. cxSlotNeutral tracks who currently occupies each.
 const CX_SPEAKERS = {
   colonel: { imgId: 'campbell', neutral: CX_F('00'),
              pose: [CX_F('10'), CX_F('09'), CX_F('08'), CX_F('08')] },
-  snake:   { imgId: 'snake',    neutral: SN_F('00'),
-             pose: [SN_F('00'), SN_F('02'), SN_F('07'), SN_F('08')] },
+  snake:   { imgId: 'snake',    neutral: SN_F('03'),
+             pose: [SN_F('03'), SN_F('03'), SN_F('08'), SN_F('08')] },
+  otacon:  { imgId: 'campbell', neutral: OT_F('00'),
+             pose: [OT_F('00'), OT_F('01'), OT_F('02'), OT_F('02')] },
 };
 let cxSpeaker = CX_SPEAKERS.colonel;
+// What each portrait slot shows at rest (imgId -> neutral src). Updated as
+// speakers take turns so a slot keeps the last character who used it.
+const cxSlotNeutral = {
+  [CX_SPEAKERS.colonel.imgId]: CX_SPEAKERS.colonel.neutral,
+  [CX_SPEAKERS.snake.imgId]:   CX_SPEAKERS.snake.neutral,
+};
+function cxSetPortrait(speakerKey){
+  const sp = CX_SPEAKERS[speakerKey];
+  if (!sp) return;
+  cxSlotNeutral[sp.imgId] = sp.neutral;
+  const img = document.getElementById(sp.imgId);
+  if (img) img.src = sp.neutral;
+}
 
 const CX_CONTACTS = [
   { freq:'140.85', name:'COLONEL',
@@ -1209,12 +1232,74 @@ const CX_CONTACTS = [
 ];
 let cxIdx = 0;
 let cxBooted = false;
+// The Colonel gives his intro briefing once. After that, returning to the
+// COLONEL channel just shows an idle "..." instead of replaying it.
+let cxColonelDone = false;
+// The PROJECTS channel plays a one-time three-way intro (Colonel hands off to
+// Otacon). After that, only Otacon greets you when you tune back in.
+let cxProjectsIntroDone = false;
+const CX_PROJECTS_IDX = 1;
+// First visit: Colonel briefs, introduces Otacon, Snake reacts, Otacon takes
+// over. Screen text keeps real spellings; the voice clips use phonetic ones.
+const CX_PROJECTS_INTRO = [
+  { text:"His operation records. Twelve declassified projects on file.", key:'c1_l0' },
+  { text:"For the details, get Otacon on the line. Hal's been cataloguing all of it.", key:'c1_l1' },
+  { text:"Hal Emmerich. Been a while since Shadow Moses. Patch him in.", speaker:'snake', key:'snake_hal' },
+  { text:"He's already listening.", key:'c1_l2' },
+  { text:"Hey, Snake. It's been a while.", speaker:'otacon', key:'ot_hello' },
+  { text:"Click on any project to see the full briefing. I can fill you in on the details, too.", speaker:'otacon', key:'ot_brief' },
+  { text:"Alright. Let's take a look, then.", speaker:'snake', key:'snake_look' },
+];
+const CX_PROJECTS_RETURN = [
+  { text:"Want to learn more about any projects?", speaker:'otacon', key:'ot_repeat' },
+];
 
 // ── talking: typewriter + Qwen3-TTS voice lines + viseme mouth ──
 // Each line may carry a voice key (static/audio/codec/<key>.m4a). Typing
 // drives the mouth; if the voice runs past the typing, the mouth keeps
 // flapping until the audio ends. The next line waits for both.
-let cxLastFrame = 0, cxLastSwap = 0, cxTypeTimer = null, cxFlapTimer = null;
+let cxTypeTimer = null;
+// Mouth animation: a single steady timer eases the mouth one step at a time
+// toward a target openness (0 closed .. 3 wide) so it never snaps open<->shut
+// (that snapping is what read as jitter). While the voice runs past the text,
+// cxFlap makes the target gently oscillate like a talking mouth.
+let cxMouth = 0, cxMouthTarget = 0, cxMouthTimer = null, cxFlap = false, cxFlapPhase = 0;
+// When a voice clip is playing, the mouth is driven by the clip's precomputed
+// viseme track (energy + spectral shape of the real speech) instead of the
+// typed text: cxAudioMouth flags that mode. cxMouthF is the smoothed openness.
+let cxAudioMouth = false, cxMouthF = 0, cxLastMouthIdx = -1;
+const CX_FLAP_CYCLE = [1, 2, 3, 2, 1, 0];
+function cxSetMouthFrame(idx){
+  idx = Math.max(0, Math.min(cxSpeaker.pose.length - 1, idx));
+  if (idx === cxLastMouthIdx) return;
+  cxLastMouthIdx = idx;
+  const img = document.getElementById(cxSpeaker.imgId);
+  if (img) img.src = cxSpeaker.pose[idx];
+}
+function cxMouthStep(){
+  if (cxFlap){
+    cxFlapPhase = (cxFlapPhase + 1) % CX_FLAP_CYCLE.length;
+    cxMouthTarget = CX_FLAP_CYCLE[cxFlapPhase];
+  }
+  if (cxMouth < cxMouthTarget) cxMouth++;
+  else if (cxMouth > cxMouthTarget) cxMouth--;
+  cxSetMouthFrame(cxMouth);
+}
+function cxStartMouth(){ if (!cxMouthTimer) cxMouthTimer = setInterval(cxMouthStep, 70); }
+function cxClearMouthTimer(){ if (cxMouthTimer){ clearInterval(cxMouthTimer); cxMouthTimer = null; } }
+// Drive the mouth from the clip's viseme track at the current playback time.
+function cxAudioMouthTick(env){
+  if (!env || !env.mouth) return;
+  const idx = Math.min(env.mouth.length - 1, Math.floor(cxVoice.currentTime / env.step));
+  const target = env.mouth[idx] || 0;
+  cxMouthF += (target - cxMouthF) * 0.4;   // low-pass so it eases, not snaps
+  cxSetMouthFrame(Math.round(cxMouthF));
+}
+function cxStopMouth(){
+  cxClearMouthTimer();
+  cxFlap = false; cxFlapPhase = 0; cxMouth = 0; cxMouthTarget = 0;
+  cxAudioMouth = false; cxMouthF = 0; cxLastMouthIdx = -1;
+}
 let cxQueue = [], cxCurrentLine = '', cxVoice = null;
 // extra per-line typing lead (ms before audio end that typing finishes)
 const CX_TYPE_LEAD = { 'c0_l1': 1500 };
@@ -1233,21 +1318,36 @@ let cxTypeDone = true, cxVoiceDone = true, cxAdvanceTimer = null;
 let cxBarEls = [], cxMeterRAF = null, cxEnvCache = {};
 function cxLoadEnvelope(key){
   if (cxEnvCache[key] !== undefined) return Promise.resolve(cxEnvCache[key]);
-  return fetch(`${STATIC_URLS.voiceBase}/${key}.m4a`)
+  return fetch(CX_VOICE_URL(key))
     .then(r => r.arrayBuffer())
     .then(b => getAudioCtx().decodeAudioData(b))
     .then(audio => {
       const data = audio.getChannelData(0);
       const hop = Math.max(1, Math.floor(audio.sampleRate * 0.03));  // 30ms frames
-      const env = [];
+      const env = [], zcr = [];
       for (let i = 0; i < data.length; i += hop){
-        let s = 0, n = 0;
-        for (let j = i; j < i + hop && j < data.length; j++){ s += data[j] * data[j]; n++; }
+        let s = 0, n = 0, zc = 0, prev = 0;
+        for (let j = i; j < i + hop && j < data.length; j++){
+          const v = data[j];
+          s += v * v; n++;
+          if (j > i && (v >= 0) !== (prev >= 0)) zc++;
+          prev = v;
+        }
         env.push(Math.sqrt(s / (n || 1)));
+        zcr.push(zc / (n || 1));         // zero-crossing rate: spectral proxy
       }
       let peak = 0.0001;
       for (const v of env) if (v > peak) peak = v;
-      const e = { frames: env.map(v => v / peak), step: 0.03 };
+      // Per-frame mouth openness (0 closed .. 3 wide) from the real speech:
+      // silence stays shut; high-ZCR fricatives (s, f, sh) stay narrow; voiced
+      // vowels open in proportion to their energy (loud "ah"/"oh" = widest).
+      const mouth = env.map((v, i) => {
+        const e = v / peak;
+        if (e < 0.08) return 0;
+        if (zcr[i] > 0.16) return 1;
+        return e > 0.62 ? 3 : e > 0.32 ? 2 : 1;
+      });
+      const e = { frames: env.map(v => v / peak), mouth, step: 0.03 };
       cxEnvCache[key] = e;
       return e;
     })
@@ -1257,8 +1357,11 @@ function cxMeterStart(key){
   if (!cxBarEls.length) return;
   cxLoadEnvelope(key).then(env => {
     if (cxMeterRAF) cancelAnimationFrame(cxMeterRAF);
+    // hand the mouth over to the speech-driven track for this clip
+    if (env && env.mouth){ cxAudioMouth = true; cxClearMouthTimer(); cxMouthF = 0; }
     const loop = () => {
       if (!cxVoice || cxVoice.paused || cxVoice.ended){ cxMeterStop(); return; }
+      if (cxAudioMouth) cxAudioMouthTick(env);
       let level = 0.45;
       if (env){ const idx = Math.min(env.frames.length - 1, Math.floor(cxVoice.currentTime / env.step)); level = env.frames[idx] || 0; }
       // fill from the bottom up: loud speech lights higher bars, quiet leaves
@@ -1288,26 +1391,25 @@ function cxViseme(ch){
   return 0;
 }
 function cxSpeakChar(ch){
-  const img = document.getElementById(cxSpeaker.imgId);
-  if (!img) return;
-  const v = cxViseme(ch);
-  const now = performance.now();
-  if (v === cxLastFrame) return;
-  if (v !== 0 && now - cxLastSwap < 60) return;
-  cxLastFrame = v; cxLastSwap = now;
-  img.src = cxSpeaker.pose[v];
+  // while a voice clip drives the mouth from its audio, ignore the text
+  if (cxAudioMouth) return;
+  // no audio (text-only line): fall back to typed-character visemes
+  cxFlap = false;
+  cxMouthTarget = cxViseme(ch);
+  cxStartMouth();
 }
 function cxRest(){
-  // both portraits back to neutral so a speaker swap never leaves a stuck mouth
-  Object.values(CX_SPEAKERS).forEach(sp => {
-    const img = document.getElementById(sp.imgId);
-    if (img) img.src = sp.neutral;
-  });
-  cxLastFrame = 0;
+  // each portrait slot back to its current occupant's neutral, so a speaker
+  // swap never leaves a stuck mouth (and Otacon/Colonel share the left slot)
+  cxStopMouth();
+  for (const imgId in cxSlotNeutral){
+    const img = document.getElementById(imgId);
+    if (img) img.src = cxSlotNeutral[imgId];
+  }
 }
 function cxStopVoice(){
   if (cxVoice) { cxVoice.pause(); cxVoice = null; }
-  if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+  cxStopMouth();
   cxMeterStop();
   cxVoiceDone = true;
 }
@@ -1320,17 +1422,12 @@ function cxHardStop(){
   cxRest();
 }
 function cxStartFlap(){
-  // voice is still speaking after the text finished: keep the mouth going
-  if (cxFlapTimer) return;
-  cxFlapTimer = setInterval(() => {
-    const img = document.getElementById(cxSpeaker.imgId);
-    if (!img) return;
-    let n;
-    do { n = Math.random() < 0.3 ? 0 : 1 + Math.floor(Math.random() * 3); }
-    while (n === cxLastFrame);
-    cxLastFrame = n;
-    img.src = cxSpeaker.pose[n];
-  }, 110);
+  // if the clip's audio is driving the mouth, it already covers the tail
+  if (cxAudioMouth) return;
+  // voice is still speaking after the text finished: keep the mouth gently
+  // opening and closing on a steady cycle (no random jitter)
+  cxFlap = true;
+  cxStartMouth();
 }
 function cxMaybeAdvance(){
   if (!cxTypeDone || !cxVoiceDone) return;
@@ -1348,6 +1445,9 @@ function cxTypeNext(){
   const item = cxQueue.shift();
   cxCurrentLine = item.text;
   cxSpeaker = item.speaker || CX_SPEAKERS.colonel;
+  // this speaker now occupies its portrait slot (Otacon can take over the left
+  // slot from the Colonel mid-conversation and stay there at rest)
+  cxSlotNeutral[cxSpeaker.imgId] = cxSpeaker.neutral;
   cxTypeDone = false;
   cxStopVoice();
   cxRest();
@@ -1373,6 +1473,7 @@ function cxTypeNext(){
     const a = cxVoiceEl;
     a.volume = 0.9;
     cxVoice = a; cxVoiceDone = false;
+    cxLoadEnvelope(item.key);   // warm the viseme track so it's ready at play
     // pace the typewriter to the voice: finish typing ~0.5s before the
     // audio ends, however long the clip actually is
     a.onloadedmetadata = (() => {
@@ -1387,12 +1488,12 @@ function cxTypeNext(){
       }
     });
     a.onended = () => {
-      if (cxFlapTimer) { clearInterval(cxFlapTimer); cxFlapTimer = null; }
+      cxStopMouth();
       cxMeterStop();
       cxVoiceDone = true; cxMaybeAdvance();
     };
     a.onerror = () => { cxVoiceDone = true; cxMaybeAdvance(); };
-    a.src = `${STATIC_URLS.voiceBase}/${item.key}.m4a`;
+    a.src = CX_VOICE_URL(item.key);
     const vkey = item.key;
     a.play().then(() => cxMeterStart(vkey)).catch(() => { cxVoiceDone = true; });   // file missing: text-only
   }
@@ -1401,7 +1502,7 @@ function cxSay(lines, keys){
   cxHardStop();
   cxQueue = lines.map((l, i) => {
     const o = typeof l === 'string' ? { text: l } : l;
-    return { text: o.text, key: keys && keys[i],
+    return { text: o.text, key: (keys && keys[i]) || o.key,
              speaker: CX_SPEAKERS[o.speaker] || CX_SPEAKERS.colonel };
   });
   cxTypeNext();
@@ -1449,12 +1550,30 @@ function cxOpenContact(i){
   panel.classList.remove('visible');
   c.render();
   requestAnimationFrame(() => panel.classList.add('visible'));
+  // left portrait occupant for this channel: Otacon once he's taken over the
+  // PROJECTS channel, otherwise the Colonel
+  cxSetPortrait(cxIdx === CX_PROJECTS_IDX && cxProjectsIntroDone ? 'otacon' : 'colonel');
   const idx = cxIdx;
   // longer beat on the very first call so the CRT power-on lands first
   const delay = cxBooted ? 320 : 2000;
   cxBooted = true;
   setTimeout(() => {
     if (idx !== cxIdx) return;  // user already retuned
+    if (idx === CX_PROJECTS_IDX) {
+      // one-time Colonel→Otacon handoff, then just Otacon on return
+      if (cxProjectsIntroDone) { cxSay(CX_PROJECTS_RETURN); return; }
+      cxProjectsIntroDone = true;
+      cxSay(CX_PROJECTS_INTRO);
+      return;
+    }
+    if (idx === 0 && cxColonelDone) {
+      // already briefed: the Colonel just holds the line
+      const dlg = document.getElementById('cx-dialogue');
+      if (dlg) dlg.textContent = '...';
+      cxRest();
+      return;
+    }
+    if (idx === 0) cxColonelDone = true;
     cxSay(c.lines, c.lines.map((_, j) => `c${idx}_l${j}`));
   }, delay);
   cxUpdateMemoryHighlight();
@@ -1504,10 +1623,9 @@ function cxOpenProject(id){
   CMDS.project(id);
   document.getElementById('cx-content').scrollIntoView({ behavior:'smooth', block:'start' });
   const p = PROJECTS.find(x => x.id === id);
-  // projects open silently: no dialogue, no voice
-  cxHardStop();
-  const dlg = document.getElementById('cx-dialogue');
-  if (dlg) dlg.textContent = '';
+  // Snake sizes up the target: one shared "Hmmm..." grunt, the real project
+  // name typed out after it as text
+  cxSay([{ text: `Hmmm... ${p.name}?`, speaker: 'snake' }], ['snake_hmm']);
 }
 function cxBackToProjects(){
   playClickSound();

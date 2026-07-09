@@ -73,25 +73,34 @@ def generate(lines: dict, split_lines: dict, ref_bytes: bytes, ref_text: str) ->
 @app.local_entrypoint()
 def main():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from generate_codec_voices import DEST, LINES, REF_AUDIO, REF_TEXT, SPLIT_LINES
+    from generate_codec_voices import (
+        DEST, LINES, REF_AUDIO, REF_TEXT, SPLIT_LINES,
+        SNAKE_LINES, SNAKE_REF_AUDIO, SNAKE_REF_TEXT, SNAKE_SPLIT_LINES,
+        OTACON_LINES, OTACON_REF_AUDIO, OTACON_REF_TEXT, OTACON_SPLIT_LINES,
+    )
 
     DEST.mkdir(parents=True, exist_ok=True)
-    todo = {k: v for k, v in LINES.items() if not (DEST / f"{k}.m4a").exists()}
-    print(f"{len(todo)}/{len(LINES)} lines to generate")
-    if not todo:
-        print("nothing to do")
-        return
+    voices = [
+        ("colonel", LINES, SPLIT_LINES, REF_AUDIO, REF_TEXT),
+        ("snake", SNAKE_LINES, SNAKE_SPLIT_LINES, SNAKE_REF_AUDIO, SNAKE_REF_TEXT),
+        ("otacon", OTACON_LINES, OTACON_SPLIT_LINES, OTACON_REF_AUDIO, OTACON_REF_TEXT),
+    ]
+    for name, lines, split_lines, ref_audio, ref_text in voices:
+        todo = {k: v for k, v in lines.items() if not (DEST / f"{k}.m4a").exists()}
+        print(f"{name}: {len(todo)}/{len(lines)} lines to generate")
+        if not todo:
+            continue
 
-    results = generate.remote(todo, SPLIT_LINES, REF_AUDIO.read_bytes(), REF_TEXT)
+        results = generate.remote(todo, split_lines, ref_audio.read_bytes(), ref_text)
 
-    for key, wav in results.items():
-        tmp = DEST / f"{key}.tmp.wav"
-        tmp.write_bytes(wav)
-        subprocess.run(
-            ["afconvert", "-f", "m4af", "-d", "aac", "-b", "49152",
-             str(tmp), str(DEST / f"{key}.m4a")],
-            check=True, capture_output=True,
-        )
-        tmp.unlink()
-        print(f"installed {key}.m4a")
+        for key, wav in results.items():
+            tmp = DEST / f"{key}.tmp.wav"
+            tmp.write_bytes(wav)
+            subprocess.run(
+                ["afconvert", "-f", "m4af", "-d", "aac", "-b", "49152",
+                 str(tmp), str(DEST / f"{key}.m4a")],
+                check=True, capture_output=True,
+            )
+            tmp.unlink()
+            print(f"installed {key}.m4a")
     print("ALL DONE")
