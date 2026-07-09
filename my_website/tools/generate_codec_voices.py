@@ -94,6 +94,118 @@ OTACON_SPLIT_LINES = {
                             "I can fill you in on the details, too."], "gap_ms": 420},
 }
 
+# ── Per-project briefings ──
+# Clicking a project plays: Snake asks, then Otacon explains it (scientific,
+# two lines, with the tech/software/usage). Spoken text below uses phonetic
+# respellings and spelled-out acronyms so the clone pronounces them; the
+# on-screen text (portfolio.js CX_PROJECT_DIALOGUE) keeps the real spellings.
+PROJECT_DIALOGUE = {
+    "oculosaurus": {
+        "snake": "Oculosaurus. What am I looking at?",
+        "otacon": [
+            "A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pie headset triangulate depth in real time, the way your own eyes judge distance.",
+            "It runs Yolo object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way.",
+        ],
+    },
+    "memprobe": {
+        "snake": "Memprobe. Break it down for me.",
+        "otacon": [
+            "It's a firmware forensics tool. You upload a compiled elf binary and it parses the dwarf debug data to map exactly where every byte of flash and RAM goes.",
+            "A Jango front end, serverless parsing on Modal, a Postgres build history, and a command line tool that fails your build if the firmware grows too large.",
+        ],
+    },
+    "echo-scout": {
+        "snake": "Echo Scout. This one's yours in the field.",
+        "otacon": [
+            "A handheld scanner built on an E S P thirty-two. Millimeter wave radar sweeps an eighty degree arc to detect people in the dark, even behind thin cover.",
+            "An eight by eight time of flight sensor rebuilds the room as a 3D point cloud, while the inertial sensor keeps a live compass on the touchscreen. Written in C plus plus.",
+        ],
+    },
+    "song2vec": {
+        "snake": "Song to Vec. What's the science here?",
+        "otacon": [
+            "It takes word embedding theory and applies it to music. A skip gram model learns vectors for genres, tags, and songs in one shared latent space.",
+            "A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with principal component analysis.",
+        ],
+    },
+    "bird-classifier": {
+        "snake": "Backyard Bird Classifier. Explain.",
+        "otacon": [
+            "A convolutional neural network trained to identify thirty Alabama bird species purely from their calls.",
+            "It turns each recording into a mel spectrogram, an image of sound, then classifies it. Wrapped in a Jango app that returns the top five guesses and the spectrogram itself.",
+        ],
+    },
+    "personal-website": {
+        "snake": "His personal site. Anything to it?",
+        "otacon": [
+            "You're standing in it, Snake. A Jango backend for a secure core, with Tailwind and Daisy U I driving the front end.",
+            "It even serves live machine learning inference, hosting the bird classifier model right alongside the portfolio.",
+        ],
+    },
+    "waste-drone": {
+        "snake": "Waste Detection Drone. Give me the specs.",
+        "otacon": [
+            "An autonomous quadcopter for environmental monitoring. A custom Yolo vee five model, trained on annotated waste imagery, spots litter from the air.",
+            "It flies programmatically through the Tello software kit, logging telemetry and tagging every detection for spatial analysis.",
+        ],
+    },
+    "modpack-updater": {
+        "snake": "Modpack Updater. What's it do?",
+        "otacon": [
+            "A cross platform desktop client that syncs Minecraft modpacks across a group using Amazon S three as the backing store.",
+            "It uses Git style change tracking against a manifest, so one click pulls only the differences. Built in Java and Java F X, packaged with Gradle.",
+        ],
+    },
+    "visaudio": {
+        "snake": "Vis Audio. Run it down.",
+        "otacon": [
+            "An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built in downloader.",
+            "It visualizes every file as a waveform and a mel spectrogram through Librosa, wrapped in a Pie Q T interface. Handles nearly every codec you'd throw at it.",
+        ],
+    },
+    "born-in-spellbooks": {
+        "snake": "Born in Spellbooks. A game mod?",
+        "otacon": [
+            "A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch.",
+            "Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep.",
+        ],
+    },
+    "fretwatch": {
+        "snake": "Fretwatch. What's the readout?",
+        "otacon": [
+            "Real time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play.",
+            "Librosa extracts the spectral features while Open C V tracks the fretboard frame by frame. Still in development.",
+        ],
+    },
+    "minecraft-server": {
+        "snake": "The Minecraft server. That's infrastructure.",
+        "otacon": [
+            "A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand built data packs.",
+            "The data packs are scripted in Jason and M C script to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management.",
+        ],
+    },
+}
+
+
+def _sentence_split(text, gap_ms=380):
+    """Split a line into sentences so the generator inserts a beat between them."""
+    import re
+    parts = [p for p in re.split(r"(?<=[.?]) +", text.strip()) if p]
+    return {"parts": parts, "gap_ms": gap_ms} if len(parts) > 1 else None
+
+
+# Fold the per-project briefings into the flat line/split tables by voice.
+for _pid, _d in PROJECT_DIALOGUE.items():
+    _sk = f"sk_{_pid}"
+    SNAKE_LINES[_sk] = _d["snake"]
+    if (_sp := _sentence_split(_d["snake"])):
+        SNAKE_SPLIT_LINES[_sk] = _sp
+    for _i, _line in enumerate(_d["otacon"]):
+        _ok = f"ot_{_pid}_{_i}"
+        OTACON_LINES[_ok] = _line
+        if (_sp := _sentence_split(_line)):
+            OTACON_SPLIT_LINES[_ok] = _sp
+
 
 def main():
     from gradio_client import Client, handle_file  # lazy: keep module importable without it

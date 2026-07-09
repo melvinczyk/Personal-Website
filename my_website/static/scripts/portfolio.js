@@ -51,6 +51,55 @@ function getAudioCtx() {
   return audioCtx;
 }
 
+// ── mute: one master gain feeds every Web Audio source (SFX + music); the
+// codec voice is a separate <audio> element muted directly. State persists. ──
+let cxMuted = localStorage.getItem('cxMuted') === '1';
+let cxMasterGain = null;
+function getMasterGain() {
+  const ctx = getAudioCtx();
+  if (!cxMasterGain) {
+    cxMasterGain = ctx.createGain();
+    cxMasterGain.gain.value = cxMuted ? 0 : 1;
+    cxMasterGain.connect(ctx.destination);
+  }
+  return cxMasterGain;
+}
+function cxSetMuted(m) {
+  cxMuted = m;
+  try { localStorage.setItem('cxMuted', m ? '1' : '0'); } catch (e) {}
+  if (cxMasterGain) cxMasterGain.gain.value = m ? 0 : 1;
+  if (typeof cxVoiceEl !== 'undefined' && cxVoiceEl) cxVoiceEl.muted = m;
+  updateMuteBtn();
+}
+function cxToggleMute() { cxSetMuted(!cxMuted); }
+const CX_ICON_SOUND = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a4 4 0 0 1 0 7"/><path d="M19.5 6a8 8 0 0 1 0 12"/></svg>';
+const CX_ICON_MUTED = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><line x1="16" y1="9.5" x2="22" y2="15.5"/><line x1="22" y1="9.5" x2="16" y2="15.5"/></svg>';
+function updateMuteBtn() {
+  const b = document.getElementById('cx-mute');
+  if (!b) return;
+  b.classList.toggle('muted', cxMuted);
+  b.setAttribute('aria-label', cxMuted ? 'Unmute' : 'Mute');
+  b.title = cxMuted ? 'Unmute' : 'Mute';
+  b.innerHTML = cxMuted ? CX_ICON_MUTED : CX_ICON_SOUND;
+}
+function initMuteButton() {
+  if (document.getElementById('cx-mute')) return;
+  const b = document.createElement('button');
+  b.id = 'cx-mute';
+  b.className = 'cx-mute';
+  // critical positioning/visibility inline so it never depends on the CSS file
+  // loading (the .cx-mute class just adds the blur + hover polish)
+  b.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10000;width:40px;height:40px;' +
+    'display:flex;align-items:center;justify-content:center;padding:0;color:#4ddc85;' +
+    'background:rgba(0,22,18,0.55);border:1px solid rgba(77,220,133,0.55);border-radius:7px;' +
+    'opacity:0.8;cursor:pointer;';
+  b.onclick = (e) => { e.stopPropagation(); cxToggleMute(); };
+  (document.body || document.documentElement).appendChild(b);
+  updateMuteBtn();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMuteButton);
+else initMuteButton();
+
 async function loadSound(url) {
   try {
     const ctx = getAudioCtx();
@@ -69,7 +118,7 @@ function playBuffer(buffer, volume=0.3) {
     gain.gain.value = volume;
     src.buffer = buffer;
     src.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(getMasterGain());
     src.start(0);
   });
 }
@@ -84,7 +133,7 @@ function playBackgroundMusic() {
     bgMusicSource.loop = true;
     gain.gain.value = 0.15;
     bgMusicSource.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(getMasterGain());
     bgMusicSource.start(0);
   });
 }
@@ -1307,6 +1356,7 @@ const CX_TYPE_LEAD = { 'c0_l1': 1500 };
 // SELECT click (Safari only allows play() from a user gesture until an
 // element has played once), then plays freely for the rest of the session.
 const cxVoiceEl = new Audio();
+cxVoiceEl.muted = cxMuted;   // honor a persisted mute state
 function cxUnlockVoice(){
   cxVoiceEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
   cxVoiceEl.play().catch(() => {});
@@ -1616,19 +1666,88 @@ function cxRenderProjectIndex(){
       ${(p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('')}
     </button>`).join('')}</div>`);
 }
+// Per-project briefing: Snake asks, Otacon explains (on-screen text keeps real
+// spellings; the voice clips use phonetic ones). Keys match generate_codec_voices.py.
+const CX_PROJECT_DIALOGUE = {
+  "oculosaurus": [
+    { s:'snake',  k:'sk_oculosaurus',   t:"Oculosaurus. What am I looking at?" },
+    { s:'otacon', k:'ot_oculosaurus_0', t:"A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pi headset triangulate depth in real time, the way your own eyes judge distance." },
+    { s:'otacon', k:'ot_oculosaurus_1', t:"It runs YOLO object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way." },
+  ],
+  "memprobe": [
+    { s:'snake',  k:'sk_memprobe',   t:"Memprobe. Break it down for me." },
+    { s:'otacon', k:'ot_memprobe_0', t:"It's a firmware forensics tool. You upload a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes." },
+    { s:'otacon', k:'ot_memprobe_1', t:"A Django front end, serverless parsing on Modal, a Postgres build history, and a CLI that fails your build if the firmware grows too large." },
+  ],
+  "echo-scout": [
+    { s:'snake',  k:'sk_echo-scout',   t:"Echo Scout. This one's yours in the field." },
+    { s:'otacon', k:'ot_echo-scout_0', t:"A handheld scanner built on an ESP32. Millimeter-wave radar sweeps an 80 degree arc to detect people in the dark, even behind thin cover." },
+    { s:'otacon', k:'ot_echo-scout_1', t:"An 8x8 time-of-flight sensor rebuilds the room as a 3D point cloud, while the IMU keeps a live compass on the touchscreen. Written in C++." },
+  ],
+  "song2vec": [
+    { s:'snake',  k:'sk_song2vec',   t:"Song2Vec. What's the science here?" },
+    { s:'otacon', k:'ot_song2vec_0', t:"It takes word-embedding theory and applies it to music. A skip-gram model learns vectors for genres, tags, and songs in one shared latent space." },
+    { s:'otacon', k:'ot_song2vec_1', t:"A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with PCA." },
+  ],
+  "bird-classifier": [
+    { s:'snake',  k:'sk_bird-classifier',   t:"Backyard Bird Classifier. Explain." },
+    { s:'otacon', k:'ot_bird-classifier_0', t:"A convolutional neural network trained to identify thirty Alabama bird species purely from their calls." },
+    { s:'otacon', k:'ot_bird-classifier_1', t:"It turns each recording into a mel-spectrogram, an image of sound, then classifies it. Wrapped in a Django app that returns the top five guesses and the spectrogram itself." },
+  ],
+  "personal-website": [
+    { s:'snake',  k:'sk_personal-website',   t:"His personal site. Anything to it?" },
+    { s:'otacon', k:'ot_personal-website_0', t:"You're standing in it, Snake. A Django backend for a secure core, with Tailwind and DaisyUI driving the front end." },
+    { s:'otacon', k:'ot_personal-website_1', t:"It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio." },
+  ],
+  "waste-drone": [
+    { s:'snake',  k:'sk_waste-drone',   t:"Waste Detection Drone. Give me the specs." },
+    { s:'otacon', k:'ot_waste-drone_0', t:"An autonomous quadcopter for environmental monitoring. A custom YOLOv5 model, trained on annotated waste imagery, spots litter from the air." },
+    { s:'otacon', k:'ot_waste-drone_1', t:"It flies programmatically through the Tello SDK, logging telemetry and tagging every detection for spatial analysis." },
+  ],
+  "modpack-updater": [
+    { s:'snake',  k:'sk_modpack-updater',   t:"Modpack Updater. What's it do?" },
+    { s:'otacon', k:'ot_modpack-updater_0', t:"A cross-platform desktop client that syncs Minecraft modpacks across a group using Amazon S3 as the backing store." },
+    { s:'otacon', k:'ot_modpack-updater_1', t:"It uses Git-style change tracking against a manifest, so one click pulls only the differences. Built in Java and JavaFX, packaged with Gradle." },
+  ],
+  "visaudio": [
+    { s:'snake',  k:'sk_visaudio',   t:"VisAudio. Run it down." },
+    { s:'otacon', k:'ot_visaudio_0', t:"An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built-in downloader." },
+    { s:'otacon', k:'ot_visaudio_1', t:"It visualizes every file as a waveform and a mel-spectrogram through librosa, wrapped in a PyQt interface. Handles nearly every codec you'd throw at it." },
+  ],
+  "born-in-spellbooks": [
+    { s:'snake',  k:'sk_born-in-spellbooks',   t:"Born in Spellbooks. A game mod?" },
+    { s:'otacon', k:'ot_born-in-spellbooks_0', t:"A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch." },
+    { s:'otacon', k:'ot_born-in-spellbooks_1', t:"Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep." },
+  ],
+  "fretwatch": [
+    { s:'snake',  k:'sk_fretwatch',   t:"FretWatch. What's the readout?" },
+    { s:'otacon', k:'ot_fretwatch_0', t:"Real-time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play." },
+    { s:'otacon', k:'ot_fretwatch_1', t:"librosa extracts the spectral features while OpenCV tracks the fretboard frame by frame. Still in development." },
+  ],
+  "minecraft-server": [
+    { s:'snake',  k:'sk_minecraft-server',   t:"The Minecraft server. That's infrastructure." },
+    { s:'otacon', k:'ot_minecraft-server_0', t:"A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand-built data packs." },
+    { s:'otacon', k:'ot_minecraft-server_1', t:"The data packs are scripted in JSON and mcscript to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management." },
+  ],
+};
 function cxOpenProject(id){
   playClickSound();
   out.innerHTML = '';
   addHtml(`<button class="cx-back-row" onclick="cxBackToProjects()">◂ ALL PROJECTS</button>`);
   CMDS.project(id);
   document.getElementById('cx-content').scrollIntoView({ behavior:'smooth', block:'start' });
-  const p = PROJECTS.find(x => x.id === id);
-  // Snake sizes up the target: one shared "Hmmm..." grunt, the real project
-  // name typed out after it as text
-  cxSay([{ text: `Hmmm... ${p.name}?`, speaker: 'snake' }], ['snake_hmm']);
+  // Otacon holds the left portrait for the briefing (even if a project was
+  // clicked before the intro handed off to him)
+  cxProjectsIntroDone = true;
+  cxSetPortrait('otacon');
+  // Snake asks, Otacon breaks down the project (voice + viseme mouth)
+  const lines = CX_PROJECT_DIALOGUE[id];
+  if (lines) cxSay(lines.map(l => ({ text: l.t, speaker: l.s, key: l.k })));
+  else cxHardStop();
 }
 function cxBackToProjects(){
   playClickSound();
+  cxHardStop();          // cut Otacon/Snake off when leaving the briefing
   out.innerHTML = '';
   cxRenderProjectIndex();
 }
