@@ -14,10 +14,10 @@ SEASON_DESCRIPTIONS = {
 # Screenshot used as the backdrop behind each disc on the gallery screen.
 # Picked for legibility; falls back to a mid-list screenshot if missing.
 SEASON_HEROES = {
-    1: "2023-10-24_22.23.28.png",
-    2: "2024-09-04_12.45.03.png",
-    3: "2025-01-29_12.23.36.png",
-    4: "2026-01-26_00.31.43.png",
+    1: "2023-09-06_23.01.52.png",
+    2: "2024-09-03_22.17.13.png",
+    3: "2025-03-29_00.52.26.png",
+    4: "2026-01-29_23.46.27.png",
 }
 
 SEASON_NAMES = {
