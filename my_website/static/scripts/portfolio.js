@@ -3,11 +3,13 @@
 // Counted from static/minecraft/ (4 season folders, 590 png, 4 mp4 + 1 gif).
 const MC_STATS = { seasons: 4, shots: 590, clips: 5, span: '2023-26' };
 
+// Per-service colours, brightened from the brand values so they read on
+// black. Used on the about card only; the CONTACT channel stays on palette.
 const SOCIAL_LINKS = [
-  { label:'GitHub',   url:'https://github.com/melvinczyk' },
-  { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/' },
-  { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy' },
-  { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com' },
+  { label:'GitHub',   url:'https://github.com/melvinczyk',                          color:'#b07cff' },
+  { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',          color:'#4da3e8' },
+  { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy', color:'#2ee06a' },
+  { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com',                      color:'#35b8dd' },
 ];
 const TAG_CLASS = {
   'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award',
@@ -234,7 +236,7 @@ about(){
       <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue - producer / artist</span></div>
       <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft - modding, custom server, Forge mods</span></div>
       <div class="who-row who-links-row"><span class="who-key">links</span><span class="who-val who-links">${SOCIAL_LINKS.map(l =>
-        `<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join('')}</span></div>
+        `<a href="${l.url}" target="_blank" rel="noopener" style="--lc:${l.color}">${l.label}</a>`).join('')}</span></div>
     </div>
   </div>`);
   bl();
