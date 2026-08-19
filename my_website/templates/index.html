@@ -81,6 +81,12 @@ const STATIC_URLS = {
   gallery:    "{% url 'gallery' %}",
   codecBase:  "{% static 'codec' %}",
   voiceBase:  "{% static 'audio/codec' %}",
+  mcThumbs: [
+    { s: 'S1', url: "{% static 'minecraft/season1/2023-12-19_16.03.58.png' %}" },
+    { s: 'S2', url: "{% static 'minecraft/season2/2024-09-04_12.45.03.png' %}" },
+    { s: 'S3', url: "{% static 'minecraft/season3/2025-01-29_12.23.36.png' %}" },
+    { s: 'S4', url: "{% static 'minecraft/season4/2026-01-26_00.31.43.png' %}" },
+  ],
 };
 </script>
 <script src="{% static 'scripts/portfolio.js' %}?t={% now 'U' %}"></script>

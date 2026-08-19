@@ -1,10 +1,13 @@
 // Accounts, shared by the about card (140.85) and the CONTACT channel (140.15)
 // so the two can never drift apart.
+// Counted from static/minecraft/ (4 season folders, 590 png, 4 mp4 + 1 gif).
+const MC_STATS = { seasons: 4, shots: 590, clips: 5, span: '2023-26' };
+
 const SOCIAL_LINKS = [
-  { label:'GitHub',   url:'https://github.com/melvinczyk',                                  color:'var(--mgs-cyan)' },
-  { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',                  color:'#0077B5' },
-  { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy',         color:'#1DB954' },
-  { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com',                              color:'#1da0c3' },
+  { label:'GitHub',   url:'https://github.com/melvinczyk' },
+  { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/' },
+  { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy' },
+  { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com' },
 ];
 const TAG_CLASS = {
   'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award',
@@ -17,7 +20,7 @@ const PROJECTS = [
   { id:"echo-scout",       name:"ECHO SCOUT",                 tags:["EMBEDDED","HARDWARE", "NETWORKING","IN DEV"],            tech:"C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF / IMU", img:"https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946",                img2:null,                                                                                                         desc:"Compact 2.8\" handheld device that detects people and maps out rooms in real time. The mmWave radar covers an 80 degree area in front of the user, while the 8x8 ToF sensor builds a 3D point cloud of the surrounding space. Orientation and heading tracked via IMU with a live compass on the touchscreen display.", link:"https://github.com/melvinczyk/Heartbeat-Sensor"},
   { id:"song2vec",         name:"SONG2VEC",                   tags:["ML/DL","LIVE"],                  tech:"Python / PyTorch / VAE / PCA / scikit-learn",        img:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/multi_blobs.png",                                  img2:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png", desc:"Skip-gram based embedding model that learns vector representations of genres, tags, and songs in a shared latent space. Includes a VAE that maps songs into a 16-dimensional latent space and synthesizes unique colour blob images driven by genre and mood embeddings. PCA projects 1,305 genre and 985 tag vectors into colour+layout space.", link:"https://github.com/melvinczyk/Song2Vec"},
   { id:"bird-classifier",  name:"BACKYARD BIRD CLASSIFIER",   tags:["ML/DL", "LIVE"],                 tech:"Python / CNN / Django / mel-spectrogram",             img:"https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg",             img2:"https://github.com/melvinczyk/Bird-classifier/blob/main/final_matrix.png?raw=true",    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
-  { id:"personal-website", name:"NICHOLASBURCZYK.COM",        tags:["LIVE"],                         tech:"Django / Python",                                    img:"https://www.svgrepo.com/show/353657/django-icon.svg",                                                         img2:null,                                                                                                         desc:"This website. Built on Django for a secure backend, Tailwind CSS + DaisyUI for the frontend, and deployed ML model inference for the bird classifier.", link:"https://github.com/melvinczyk/Personal-Website"},
+  { id:"personal-website", name:"NICHOLASBURCZYK.COM",        tags:["LIVE"],                         tech:"Django / Python / Qwen3-TTS voice cloning / Web Audio API / MGS1 font + PSone.css",                                    img:"https://www.svgrepo.com/show/353657/django-icon.svg",                                                         img2:null,                                                                                                         desc:"This website. The Colonel, Snake and Otacon are AI voices, cloned from the original game audio with a TTS model running on a cloud GPU, and their sprite lip-sync is computed frame by frame from each clip's waveform. It also serves live ML inference, hosting the bird classifier model right alongside the portfolio. The interface uses the real MGS1 bitmap font, with PS1 menu components adapted from the open-source PSone.css.", link:"https://github.com/melvinczyk/Personal-Website"},
   { id:"waste-drone",      name:"WASTE DETECTION DRONE",      tags:["ML/DL","HARDWARE","NETWORKING"],             tech:"Python / YOLOv5 / Tello SDK",                        img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png",          img2:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/model_.gif",        desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.", link:"https://github.com/melvinczyk/Waste-detection-drone"},
   { id:"modpack-updater",  name:"MINECRAFT MODPACK UPDATER",  tags:["NETWORKING"],                               tech:"Java / JavaFX / Amazon S3 / Gradle",                 img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41",                          img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267",                            desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click update for clients. Cross-platform.", link:"https://github.com/melvinczyk/ModpackUpdater"},
   { id:"visaudio",         name:"VISAUDIO",                   tags:[],                               tech:"Python / librosa / PyQt",                            img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true",                                img2:null,                                                                                                         desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac.", link:"https://github.com/melvinczyk/VisAudio"},
@@ -221,8 +224,8 @@ const CMDS = {
 about(){
   bl();
   addHtml(`<div class="who-card fade-in">
+    <div class="ps-bar"><span class="ps-t">◈ NICK BURCZYK</span><span class="ps-r">140.85</span></div>
     <div class="who-info">
-      <div class="who-name">NICK BURCZYK</div>
       <div class="who-row"><span class="who-key">school</span><span class="who-val">MSAI @ UAB - Spring 2027</span></div>
       <div class="who-row"><span class="who-key">work</span><span class="who-val">TITANS-SW R&amp;D Intern @ Sandia National Labs</span></div>
       <div class="who-row"><span class="who-key">teaching</span><span class="who-val">TA - Software Development @ UAB</span></div>
@@ -231,7 +234,7 @@ about(){
       <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue - producer / artist</span></div>
       <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft - modding, custom server, Forge mods</span></div>
       <div class="who-row who-links-row"><span class="who-key">links</span><span class="who-val who-links">${SOCIAL_LINKS.map(l =>
-        `<a href="${l.url}" target="_blank" rel="noopener" style="--lc:${l.color}">${l.label}</a>`).join('')}</span></div>
+        `<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join('')}</span></div>
     </div>
   </div>`);
   bl();
@@ -290,14 +293,7 @@ project(id){
         <span class="proj-demo-sim">203K SONGS · 1305 GENRES · 985 TAGS</span>
       </div>
       <a href="/song2vec/" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN SONG2VEC DEMO /song2vec/</a>
-    </div>` : (p.id==='memprobe' ? `
-    <div class="proj-demo-outer" style="padding:16px 20px;">
-      <div class="proj-demo-hdr" style="margin-bottom:10px;">
-        <span>◈ OPEN SOURCE</span>
-        <span class="proj-demo-sim">ELF · DWARF · MAP · CI BUDGETS</span>
-      </div>
-      <a href="https://github.com/melvinczyk/memprobe/tree/master" target="_blank" class="proj-link" style="display:inline-block;margin-top:4px;">→ VIEW SOURCE github.com/melvinczyk/memprobe</a>
-    </div>` : ''));
+    </div>` : (p.id==='bird-classifier' ? psBirdPanel() : (p.id==='minecraft-server' ? psGalleryPanel() : '')));
   addHtml(`<div class="proj-card">
     <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${tagsHtml}</div>
     <div class="proj-card-body">
@@ -319,58 +315,48 @@ music(){
   ln('  Artist: <span style="color:var(--mgs-cyan)">Zero Barbecue</span>','line');
   ln('  First single out now.','white');
   bl();
-  ln('  <span style="color:#1DB954">●</span> Spotify  → <a class="tl" href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy" target="_blank">open.spotify.com/artist/Zero-Barbecue</a>');
-  ln('  <span style="color:#1da0c3">●</span> Bandcamp → <a class="tl" href="https://zerobarbecue.bandcamp.com" target="_blank">zerobarbecue.bandcamp.com</a>');
-  bl();
-  addHtml(`<div style="padding:4px 20px 8px;max-width:620px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px;background:rgba(0,25,25,0.5)"><iframe style="border-radius:4px;border:none;display:block" src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0" width="100%" height="200" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div></div>`);
+  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">◈ ZERO BARBECUE</span><span class="ps-r">FIRST SINGLE</span></div>
+    <div class="ps-body">
+      <div class="ps-frame"><iframe src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0" height="200" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Zero Barbecue on Spotify"></iframe></div>
+      <div class="ps-btnrow">
+        <a class="ps-btn ps-sm ps-alt" href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy" target="_blank" rel="noopener"><span class="ps-lbl">SPOTIFY</span></a>
+        <a class="ps-btn ps-sm ps-alt" href="https://zerobarbecue.bandcamp.com" target="_blank" rel="noopener"><span class="ps-lbl">BANDCAMP</span></a>
+      </div>
+    </div>
+  </div></div>`);
   bl();
 },
 
 contact(){
   bl();
-  SOCIAL_LINKS.forEach(({label,url,color:col})=>{
-    addHtml(`<div class="contact-row fade-in" style="margin:6px 20px;max-width:1000px"><span class="contact-label">${label}</span><a class="contact-link" style="color:${col}" href="${url}" target="_blank">${url}</a></div>`);
-  });
+  const rows = SOCIAL_LINKS.map(({label,url}) =>
+    `<a class="contact-row" href="${url}" target="_blank" rel="noopener"><span class="contact-label">${label}</span><span class="contact-link">${url}</span></a>`).join('');
+  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">◈ DIRECT CHANNELS</span><span class="ps-r">${SOCIAL_LINKS.length} ON FILE</span></div>
+    <div class="ps-body">${rows}</div>
+  </div></div>`);
   bl();
 },
 
 map(){
   bl();
-  ln('  Live Bluemap render: real-time world data','white');
-  ln('  Full view → <a class="tl" href="http://216.219.93.66:8100/" target="_blank">216.219.93.66:8100/</a>');
-  bl();
-  addHtml(`<div style="padding:4px 20px 10px;max-width:700px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px;background:rgba(0,25,25,0.5)"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" width="100%" height="360" frameborder="0" style="border:1px solid var(--mgs-border);display:block;"></iframe></div></div>`);
+  addHtml(psMapPanel());
   bl();
 },
 
 gallery(){
   bl();
-  ln('  <span style="color:var(--mgs-cyan)">Minecraft Server Gallery</span>','line');
-  ln('  Screenshots &amp; clips from all seasons','white');
+  addHtml(psGalleryPanel());
   bl();
-  ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown">3</span>...','line');
-  bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">MC GALLERY</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">All seasons · screenshots &amp; video clips</div></div><a href="${STATIC_URLS.gallery}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ OPEN</a></div></div>`);
-  bl();
-  let n=3;
-  const cd=document.getElementById('countdown');
-  const t=setInterval(()=>{ n--; if(cd) cd.textContent=n; if(n<=0){clearInterval(t);window.location.href=STATIC_URLS.gallery;} },1000);
 },
 
 clear(){ out.innerHTML=''; },
 
 'bird-classifier'(){
   bl();
-  ln('  <span style="color:var(--mgs-cyan)">Backyard Alabama Bird Detector</span>','line');
-  ln('  CNN · mel-spectrogram · 30 Alabama species','white');
+  addHtml(psBirdPanel());
   bl();
-  ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown">3</span>...','line');
-  bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">BIRD CLASSIFIER</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Upload or record a bird call to classify it</div></div><a href="${STATIC_URLS.uploadFile}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
-  bl();
-  let n=3;
-  const cd=document.getElementById('countdown');
-  const t=setInterval(()=>{ n--; if(cd) cd.textContent=n; if(n<=0){clearInterval(t);window.location.href=STATIC_URLS.uploadFile;} },1000);
 },
 };
 
@@ -1669,12 +1655,15 @@ function toggleMemory(force){
 
 // ── section content ──
 function cxRenderProjectIndex(){
-  addHtml(`<div class="fade-in">${PROJECTS.map((p, i) => `
-    <button class="cx-proj-row" onclick="cxOpenProject('${p.id}')">
-      <span class="cx-proj-freq">141.${String(13 + i).padStart(2,'0')}</span>
-      <span class="cx-proj-name">${esc(p.name)}</span>
-      ${(p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('')}
-    </button>`).join('')}</div>`);
+  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">◈ OPERATION RECORDS</span><span class="ps-r">${PROJECTS.length} DECLASSIFIED</span></div>
+    <div class="ps-body">${PROJECTS.map((p, i) => `
+      <button class="cx-proj-row" onclick="cxOpenProject('${p.id}')">
+        <span class="cx-proj-freq">141.${String(13 + i).padStart(2,'0')}</span>
+        <span class="cx-proj-name">${esc(p.name)}</span>
+        ${(p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('')}
+      </button>`).join('')}</div>
+  </div></div>`);
 }
 // Per-project briefing: Snake asks, Otacon explains (on-screen text keeps real
 // spellings; the voice clips use phonetic ones). Keys match generate_codec_voices.py.
@@ -1706,8 +1695,9 @@ const CX_PROJECT_DIALOGUE = {
   ],
   "personal-website": [
     { s:'snake',  k:'sk_personal-website',   t:"His personal site. Anything to it?" },
-    { s:'otacon', k:'ot_personal-website_0', t:"You're standing in it, Snake. A Django backend for a secure core, with Tailwind and DaisyUI driving the front end." },
-    { s:'otacon', k:'ot_personal-website_1', t:"It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio." },
+    { s:'otacon', k:'ot_personal-website_0', t:"You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text-to-speech model on a cloud GPU, then computed our mouth movements straight off the waveform." },
+    { s:'otacon', k:'ot_personal-website_1', t:"The interface is the real thing too. That's the actual MGS1 bitmap font off the disc, and every menu panel is a PlayStation component borrowed from an open-source stylesheet called PSone." },
+    { s:'otacon', k:'ot_personal-website_2', t:"It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio." },
   ],
   "waste-drone": [
     { s:'snake',  k:'sk_waste-drone',   t:"Waste Detection Drone. Give me the specs." },
@@ -1761,11 +1751,79 @@ function cxBackToProjects(){
   out.innerHTML = '';
   cxRenderProjectIndex();
 }
+// MC WORLD channel. The gallery used to hide behind a single text link under
+// a 360px map iframe; it is now the first thing on the channel, with real
+// thumbnails and a PS1 menu button, and the map sits in its own window below.
+function psGalleryPanel(){
+  const thumbs = (STATIC_URLS.mcThumbs || []).map(t =>
+    `<a href="${STATIC_URLS.gallery}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
+  return `<div class="ps-wrap fade-in"><div class="ps-win">
+    <div class="ps-bar"><span class="ps-t">◈ SERVER GALLERY</span><span class="ps-r">ALL SEASONS</span></div>
+    <div class="ps-body">
+      <div class="ps-stats">
+        <div><b>${MC_STATS.seasons}</b><i>SEASONS</i></div>
+        <div><b>${MC_STATS.shots}</b><i>SCREENSHOTS</i></div>
+        <div><b>${MC_STATS.clips}</b><i>CLIPS</i></div>
+        <div><b>${MC_STATS.span}</b><i>UPTIME</i></div>
+      </div>
+      <div class="ps-thumbs">${thumbs}
+        <a href="${STATIC_URLS.gallery}" class="ps-more"><span>+${MC_STATS.shots - (STATIC_URLS.mcThumbs||[]).length}<br>MORE</span></a>
+      </div>
+      <a class="ps-btn" href="${STATIC_URLS.gallery}"><span class="ps-lbl">OPEN FULL GALLERY</span></a>
+      <div class="ps-hint">${MC_STATS.seasons} seasons · screenshots &amp; video clips</div>
+    </div>
+  </div></div>`;
+}
+function psMapPanel(){
+  return `<div class="ps-wrap fade-in"><div class="ps-win">
+    <div class="ps-bar"><span class="ps-t">◈ LIVE WORLD MAP</span><span class="ps-r"><span class="ps-live"></span>RENDERING</span></div>
+    <div class="ps-body">
+      <div class="ps-frame"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" height="300" loading="lazy" title="Live Bluemap render"></iframe></div>
+      <div class="ps-btnrow">
+        <a class="ps-btn ps-sm ps-alt" href="http://216.219.93.66:8100/" target="_blank" rel="noopener"><span class="ps-lbl">FULLSCREEN MAP</span></a>
+        <a class="ps-btn ps-sm ps-alt" href="https://github.com/melvinczyk/Datapacks" target="_blank" rel="noopener"><span class="ps-lbl">DATAPACK SOURCE</span></a>
+      </div>
+    </div>
+  </div></div>`;
+}
+// Bird classifier. The model is live and takes audio, but the only thing that
+// said so was an 11px "LAUNCH" chip. A sample top-5 result (PSone's progress
+// bar, which is exactly the right widget for confidences) sells it instead.
+function psBirdPanel(){
+  const u = STATIC_URLS.uploadFile;
+  const rows = [
+    ['NORTHERN FLICKER', 94, false],
+    ['RED-BELLIED WOODPKR', 31, true],
+    ['PILEATED WOODPECKER', 18, true],
+    ['BLUE JAY', 9, true],
+    ['CAROLINA WREN', 4, true],
+  ].map(([n, pc, dim]) => `<div class="ps-row${dim ? ' ps-dim' : ''}">
+        <span class="ps-nm">${n}</span>
+        <div class="ps-prog"><div class="ps-fill" style="width:${pc}%"></div></div>
+        <span class="ps-pc">${pc}%</span>
+      </div>`).join('');
+  return `<div class="ps-wrap fade-in"><div class="ps-win">
+    <div class="ps-bar"><span class="ps-t">◈ BIRD CLASSIFIER</span><span class="ps-r"><span class="ps-live"></span>MODEL ONLINE</span></div>
+    <div class="ps-body">
+      <div class="ps-spec"><span>CNN</span><span>MEL-SPECTROGRAM</span><span>30 SPECIES</span><span>PYTORCH</span><span>DJANGO</span></div>
+      <div class="ps-p">Feed it a bird call and it returns a species, the top five candidates with confidence, and the spectrogram it actually classified.</div>
+      <div class="ps-bar" style="border-radius:0;margin:0 0 12px;border-top:1px solid rgba(0,255,204,0.28)">
+        <span class="ps-t" style="font-size:17px">SAMPLE OUTPUT</span><span class="ps-r">northern_flicker.wav</span>
+      </div>
+      ${rows}
+      <div style="height:8px"></div>
+      <a class="ps-btn" href="${u}#drop-zone"><span class="ps-lbl">UPLOAD A RECORDING</span></a>
+      <div class="ps-btnrow">
+        <a class="ps-btn ps-sm ps-alt" href="${u}#start-recording"><span class="ps-lbl">RECORD FROM MIC</span></a>
+        <a class="ps-btn ps-sm ps-alt" href="${u}#bird-search"><span class="ps-lbl">TRY A SAMPLE CALL</span></a>
+      </div>
+      <div class="ps-hint">wav / mp3 / ogg / m4a · or pull one by Macaulay ML number</div>
+    </div>
+  </div></div>`;
+}
 function cxRenderMinecraft(){
-  CMDS.map();
-  addHtml(`<div style="padding:0 20px 8px;">
-    <a class="proj-link" href="${STATIC_URLS.gallery}">→ SCREENSHOT GALLERY: ALL SEASONS</a>
-  </div>`);
+  addHtml(psGalleryPanel());
+  addHtml(psMapPanel());
 }
 
 // ── init ──

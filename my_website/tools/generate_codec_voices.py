@@ -138,7 +138,8 @@ PROJECT_DIALOGUE = {
     "personal-website": {
         "snake": "His personal site. Anything to it?",
         "otacon": [
-            "You're standing in it, Snake. A Jango backend for a secure core, with Tailwind and Daisy U I driving the front end.",
+            "You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text to speech model on a cloud G P U, then computed our mouth movements straight off the waveform.",
+            "The interface is the real thing too. That's the actual M G S one bitmap font off the disc, and every menu panel is a Playstation component borrowed from an open source stylesheet called P S one.",
             "It even serves live machine learning inference, hosting the bird classifier model right alongside the portfolio.",
         ],
     },
