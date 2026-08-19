@@ -534,3 +534,27 @@ body::after { display: none; }
 
 .disc-slot { position: relative; }
 
+
+/* Per-season glow. The colour rides on --disc-glow; the halo lives on ::after
+   so season 5's hue-rotate spins the light and not the box art. */
+.disc-slot                  { --disc-glow: #9aa0a6; }
+.disc-slot[data-season="1"] { --disc-glow: #ffb52e; }
+.disc-slot[data-season="2"] { --disc-glow: #ff3d34; }
+.disc-slot[data-season="3"] { --disc-glow: #35d94b; }
+.disc-slot[data-season="4"] { --disc-glow: #3d9bff; }
+.disc-slot[data-season="5"] { --disc-glow: #ff2d55; }
+
+.disc-case::after {
+  content: ''; position: absolute; inset: -2px; z-index: 3; pointer-events: none;
+  border: 2px solid var(--disc-glow);
+  animation: disc-glow 3.4s ease-in-out infinite;
+}
+.disc-slot.active .disc-case::after { animation-duration: 2.2s; }
+@keyframes disc-glow {
+  0%, 100% { opacity: .32; box-shadow: 0 0  8px 0px var(--disc-glow), inset 0 0  8px -4px var(--disc-glow); }
+  50%      { opacity: 1;   box-shadow: 0 0 24px 3px var(--disc-glow), inset 0 0 18px -3px var(--disc-glow); }
+}
+.disc-slot[data-season="5"] .disc-case::after {
+  animation: disc-glow 2.2s ease-in-out infinite, disc-rainbow 5s linear infinite;
+}
+@keyframes disc-rainbow { to { filter: hue-rotate(360deg); } }

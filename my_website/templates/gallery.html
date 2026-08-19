@@ -39,7 +39,7 @@
           <button class="rail-arrow next" onclick="discStep(1)" aria-label="Next disc">▸</button>
           <div class="disc-track" id="disc-track">
             {% for season in seasons %}
-            <div class="disc-slot" id="disc-{{ forloop.counter0 }}" onclick="discClick({{ forloop.counter0 }})">
+            <div class="disc-slot" id="disc-{{ forloop.counter0 }}" data-season="{{ season.number }}" onclick="discClick({{ forloop.counter0 }})">
               <div class="disc-case">
                 <span class="disc-num">DISC {{ season.number }}</span>
                 {% if season.has_logo %}

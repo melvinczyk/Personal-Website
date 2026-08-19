@@ -9,6 +9,7 @@ SEASON_DESCRIPTIONS = {
     2: "Groid Pack season 2 - Spells and Dragons",
     3: "Groid Pack season 3 PART 1 - Guns and Factories",
     4: "Groid Pack Seven Seas - Pirates PvP",
+    5: "Groid Pack OG Remastered - The first pack, rebuilt",
 }
 
 # Screenshot used as the backdrop behind each disc on the gallery screen.
@@ -24,6 +25,7 @@ SEASON_NAMES = {
     2: "SEASON 2 - Spells and Dragons",
     3: "SEASON 3 (PART 1)",
     4: "SEVEN SEAS",
+    5: "OG REMASTERED",
 }
 
 IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
