@@ -31,7 +31,6 @@ KP_LINES.forEach(({ t, c, d }) => {
   }, d);
 });
 
-// Typewriter message
 const MSG = "Page doesnt exist rn.";
 const tw = document.getElementById('tw-msg');
 let i = 0;
@@ -43,7 +42,6 @@ function typeNext() {
 }
 setTimeout(typeNext, 900);
 
-// Glitch the 404 number
 const errNum = document.getElementById('errnum');
 const glitchNums = ['4O4', '404', '40₄', 'ᗺ04', '404', '4Ø4', '404'];
 setInterval(() => {

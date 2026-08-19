@@ -1,8 +1,7 @@
-/* ── PAGE BASE ── */
+
 #screen { opacity: 1; }
 html, body { overflow: auto; min-height: 100%; }
 
-/* ── NAV ── */
 #navback {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 8px 20px;
@@ -21,10 +20,8 @@ html, body { overflow: auto; min-height: 100%; }
 .nb-sep { color: rgba(0,170,136,0.4); }
 .nb-active { color: var(--mgs-cyan); font-family: 'Orbitron', monospace; font-size: 10px; }
 
-/* ── MAIN ── */
 #main { max-width: 1160px; margin: 0 auto; padding: 24px 20px 60px; }
 
-/* ── SECTION CARD ── */
 .ts {
   border: 2px solid var(--mgs-border);
   border-left: 4px solid var(--mgs-cyan);
@@ -55,7 +52,6 @@ html, body { overflow: auto; min-height: 100%; }
 .ts-sub { color: var(--mgs-border); font-size: 11px; margin-left: auto; font-family: 'Share Tech Mono', monospace; }
 .ts-bd { padding: 20px; }
 
-/* ── STAT BOXES ── */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -74,7 +70,6 @@ html, body { overflow: auto; min-height: 100%; }
 .stat-val.e { color: var(--alert-red); }
 .stat-sub { color: var(--mgs-border); font-size: 11px; margin-top: 2px; font-family: 'Share Tech Mono', monospace; }
 
-/* ── UPLOAD / RECORD ── */
 .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
 @media(max-width: 720px) { .upload-grid { grid-template-columns: 1fr; } }
 
@@ -121,7 +116,6 @@ audio { width: 100%; margin-top: 10px; }
 .or-divider::before { left: 0; }
 .or-divider::after  { right: 0; }
 
-/* ── BUTTONS ── */
 .term-btn {
   display: inline-flex; align-items: center; gap: 7px;
   background: transparent; border: 2px solid var(--mgs-border);
@@ -149,7 +143,6 @@ audio { width: 100%; margin-top: 10px; }
 
 .loading-row { display: none; align-items: center; gap: 8px; color: var(--mgs-border); font-size: 12px; font-family: 'Share Tech Mono', monospace; }
 
-/* ── INPUTS ── */
 .term-input {
   width: 100%; background: rgba(0,10,10,0.9);
   border: 2px solid rgba(0,170,136,0.3);
@@ -176,7 +169,6 @@ audio { width: 100%; margin-top: 10px; }
 
 .hp { display: none; visibility: hidden; }
 
-/* ── ALERTS ── */
 .term-alert-err {
   display: flex; gap: 10px;
   border: 2px solid var(--alert-red); border-left: 4px solid var(--alert-red);
@@ -192,7 +184,6 @@ audio { width: 100%; margin-top: 10px; }
   font-family: 'Share Tech Mono', monospace;
 }
 
-/* ── CAROUSEL ── */
 .carousel-wrap {
   position: relative; overflow: hidden;
   border: 2px solid var(--mgs-border);
@@ -216,13 +207,11 @@ audio { width: 100%; margin-top: 10px; }
 .cdot { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,170,136,0.3); transition: background .2s; cursor: pointer; }
 .cdot.active { background: var(--mgs-cyan); }
 
-/* ── MACAULAY ── */
 .macaulay-inner { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
 .macaulay-embed { flex-shrink: 0; }
 .macaulay-embed iframe { border: 2px solid var(--mgs-border); display: block; }
 .macaulay-form { flex: 1; min-width: 220px; }
 
-/* ── BIRD TABLE ── */
 .bird-table { width: 100%; border-collapse: collapse; }
 .bird-table th {
   font-size: 10px; letter-spacing: 3px; color: var(--mgs-border);
@@ -258,7 +247,6 @@ audio { width: 100%; margin-top: 10px; }
 .table-search input { flex: 1; max-width: 280px; }
 .table-count { font-size: 11px; color: var(--mgs-border); font-family: 'Share Tech Mono', monospace; }
 
-/* ── HOW IT WORKS ── */
 .pipeline { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 .pipe-step {
   border: 2px solid rgba(0,170,136,0.3);
@@ -277,7 +265,6 @@ audio { width: 100%; margin-top: 10px; }
 }
 .pipe-desc { font-size: 12px; color: #99ddcc; line-height: 1.65; font-family: 'Share Tech Mono', monospace; }
 
-/* ── STATUS BAR ── */
 #statusbar {
   position: sticky; bottom: 0; z-index: 50;
   display: flex; justify-content: space-between; align-items: center;
@@ -290,7 +277,6 @@ audio { width: 100%; margin-top: 10px; }
   font-family: 'Orbitron', monospace;
 }
 
-/* ── MISC ── */
 a.tl { color: var(--mgs-cyan); text-decoration: none; font-family: 'Share Tech Mono', monospace; }
 a.tl:hover { text-shadow: 0 0 8px var(--mgs-cyan); text-decoration: underline; }
 .section-comment { font-size: 11px; color: var(--mgs-border); margin-bottom: 14px; letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; }

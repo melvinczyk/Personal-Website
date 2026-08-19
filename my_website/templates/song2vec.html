@@ -16,13 +16,11 @@
 
 <div id="screen">
 
-  <!-- TITLEBAR -->
   <div id="titlebar">
     <div class="ttl">NICK BURCZYK · SONG2VEC</div>
     <div class="clk" id="clock">00:00:00</div>
   </div>
 
-  <!-- NAV -->
   <div id="navback">
     <a href="/" class="nb-link">home</a>
     <span class="nb-sep">/</span>
@@ -34,7 +32,6 @@
 
   <div id="main">
 
-    <!-- HEADER + STATS -->
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">SONG2VEC</span>
@@ -67,7 +64,6 @@
       </div>
     </div>
 
-    <!-- SEARCH + VISUALIZER -->
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">SEARCH</span>
@@ -76,7 +72,6 @@
       <div class="ts-bd">
         <div class="sv-grid">
 
-          <!-- LEFT: search + meta -->
           <div class="sv-left">
             <div class="sv-search-wrap">
               <div class="term-input-row">
@@ -86,7 +81,6 @@
               <div class="sv-results" id="sv-results"></div>
             </div>
 
-            <!-- Selected song info -->
             <div class="sv-song-info" id="sv-song-info" style="display:none">
               <div class="sv-song-title" id="sv-song-title"></div>
               <div class="sv-song-artist" id="sv-song-artist"></div>
@@ -101,7 +95,6 @@
               </div>
             </div>
 
-            <!-- Idle hint -->
             <div class="sv-idle-hint" id="sv-idle-hint">
               <div class="sv-hint-line">◈ type a song or artist</div>
               <div class="sv-hint-line">◈ select from the dropdown</div>
@@ -109,7 +102,6 @@
             </div>
           </div>
 
-          <!-- RIGHT: blob canvas -->
           <div class="sv-right">
             <div class="sv-canvas-wrap">
               <canvas id="sv-canvas" width="400" height="400"></canvas>
@@ -124,7 +116,6 @@
       </div>
     </div>
 
-    <!-- VECTOR SPACE -->
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">EMBEDDING SPACE</span>
@@ -138,7 +129,6 @@
       </div>
     </div>
 
-    <!-- HOW IT WORKS -->
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">PIPELINE</span>
@@ -178,15 +168,14 @@
       </div>
     </div>
 
-  </div><!-- /main -->
+  </div>
 
-  <!-- STATUS BAR -->
   <div id="statusbar">
     <div><span style="color:var(--mgs-cyan)">●</span>&nbsp; song2vec · 203K songs · 1305 genres · 985 tags</div>
     <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
   </div>
 
-</div><!-- /screen -->
+</div>
 
 <script>
 const BLOB_DATA_URL = "{% static 'scripts/blob_data.json' %}";

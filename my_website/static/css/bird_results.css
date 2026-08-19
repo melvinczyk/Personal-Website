@@ -1,8 +1,7 @@
-/* ── PAGE BASE ── */
+
 #screen { opacity: 1; }
 html, body { overflow: auto; min-height: 100%; }
 
-/* ── NAV ── */
 #navback {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 8px 20px;
@@ -22,10 +21,8 @@ html, body { overflow: auto; min-height: 100%; }
 .nb-active { color: var(--mgs-cyan); font-family: 'Orbitron', monospace; font-size: 10px; }
 .nb-right { margin-left: auto; display: flex; gap: 10px; }
 
-/* ── MAIN ── */
 #main { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
 
-/* ── SECTION CARD ── */
 .ts {
   border: 2px solid var(--mgs-border);
   border-left: 4px solid var(--mgs-cyan);
@@ -56,7 +53,6 @@ html, body { overflow: auto; min-height: 100%; }
 .ts-sub { color: var(--mgs-border); font-size: 11px; margin-left: auto; font-family: 'Share Tech Mono', monospace; }
 .ts-bd { padding: 20px; }
 
-/* ── RESULT HERO ── */
 .hero { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
 
 .bird-img-wrap { flex-shrink: 0; width: 210px; }
@@ -83,7 +79,6 @@ html, body { overflow: auto; min-height: 100%; }
   font-weight: 900;
 }
 
-/* Confidence bar */
 .conf-label {
   color: var(--mgs-border); font-size: 10px; letter-spacing: 2px;
   margin-top: 14px; margin-bottom: 4px;
@@ -101,7 +96,6 @@ html, body { overflow: auto; min-height: 100%; }
   transition: width 1.2s cubic-bezier(.4,0,.2,1);
 }
 
-/* Stats boxes */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -120,14 +114,12 @@ html, body { overflow: auto; min-height: 100%; }
 .stat-val.e { color: var(--alert-red); }
 .stat-dsub { color: var(--mgs-border); font-size: 11px; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
 
-/* Terminal readout */
 .readout { margin-top: 16px; font-size: 12px; color: var(--mgs-border); line-height: 2.1; font-family: 'Share Tech Mono', monospace; }
 .readout .k  { color: rgba(0,170,136,0.4); }
 .readout .v  { color: var(--mgs-teal); }
 .readout .vg { color: var(--mgs-cyan); }
 .readout .vy { color: var(--alert-yellow); }
 
-/* ── SPECTROGRAMS ── */
 .spectro-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -156,7 +148,6 @@ html, body { overflow: auto; min-height: 100%; }
 }
 .spectro-item:hover .spectro-badge { opacity: 1; }
 
-/* Lightbox */
 #lightbox {
   display: none; position: fixed; inset: 0; z-index: 2000;
   background: rgba(0,0,0,.92); align-items: center; justify-content: center;
@@ -170,7 +161,6 @@ html, body { overflow: auto; min-height: 100%; }
   font-family: 'Orbitron', monospace; letter-spacing: 2px; font-weight: 700;
 }
 
-/* ── FEEDBACK FORM ── */
 .form-row { margin-bottom: 16px; }
 .form-lbl {
   display: block; font-size: 10px; color: var(--mgs-border);
@@ -251,7 +241,6 @@ html, body { overflow: auto; min-height: 100%; }
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-/* ── STATUS BAR ── */
 #statusbar {
   position: sticky; bottom: 0; z-index: 50;
   display: flex; justify-content: space-between; align-items: center;

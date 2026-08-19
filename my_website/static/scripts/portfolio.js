@@ -1,10 +1,9 @@
-// Accounts, shared by the about card (140.85) and the CONTACT channel (140.15)
-// so the two can never drift apart.
-// Counted from static/minecraft/ (4 season folders, 590 png, 4 mp4 + 1 gif).
+// Shared by the about card (140.85) and the CONTACT channel (140.15).
+// Counts come from static/minecraft/ (4 seasons, 590 png, 4 mp4 + 1 gif).
 const MC_STATS = { seasons: 4, shots: 590, clips: 5, span: '2023-26' };
 
-// Per-service colours, brightened from the brand values so they read on
-// black. Used on the about card only; the CONTACT channel stays on palette.
+// Brightened from the brand colours so they read on black. About card only;
+// the CONTACT channel stays on palette.
 const SOCIAL_LINKS = [
   { label:'GitHub',   url:'https://github.com/melvinczyk',                          color:'#b07cff' },
   { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',          color:'#4da3e8' },
@@ -31,9 +30,6 @@ const PROJECTS = [
   { id:"minecraft-server", name:"MINECRAFT SERVER & MODPACK", tags:["NETWORKING","ONGOING"],                     tech:"Java / JSON / mcscript / Linux server admin",        img:"https://i.ibb.co/7KCwNZr/minecraft.png",                                                                     img2:null,                                                                                                         desc:"Custom modpack with curated mods, resource & data packs. Server admin: config management, real-time troubleshooting, networking. Custom data packs with JSON/mcscript for custom mobs, biomes, loot tables, and structure generation.", link:"https://github.com/melvinczyk/Datapacks"},
 ];
 
-// ══════════════════════════════════════════
-// SIDEBAR PROJECT LIST
-// ══════════════════════════════════════════
 function buildSidebarProjects() {
   const container = document.getElementById('sb-projects');
   if (!container) return;
@@ -53,9 +49,6 @@ function buildSidebarProjects() {
 
 document.addEventListener('DOMContentLoaded', buildSidebarProjects);
 
-// ══════════════════════════════════════════
-// AUDIO
-// ══════════════════════════════════════════
 let audioCtx = null;
 let hoverBuffer = null, clickBuffer = null, errorBuffer = null, bgMusic = null, bgMusicSource = null;
 
@@ -64,8 +57,8 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-// ── mute: one master gain feeds every Web Audio source (SFX + music); the
-// codec voice is a separate <audio> element muted directly. State persists. ──
+// Mute: one master gain feeds every Web Audio source; the codec voice is a
+// separate <audio> element muted directly. State persists.
 let cxMuted = localStorage.getItem('cxMuted') === '1';
 let cxMasterGain = null;
 function getMasterGain() {
@@ -100,8 +93,8 @@ function initMuteButton() {
   const b = document.createElement('button');
   b.id = 'cx-mute';
   b.className = 'cx-mute';
-  // critical positioning/visibility inline so it never depends on the CSS file
-  // loading (the .cx-mute class just adds the blur + hover polish)
+// critical positioning/visibility inline so it never depends on the CSS file
+// loading (the .cx-mute class just adds the blur + hover polish)
   b.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10000;width:40px;height:40px;' +
     'display:flex;align-items:center;justify-content:center;padding:0;color:#4ddc85;' +
     'background:rgba(0,22,18,0.55);border:1px solid rgba(77,220,133,0.55);border-radius:7px;' +
@@ -170,9 +163,6 @@ document.addEventListener('click', e => {
   }
 }, true);
 
-// ══════════════════════════════════════════
-// CODEC INTRO ENTRY
-// ══════════════════════════════════════════
 async function enterSite() {
   const btn    = document.getElementById('codec-btn');
   const codec  = document.getElementById('codec-screen');
@@ -200,7 +190,6 @@ async function enterSite() {
     playBuffer(openBuffer, 0.7);
     codec.addEventListener('animationend', () => {
       codec.style.display = 'none';
-      // reveal happens entirely through the CRT line-open animation
       screen.classList.add('visible', 'crt-open');
       setTimeout(playBackgroundMusic, 300);
       initCodec();
@@ -208,10 +197,6 @@ async function enterSite() {
   }, 1800);
 }
 
-
-// ══════════════════════════════════════════
-// TERMINAL HELPERS
-// ══════════════════════════════════════════
 const out = document.getElementById('output');
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function ln(html='',cls='line'){const d=document.createElement('div');d.className=`line ${cls} fade-in`;d.innerHTML=html;out.appendChild(d);out.scrollTop=out.scrollHeight;}
@@ -219,9 +204,6 @@ function bl(){const d=document.createElement('div');d.className='blank fade-in';
 function addHtml(h){const d=document.createElement('div');d.className='fade-in';d.innerHTML=h;out.appendChild(d);out.scrollTop=out.scrollHeight;}
 function echo(cmd){ln(`<span style="color:var(--mgs-border)">>></span> <span style="color:var(--mgs-cyan)">${esc(cmd)}</span>`);}
 
-// ══════════════════════════════════════════
-// COMMANDS
-// ══════════════════════════════════════════
 const CMDS = {
 about(){
   bl();
@@ -381,9 +363,6 @@ CMDS['song2vec'] = function() {
 CMDS['gallery']=CMDS['gallery'];
 CMDS['mc-gallery']=CMDS['gallery'];
 
-// ══════════════════════════════════════════
-// COMMAND RUNNER
-// ══════════════════════════════════════════
 function runCmd(raw){
   const trimmed=(raw||'').trim();
   echo(trimmed);
@@ -395,10 +374,6 @@ function runCmd(raw){
   else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>. Type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
 }
 
-
-// ══════════════════════════════════════════
-// ECHO SCOUT LIVE DEMO: full device emulator
-// ══════════════════════════════════════════
 let _esDemoRAF = null;
 
 function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
@@ -408,31 +383,25 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  // ── State machine ──
   let screen    = 'loading';
   let subTab    = 0;
   let t         = 0;
   let loadPct   = 0;
   let lastScreen = '';
   let lastSubTab = -1;
-  // ANGL state: 0=idle,1=aLocked,2=done
   let anglState = 0;
-  // Scope buffers
   const SCOPE_SAMPLES = 240;
   const _scopeBuf = [new Float32Array(SCOPE_SAMPLES), new Float32Array(SCOPE_SAMPLES), new Float32Array(SCOPE_SAMPLES)];
   let _scopeHead = 0;
 
-  // Reset button
   const resetBtn = document.getElementById(`${canvasId}-reset`);
   if (resetBtn) resetBtn.addEventListener('click', () => {
     screen='loading'; subTab=0; t=0; loadPct=0; lastScreen=''; lastSubTab=-1; anglState=0; _scopeHead=0;
   });
 
-  // ── Colour palette ──
   const K = { BG:'#000000', G:'#00FC00', DIM:'#006000', FAINT:'#003000',
               SEP:'#005800', RED:'#FF0000', AMB:'#F85C00', WHT:'#FFFFFF' };
 
-  // ── Primitives ──
   function fr(x,y,w,h,c)        { ctx.fillStyle=c; ctx.fillRect(x,y,w,h); }
   function dr(x,y,w,h,c)        { ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1); }
   function hl(x,y,l,c)          { ctx.fillStyle=c; ctx.fillRect(x,y,l,1); }
@@ -446,7 +415,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
   }
   function ctxt(s,cx,y,sz,c) { txt(s,cx,y,sz,c,'center'); }
 
-  // ── ASCII art renderer ──
   function drawArt(lines, sx, sy, cw, lh, col) {
     ctx.save(); ctx.fillStyle=col;
     ctx.font=`${lh}px "Courier New",monospace`;
@@ -478,7 +446,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     '        \\/     \\/                  ',
   ];
 
-  // ── Shared header ──
   function drawHeader(title, showCal=false) {
     fr(0,0,240,28,K.BG); hl(0,27,240,K.SEP);
     ctx.save(); ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
@@ -489,7 +456,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     if (showCal) ctxt('CAL',205,7,2,K.DIM);
   }
 
-  // ── Tab bar ──
   function drawTabBar(labels, active) {
     const tw=Math.floor(240/labels.length);
     fr(0,280,240,40,K.BG); hl(0,280,240,K.SEP);
@@ -500,7 +466,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     });
   }
 
-  // ── Loading screen ──
   function drawLoading() {
     fr(0,0,240,320,K.BG);
     dr(2,2,236,316,K.FAINT);
@@ -514,11 +479,9 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     ctxt(`${Math.round(loadPct)}%`,120,BY+BH+6,1,K.DIM);
   }
 
-  // ── Menu screen ──
   function drawMenu() {
     fr(0,0,240,320,K.BG);
     dr(2,2,236,316,K.FAINT);
-    // Title frame
     dr(8,8,224,138,K.DIM); dr(12,12,216,130,K.G);
     hl(16,16,16,K.G); vl(16,16,16,K.G);
     hl(207,16,16,K.G); vl(223,16,16,K.G);
@@ -528,7 +491,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     ctxt('VERSION: 1.0',120,137,1,K.DIM);
     drawArt(ECHO_ART,  42, 16, 5, 9, K.G);
     drawArt(SCOUT_ART, 30, 80, 5, 9, K.G);
-    // Status bar
     const sy=147, sh=13;
     fr(0,sy,240,sh,K.BG);
     hl(8,sy,224,K.SEP); hl(8,sy+sh-1,224,K.SEP);
@@ -542,14 +504,12 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     }
     sUnit(44,'RADAR'); sUnit(124,'IMU'); sUnit(200,'TOF');
     hl(8,158,224,K.SEP);
-    // RADAR launch button
     const bx=12,by=160,bw=216,bh=44, arm=10;
     dr(bx,by,bw,bh,K.DIM); dr(bx+2,by+2,bw-4,bh-4,K.G);
     hl(bx+6,by+6,arm,K.G); vl(bx+6,by+6,arm,K.G);
     hl(bx+bw-arm-6,by+6,arm,K.G); vl(bx+bw-7,by+6,arm,K.G);
     hl(bx+6,by+bh-7,arm,K.G); vl(bx+6,by+bh-arm-6,arm,K.G);
     hl(bx+bw-arm-6,by+bh-7,arm,K.G); vl(bx+bw-7,by+bh-arm-6,arm,K.G);
-    // Compass icon left of RADAR text
     const ix=bx+22, iy=by+bh/2;
     vl(ix,iy-7,14,K.G);
     lnC(ix,iy,ix-5,iy-6,K.G); lnC(ix,iy,ix+5,iy-6,K.G);
@@ -575,7 +535,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     dr(40,294,160,16,K.RED); ctxt('[ POWER OFF ]',120,297,1,K.RED);
   }
 
-  // ── Pre-bake radar cone grid ──
   const _coneCanvas=document.createElement('canvas');
   _coneCanvas.width=240; _coneCanvas.height=320;
   (function buildCone(){
@@ -618,7 +577,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     {ph:2.1, ps:0.015,db:850, da:320,ab:-20,aa:18},
   ];
 
-  // ── Radar screen ──
   function drawRadar(t) {
     const AX=120,AY=316,CLEN=227,AR=4000,CTOP=28;
     const sd=d=>Math.pow(Math.min(d/AR,1),0.75)*0.88;
@@ -657,7 +615,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     }
   }
 
-  // ── TOF helpers ──
   function tofCol(d) {
     if(d<=0)   return '#202020';
     if(d<300)  return '#FF0000';
@@ -667,7 +624,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     return K.DIM;
   }
 
-  // GRID tab
   function drawTofGrid(t) {
     const CELL=30, GY=28;
     const cd=280+700*(0.5+0.5*Math.sin(t/110));
@@ -679,11 +635,9 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     }
   }
 
-  // ANGL tab – 3D angle measurement tool
   function drawTofAngl(t) {
     const VIZ_CX=120, VIZ_CY=189;
     const ANGL_NUM_H=76, BTN_Y=236, BTN_H=44;
-    // Simulated angle cycling 0→90
     const angleVal=(45+40*Math.sin(t*0.008)).toFixed(1);
     if(anglState===0){
       ctxt('POINT AT TARGET A',120,30,1,K.DIM);
@@ -695,7 +649,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       ctxt('ANGLE LOCKED',120,30,1,K.G);
       ctxt(`${angleVal}`,120,44,4,K.G);
     }
-    // 3D axes
     function proj3(x,y,z){
       const rx=0.3,ry=t*0.01;
       const cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy2=Math.sin(ry);
@@ -712,17 +665,14 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     ctx.save(); ctx.font='8px "Courier New",monospace'; ctx.textBaseline='top'; ctx.fillStyle=K.RED; ctx.fillText('X',...proj3(axLen+4,0,0));
     ctx.fillStyle=K.G; ctx.fillText('Y',...proj3(0,axLen+4,0));
     ctx.fillStyle=K.DIM; ctx.fillText('Z',...proj3(0,0,axLen+4)); ctx.restore();
-    // Vector A (green)
     const aAngle=0.8, p0=proj3(0,0,0), pA=proj3(Math.cos(aAngle)*50,Math.sin(aAngle)*50,0);
     lnC(p0[0],p0[1],pA[0],pA[1],K.G);
     fc(pA[0],pA[1],4,K.G);
     if(anglState>0){
-      // Vector B (amber)
       const bAngle=aAngle+parseFloat(angleVal)*Math.PI/180;
       const pB=proj3(Math.cos(bAngle)*50,Math.sin(bAngle)*50,0);
       lnC(p0[0],p0[1],pB[0],pB[1],K.AMB);
       fc(pB[0],pB[1],4,K.AMB);
-      // arc between
       ctx.strokeStyle=anglState===2?K.G:K.AMB; ctx.lineWidth=1;
       ctx.beginPath();
       for(let s=0;s<=20;s++){
@@ -732,30 +682,24 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       }
       ctx.stroke();
     }
-    // Button
     const bLabel=anglState===0?'LOCK A':anglState===1?'LOCK B':'RESET';
     const bCol=anglState===0?K.G:anglState===1?K.AMB:K.DIM;
     dr(20,BTN_Y,200,BTN_H,bCol); dr(22,BTN_Y+2,196,BTN_H-4,bCol);
     ctxt(`[ ${bLabel} ]`,120,BTN_Y+16,2,bCol);
   }
 
-  // DIST tab – side-view cone distance measurement
   function drawTofDist(t) {
     const DIST_VIZ_CX=120, DIST_VIZ_Y=64, DIST_VIZ_BOT=232;
     const DIST_BTN_Y=236, DIST_BTN_H=44, DIST_BTN_W=200, DIST_BTN_X=20;
     const dist=Math.round(500+1500*(0.5+0.5*Math.sin(t*0.008)));
     const distStr=dist<1000?`${dist}mm`:`${(dist/1000).toFixed(2)}m`;
     ctxt(distStr,120,4,4,K.G);
-    // cone viz area
     const VH=DIST_VIZ_BOT-DIST_VIZ_Y, AX=DIST_VIZ_CX, AY=DIST_VIZ_BOT;
     const CLEN=VH;
-    // center vline
     vl(AX,DIST_VIZ_Y,VH,K.DIM);
-    // FOV lines spread=52deg
     const spread=52;
     lnC(AX,AY, AX+CLEN*Math.sin(spread*Math.PI/180), DIST_VIZ_Y, K.DIM);
     lnC(AX,AY, AX-CLEN*Math.sin(spread*Math.PI/180), DIST_VIZ_Y, K.DIM);
-    // range rings at 500,1000,1500,2000,3000,4000mm
     const MAX_D=4000;
     [500,1000,1500,2000,3000,4000].forEach(ring=>{
       const yp=Math.round(AY-CLEN*ring/MAX_D);
@@ -765,7 +709,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       ctx.save(); ctx.fillStyle=K.DIM; ctx.font='7px "Courier New",monospace'; ctx.textBaseline='middle';
       ctx.fillText(ring>=1000?`${ring/1000}m`:`${ring}`,AX+hw+2,yp); ctx.restore();
     });
-    // distance marker
     const markerY=Math.round(AY-CLEN*Math.min(dist,MAX_D)/MAX_D);
     if(markerY>=DIST_VIZ_Y){
       const hw2=Math.round(CLEN*Math.sin(spread*Math.PI/180)*Math.min(dist,MAX_D)/MAX_D);
@@ -774,42 +717,34 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       ctx.setLineDash([]);
       fc(AX,markerY,4,K.G);
     }
-    // device rect at bottom
     fr(AX-8,AY-6,16,6,K.DIM);
-    // Button
     dr(DIST_BTN_X,DIST_BTN_Y,DIST_BTN_W,DIST_BTN_H,K.G);
     dr(DIST_BTN_X+2,DIST_BTN_Y+2,DIST_BTN_W-4,DIST_BTN_H-4,K.G);
     ctxt('[ MEASURE ]',120,DIST_BTN_Y+16,2,K.G);
   }
 
-  // NRML tab – surface normal + fitted plane
   function drawTofNrml(t) {
     const NUM_H=52, VIZ_Y=80, VIZ_CX=120, VIZ_CY=180, SCALE=55;
     const tiltX=(12*Math.sin(t*0.007)).toFixed(1);
     const azimuth=(30+25*Math.sin(t*0.005)).toFixed(1);
     txt(`TILT ${tiltX} deg`,10,28,2,K.G);
     txt(`AZ ${azimuth} deg`,10,46,2,K.AMB);
-    // oblique projection
     function proj(x,y,z){ return [VIZ_CX+(x+z*0.35)*SCALE/500, VIZ_CY+(y-z*0.18)*SCALE/500]; }
-    // axes
     [[500,0,0,K.RED],[0,500,0,K.G],[0,0,500,K.DIM]].forEach(([x,y,z,c])=>{
       const p0=proj(0,0,0), p1=proj(x,y,z);
       lnC(p0[0],p0[1],p1[0],p1[1],c);
     });
-    // point cloud dots (8x8 on a tilted plane)
     for(let ri=0;ri<8;ri++) for(let ci=0;ci<8;ci++){
       const px_=(ci-3.5)*80, pz=(ri-3.5)*80;
       const py_=-px_*Math.sin(parseFloat(tiltX)*Math.PI/180)*0.3+Math.sin(t*0.05+ri*ci)*8;
       const [sx,sy]=proj(px_,py_,pz);
       ctx.fillStyle=K.DIM; ctx.fillRect(sx-1,sy-1,2,2);
     }
-    // fitted plane AMBER quad
     const plCorners=[[-400,-20,-400],[-400,-20,400],[400,-20,400],[400,-20,-400]].map(([x,y,z])=>proj(x,y,z));
     ctx.strokeStyle=K.AMB; ctx.lineWidth=1; ctx.beginPath();
     ctx.moveTo(plCorners[0][0],plCorners[0][1]);
     plCorners.forEach(p=>ctx.lineTo(p[0],p[1]));
     ctx.closePath(); ctx.stroke();
-    // normal arrow GREEN with circle tip
     const tipP=proj(0,-350,0);
     lnC(VIZ_CX,VIZ_CY,tipP[0],tipP[1],K.G);
     fc(tipP[0],tipP[1],5,K.G);
@@ -825,7 +760,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     drawTabBar(['GRID','ANGL','DIST','NRML'],tab);
   }
 
-  // ── IMU/Attitude screen ──
   function drawImuCube(t) {
     const CX=120,CY=154,SZ=62;
     const rx=t*0.012, ry=t*0.018, rz=t*0.007;
@@ -857,7 +791,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.stroke();
     ctx.beginPath(); ctx.arc(CX,CY,R-8,0,Math.PI*2); ctx.stroke();
     ctx.restore();
-    // tick marks
     for(let a=0;a<360;a+=30){
       const r=a*Math.PI/180;
       const ox=Math.cos(r),oy=Math.sin(r);
@@ -874,27 +807,22 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     ctxt(level?'LEVEL':'TILTED',120,268,1,level?K.G:K.RED);
   }
 
-  // Push new sample to scope buffer each tick
   function tickScope(t) {
-    _scopeBuf[0][_scopeHead]=Math.sin(t*0.012)*45;            // Roll
-    _scopeBuf[1][_scopeHead]=Math.sin(t*0.018+1.0)*30;        // Pitch
-    _scopeBuf[2][_scopeHead]=(t*0.007*180/Math.PI)%360-180;  // Yaw (centred)
+    _scopeBuf[0][_scopeHead]=Math.sin(t*0.012)*45;
+    _scopeBuf[1][_scopeHead]=Math.sin(t*0.018+1.0)*30;
+    _scopeBuf[2][_scopeHead]=(t*0.007*180/Math.PI)%360-180;
     _scopeHead=(_scopeHead+1)%SCOPE_SAMPLES;
   }
 
   function drawScopeFrame() {
-    // SCOPE_Y0=46, SCOPE_LANE_H=78, 3 lanes
     const SCOPE_Y0=46, LH=78;
     const LANES=[{lbl:'R',col:K.G},{lbl:'P',col:K.AMB},{lbl:'Y',col:K.DIM}];
     const RANGES=[90,60,180];
-    // lane separators
     hl(0,SCOPE_Y0+LH,240,K.FAINT);
     hl(0,SCOPE_Y0+LH*2,240,K.FAINT);
-    // mid-lane guides
     [SCOPE_Y0+LH/2, SCOPE_Y0+LH+LH/2, SCOPE_Y0+LH*2+LH/2].forEach(my=>{
       hl(0,Math.round(my),240,K.FAINT);
     });
-    // Legend squares at x=178
     LANES.forEach(({lbl,col},i)=>{
       fr(178,32+i*10,6,6,col);
       ctx.save(); ctx.fillStyle=col; ctx.font='8px "Courier New",monospace';
@@ -923,41 +851,30 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     drawTabBar(['CUBE','PLMB','SCPE'],tab);
   }
 
-  // ── Battery screen ──
   function drawBattery(t) {
     fr(0,0,240,320,K.BG);
     drawHeader('BATTERY');
     const pct=Math.round(72+8*Math.sin(t/200));
     const col=pct>30?K.G:K.RED;
-    // "CHARGE LEVEL" label
     ctxt('CHARGE LEVEL',120,58,1,K.DIM);
-    // Rounded rect shell
     const BX=10,BY=72,BW=196,BH=46,BR=5;
     ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
     ctx.beginPath(); ctx.roundRect(BX,BY,BW,BH,BR); ctx.stroke();
-    // tip nub
     fr(206,86,8,18,K.DIM);
-    // fill bar
     const fillW=Math.round((BW-8)*pct/100);
     if(fillW>0){ ctx.save(); ctx.beginPath(); ctx.roundRect(BX+4,BY+4,BW-8,BH-8,BR-2); ctx.clip(); fr(BX+4,BY+4,fillW,BH-8,col); ctx.restore(); }
-    // VOLTAGE
     ctxt('VOLTAGE',120,128,2,K.DIM);
     ctxt('3.84 V',120,146,4,K.G);
-    // REMAINING
     ctxt('REMAINING',120,180,2,K.DIM);
     ctxt(`${Math.round(pct*18)}/1800 mAh`,120,198,2,K.G);
-    // separator
     hl(8,220,224,K.SEP);
-    // CHARGE
     ctxt('CHARGE',120,228,2,K.DIM);
     ctxt(`${pct}%`,120,246,4,col);
   }
 
-  // ── Settings screen ──
   function drawSettings() {
     fr(0,0,240,320,K.BG);
     drawHeader('SETTINGS');
-    // Layout constants matching firmware
     const ARROW_W=52, ROW_H=46, HDR_H=22;
     const sections=[
       {hdr:'DETECTION',  items:[['MAX RANGE','4000 MM','max detect dist'],['SENSITIVITY','MED','target filter level']]},
@@ -968,7 +885,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     let y=28;
     sections.forEach(sec=>{
       if(y+HDR_H>270) return;
-      // header row: AMBER underline + AMBER centred label
       fr(0,y,240,HDR_H,K.BG);
       hl(0,y+HDR_H-1,240,K.AMB);
       ctxt(sec.hdr,120,y+6,1,K.AMB);
@@ -977,46 +893,38 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
         if(y+ROW_H>270) return;
         fr(0,y,240,ROW_H,K.BG);
         hl(0,y+ROW_H-1,240,K.SEP);
-        // vertical dividers
         vl(ARROW_W,y+2,ROW_H-4,K.SEP);
         vl(240-ARROW_W,y+2,ROW_H-4,K.SEP);
-        // arrow buttons
         ctxt('<',26,y+ROW_H/2-6,2,K.DIM);
         ctxt('>',240-26,y+ROW_H/2-6,2,K.DIM);
-        // label + desc
         txt(lbl,ARROW_W+8,y+6,1,K.DIM);
         txt(desc,ARROW_W+8,y+18,1,K.FAINT);
-        // value centred
         ctxt(val,120,y+ROW_H/2-6,2,K.G);
         y+=ROW_H;
       });
     });
-    // RESET DEFAULTS button at bottom
     const ry=270;
     dr(16,ry+7,208,26,K.RED);
     ctxt('RESET DEFAULTS',120,ry+14,2,K.RED);
   }
 
-  // ── 3D Map pre-generated room point cloud ──
   const _mapPts=(function(){
     const pts=[]; const N=400; const ROOM=300;
-    // 6 faces of a box: ceiling,floor,left,right,front,back
     for(let i=0;i<N;i++){
       const u=(Math.random()-0.5)*2*ROOM, v=(Math.random()-0.5)*2*ROOM;
       const face=Math.floor(Math.random()*6);
       let p;
-      if(face===0) p=[u,  ROOM,v];   // ceiling
-      else if(face===1) p=[u,-ROOM,v]; // floor
-      else if(face===2) p=[-ROOM,u,v]; // left
-      else if(face===3) p=[ ROOM,u,v]; // right
-      else if(face===4) p=[u,v,  ROOM]; // front
-      else              p=[u,v,-ROOM];  // back
+      if(face===0) p=[u,  ROOM,v];
+      else if(face===1) p=[u,-ROOM,v];
+      else if(face===2) p=[-ROOM,u,v];
+      else if(face===3) p=[ ROOM,u,v];
+      else if(face===4) p=[u,v,  ROOM];
+      else              p=[u,v,-ROOM];
       pts.push(p);
     }
     return pts;
   })();
 
-  // Iron colormap by depth
   function ironColor(v) {
     v=Math.max(0,Math.min(1,v));
     if(v<0.33)  { const f=v/0.33; return `rgb(${Math.round(f*200)},0,${Math.round(f*80)})`; }
@@ -1028,10 +936,8 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
     fr(0,0,240,320,K.BG);
     drawHeader('3D MAP');
     const VIEW_Y=28, VIEW_H=244, VIEW_CX=120, VIEW_CY=150, FOCAL=200;
-    // Rotate Y axis slowly
     const ry=t*0.006;
     const cosY=Math.cos(ry), sinY=Math.sin(ry);
-    // Collect projected points with depth
     const projected=[];
     _mapPts.forEach(([px,py,pz])=>{
       const rx=px*cosY+pz*sinY, rz=-px*sinY+pz*cosY;
@@ -1042,36 +948,29 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       if(sy<VIEW_Y||sy>VIEW_Y+VIEW_H||sx<0||sx>240) return;
       projected.push({sx,sy,depth});
     });
-    // Sort back to front
     projected.sort((a,b)=>b.depth-a.depth);
     projected.forEach(({sx,sy,depth})=>{
       const v=1-Math.min(1,(depth-10)/900);
       ctx.fillStyle=ironColor(v);
       ctx.fillRect(Math.round(sx)-1,Math.round(sy)-1,2,2);
     });
-    // CLEAR button
     hl(8,272,224,K.SEP);
     fr(8,279,224,32,K.BG);
     dr(8,279,224,32,K.DIM);
     ctxt('CLEAR',120,289,2,K.DIM);
   }
 
-  // ── Surveyor screen ──
-  // Surface colors matching firmware RGB565→CSS
   const SURF_COLS=['#00FFFF','#848484','#FF8000','#0000FF','#00FF00','#FF0000'];
   const SURF_NAMES=['CEILING','FLOOR','LEFT','RIGHT','FRONT','BACK'];
-  // Captured flags (simulated)
   const _survCap=[true,true,false,false,false,false];
 
   function drawSurveyor(t) {
     fr(0,0,240,320,K.BG);
     drawHeader('SURVEYOR');
-    // INFO bar
     const INFO_Y=28, INFO_H=16;
     fr(0,INFO_Y,240,INFO_H,K.BG);
     ctxt('ROOM DIMENSIONS',120,INFO_Y+3,1,K.DIM);
     hl(0,INFO_Y+INFO_H-1,240,K.SEP);
-    // 6 surface buttons in 3×2 grid (BTN_Y=44, BTN_ROW_H=36, 3 rows)
     const BTN_Y=44, BTN_ROW_H=36;
     for(let i=0;i<6;i++){
       const col=i%2, row=Math.floor(i/2);
@@ -1083,21 +982,17 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       ctx.textBaseline='middle'; ctx.textAlign='center';
       ctx.fillText(SURF_NAMES[i],bx+bw/2,by+bh/2); ctx.restore();
     }
-    // CAPTURE + CLEAR ALL at CLR_Y=152
     const CLR_Y=152, CLR_H=24;
     dr(4,CLR_Y,140,CLR_H,K.G); ctxt('CAPTURE',74,CLR_Y+7,1,K.G);
     dr(152,CLR_Y,84,CLR_H,K.DIM); ctxt('CLEAR ALL',194,CLR_Y+7,1,K.DIM);
     hl(0,CLR_Y+CLR_H,240,K.SEP);
-    // 3D wireframe box  VIZ_Y=176, VIZ_CX=120, VIZ_CY=248
     const VIZ_Y=177, VIZ_CX=120, VIZ_CY=248, VIZ_H=143;
     fr(0,VIZ_Y,240,VIZ_H,K.BG);
-    // 8 corners of room box
     const W2=80,H2=50,D2=60;
     const corners=[
       [-W2,-H2,-D2],[ W2,-H2,-D2],[ W2, H2,-D2],[-W2, H2,-D2],
       [-W2,-H2, D2],[ W2,-H2, D2],[ W2, H2, D2],[-W2, H2, D2],
     ];
-    // view rotation: yaw=0.55+slow spin, pitch=-0.4
     const yaw=0.55+t*0.004, pitch=-0.4;
     const cy=Math.cos(yaw),sy2=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
     function projRoom(x,y,z){
@@ -1114,31 +1009,25 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
         ctx.beginPath(); ctx.moveTo(pts2d[a][0],pts2d[a][1]); ctx.lineTo(pts2d[b][0],pts2d[b][1]); ctx.stroke();
       }
     });
-    // User dot at origin
     const userP=projRoom(0,0,0);
     fc(userP[0],userP[1],4,K.G);
   }
 
-  // ── Power screen ──
   function drawPower() {
     fr(0,0,240,320,K.BG);
     dr(2,2,236,316,K.RED); dr(4,4,232,312,K.RED);
     ctxt('POWER',120,55,4,K.RED);
     ctxt('OPTIONS',120,90,4,K.RED);
-    // RESTART – AMBER
     dr(20,148,200,44,K.AMB); dr(22,150,196,40,K.AMB);
     ctxt('[ RESTART ]',120,162,2,K.AMB);
     ctxt('rescans all devices',120,185,1,K.FAINT);
-    // POWER OFF – RED
     dr(20,204,200,44,K.RED); dr(22,206,196,40,K.RED);
     ctxt('[ POWER OFF ]',120,218,2,K.RED);
     ctxt('tap screen to wake',120,241,1,K.FAINT);
-    // CANCEL – GREEN_DIM
     dr(20,260,200,44,K.DIM); dr(22,262,196,40,K.DIM);
     ctxt('[ CANCEL ]',120,274,2,K.DIM);
   }
 
-  // ── Click handler ──
   function handleClick(x,y) {
     if(screen==='loading') return;
     if(screen==='menu'){
@@ -1152,23 +1041,18 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
       if(x>=40&&x<=200&&y>=294&&y<=310)  { screen='power';    t=0; lastScreen=''; return; }
       return;
     }
-    // < MENU header button
     if(x>=3&&x<=67&&y>=3&&y<=25) { screen='menu'; t=0; lastScreen=''; return; }
-    // Power screen buttons
     if(screen==='power'){
       if(x>=20&&x<=220&&y>=148&&y<=192) { screen='loading'; loadPct=0; t=0; lastScreen=''; return; } // RESTART
       if(x>=20&&x<=220&&y>=204&&y<=248) { screen='loading'; loadPct=0; t=0; lastScreen=''; return; } // POWER OFF
       if(x>=20&&x<=220&&y>=260&&y<=304) { screen='menu';    t=0; lastScreen=''; return; }            // CANCEL
       return;
     }
-    // TOF ANGL button
     if(screen==='tof'&&subTab===1&&y>=236&&y<=280){
       anglState=(anglState+1)%3; return;
     }
-    // Tab bars
     if(screen==='tof'&&y>=280) { subTab=Math.min(3,Math.floor(x/60)); lastSubTab=-1; return; }
     if(screen==='imu'&&y>=280) { subTab=Math.min(2,Math.floor(x/80)); lastSubTab=-1; return; }
-    // Map3d CLEAR
     if(screen==='map3d'&&x>=8&&x<=232&&y>=279&&y<=311) { t=0; return; }
   }
 
@@ -1178,7 +1062,6 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
   });
   canvas.style.cursor='pointer';
 
-  // ── Main loop ──
   function loop() {
     t++;
     if(screen==='loading'){
@@ -1213,25 +1096,16 @@ function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
   loop();
 }
 
-
-// ══════════════════════════════════════════
-// CODEC MAIN SCREEN
-// Frequencies are sections; the MEMORY panel is the readable menu.
-// The Colonel talks with real ripped frames, mouth driven by visemes.
-// ══════════════════════════════════════════
-// Sprites/voice load without Django's ?t= cache-buster, so the browser caches
-// them hard: replacing a frame on disk isn't enough, the stale one keeps
-// showing. Stamp every codec asset URL with a per-load token so a plain reload
-// always pulls the current art and audio.
+// Sprites and voice load without Django's ?t= cache-buster, so the browser
+// caches them hard. Stamp every codec asset URL with a per-load token or a
+// replaced frame keeps showing the stale one.
 const CX_BUST = Date.now();
 const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png?v=${CX_BUST}`;
 const SN_F = n => `${STATIC_URLS.codecBase}/snake_f${n}.png?v=${CX_BUST}`;
 const OT_F = n => `${STATIC_URLS.codecBase}/otacon_f${n}.png?v=${CX_BUST}`;
 const CX_VOICE_URL = key => `${STATIC_URLS.voiceBase}/${key}.m4a?v=${CX_BUST}`;
-// Codec speakers, each with a neutral face and a closed/half/open/wide viseme
-// set of real ripped frames. Lines choose their speaker; default is the
-// Colonel. The Colonel and Otacon share the left portrait slot ('campbell');
-// Snake is the right slot. cxSlotNeutral tracks who currently occupies each.
+// The Colonel and Otacon share the left portrait slot ('campbell'); Snake is
+// the right one. Each speaker carries a neutral face plus four visemes.
 const CX_SPEAKERS = {
   colonel: { imgId: 'campbell', neutral: CX_F('00'),
              pose: [CX_F('10'), CX_F('09'), CX_F('08'), CX_F('08')] },
@@ -1241,8 +1115,7 @@ const CX_SPEAKERS = {
              pose: [OT_F('00'), OT_F('01'), OT_F('02'), OT_F('02')] },
 };
 let cxSpeaker = CX_SPEAKERS.colonel;
-// What each portrait slot shows at rest (imgId -> neutral src). Updated as
-// speakers take turns so a slot keeps the last character who used it.
+// What each slot shows at rest, so it keeps the last character who used it.
 const cxSlotNeutral = {
   [CX_SPEAKERS.colonel.imgId]: CX_SPEAKERS.colonel.neutral,
   [CX_SPEAKERS.snake.imgId]:   CX_SPEAKERS.snake.neutral,
@@ -1279,15 +1152,12 @@ const CX_CONTACTS = [
 ];
 let cxIdx = 0;
 let cxBooted = false;
-// The Colonel gives his intro briefing once. After that, returning to the
-// COLONEL channel just shows an idle "..." instead of replaying it.
+// The Colonel briefs once; after that the COLONEL channel just idles on "...".
 let cxColonelDone = false;
-// The PROJECTS channel plays a one-time three-way intro (Colonel hands off to
-// Otacon). After that, only Otacon greets you when you tune back in.
 let cxProjectsIntroDone = false;
 const CX_PROJECTS_IDX = 1;
-// First visit: Colonel briefs, introduces Otacon, Snake reacts, Otacon takes
-// over. Screen text keeps real spellings; the voice clips use phonetic ones.
+// One-time three-way intro on PROJECTS, then only Otacon greets you. Screen
+// text keeps real spellings; the voice clips use phonetic ones.
 const CX_PROJECTS_INTRO = [
   { text:"His operation records. Twelve declassified projects on file.", key:'c1_l0' },
   { text:"For the details, get Otacon on the line. Hal's been cataloguing all of it.", key:'c1_l1' },
@@ -1301,19 +1171,15 @@ const CX_PROJECTS_RETURN = [
   { text:"Want to learn more about any projects?", speaker:'otacon', key:'ot_repeat' },
 ];
 
-// ── talking: typewriter + Qwen3-TTS voice lines + viseme mouth ──
 // Each line may carry a voice key (static/audio/codec/<key>.m4a). Typing
-// drives the mouth; if the voice runs past the typing, the mouth keeps
-// flapping until the audio ends. The next line waits for both.
+// drives the mouth; if the voice outruns the typing the mouth keeps flapping
+// until the audio ends, and the next line waits for both.
 let cxTypeTimer = null;
-// Mouth animation: a single steady timer eases the mouth one step at a time
-// toward a target openness (0 closed .. 3 wide) so it never snaps open<->shut
-// (that snapping is what read as jitter). While the voice runs past the text,
-// cxFlap makes the target gently oscillate like a talking mouth.
+// One steady timer eases the mouth a step at a time toward a target openness
+// (0 closed .. 3 wide) so it never snaps open<->shut, which read as jitter.
+// While a clip plays, the target comes from its precomputed viseme track
+// instead of the typed text; cxAudioMouth flags that mode.
 let cxMouth = 0, cxMouthTarget = 0, cxMouthTimer = null, cxFlap = false, cxFlapPhase = 0;
-// When a voice clip is playing, the mouth is driven by the clip's precomputed
-// viseme track (energy + spectral shape of the real speech) instead of the
-// typed text: cxAudioMouth flags that mode. cxMouthF is the smoothed openness.
 let cxAudioMouth = false, cxMouthF = 0, cxLastMouthIdx = -1;
 const CX_FLAP_CYCLE = [1, 2, 3, 2, 1, 0];
 function cxSetMouthFrame(idx){
@@ -1334,7 +1200,6 @@ function cxMouthStep(){
 }
 function cxStartMouth(){ if (!cxMouthTimer) cxMouthTimer = setInterval(cxMouthStep, 70); }
 function cxClearMouthTimer(){ if (cxMouthTimer){ clearInterval(cxMouthTimer); cxMouthTimer = null; } }
-// Drive the mouth from the clip's viseme track at the current playback time.
 function cxAudioMouthTick(env){
   if (!env || !env.mouth) return;
   const idx = Math.min(env.mouth.length - 1, Math.floor(cxVoice.currentTime / env.step));
@@ -1354,15 +1219,15 @@ const CX_TYPE_LEAD = { 'c0_l1': 1500 };
 // SELECT click (Safari only allows play() from a user gesture until an
 // element has played once), then plays freely for the rest of the session.
 const cxVoiceEl = new Audio();
-cxVoiceEl.muted = cxMuted;   // honor a persisted mute state
+cxVoiceEl.muted = cxMuted;
 function cxUnlockVoice(){
   cxVoiceEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
   cxVoiceEl.play().catch(() => {});
 }
 let cxTypeDone = true, cxVoiceDone = true, cxAdvanceTimer = null;
 
-// ── signal-meter VU: wedge reacts to the voice via a precomputed amplitude
-// envelope, synced by playback time (no rerouting of the audio element) ──
+// Signal-meter VU: the wedge follows a precomputed amplitude envelope synced
+// by playback time, so the audio element never has to be rerouted.
 let cxBarEls = [], cxMeterRAF = null, cxEnvCache = {};
 function cxLoadEnvelope(key){
   if (cxEnvCache[key] !== undefined) return Promise.resolve(cxEnvCache[key]);
@@ -1386,9 +1251,8 @@ function cxLoadEnvelope(key){
       }
       let peak = 0.0001;
       for (const v of env) if (v > peak) peak = v;
-      // Per-frame mouth openness (0 closed .. 3 wide) from the real speech:
-      // silence stays shut; high-ZCR fricatives (s, f, sh) stay narrow; voiced
-      // vowels open in proportion to their energy (loud "ah"/"oh" = widest).
+// Mouth openness per frame from the real speech: silence stays shut, high-ZCR
+// fricatives stay narrow, voiced vowels open in proportion to their energy.
       const mouth = env.map((v, i) => {
         const e = v / peak;
         if (e < 0.08) return 0;
@@ -1405,15 +1269,13 @@ function cxMeterStart(key){
   if (!cxBarEls.length) return;
   cxLoadEnvelope(key).then(env => {
     if (cxMeterRAF) cancelAnimationFrame(cxMeterRAF);
-    // hand the mouth over to the speech-driven track for this clip
     if (env && env.mouth){ cxAudioMouth = true; cxClearMouthTimer(); cxMouthF = 0; }
     const loop = () => {
       if (!cxVoice || cxVoice.paused || cxVoice.ended){ cxMeterStop(); return; }
       if (cxAudioMouth) cxAudioMouthTick(env);
       let level = 0.45;
       if (env){ const idx = Math.min(env.frames.length - 1, Math.floor(cxVoice.currentTime / env.step)); level = env.frames[idx] || 0; }
-      // fill from the bottom up: loud speech lights higher bars, quiet leaves
-      // only the bottom lit — bottom is lit most, top least
+// fill from the bottom up: loud speech lights higher bars
       const lit = Math.round(level * cxBarEls.length);
       const n = cxBarEls.length;
       cxBarEls.forEach((el, i) => {
@@ -1427,7 +1289,7 @@ function cxMeterStart(key){
 }
 function cxMeterStop(){
   if (cxMeterRAF){ cancelAnimationFrame(cxMeterRAF); cxMeterRAF = null; }
-  cxBarEls.forEach(el => { el.style.opacity = el._base; });   // idle: dim wedge, no audio
+  cxBarEls.forEach(el => { el.style.opacity = el._base; });
 }
 
 function cxViseme(ch){
@@ -1439,16 +1301,14 @@ function cxViseme(ch){
   return 0;
 }
 function cxSpeakChar(ch){
-  // while a voice clip drives the mouth from its audio, ignore the text
   if (cxAudioMouth) return;
-  // no audio (text-only line): fall back to typed-character visemes
   cxFlap = false;
   cxMouthTarget = cxViseme(ch);
   cxStartMouth();
 }
 function cxRest(){
-  // each portrait slot back to its current occupant's neutral, so a speaker
-  // swap never leaves a stuck mouth (and Otacon/Colonel share the left slot)
+// each slot back to its occupant's neutral, so a speaker swap never leaves a
+// stuck mouth (the Colonel and Otacon share the left slot)
   cxStopMouth();
   for (const imgId in cxSlotNeutral){
     const img = document.getElementById(imgId);
@@ -1470,10 +1330,9 @@ function cxHardStop(){
   cxRest();
 }
 function cxStartFlap(){
-  // if the clip's audio is driving the mouth, it already covers the tail
   if (cxAudioMouth) return;
-  // voice is still speaking after the text finished: keep the mouth gently
-  // opening and closing on a steady cycle (no random jitter)
+// voice still speaking after the text finished: keep the mouth on a steady
+// open/close cycle rather than random jitter
   cxFlap = true;
   cxStartMouth();
 }
@@ -1493,8 +1352,8 @@ function cxTypeNext(){
   const item = cxQueue.shift();
   cxCurrentLine = item.text;
   cxSpeaker = item.speaker || CX_SPEAKERS.colonel;
-  // this speaker now occupies its portrait slot (Otacon can take over the left
-  // slot from the Colonel mid-conversation and stay there at rest)
+// this speaker now owns its slot, so Otacon can take the left one from the
+// Colonel mid-conversation and stay there at rest
   cxSlotNeutral[cxSpeaker.imgId] = cxSpeaker.neutral;
   cxTypeDone = false;
   cxStopVoice();
@@ -1522,12 +1381,10 @@ function cxTypeNext(){
     a.volume = 0.9;
     cxVoice = a; cxVoiceDone = false;
     cxLoadEnvelope(item.key);   // warm the viseme track so it's ready at play
-    // pace the typewriter to the voice: finish typing ~0.5s before the
-    // audio ends, however long the clip actually is
     a.onloadedmetadata = (() => {
       if (!cxTypeTimer || cxTypeDone || !isFinite(a.duration)) return;
-      // finish typing ahead of the audio ending, so the text leads the
-      // voice like subtitles. Per-line leads can be tuned in CX_TYPE_LEAD.
+// finish typing ~0.5s before the audio ends so the text leads the voice like
+// subtitles; per-line leads live in CX_TYPE_LEAD
       const lead = CX_TYPE_LEAD[item.key] || 1000;
       const remainMs = a.duration * 1000 - (performance.now() - startedAt) - lead;
       const remainChars = cxCurrentLine.length - i;
@@ -1559,8 +1416,6 @@ function skipTyping(){
   const dlg = document.getElementById('cx-dialogue');
   if (!dlg) return;
   if (cxTypeTimer) {
-    // finish the text instantly and cut the voice: he goes quiet
-    // until the next line starts
     clearInterval(cxTypeTimer); cxTypeTimer = null;
     dlg.textContent = cxCurrentLine;
     cxTypeDone = true;
@@ -1568,54 +1423,46 @@ function skipTyping(){
     cxRest();
     cxMaybeAdvance();
   } else if (cxQueue.length) {
-    // jump to the next line, cutting off the current voice
     if (cxAdvanceTimer) { clearTimeout(cxAdvanceTimer); cxAdvanceTimer = null; }
     cxStopVoice();
     cxTypeNext();
   } else if (!cxVoiceDone) {
-    // text done, voice still going: silence him
     cxStopVoice();
     cxRest();
   }
 }
 
-// ── tuning ──
 function cxOpenContact(i){
   cxIdx = (i + CX_CONTACTS.length) % CX_CONTACTS.length;
   const c = CX_CONTACTS[cxIdx];
-  cxHardStop();                 // silence any previous line immediately
+  cxHardStop();
   document.getElementById('freq-num').textContent = c.freq;
   document.getElementById('cx-contact-name').textContent = c.name;
-  // brief static burst on both portraits, like retuning
   ['cx-portrait-l','cx-portrait-r'].forEach(id => {
     const p = document.getElementById(id);
     p.classList.add('static');
     setTimeout(() => p.classList.remove('static'), 280);
   });
-  // content renders immediately; dialogue is flavor, not a gate
   out.innerHTML = '';
   const panel = document.getElementById('cx-content');
   panel.classList.remove('visible');
   c.render();
   requestAnimationFrame(() => panel.classList.add('visible'));
-  // left portrait occupant for this channel: Otacon once he's taken over the
-  // PROJECTS channel, otherwise the Colonel
+// Otacon holds the left portrait once he has taken over PROJECTS
   cxSetPortrait(cxIdx === CX_PROJECTS_IDX && cxProjectsIntroDone ? 'otacon' : 'colonel');
   const idx = cxIdx;
-  // longer beat on the very first call so the CRT power-on lands first
   const delay = cxBooted ? 320 : 2000;
   cxBooted = true;
   setTimeout(() => {
     if (idx !== cxIdx) return;  // user already retuned
     if (idx === CX_PROJECTS_IDX) {
-      // one-time Colonel→Otacon handoff, then just Otacon on return
+// one-time Colonel->Otacon handoff, then just Otacon on return
       if (cxProjectsIntroDone) { cxSay(CX_PROJECTS_RETURN); return; }
       cxProjectsIntroDone = true;
       cxSay(CX_PROJECTS_INTRO);
       return;
     }
     if (idx === 0 && cxColonelDone) {
-      // already briefed: the Colonel just holds the line
       const dlg = document.getElementById('cx-dialogue');
       if (dlg) dlg.textContent = '...';
       cxRest();
@@ -1631,7 +1478,6 @@ function tuneStep(dir){
   cxOpenContact(cxIdx + dir);
 }
 
-// ── memory panel (the readable menu) ──
 function cxBuildMemory(){
   const list = document.getElementById('cx-mem-list');
   if (!list) return;
@@ -1655,7 +1501,6 @@ function toggleMemory(force){
   p.classList.toggle('open', open);
 }
 
-// ── section content ──
 function cxRenderProjectIndex(){
   addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
     <div class="ps-bar"><span class="ps-t">◈ OPERATION RECORDS</span><span class="ps-r">${PROJECTS.length} DECLASSIFIED</span></div>
@@ -1667,8 +1512,8 @@ function cxRenderProjectIndex(){
       </button>`).join('')}</div>
   </div></div>`);
 }
-// Per-project briefing: Snake asks, Otacon explains (on-screen text keeps real
-// spellings; the voice clips use phonetic ones). Keys match generate_codec_voices.py.
+// Per-project briefing: Snake asks, Otacon explains. Keys match
+// generate_codec_voices.py; screen text keeps real spellings, voices phonetic.
 const CX_PROJECT_DIALOGUE = {
   "oculosaurus": [
     { s:'snake',  k:'sk_oculosaurus',   t:"Oculosaurus. What am I looking at?" },
@@ -1738,24 +1583,20 @@ function cxOpenProject(id){
   addHtml(`<button class="cx-back-row" onclick="cxBackToProjects()">◂ ALL PROJECTS</button>`);
   CMDS.project(id);
   document.getElementById('cx-content').scrollIntoView({ behavior:'smooth', block:'start' });
-  // Otacon holds the left portrait for the briefing (even if a project was
-  // clicked before the intro handed off to him)
+// Otacon holds the left portrait even if a project was clicked before the
+// intro handed off to him
   cxProjectsIntroDone = true;
   cxSetPortrait('otacon');
-  // Snake asks, Otacon breaks down the project (voice + viseme mouth)
   const lines = CX_PROJECT_DIALOGUE[id];
   if (lines) cxSay(lines.map(l => ({ text: l.t, speaker: l.s, key: l.k })));
   else cxHardStop();
 }
 function cxBackToProjects(){
   playClickSound();
-  cxHardStop();          // cut Otacon/Snake off when leaving the briefing
+  cxHardStop();
   out.innerHTML = '';
   cxRenderProjectIndex();
 }
-// MC WORLD channel. The gallery used to hide behind a single text link under
-// a 360px map iframe; it is now the first thing on the channel, with real
-// thumbnails and a PS1 menu button, and the map sits in its own window below.
 function psGalleryPanel(){
   const thumbs = (STATIC_URLS.mcThumbs || []).map(t =>
     `<a href="${STATIC_URLS.gallery}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
@@ -1788,9 +1629,6 @@ function psMapPanel(){
     </div>
   </div></div>`;
 }
-// Bird classifier. The model is live and takes audio, but the only thing that
-// said so was an 11px "LAUNCH" chip. A sample top-5 result (PSone's progress
-// bar, which is exactly the right widget for confidences) sells it instead.
 function psBirdPanel(){
   const u = STATIC_URLS.uploadFile;
   const rows = [
@@ -1828,22 +1666,18 @@ function cxRenderMinecraft(){
   addHtml(psMapPanel());
 }
 
-// ── init ──
 function initCodec(){
-  // preload talk frames
   Object.values(CX_SPEAKERS).forEach(sp =>
     [sp.neutral, ...sp.pose].forEach(src => { const im = new Image(); im.src = src; }));
-  // signal meter: dense stack of horizontal bars whose lengths follow a
-  // concave (log-like) curve, top bar longest — matches the real codec
+// Signal meter: a dense stack of left-aligned bars on a concave curve, top
+// bar longest, matching the real codec display.
   const bars = document.getElementById('cx-bars');
   cxBarEls = [];   // ordered top -> bottom
-  // one unified stack, all left-aligned: full-width top bar, then a concave
-  // drop that levels off — sized to fill the display like the real codec
   const widths = [196, 118, 92, 78, 68, 61, 56, 52, 49];
   if (bars) widths.forEach((w) => {
     const s = document.createElement('span');
     s.style.width = w + 'px';
-    s._base = 0.28;                 // dim at rest; bars light up with the audio
+    s._base = 0.28;
     s.style.opacity = s._base;
     bars.appendChild(s);
     cxBarEls.push(s);

@@ -1,4 +1,3 @@
-// ── CLOCK ──────────────────────────────────────────────────
 function tick() {
   const t = new Date().toLocaleTimeString('en-US', { hour12: false });
   document.getElementById('clock').textContent = t;
@@ -7,7 +6,6 @@ function tick() {
 tick();
 setInterval(tick, 1000);
 
-// ── CAROUSEL ───────────────────────────────────────────────
 const CAROUSEL_IMGS = [
   'https://cdn.mos.cms.futurecdn.net/PqHzRT5FnGPSoEUMfmGSWH.jpg',
   'https://feederwatch.org/wp-content/uploads/2020/02/37B77335-C469-4D36-A535-059F40176E4E.jpeg',
@@ -47,7 +45,6 @@ function goSlide(n) {
 
 setInterval(() => goSlide((cIdx + 1) % CAROUSEL_IMGS.length), 3500);
 
-// ── UPLOAD FORM LOGIC ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const startBtn     = document.getElementById('start-recording');
   const stopBtn      = document.getElementById('stop-recording');
@@ -73,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // File input
   fileInput.addEventListener('change', function () {
     if (this.files.length > 0) {
       fileNameEl.textContent = '▸ ' + this.files[0].name;
@@ -90,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Drag and drop
   dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
   dropZone.addEventListener('drop', e => {
@@ -102,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Recording
   startBtn.addEventListener('click', async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorder = new MediaRecorder(stream);
@@ -139,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     stopBtn.disabled  = true;
   });
 
-  // Reset
   resetBtn.addEventListener('click', () => {
     fileInput.value    = '';
     fileInput.disabled = false;
@@ -154,14 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.term-alert-err').forEach(el => el.style.display = 'none');
   });
 
-  // Submit loading state
   document.getElementById('upload-form').addEventListener('submit', () => {
     uploadBtn.style.display = 'none';
     document.getElementById('loading-btn').style.display = 'inline-flex';
   });
 });
 
-// ── BIRD TABLE FILTER ─────────────────────────────────────
 function filterBirds() {
   const q    = document.getElementById('bird-search').value.toLowerCase();
   const rows = document.querySelectorAll('#bird-tbody tr');
@@ -175,7 +166,6 @@ function filterBirds() {
   document.getElementById('bird-count').textContent = `showing ${shown} bird${shown !== 1 ? 's' : ''}`;
 }
 
-// ── AUDIO PLAY/STOP ───────────────────────────────────────
 let currentAudio = null, currentBtn = null;
 
 function togglePlay(audioId, btnId) {

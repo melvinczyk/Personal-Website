@@ -1,4 +1,3 @@
-// ── SOUNDS ───────────────────────────────────────────────────
 let audioCtx = null, hoverBuffer = null, clickBuffer = null;
 
 function getCtx() {
@@ -43,17 +42,12 @@ document.addEventListener('click', e => {
   if (e.target.closest && e.target.closest(HOT)) ensureSounds().then(() => playBuffer(clickBuffer, 0.35));
 }, true);
 
-// ══════════════════════════════════════════════════════════════════════
-// DISC RAIL
-// Each season is a "game". The rail holds every disc; moving left/right
-// slides the track so the selected slot sits dead centre, and the media
-// stage below re-renders with that disc's contents.
-// ══════════════════════════════════════════════════════════════════════
+// Each season is a "game" on the rail: moving left/right slides the track so
+// the selected slot sits dead centre and the stage re-renders with its files.
 const SLOT_GAP = 26;
 let discIdx = 0;
 let currentTab = 'screenshots';
 
-// Slide the track so the selected slot lands on the rail's centre line.
 // offsetWidth is the layout width, unaffected by the scale on inactive slots.
 function layoutRail() {
   const track = document.getElementById('disc-track');
@@ -76,7 +70,7 @@ function selectDisc(i) {
   document.getElementById('disc-title').textContent = s.name;
   document.getElementById('disc-desc').textContent  = s.description;
 
-  // meters are scaled against the fullest disc, so the biggest reads full
+  // scaled against the fullest disc, so the biggest one reads full
   const maxShots = Math.max(1, ...SEASONS.map(x => x.screenshots.length));
   const maxClips = Math.max(1, ...SEASONS.map(x => x.videos.length));
   document.getElementById('meter-shots').style.width = (s.screenshots.length / maxShots * 100) + '%';
@@ -86,7 +80,6 @@ function selectDisc(i) {
   document.getElementById('tab-count-shots').textContent = s.screenshots.length;
   document.getElementById('tab-count-clips').textContent = s.videos.length;
 
-  // the disc's own world behind the menu
   const bg = document.getElementById('console-bg');
   if (s.hero) { bg.style.backgroundImage = `url("${s.hero}")`; bg.classList.add('on'); }
   else        { bg.classList.remove('on'); }
@@ -94,8 +87,7 @@ function selectDisc(i) {
   renderMedia();
 }
 
-// Clicking the highlighted disc loads it (its files open underneath);
-// clicking any other disc just moves the rail to it first.
+// Clicking the highlighted disc loads it; any other disc moves the rail first.
 function discClick(i) {
   if (i === discIdx) { toggleMedia(); return; }
   selectDisc(i);
@@ -105,7 +97,7 @@ function toggleMedia(force) {
   const open = typeof force === 'boolean' ? force : !el.classList.contains('open');
   el.classList.toggle('open', open);
   document.querySelector('.console-screen').classList.toggle('loaded', open);
-  layoutRail();                       // the slots resized, so re-centre
+  layoutRail();   // the slots resized, so re-centre
   if (open) requestAnimationFrame(() =>
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
@@ -144,7 +136,6 @@ function renderMedia() {
     : '<div class="empty-msg">// no clips on this disc</div>';
 }
 
-// ── TABS ─────────────────────────────────────────────────────
 function switchTab(tabName) {
   currentTab = tabName;
   toggleMedia(true);
@@ -153,7 +144,6 @@ function switchTab(tabName) {
 }
 function cycleTab() { switchTab(currentTab === 'screenshots' ? 'videos' : 'screenshots'); }
 
-// ── CONTROLLER ACTIONS ───────────────────────────────────────
 function jumpTop()   { document.getElementById('stage').scrollTo({ top: 0, behavior: 'smooth' }); }
 function jumpMedia() { toggleMedia(true); }
 function loadDisc()  { toggleMedia(); }
@@ -164,7 +154,6 @@ function psxBack() {
   window.location.href = HOME_URL;
 }
 
-// ── VIEWER ───────────────────────────────────────────────────
 let lbMediaType = 'screenshots';
 let lbIdx = 0;
 function lbOpen() { return document.getElementById('lightbox').classList.contains('open'); }

@@ -16,13 +16,11 @@
 
 <div id="screen">
 
-  <!-- TITLEBAR -->
   <div id="titlebar">
     <div class="ttl">NICK BURCZYK — BIRD CLASSIFIER — RESULTS</div>
     <div class="clk" id="clock">00:00:00</div>
   </div>
 
-  <!-- BREADCRUMB NAV -->
   <div id="navback">
     <a href="/" class="nb-link">~/home</a>
     <span class="nb-sep">/</span>
@@ -37,7 +35,6 @@
 
   <div id="main">
 
-    <!-- SECTION 1: RESULT HERO -->
     <div class="ts">
       <div class="ts-hd">
         <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
@@ -47,7 +44,6 @@
       <div class="ts-bd">
         <div class="hero">
 
-          <!-- Bird image -->
           <div class="bird-img-wrap">
             <img src="{{ result.bird_image }}"
                  alt="{{ result.bird }}"
@@ -57,12 +53,11 @@
             </div>
           </div>
 
-          <!-- Info -->
           <div class="bird-info">
             <div class="bird-label">// DETECTED SPECIES</div>
             <div class="bird-name">{{ result.bird }}</div>
 
-            <!-- Confidence bar — confidence passed via data attr to avoid Django/JS template clash -->
+            <!-- confidence goes through a data attr: Django and JS both want {{ }} -->
             <div class="conf-label">
               <span>CONFIDENCE</span>
               <span style="color:{% if result.severity == 'success' %}var(--mgs-cyan){% elif result.severity == 'warning' %}var(--alert-yellow){% else %}var(--alert-red){% endif %}">{{ result.confidence }}%</span>
@@ -71,7 +66,6 @@
               <div class="conf-fill" id="confbar" style="width:0" data-confidence="{{ result.confidence }}"></div>
             </div>
 
-            <!-- Stats boxes -->
             <div class="stats-grid">
               <div class="stat-box">
                 <div class="stat-lbl">CONFIDENCE</div>
@@ -88,7 +82,6 @@
               </div>
             </div>
 
-            <!-- Terminal readout -->
             <div class="readout">
               <div><span class="k">$</span> model.predict(audio_input)</div>
               <div><span class="k">→</span> species: <span class="v">{{ result.bird }}</span></div>
@@ -104,7 +97,6 @@
       </div>
     </div>
 
-    <!-- SECTION 2: SPECTROGRAMS -->
     <div class="ts">
       <div class="ts-hd">
         <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
@@ -126,7 +118,6 @@
       </div>
     </div>
 
-    <!-- SECTION 3: FEEDBACK FORM -->
     <div class="ts">
       <div class="ts-hd">
         <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
@@ -194,15 +185,13 @@
       </div>
     </div>
 
-  </div><!-- /main -->
+  </div>
 
-  <!-- LIGHTBOX -->
   <div id="lightbox" onclick="closeLightbox()">
     <span class="lb-close" onclick="closeLightbox()">[ × CLOSE ]</span>
     <img id="lb-img" src="" alt="">
   </div>
 
-  <!-- STATUS BAR -->
   <div id="statusbar">
     <div>
       <span style="color:var(--mgs-cyan)">●</span>&nbsp; inference complete
@@ -213,7 +202,7 @@
     <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
   </div>
 
-</div><!-- /screen -->
+</div>
 
 <script src="{% static 'scripts/bird_results.js' %}"></script>
 </body>

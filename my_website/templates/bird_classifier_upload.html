@@ -16,13 +16,11 @@
 
 <div id="screen">
 
-  <!-- TITLEBAR -->
   <div id="titlebar">
     <div class="ttl">NICK BURCZYK — BIRD CLASSIFIER</div>
     <div class="clk" id="clock">00:00:00</div>
   </div>
 
-  <!-- NAV -->
   <div id="navback">
     <a href="/" class="nb-link">home</a>
     <span class="nb-sep">/</span>
@@ -34,7 +32,6 @@
 
   <div id="main">
 
-    <!-- HEADER + STATS -->
     <div class="ts">
       <div class="ts-hd">
 <span class="ts-title">BACKYARD ALABAMA BIRD DETECTOR</span>
@@ -66,7 +63,6 @@
       </div>
     </div>
 
-    <!-- UPLOAD + CAROUSEL -->
     <div class="ts">
       <div class="ts-hd">
 <span class="ts-title">SUBMIT AUDIO FOR CLASSIFICATION</span>
@@ -75,7 +71,6 @@
       <div class="ts-bd">
         <div class="upload-grid">
 
-          <!-- LEFT: FORM -->
           <div>
             <form method="post" enctype="multipart/form-data" id="upload-form">
               {% csrf_token %}
@@ -136,7 +131,6 @@
 
           </div>
 
-          <!-- RIGHT: CAROUSEL -->
           <div>
             <div class="section-comment">Alabama birds the model recognizes</div>
             <div class="carousel-wrap">
@@ -150,7 +144,6 @@
       </div>
     </div>
 
-    <!-- MACAULAY LIBRARY -->
     <div class="ts">
       <div class="ts-hd">
 <span class="ts-title">FETCH FROM MACAULAY LIBRARY</span>
@@ -187,7 +180,6 @@
       </div>
     </div>
 
-    <!-- BIRD TABLE -->
     <div class="ts">
       <div class="ts-hd">
 <span class="ts-title">ALL DETECTABLE SPECIES</span>
@@ -331,7 +323,6 @@
       </div>
     </div>
 
-    <!-- HOW IT WORKS -->
     <div class="ts">
       <div class="ts-hd">
 <span class="ts-title">HOW IT WORKS</span>
@@ -364,15 +355,14 @@
       </div>
     </div>
 
-  </div><!-- /main -->
+  </div>
 
-  <!-- STATUS BAR -->
   <div id="statusbar">
     <div><span style="color:var(--mgs-cyan)">●</span>&nbsp; bird-classifier v1 · 30 classes · Alabama region</div>
     <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
   </div>
 
-</div><!-- /screen -->
+</div>
 
 <script src="{% static 'scripts/bird_classifier.js' %}"></script>
 <script>

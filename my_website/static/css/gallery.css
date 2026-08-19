@@ -1,18 +1,10 @@
-/* ══════════════════════════════════════════════════════════════════════
-   SERVER GALLERY — PS1 DISC SELECT
-   A mock console screen. Each season is a "game" on the disc rail; you
-   move between them left and right with the on-screen controller.
+/* Server gallery: a mock PS1 console. Each season is a "game" on the disc
+   rail. Controller icons are ported from PSone.css by micah5 (MIT), keeping
+   its plastic gradient and face-button colours; sizes are pinned in px so
+   they do not drift with the inherited font-size. */
 
-   The controller icons (d-pad, face buttons, shoulders, START/SELECT)
-   are ported from PSone.css by micah5 (MIT), keeping its plastic
-   gradient and the authentic face-button colours: square #D592BD,
-   circle #E94B0E, cross #9DA5D5, triangle #20AF93. Sizes were made
-   explicit in px so they do not drift with the inherited font-size.
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* portfolio.css lays a fixed, flickering scanline sheet over everything
-   (body::before, z-index 9999) plus a sweeping .scanline bar. Both are off
-   here: the console is a screen you are looking at, not one you are inside. */
+/* portfolio.css lays a sweeping .scanline bar over the page; it is off here,
+   since the console is a screen you look at, not one you are inside. */
 body::before { display: none; }
 .scanline    { display: none; }
 
@@ -23,9 +15,6 @@ html, body { height: 100%; overflow: hidden; }
 #stage::-webkit-scrollbar-track { background: var(--mgs-bg); }
 #stage::-webkit-scrollbar-thumb { background: var(--mgs-cyan); }
 
-/* ══════════════════════════════════════════════════════════════════
-   PSone.css CONTROLLER ICONS  (ported, MIT — see header)
-   ══════════════════════════════════════════════════════════════════ */
 .icon {
   position: relative; display: inline-block;
   width: 52px; height: 52px; border: 0; padding: 0;
@@ -34,7 +23,6 @@ html, body { height: 100%; overflow: hidden; }
 .icon.clickable { cursor: pointer; transition: box-shadow .3s cubic-bezier(.25,.8,.5,1), transform .12s; }
 .icon.clickable:active { transform: translateY(2px); box-shadow: 0 1px 2px #000; }
 
-/* face buttons: grey plastic disc, coloured glyph */
 .icon.square, .icon.circle, .icon.x, .icon.triangle {
   border-radius: 50%;
   background-image: linear-gradient(#5f5e60, #3C3D3F);
@@ -59,7 +47,7 @@ html, body { height: 100%; overflow: hidden; }
 }
 .icon.x::before { transform: rotate(45deg); }
 .icon.x::after  { transform: rotate(135deg); }
-/* outer teal triangle with a smaller dark one punched out, both centred on 26 */
+
 .icon.triangle::before {
   content: ''; position: absolute; top: 6px; left: 6px;
   width: 0; height: 0; border: 0 solid transparent;
@@ -73,7 +61,6 @@ html, body { height: 100%; overflow: hidden; }
   border-bottom: 21px solid #47484A;
 }
 
-/* shoulder buttons */
 .icon.l1, .icon.r1, .icon.l2, .icon.r2 {
   width: 58px; height: 27px; border-radius: 5px;
   background-image: linear-gradient(#5f5e60, #3C3D3F);
@@ -99,7 +86,6 @@ html, body { height: 100%; overflow: hidden; }
 .icon.l2::after { content: 'L2'; }
 .icon.r2::after { content: 'R2'; }
 
-/* START / SELECT */
 .icon.select {
   width: 56px; height: 27px; border-radius: 4px;
   background-image: linear-gradient(#504f51, #3C3D3F);
@@ -123,7 +109,6 @@ html, body { height: 100%; overflow: hidden; }
    both offsets are pulled back to put the label level with SELECT's */
 .icon.start-label::before  { content: 'START'; left: -52px; width: 52px; top: 20px; }
 
-/* d-pad */
 .icon.arrow-left, .icon.arrow-right, .icon.arrow-up, .icon.arrow-down {
   width: 44px; height: 44px; box-shadow: 0 2px 5px #000;
   background-image: linear-gradient(#504f51, #3C3D3F);
@@ -141,9 +126,6 @@ html, body { height: 100%; overflow: hidden; }
 .icon.arrow-up::after    { bottom: 100%; left: 50%; margin-left: -22px; border-width: 22px; border-bottom-color: #504f51; }
 .icon.arrow-down::after  { top: 100%;    left: 50%; margin-left: -22px; border-width: 22px; border-top-color: #3C3D3F; }
 
-/* ══════════════════════════════════════════════════════════════════
-   MOCK CONSOLE
-   ══════════════════════════════════════════════════════════════════ */
 .console-shell {
   max-width: 1060px; margin: 0 auto 22px; position: relative;
   border-radius: 16px; padding: 14px;
@@ -162,7 +144,6 @@ html, body { height: 100%; overflow: hidden; }
   box-shadow: 0 0 10px #24e08a; animation: ps-pulse 2.4s infinite;
 }
 
-/* the CRT inside the shell */
 .console-screen {
   position: relative; border-radius: 8px; overflow: hidden;
   background: radial-gradient(120% 120% at 50% 30%, #013a33 0%, #000c11 70%, #000406 100%);
@@ -170,7 +151,7 @@ html, body { height: 100%; overflow: hidden; }
   box-shadow: inset 0 0 60px rgba(0,0,0,0.9), inset 0 0 2px 2px rgba(0,255,204,0.14);
   padding: 20px 18px 22px;
 }
-/* the selected disc's own world sits behind the menu */
+
 .console-bg {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background-size: cover; background-position: center;
@@ -178,7 +159,7 @@ html, body { height: 100%; overflow: hidden; }
   opacity: 0; transition: opacity .45s ease;
 }
 .console-bg.on { opacity: 0.30; }
-/* darken toward the edges and the bottom so menu text stays readable */
+
 .console-screen::before {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
@@ -187,7 +168,6 @@ html, body { height: 100%; overflow: hidden; }
 }
 .console-content { position: relative; z-index: 2; }
 
-/* ══ DISC RAIL : one "game" per season ══ */
 .disc-head {
   display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
   font-family: 'MGS1 Codec', monospace;
@@ -230,7 +210,6 @@ html, body { height: 100%; overflow: hidden; }
 }
 .disc-slot.active .disc-slot-name { color: var(--mgs-cyan); }
 
-/* rail arrows */
 .rail-arrow {
   position: absolute; top: 70px; z-index: 5; background: none; border: 0; cursor: pointer;
   font-size: 34px; line-height: 1; color: var(--mgs-cyan); text-shadow: 0 0 12px var(--mgs-cyan);
@@ -240,7 +219,6 @@ html, body { height: 100%; overflow: hidden; }
 .rail-arrow.prev { left: 4px; }
 .rail-arrow.next { right: 4px; }
 
-/* ══ SELECTED GAME INFO ══ */
 .disc-info {
   margin-top: 16px; padding-top: 14px;
   border-top: 1px solid rgba(0,255,204,0.25); position: relative; z-index: 2;
@@ -255,7 +233,6 @@ html, body { height: 100%; overflow: hidden; }
 .disc-meters .ps-row { grid-template-columns: 150px 1fr 74px; }
 .disc-meters .ps-prog { height: 15px; }
 
-/* ══ CONTROLLER DECK ══ */
 .console-deck {
   display: flex; align-items: flex-start; justify-content: center; gap: 46px;
   padding: 26px 10px 8px; flex-wrap: wrap;
@@ -281,9 +258,6 @@ html, body { height: 100%; overflow: hidden; }
 .face .x        { grid-area: 3 / 2; }
 .deck-mid { display: flex; gap: 16px; align-items: center; margin-top: 84px; }
 
-/* ══════════════════════════════════════════════════════════════════
-   MEDIA STAGE — the loaded game's contents
-   ══════════════════════════════════════════════════════════════════ */
 .disc-media {
   display: none; margin-top: 16px; padding-top: 14px;
   border-top: 1px solid rgba(0,255,204,0.25);
@@ -293,7 +267,7 @@ html, body { height: 100%; overflow: hidden; }
   max-height: 340px; overflow-y: auto; overflow-x: hidden;
   padding-right: 6px;
 }
-/* once a disc is loaded the box art steps back so the files get the room */
+
 .console-screen.loaded .disc-rail { height: 142px; }
 .console-screen.loaded .disc-slot { width: 108px; }
 .console-screen.loaded .disc-case { width: 108px; height: 108px; }
@@ -352,7 +326,7 @@ html, body { height: 100%; overflow: hidden; }
   border-top: 1px solid rgba(0,255,204,0.3); font-size: 14px; color: #a8e9d8;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* the ✕ prompt PS1 menus put on the highlighted entry */
+
 .masonry-item .tile-x, .video-tile .tile-x {
   position: absolute; top: 6px; left: 6px; z-index: 3;
   width: 26px; height: 26px; opacity: 0; transform: scale(.7);
@@ -360,7 +334,7 @@ html, body { height: 100%; overflow: hidden; }
 }
 .masonry-item:hover .tile-x, .video-tile:hover .tile-x { opacity: 1; transform: scale(1); }
 .tile-x.x::before, .tile-x.x::after { top: 11px; left: 5px; right: 5px; border-width: 2px; }
-/* the deck sets the icon scale; inline copies ride smaller */
+
 .media-tab .icon { transform: scale(.62); margin: -6px -10px; }
 .lb-btn .icon    { transform: scale(.62); margin: -8px -12px; }
 
@@ -394,7 +368,6 @@ html, body { height: 100%; overflow: hidden; }
   font-size: 14px; padding: 1px 7px;
 }
 
-/* ══ VIEWER ══ */
 #lightbox {
   display: none; position: fixed; inset: 0; z-index: 2000;
   background: rgba(0,3,3,0.97); align-items: center; justify-content: center;
@@ -431,19 +404,9 @@ html, body { height: 100%; overflow: hidden; }
   .deck-mid { display: none; }
 }
 
-
-/* ══════════════════════════════════════════════════════════════════════
-   PSone.css DEFAULT THEME
-   The console runs on PSone.css's own palette rather than the codec cyan:
-   the FF7-blue container gradient, its light border and inner white ring,
-   lightgrey titles over hard black shadows, and its progress-bar colours.
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* the codec grid backdrop is cyan; the console sets its own ground */
 .grid-overlay { display: none; }
 body { background: #05060a; }
 
-/* .container — FF7 blue menu window */
 .console-screen {
   background: linear-gradient(#0a1447, #04061f);
   border: 1px solid #c6c6c6;
@@ -451,14 +414,13 @@ body { background: #05060a; }
   box-shadow: inset 0 0 2px 2px rgba(0,0,0,0.35);
   padding: 0 18px 22px;
 }
-/* PSone .container:before — the inner white ring */
+
 .console-screen::before {
   background: none;
   border: 2px solid #fff; border-radius: 7px;
   box-sizing: border-box; opacity: .85; z-index: 5;
 }
-/* the veil that keeps menu text readable over the disc's backdrop; it used
-   to live on ::before, which the ring took over */
+/* keeps menu text readable over the disc backdrop */
 .console-screen::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
@@ -468,7 +430,6 @@ body { background: #05060a; }
 .console-bg { filter: saturate(0.6) brightness(0.85); }
 .console-bg.on { opacity: 0.42; }
 
-/* .container.dark — the nested panels */
 .disc-info { border-top-color: rgba(255,255,255,0.35); }
 .disc-media {
   border-top-color: rgba(255,255,255,0.35);
@@ -477,7 +438,6 @@ body { background: #05060a; }
   border-radius: 4px;
 }
 
-/* .title / p — lightgrey over a hard black shadow */
 .disc-head .dh-t, .disc-title {
   color: lightgrey; text-shadow: 4px 4px black; text-transform: uppercase;
 }
@@ -497,7 +457,6 @@ body { background: #05060a; }
 .disc-slot.active .disc-case img { filter: brightness(1); }
 .rail-arrow { color: #fff; text-shadow: 3px 3px black; }
 
-/* .progress — PSone's well and bar colours */
 .disc-meters .ps-prog {
   background-color: rgba(0,0,0,0.5); border: 0; padding: 3px; height: 18px;
 }
@@ -511,7 +470,6 @@ body { background: #05060a; }
 .disc-meters .ps-pc { color: #C6C843; text-shadow: 2px 2px black; }
 .disc-meters .ps-row.ps-dim .ps-nm, .disc-meters .ps-row.ps-dim .ps-pc { color: #AEAFAE; }
 
-/* .btn — lit through the centre, PSone grey, blue when active */
 .media-tabs { border-bottom-color: rgba(255,255,255,0.3); gap: 0; }
 .media-tab {
   color: #fff; text-shadow: 2px 2px black; text-transform: uppercase;
@@ -529,7 +487,6 @@ body { background: #05060a; }
 .media-tab.active .tab-count { color: #fff; border-color: rgba(255,255,255,0.5); }
 .empty-msg { color: #AEAFAE; text-shadow: 2px 2px black; }
 
-/* tiles */
 .masonry-item, .video-tile { border-color: rgba(255,255,255,0.28); }
 .masonry-item:hover, .video-tile:hover { border-color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.3); }
 .masonry-label, .video-tile-label {
@@ -540,7 +497,6 @@ body { background: #05060a; }
 .tile-type-badge { border-color: #F19C42; color: #F19C42; text-shadow: 2px 2px black; }
 .disc-media .tab-panel::-webkit-scrollbar-thumb { background: #AEAFAE; }
 
-/* viewer */
 #lightbox { background: rgba(5,6,10,0.97); }
 #lightbox-media-wrap img, #lightbox-media-wrap video {
   border-color: rgba(255,255,255,0.6); box-shadow: 0 0 40px rgba(0,0,0,0.9);
@@ -554,8 +510,6 @@ body { background: #05060a; }
 .lb-btn { color: #fff; text-shadow: 2px 2px black; }
 .lb-btn:hover { color: #C6C843; }
 
-/* Black page, like the PSone.css demo. There is no titlebar and no plastic
-   bezel any more: the .container is the whole interface, sitting on black. */
 html, body, #screen { background: #000; }
 body::after { display: none; }
 #stage::-webkit-scrollbar-thumb { background: #AEAFAE; }
@@ -565,7 +519,6 @@ body::after { display: none; }
   background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0;
 }
 
-/* the container's own title bar, with the PSone logo */
 .disc-titlebar {
   display: flex; align-items: center; gap: 14px;
   padding: 12px 18px 12px; position: relative; z-index: 4;
@@ -580,7 +533,5 @@ body::after { display: none; }
   color: #AEAFAE; text-shadow: 2px 2px black; text-transform: uppercase; transform: scaleY(1.2);
 }
 
-/* the PSone radio cursor was removed: it read as a stray magenta blob */
 .disc-slot { position: relative; }
-
 

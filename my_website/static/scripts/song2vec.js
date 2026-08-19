@@ -1,4 +1,3 @@
-// ── Clock ─────────────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
   const s = t => String(t).padStart(2, '0');
@@ -11,14 +10,12 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── Blob data (PCA positions for scatter plots) ───────────────────
 let _blobData = null;
 fetch(BLOB_DATA_URL)
   .then(r => r.json())
   .then(d => { _blobData = d; drawScatter(null); })
   .catch(() => {});
 
-// ── Elements ──────────────────────────────────────────────────────
 const input     = document.getElementById('sv-input');
 const resultsEl = document.getElementById('sv-results');
 const songInfo  = document.getElementById('sv-song-info');
@@ -31,7 +28,6 @@ const canvas    = document.getElementById('sv-canvas');
 const overlay   = document.getElementById('sv-canvas-overlay');
 const caption   = document.getElementById('sv-caption');
 
-// ── Search ────────────────────────────────────────────────────────
 let _timer = null;
 
 input.addEventListener('input', () => {
@@ -90,12 +86,10 @@ function renderResults(songs) {
   });
 }
 
-// ── Select + Render ───────────────────────────────────────────────
 function selectSong(id, name, artist) {
   hideResults();
   input.value = `${name}  ·  ${artist}`;
 
-  // Show loading state on canvas
   setOverlay('RENDERING...');
   if (caption) caption.textContent = '';
   songInfo.style.display = 'none';
@@ -117,7 +111,6 @@ function drawBlob(data) {
     ctx.drawImage(img, 0, 0);
     overlay.classList.add('hidden');
 
-    // Song info panel
     songTitle.textContent  = data.name;
     songArtist.textContent = data.artist;
 
@@ -139,7 +132,6 @@ function drawBlob(data) {
   img.src = 'data:image/png;base64,' + data.image;
 }
 
-// ── Scatter plots ─────────────────────────────────────────────────
 const GENRE_LABELS = new Set([
   'metal','rock','pop','jazz','blues','folk','rap','edm','emo','punk',
   'classical','country','reggae','soul','funk','r&b','house','techno',
@@ -171,7 +163,6 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
   ctx.fillStyle = '#050e0b';
   ctx.fillRect(0, 0, W, H);
 
-  // Normalize coordinates to fill the canvas
   const vals = Object.values(entries);
   const minX = Math.min(...vals.map(v => v.x));
   const maxX = Math.max(...vals.map(v => v.x));
@@ -185,7 +176,6 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
 
   const pairs = Object.entries(entries);
 
-  // Pass 1: all background dots colored by their embedding color
   for (const [, v] of pairs) {
     ctx.beginPath();
     ctx.arc(toX(v.x), toY(v.y), 2.5, 0, Math.PI * 2);
@@ -193,7 +183,6 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
     ctx.fill();
   }
 
-  // Pass 2: labels for prominent entries (dim, no song selected yet)
   ctx.font = '12px "Share Tech Mono", monospace';
   ctx.textBaseline = 'middle';
   if (!activeSet) {
@@ -205,12 +194,9 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
     }
   }
 
-  // Pass 3: active points — glow + bright dot + label
   if (activeSet) {
-    // dim non-active
     ctx.fillStyle = 'rgba(5,14,11,0.5)';
     ctx.fillRect(0, 0, W, H);
-    // redraw all dots dimmed
     for (const [, v] of pairs) {
       ctx.beginPath();
       ctx.arc(toX(v.x), toY(v.y), 2.5, 0, Math.PI * 2);
@@ -221,7 +207,6 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
     for (const [name, v] of pairs) {
       if (!activeSet.has(name.toLowerCase())) continue;
       const gx = toX(v.x), gy = toY(v.y);
-      // outer glow
       const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, 28);
       grad.addColorStop(0, `rgba(${v.r},${v.g},${v.b},0.6)`);
       grad.addColorStop(1, 'transparent');
@@ -229,18 +214,15 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
       ctx.arc(gx, gy, 28, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
-      // bright dot
       ctx.beginPath();
       ctx.arc(gx, gy, 6, 0, Math.PI * 2);
       ctx.fillStyle = `rgb(${v.r},${v.g},${v.b})`;
       ctx.fill();
-      // white ring
       ctx.beginPath();
       ctx.arc(gx, gy, 6, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(255,255,255,0.7)';
       ctx.lineWidth = 1;
       ctx.stroke();
-      // label
       ctx.fillStyle = `rgb(${v.r},${v.g},${v.b})`;
       ctx.font = '13px "Share Tech Mono", monospace';
       ctx.fillText(name, gx + 9, gy);
@@ -253,7 +235,6 @@ function setOverlay(msg) {
   document.getElementById('sv-canvas-msg').textContent = msg;
 }
 
-// ── Escape helper ─────────────────────────────────────────────────
 function esc(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')

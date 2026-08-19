@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Lightbox
 function openLightbox(src, label) {
   document.getElementById('lb-img').src = src;
   document.getElementById('lb-img').alt = label;

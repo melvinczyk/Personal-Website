@@ -20,7 +20,6 @@
 
       <div class="console-screen">
 
-        <!-- title bar, PSone logo and all -->
         <div class="disc-titlebar">
           <span class="icon psone"></span>
           <span class="dt-name">GROID PACK</span>
@@ -35,7 +34,6 @@
           <span class="dh-r"><span id="disc-pos">1</span> OF {{ seasons|length }}</span>
         </div>
 
-        <!-- disc rail: one game per season -->
         <div class="disc-rail">
           <button class="rail-arrow prev" onclick="discStep(-1)" aria-label="Previous disc">◂</button>
           <button class="rail-arrow next" onclick="discStep(1)" aria-label="Next disc">▸</button>
@@ -56,7 +54,6 @@
           </div>
         </div>
 
-        <!-- selected game -->
         <div class="disc-info">
           <div class="disc-title" id="disc-title">—</div>
           <div class="disc-desc" id="disc-desc"></div>
@@ -73,7 +70,6 @@
             </div>
           </div>
 
-          <!-- contents of the loaded disc, revealed in place -->
           <div class="disc-media" id="disc-media">
             <div class="media-tabs">
               <button class="media-tab active" data-tab="screenshots" onclick="switchTab('screenshots')">
@@ -91,10 +87,9 @@
 
         </div>
 
-        </div><!-- /console-content -->
-      </div><!-- /console-screen -->
+        </div>
+      </div>
 
-      <!-- ══ CONTROLLER ══ -->
       <div class="console-deck">
 
         <div class="deck-cluster">
@@ -129,13 +124,11 @@
           </div>
         </div>
 
+      </div>
+    </div>
 
-      </div><!-- /console-deck -->
-    </div><!-- /console-shell -->
+  </div>
 
-  </div><!-- /stage -->
-
-  <!-- ══ VIEWER ══ -->
   <div id="lightbox">
     <div id="lightbox-counter">FILE <b id="lb-counter-text">1 / 1</b></div>
     <button class="lb-btn" id="lightbox-close" onclick="closeLightbox()">
@@ -149,7 +142,7 @@
     </div>
   </div>
 
-</div><!-- /screen -->
+</div>
 
 <script>
 const GALLERY_URLS = {

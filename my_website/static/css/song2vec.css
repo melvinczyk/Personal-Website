@@ -1,6 +1,5 @@
-/* ── SONG2VEC PAGE ───────────────────────────────────────────────── */
 
-/* Two-column search + canvas layout */
+
 .sv-grid {
   display: grid;
   grid-template-columns: 1fr 180px;
@@ -12,7 +11,6 @@
   .sv-right { order: -1; }
 }
 
-/* ── LEFT PANEL ─────────────────────────────────────────────────── */
 .sv-left { display: flex; flex-direction: column; gap: 18px; }
 
 .sv-search-wrap { position: relative; }
@@ -45,7 +43,6 @@
   color: rgba(0,170,136,0.3);
 }
 
-/* ── SONG INFO ──────────────────────────────────────────────────── */
 .sv-song-info {
   display: flex; flex-direction: column; gap: 14px;
   border: 1px solid rgba(0,170,136,0.2);
@@ -81,7 +78,6 @@
   border: 1px solid rgba(0,136,136,0.25); color: rgba(0,170,136,0.6);
 }
 
-/* ── IDLE HINT ──────────────────────────────────────────────────── */
 .sv-idle-hint {
   display: flex; flex-direction: column; gap: 8px;
   padding: 16px;
@@ -92,7 +88,6 @@
   color: rgba(0,170,136,0.3); letter-spacing: 1px;
 }
 
-/* ── RIGHT PANEL: CANVAS ────────────────────────────────────────── */
 .sv-right { display: flex; flex-direction: column; gap: 10px; }
 
 .sv-canvas-wrap {
@@ -129,18 +124,15 @@
   text-transform: uppercase;
 }
 
-/* ── PIPELINE (reuse bird classifier style) ─────────────────────── */
 .pipe-icon {
   font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900;
   color: var(--mgs-cyan); opacity: 0.35;
   flex-shrink: 0; width: 48px; text-align: center;
 }
 
-/* ── GLOBAL OVERRIDES FOR THIS PAGE ────────────────────────────── */
 .ts::before, .ts::after { display: none; }
 body::before, body::after { display: none; }
 
-/* ── SCATTER PLOT ───────────────────────────────────────────────── */
 .sv-scatter-single {
   display: flex; flex-direction: column; gap: 6px;
 }
@@ -154,7 +146,6 @@ body::before, body::after { display: none; }
   background: #000;
 }
 
-/* ── LOADING SPINNER on canvas ──────────────────────────────────── */
 .sv-spinner {
   position: absolute; inset: 0;
   display: none; align-items: center; justify-content: center;
