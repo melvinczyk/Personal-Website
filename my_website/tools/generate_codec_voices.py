@@ -110,8 +110,8 @@ PROJECT_DIALOGUE = {
     "memprobe": {
         "snake": "Memprobe. Break it down for me.",
         "otacon": [
-            "It's a firmware forensics tool. You upload a compiled elf binary and it parses the dwarf debug data to map exactly where every byte of flash and RAM goes.",
-            "A Jango front end, serverless parsing on Modal, a Postgres build history, and a command line tool that fails your build if the firmware grows too large.",
+            "It's a firmware forensics tool. You point it at a compiled elf binary and it parses the dwarf debug data to map exactly where every byte of flash and RAM goes.",
+            "It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your C I when the firmware outgrows its budget.",
         ],
     },
     "echo-scout": {

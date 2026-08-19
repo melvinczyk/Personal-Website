@@ -1,11 +1,19 @@
+// Accounts, shared by the about card (140.85) and the CONTACT channel (140.15)
+// so the two can never drift apart.
+const SOCIAL_LINKS = [
+  { label:'GitHub',   url:'https://github.com/melvinczyk',                                  color:'var(--mgs-cyan)' },
+  { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',                  color:'#0077B5' },
+  { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy',         color:'#1DB954' },
+  { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com',                              color:'#1da0c3' },
+];
 const TAG_CLASS = {
   'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award',
-  'ML/DL':'ai', 'EMBEDDED':'embedded', 'HARDWARE':'hardware', 'NETWORKING':'networking',
+  'ML/DL':'ai', 'EMBEDDED':'embedded', 'OPEN SOURCE':'ongoing', 'HARDWARE':'hardware', 'NETWORKING':'networking',
 };
 
 const PROJECTS = [
   { id:"oculosaurus",      name:"OCULOSAURUS",                tags:["1ST PLACE","HARDWARE","NETWORKING"], tech:"Python / OpenCV / Raspberry Pi / YOLO",              img:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/example.gif",  img2:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/point_cloud.png", desc:"Stereo vision system to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition.", link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator"},
-  { id:"memprobe",         name:"MEMPROBE",                   tags:["EMBEDDED","WEB","LIVE"],         tech:"Django / Modal / PostgreSQL / pyelftools / Click CLI", img:"https://memprobe.dev/static/og-image.png", img2:null, desc:"Online ELF analyzer for embedded firmware. Upload a compiled binary and instantly see where flash and RAM go: per-section and per-symbol breakdown, treemap, address map, and memory warnings, with build-over-build size tracking. A Django web app with serverless ELF/DWARF parsing on Modal, a Postgres-backed build history, and a pip-installable CLI that gates firmware size in CI.", link:"https://memprobe.dev"},
+  { id:"memprobe",         name:"MEMPROBE",                   tags:["EMBEDDED","OPEN SOURCE"],        tech:"Python / pyelftools / ELF + DWARF / GCC & IAR map parsers / pytest", img:null, img2:null, desc:"Open-source firmware memory analyzer. Parses ELF/DWARF binaries and GCC/IAR linker maps to show exactly where flash and RAM go: per-symbol and per-library attribution, stack usage, dead code detection, bloat insights, and build-over-build diffing. Enforces size budgets so CI fails when firmware outgrows its target. Ships as an installable Python package with local build history.", link:"https://github.com/melvinczyk/memprobe/tree/master"},
   { id:"echo-scout",       name:"ECHO SCOUT",                 tags:["EMBEDDED","HARDWARE", "NETWORKING","IN DEV"],            tech:"C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF / IMU", img:"https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946",                img2:null,                                                                                                         desc:"Compact 2.8\" handheld device that detects people and maps out rooms in real time. The mmWave radar covers an 80 degree area in front of the user, while the 8x8 ToF sensor builds a 3D point cloud of the surrounding space. Orientation and heading tracked via IMU with a live compass on the touchscreen display.", link:"https://github.com/melvinczyk/Heartbeat-Sensor"},
   { id:"song2vec",         name:"SONG2VEC",                   tags:["ML/DL","LIVE"],                  tech:"Python / PyTorch / VAE / PCA / scikit-learn",        img:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/multi_blobs.png",                                  img2:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png", desc:"Skip-gram based embedding model that learns vector representations of genres, tags, and songs in a shared latent space. Includes a VAE that maps songs into a 16-dimensional latent space and synthesizes unique colour blob images driven by genre and mood embeddings. PCA projects 1,305 genre and 985 tag vectors into colour+layout space.", link:"https://github.com/melvinczyk/Song2Vec"},
   { id:"bird-classifier",  name:"BACKYARD BIRD CLASSIFIER",   tags:["ML/DL", "LIVE"],                 tech:"Python / CNN / Django / mel-spectrogram",             img:"https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg",             img2:"https://github.com/melvinczyk/Bird-classifier/blob/main/final_matrix.png?raw=true",    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
@@ -222,6 +230,8 @@ about(){
       <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ - embedded, performance computing, low-level work</span></div>
       <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue - producer / artist</span></div>
       <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft - modding, custom server, Forge mods</span></div>
+      <div class="who-row who-links-row"><span class="who-key">links</span><span class="who-val who-links">${SOCIAL_LINKS.map(l =>
+        `<a href="${l.url}" target="_blank" rel="noopener" style="--lc:${l.color}">${l.label}</a>`).join('')}</span></div>
     </div>
   </div>`);
   bl();
@@ -283,17 +293,17 @@ project(id){
     </div>` : (p.id==='memprobe' ? `
     <div class="proj-demo-outer" style="padding:16px 20px;">
       <div class="proj-demo-hdr" style="margin-bottom:10px;">
-        <span>◈ LIVE SAAS</span>
-        <span class="proj-demo-sim">ELF · DWARF · FLASH / RAM</span>
+        <span>◈ OPEN SOURCE</span>
+        <span class="proj-demo-sim">ELF · DWARF · MAP · CI BUDGETS</span>
       </div>
-      <a href="https://memprobe.dev" target="_blank" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN MEMPROBE memprobe.dev</a>
+      <a href="https://github.com/melvinczyk/memprobe/tree/master" target="_blank" class="proj-link" style="display:inline-block;margin-top:4px;">→ VIEW SOURCE github.com/melvinczyk/memprobe</a>
     </div>` : ''));
   addHtml(`<div class="proj-card">
     <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${tagsHtml}</div>
     <div class="proj-card-body">
-      <div class="proj-img-wrap"><div style="width:100%"><img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">${img2html}</div></div>
+      ${p.img ? `<div class="proj-img-wrap"><div style="width:100%"><img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">${img2html}</div></div>` : ''}
       <div class="proj-info">
-        <div class="proj-tech">tech: <span style="color:#99ddcc">${esc(p.tech)}</span></div>
+        <div class="proj-tech">tech: <span style="color:var(--mgs-cyan)">${esc(p.tech)}</span></div>
         <div class="proj-desc">${esc(p.desc)}</div>
         <a class="proj-link" href="${p.link}" target="_blank">→ ${p.link.includes('github.com') ? `GITHUB: ${p.link.replace('https://github.com/','')}` : `LIVE: ${p.link.replace(/^https?:\/\//,'')}`}</a>
       </div>
@@ -318,8 +328,8 @@ music(){
 
 contact(){
   bl();
-  [['LinkedIn','https://www.linkedin.com/in/nicholas-burczyk/','#0077B5'],['GitHub','https://github.com/melvinczyk','var(--mgs-cyan)'],['Bandcamp','https://zerobarbecue.bandcamp.com','#1da0c3'],['Spotify','https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy','#1DB954']].forEach(([label,url,col])=>{
-    addHtml(`<div class="contact-row fade-in" style="margin:6px 20px;max-width:600px"><span class="contact-label">${label}</span><a class="contact-link" style="color:${col}" href="${url}" target="_blank">${url}</a></div>`);
+  SOCIAL_LINKS.forEach(({label,url,color:col})=>{
+    addHtml(`<div class="contact-row fade-in" style="margin:6px 20px;max-width:1000px"><span class="contact-label">${label}</span><a class="contact-link" style="color:${col}" href="${url}" target="_blank">${url}</a></div>`);
   });
   bl();
 },
@@ -340,7 +350,7 @@ gallery(){
   bl();
   ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown">3</span>...','line');
   bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:16px;letter-spacing:2px;font-weight:700">MC GALLERY</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">All seasons · screenshots &amp; video clips</div></div><a href="${STATIC_URLS.gallery}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ OPEN</a></div></div>`);
+  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">MC GALLERY</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">All seasons · screenshots &amp; video clips</div></div><a href="${STATIC_URLS.gallery}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ OPEN</a></div></div>`);
   bl();
   let n=3;
   const cd=document.getElementById('countdown');
@@ -356,7 +366,7 @@ clear(){ out.innerHTML=''; },
   bl();
   ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown">3</span>...','line');
   bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:16px;letter-spacing:2px;font-weight:700">BIRD CLASSIFIER</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Upload or record a bird call to classify it</div></div><a href="${STATIC_URLS.uploadFile}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
+  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">BIRD CLASSIFIER</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Upload or record a bird call to classify it</div></div><a href="${STATIC_URLS.uploadFile}" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
   bl();
   let n=3;
   const cd=document.getElementById('countdown');
@@ -374,7 +384,7 @@ CMDS['song2vec'] = function() {
   bl();
   ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown2">3</span>...','line');
   bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:16px;letter-spacing:2px;font-weight:700">SONG2VEC</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Search a song and generate its musical blob</div></div><a href="/song2vec/" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
+  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">SONG2VEC</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Search a song and generate its musical blob</div></div><a href="/song2vec/" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
   bl();
   let n=3;
   const cd=document.getElementById('countdown2');
@@ -1676,8 +1686,8 @@ const CX_PROJECT_DIALOGUE = {
   ],
   "memprobe": [
     { s:'snake',  k:'sk_memprobe',   t:"Memprobe. Break it down for me." },
-    { s:'otacon', k:'ot_memprobe_0', t:"It's a firmware forensics tool. You upload a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes." },
-    { s:'otacon', k:'ot_memprobe_1', t:"A Django front end, serverless parsing on Modal, a Postgres build history, and a CLI that fails your build if the firmware grows too large." },
+    { s:'otacon', k:'ot_memprobe_0', t:"It's a firmware forensics tool. You point it at a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes." },
+    { s:'otacon', k:'ot_memprobe_1', t:"It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your CI when the firmware outgrows its budget." },
   ],
   "echo-scout": [
     { s:'snake',  k:'sk_echo-scout',   t:"Echo Scout. This one's yours in the field." },
