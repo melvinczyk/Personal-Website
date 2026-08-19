@@ -1,341 +1,586 @@
-/* ── PAGE BASE ── */
-#screen { opacity: 1; overflow: hidden; }
+/* ══════════════════════════════════════════════════════════════════════
+   SERVER GALLERY — PS1 DISC SELECT
+   A mock console screen. Each season is a "game" on the disc rail; you
+   move between them left and right with the on-screen controller.
+
+   The controller icons (d-pad, face buttons, shoulders, START/SELECT)
+   are ported from PSone.css by micah5 (MIT), keeping its plastic
+   gradient and the authentic face-button colours: square #D592BD,
+   circle #E94B0E, cross #9DA5D5, triangle #20AF93. Sizes were made
+   explicit in px so they do not drift with the inherited font-size.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* portfolio.css lays a fixed, flickering scanline sheet over everything
+   (body::before, z-index 9999) plus a sweeping .scanline bar. Both are off
+   here: the console is a screen you are looking at, not one you are inside. */
+body::before { display: none; }
+.scanline    { display: none; }
+
+#screen { opacity: 1; display: flex; flex-direction: column; overflow: hidden; }
 html, body { height: 100%; overflow: hidden; }
+#stage { flex: 1; overflow-y: auto; padding: 18px 20px 40px; scroll-behavior: smooth; }
+#stage::-webkit-scrollbar { width: 5px; }
+#stage::-webkit-scrollbar-track { background: var(--mgs-bg); }
+#stage::-webkit-scrollbar-thumb { background: var(--mgs-cyan); }
 
-/* ── LAYOUT ── */
-#layout { flex: 1; display: flex; overflow: hidden; }
+/* ══════════════════════════════════════════════════════════════════
+   PSone.css CONTROLLER ICONS  (ported, MIT — see header)
+   ══════════════════════════════════════════════════════════════════ */
+.icon {
+  position: relative; display: inline-block;
+  width: 52px; height: 52px; border: 0; padding: 0;
+  vertical-align: middle; user-select: none; outline: 0;
+}
+.icon.clickable { cursor: pointer; transition: box-shadow .3s cubic-bezier(.25,.8,.5,1), transform .12s; }
+.icon.clickable:active { transform: translateY(2px); box-shadow: 0 1px 2px #000; }
 
-/* ── SIDEBAR ── */
-#sidebar {
-  width: 220px; flex-shrink: 0;
-  background: rgba(0,15,15,0.95);
-  border-right: 3px solid var(--mgs-cyan);
-  display: flex; flex-direction: column;
-  overflow-y: auto;
-  box-shadow: 3px 0 20px var(--glow-cyan);
-  position: relative;
+/* face buttons: grey plastic disc, coloured glyph */
+.icon.square, .icon.circle, .icon.x, .icon.triangle {
+  border-radius: 50%;
+  background-image: linear-gradient(#5f5e60, #3C3D3F);
+  box-shadow: 0 2px 5px #000;
 }
-#sidebar::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,255,204,0.03) 4px, rgba(0,255,204,0.03) 8px);
+.icon.square::before {
+  content: ''; position: absolute; border: 5px solid #D592BD;
+  top: 14px; bottom: 14px; left: 14px; right: 14px;
+  transition: .3s cubic-bezier(.25,.8,.5,1);
 }
-#sidebar::-webkit-scrollbar { width: 3px; }
-#sidebar::-webkit-scrollbar-thumb { background: var(--mgs-border); }
-
-.sb-section {
-  padding: 10px 12px 4px; font-size: 10px;
-  color: var(--mgs-cyan); letter-spacing: 2px; text-transform: uppercase;
-  border-bottom: 2px solid rgba(0,170,136,0.3);
-  font-family: 'Orbitron', monospace;
+.icon.circle::before {
+  content: ''; position: absolute; border: 5px solid #E94B0E; border-radius: 50%;
+  top: 10px; bottom: 10px; left: 10px; right: 10px;
+  transition: .3s cubic-bezier(.25,.8,.5,1);
 }
-.sb-btn {
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; background: none; border: none;
-  border-bottom: 1px solid rgba(0,136,136,0.15);
-  border-left: 3px solid transparent;
-  padding: 9px 14px; cursor: pointer;
-  font-family: 'Orbitron', monospace; font-size: 10px;
-  color: var(--mgs-border); text-align: left; transition: all .15s;
-  text-decoration: none;
+/* a bordered zero-height box: `top` is half the disc minus the border so the
+   stroke sits on the centre line before it is rotated */
+.icon.x::before, .icon.x::after {
+  content: ''; position: absolute; border: 3px solid #9DA5D5;
+  top: 23px; left: 10px; right: 10px;
+  transition: .3s cubic-bezier(.25,.8,.5,1);
 }
-.sb-btn:hover { background: rgba(0,255,204,0.06); color: var(--mgs-cyan); padding-left: 18px; border-left-color: var(--mgs-cyan); }
-.sb-btn.active { color: var(--mgs-cyan); border-left-color: var(--mgs-cyan); background: rgba(0,255,204,0.08); }
-.sb-arrow { color: var(--mgs-cyan); font-size: 10px; opacity: 0; transition: opacity .15s; margin-left: auto; }
-.sb-btn:hover .sb-arrow { opacity: 1; }
-.sb-btn .sb-icon { font-size: 12px; width: 16px; text-align: center; }
-
-.sb-season-btn {
-  display: flex; align-items: center; justify-content: space-between;
-  width: 100%; background: none; border: none;
-  border-bottom: 1px solid rgba(0,80,60,0.15);
-  padding: 7px 14px 7px 28px; cursor: pointer;
-  font-family: 'Orbitron', monospace; font-size: 10px;
-  color: rgba(0,170,136,0.6); text-align: left; transition: all .15s;
+.icon.x::before { transform: rotate(45deg); }
+.icon.x::after  { transform: rotate(135deg); }
+/* outer teal triangle with a smaller dark one punched out, both centred on 26 */
+.icon.triangle::before {
+  content: ''; position: absolute; top: 6px; left: 6px;
+  width: 0; height: 0; border: 0 solid transparent;
+  border-right-width: 20px; border-left-width: 20px;
+  border-bottom: 32px solid #20AF93;
 }
-.sb-season-btn:hover { color: var(--mgs-cyan); background: rgba(0,255,204,0.06); padding-left: 32px; }
-.sb-season-btn.open { color: var(--mgs-cyan); border-left: 2px solid var(--mgs-cyan); }
-
-/* ── MAIN ── */
-#main {
-  flex: 1; overflow-y: auto;
-  padding: 20px 24px 40px;
-  scroll-behavior: smooth;
-}
-#main::-webkit-scrollbar { width: 4px; }
-#main::-webkit-scrollbar-track { background: var(--mgs-bg); }
-#main::-webkit-scrollbar-thumb { background: var(--mgs-cyan); }
-
-/* ── PAGE HEADER ── */
-.page-header {
-  display: flex; align-items: center; gap: 16px;
-  padding-bottom: 14px;
-  border-bottom: 2px solid rgba(0,170,136,0.3);
-  margin-bottom: 28px;
-  animation: fadeIn .3s ease forwards;
-}
-.page-header-title {
-  font-family: 'Orbitron', monospace;
-  font-size: 22px; color: var(--mgs-cyan);
-  letter-spacing: 3px; font-weight: 900;
-  text-shadow: 0 0 15px var(--glow-cyan);
-}
-.page-header-sub { color: var(--mgs-border); font-size: 11px; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
-.back-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: transparent; border: 2px solid rgba(0,170,136,0.4);
-  color: var(--mgs-border); font-family: 'Orbitron', monospace; font-size: 10px;
-  padding: 5px 12px; cursor: pointer;
-  text-decoration: none; transition: all .15s; white-space: nowrap; flex-shrink: 0;
-}
-.back-btn:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); background: rgba(0,255,204,0.06); box-shadow: 0 0 12px var(--glow-cyan); }
-
-/* ── SEASON BLOCK ── */
-.season-block { margin-bottom: 12px; animation: fadeIn .35s ease forwards; }
-
-/* ── SEASON HEADER (clickable toggle) ── */
-.season-header {
-  display: flex; align-items: center; gap: 16px;
-  padding: 14px 20px;
-  border: 2px solid var(--mgs-border);
-  border-left: 4px solid var(--mgs-cyan);
-  background: rgba(0,15,15,0.8);
-  cursor: pointer;
-  transition: background .2s, box-shadow .2s;
-  position: relative; user-select: none;
-}
-.season-header::before, .season-header::after {
-  content: ''; position: absolute;
-  width: 12px; height: 12px; border: 1.5px solid var(--mgs-cyan);
-}
-.season-header::before { top: 0; right: 0; border-left: none; border-bottom: none; }
-.season-header::after  { bottom: 0; left: 4px; border-right: none; border-top: none; }
-.season-header:hover { background: rgba(0,255,204,0.04); box-shadow: 0 0 20px rgba(0,255,204,0.06); }
-.season-block.open .season-header { border-bottom: none; }
-
-.season-logo {
-  flex-shrink: 0; width: 100px; height: 100px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,10,10,0.9);
-  border: 2px solid var(--mgs-border); overflow: hidden;
-}
-.season-logo img {
-  width: 100%; height: 100%; object-fit: contain;
-  animation: logoPulse 4s ease-in-out infinite;
-}
-@keyframes logoPulse {
-  0%,100% { filter: drop-shadow(0 0 4px var(--glow-cyan)); }
-  50%      { filter: drop-shadow(0 0 14px var(--glow-cyan)); }
-}
-.season-logo-placeholder {
-  font-family: 'Orbitron', monospace; font-size: 26px;
-  color: var(--mgs-border); font-weight: 900;
+.icon.triangle::after {
+  content: ''; position: absolute; top: 13px; left: 13px;
+  width: 0; height: 0; border: 0 solid transparent;
+  border-right-width: 13px; border-left-width: 13px;
+  border-bottom: 21px solid #47484A;
 }
 
-.season-meta { flex: 1; min-width: 0; }
-.season-name {
-  font-family: 'Orbitron', monospace; font-size: 15px;
-  color: var(--mgs-cyan); letter-spacing: 2px; font-weight: 700;
+/* shoulder buttons */
+.icon.l1, .icon.r1, .icon.l2, .icon.r2 {
+  width: 58px; height: 27px; border-radius: 5px;
+  background-image: linear-gradient(#5f5e60, #3C3D3F);
+  box-shadow: 0 2px 5px #000;
+  font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #e8e8ea;
 }
-.season-desc { color: #99ddcc; font-size: 11px; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
-.season-stats { display: flex; gap: 14px; margin-top: 5px; flex-wrap: wrap; }
-.season-stat { color: var(--mgs-border); font-size: 10px; font-family: 'Share Tech Mono', monospace; }
-.season-stat span { color: var(--mgs-cyan); }
+.icon.l2, .icon.r2 { height: 32px; border-radius: 5px 5px 50% 50%; }
+.icon.l1::after, .icon.r1::after, .icon.l2::after, .icon.r2::after {
+  position: absolute; inset: 0; display: grid; place-items: center; letter-spacing: 1px;
+}
+.icon.psone {
+  width: 40px; height: 40px; border-radius: 50%;
+  background-image: linear-gradient(#5f5e60, #3C3D3F);
+  box-shadow: 0 2px 5px #000;
+}
+.icon.psone::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyBhcmlhLWhpZGRlbj0idHJ1ZSIgZGF0YS1wcmVmaXg9ImZhYiIgZGF0YS1pY29uPSJwbGF5c3RhdGlvbiIgcm9sZT0iaW1nIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgNTEyIiBjbGFzcz0icHNvbmUtaWNvbiI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTU3MC45IDM3Mi4zYy0xMS4zIDE0LjItMzguOCAyNC4zLTM4LjggMjQuM0wzMjcgNDcwLjJ2LTU0LjNsMTUwLjktNTMuOGMxNy4xLTYuMSAxOS44LTE0LjggNS44LTE5LjQtMTMuOS00LjYtMzkuMS0zLjMtNTYuMiAyLjlMMzI3IDM4MS4xdi01Ni40YzIzLjItNy44IDQ3LjEtMTMuNiA3NS43LTE2LjggNDAuOS00LjUgOTAuOS42IDEzMC4yIDE1LjUgNDQuMiAxNCA0OS4yIDM0LjcgMzggNDguOXptLTIyNC40LTkyLjV2LTEzOWMwLTE2LjMtMy0zMS4zLTE4LjMtMzUuNi0xMS43LTMuOC0xOSA3LjEtMTkgMjMuNHYzNDcuOWwtOTMuOC0yOS44VjMyYzM5LjkgNy40IDk4IDI0LjkgMTI5LjIgMzUuNEM0MjQuMSA5NC43IDQ1MSAxMjguNyA0NTEgMjA1LjJjMCA3NC41LTQ2IDEwMi44LTEwNC41IDc0LjZ6TTQzLjIgNDEwLjJjLTQ1LjQtMTIuOC01My0zOS41LTMyLjMtNTQuOCAxOS4xLTE0LjIgNTEuNy0yNC45IDUxLjctMjQuOWwxMzQuNS00Ny44djU0LjVsLTk2LjggMzQuNmMtMTcuMSA2LjEtMTkuNyAxNC44LTUuOCAxOS40IDEzLjkgNC42IDM5LjEgMy4zIDU2LjItMi45bDQ2LjQtMTYuOXY0OC44Yy01MS42IDkuMy0xMDEuNCA3LjMtMTUzLjktMTB6Ij48L3BhdGg+PC9zdmc+');
+  background-size: 62%; background-position: center; background-repeat: no-repeat;
+}
+.icon.l1::after { content: 'L1'; }
+.icon.r1::after { content: 'R1'; }
+.icon.l2::after { content: 'L2'; }
+.icon.r2::after { content: 'R2'; }
 
-.season-toggle {
-  flex-shrink: 0; font-family: 'Orbitron', monospace;
-  font-size: 10px; color: var(--mgs-border);
-  display: flex; align-items: center; gap: 5px;
-  transition: color .2s; white-space: nowrap;
+/* START / SELECT */
+.icon.select {
+  width: 56px; height: 27px; border-radius: 4px;
+  background-image: linear-gradient(#504f51, #3C3D3F);
+  box-shadow: 0 2px 5px #000;
 }
-.chevron {
-  display: inline-block; transition: transform .3s ease; font-style: normal;
+/* PSone builds START from borders: a right-pointing wedge, not a pill */
+.icon.start {
+  width: 0; height: 0; background: none; box-shadow: none;
+  border-style: solid;
+  border-width: 16px 0 16px 52px;
+  border-color: transparent transparent transparent #3C3D3F;
+  border-top-left-radius: 4px; border-bottom-left-radius: 4px;
+  filter: drop-shadow(0 2px 4px #000);
 }
-.season-block.open .chevron { transform: rotate(180deg); }
-.season-block.open .season-toggle { color: var(--mgs-cyan); }
+.icon.select-label::before, .icon.start-label::before {
+  position: absolute; top: 34px; white-space: nowrap; text-align: center;
+  font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #6b8c84; letter-spacing: 1px;
+}
+.icon.select-label::before { content: 'SELECT'; left: 0; width: 56px; }
+/* START's padding box sits 52px right and 16px down inside its borders, so
+   both offsets are pulled back to put the label level with SELECT's */
+.icon.start-label::before  { content: 'START'; left: -52px; width: 52px; top: 20px; }
 
-/* ── SEASON BODY (collapsible) ── */
-.season-body {
-  display: none;
-  border: 2px solid var(--mgs-border);
-  border-top: none;
-  border-left: 4px solid var(--mgs-cyan);
-  background: rgba(0,8,8,0.6);
-  padding: 16px;
+/* d-pad */
+.icon.arrow-left, .icon.arrow-right, .icon.arrow-up, .icon.arrow-down {
+  width: 44px; height: 44px; box-shadow: 0 2px 5px #000;
+  background-image: linear-gradient(#504f51, #3C3D3F);
 }
-.season-block.open .season-body {
-  display: block;
-  animation: fadeIn .25s ease forwards;
+.icon.arrow-left  { border-radius: 0 4px 4px 0; background-image: linear-gradient(to right, #504f51, #3C3D3F); }
+.icon.arrow-right { border-radius: 4px 0 0 4px; background-image: linear-gradient(to left,  #504f51, #3C3D3F); }
+.icon.arrow-up    { border-radius: 0 0 4px 4px; }
+.icon.arrow-down  { border-radius: 4px 4px 0 0; }
+.icon.arrow-left::after, .icon.arrow-right::after,
+.icon.arrow-up::after, .icon.arrow-down::after {
+  content: ''; position: absolute; width: 0; height: 0; border: solid transparent;
+}
+.icon.arrow-left::after  { right: 100%;  top: 50%;  margin-top: -22px;  border-width: 22px; border-right-color: #504f51; }
+.icon.arrow-right::after { left: 100%;   top: 50%;  margin-top: -22px;  border-width: 22px; border-left-color: #504f51; }
+.icon.arrow-up::after    { bottom: 100%; left: 50%; margin-left: -22px; border-width: 22px; border-bottom-color: #504f51; }
+.icon.arrow-down::after  { top: 100%;    left: 50%; margin-left: -22px; border-width: 22px; border-top-color: #3C3D3F; }
+
+/* ══════════════════════════════════════════════════════════════════
+   MOCK CONSOLE
+   ══════════════════════════════════════════════════════════════════ */
+.console-shell {
+  max-width: 1060px; margin: 0 auto 22px; position: relative;
+  border-radius: 16px; padding: 14px;
+  background: linear-gradient(#3a3b3d, #1c1d1f 60%, #101112);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.14);
+  border: 1px solid #4a4b4d;
+}
+.console-brand {
+  display: flex; align-items: center; gap: 12px; padding: 0 6px 10px;
+  font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #8d8e90; letter-spacing: 1px;
+}
+.console-brand .cb-name { color: #cfd0d2; font-size: 17px; }
+.console-brand .cb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.power-led {
+  width: 9px; height: 9px; border-radius: 50%; background: #24e08a;
+  box-shadow: 0 0 10px #24e08a; animation: ps-pulse 2.4s infinite;
 }
 
-/* ── TABS ── */
+/* the CRT inside the shell */
+.console-screen {
+  position: relative; border-radius: 8px; overflow: hidden;
+  background: radial-gradient(120% 120% at 50% 30%, #013a33 0%, #000c11 70%, #000406 100%);
+  border: 2px solid #0a0b0c;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.9), inset 0 0 2px 2px rgba(0,255,204,0.14);
+  padding: 20px 18px 22px;
+}
+/* the selected disc's own world sits behind the menu */
+.console-bg {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-size: cover; background-position: center;
+  filter: saturate(0.5) brightness(0.75) contrast(1.05);
+  opacity: 0; transition: opacity .45s ease;
+}
+.console-bg.on { opacity: 0.30; }
+/* darken toward the edges and the bottom so menu text stays readable */
+.console-screen::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 25%, transparent 0%, rgba(0,8,10,0.55) 65%, rgba(0,6,8,0.92) 100%),
+    linear-gradient(to bottom, rgba(0,10,12,0.35), rgba(0,8,10,0.8));
+}
+.console-content { position: relative; z-index: 2; }
+
+/* ══ DISC RAIL : one "game" per season ══ */
+.disc-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  font-family: 'MGS1 Codec', monospace;
+}
+.disc-head .dh-t { font-size: 21px; color: #d9fff5; text-shadow: 2px 2px 0 #000, 0 0 10px var(--glow-cyan); transform: scaleY(1.28); }
+.disc-head .dh-r { margin-left: auto; font-size: 16px; color: #5fbfa8; transform: scaleY(1.2); }
+
+.disc-rail { position: relative; height: 232px; overflow: hidden; }
+.disc-track {
+  position: absolute; top: 0; left: 50%; display: flex; gap: 26px;
+  transition: transform .38s cubic-bezier(.25,.8,.5,1);
+}
+.disc-slot {
+  width: 176px; flex-shrink: 0; cursor: pointer; text-align: center;
+  opacity: .38; transform: scale(.78); transform-origin: center top;
+  transition: opacity .3s ease, transform .3s cubic-bezier(.25,.8,.5,1);
+}
+.disc-slot.active { opacity: 1; transform: scale(1); }
+.disc-case {
+  position: relative; width: 176px; height: 176px; margin: 0 auto;
+  background: #000; overflow: hidden;
+  border: 2px solid rgba(0,255,204,0.28);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+}
+.disc-slot.active .disc-case { border-color: var(--mgs-cyan); box-shadow: 0 0 26px rgba(0,255,204,0.4), 0 6px 20px rgba(0,0,0,0.7); }
+.disc-case img { width: 100%; height: 100%; object-fit: contain; display: block; filter: brightness(.8); transition: filter .3s; }
+.disc-slot.active .disc-case img { filter: brightness(1) drop-shadow(0 0 8px var(--glow-cyan)); }
+.disc-case .disc-ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: 'MGS1 Codec', monospace; font-size: 46px; font-weight: 900; color: var(--mgs-border);
+}
+.disc-case .disc-num {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  font-family: 'MGS1 Codec', monospace; font-size: 14px; color: #bff3e6;
+  background: rgba(0,0,0,0.7); padding: 1px 7px; border: 1px solid rgba(0,255,204,0.35);
+}
+.disc-slot-name {
+  margin-top: 9px; font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #6fae9c;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: scaleY(1.2);
+}
+.disc-slot.active .disc-slot-name { color: var(--mgs-cyan); }
+
+/* rail arrows */
+.rail-arrow {
+  position: absolute; top: 70px; z-index: 5; background: none; border: 0; cursor: pointer;
+  font-size: 34px; line-height: 1; color: var(--mgs-cyan); text-shadow: 0 0 12px var(--mgs-cyan);
+  opacity: .55; transition: opacity .15s, transform .15s;
+}
+.rail-arrow:hover { opacity: 1; transform: scale(1.25); }
+.rail-arrow.prev { left: 4px; }
+.rail-arrow.next { right: 4px; }
+
+/* ══ SELECTED GAME INFO ══ */
+.disc-info {
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid rgba(0,255,204,0.25); position: relative; z-index: 2;
+}
+.disc-title {
+  font-family: 'MGS1 Codec', monospace; font-size: 28px; font-weight: 900; color: var(--mgs-cyan);
+  text-shadow: 0 0 14px var(--glow-cyan), 2px 2px 0 #000;
+  transform: scaleY(1.3); transform-origin: left top;
+}
+.disc-desc { color: #8fd6c4; font-size: 18px; margin-top: 14px; transform: scaleY(1.25); transform-origin: left top; }
+.disc-meters { margin-top: 18px; max-width: 520px; }
+.disc-meters .ps-row { grid-template-columns: 150px 1fr 74px; }
+.disc-meters .ps-prog { height: 15px; }
+
+/* ══ CONTROLLER DECK ══ */
+.console-deck {
+  display: flex; align-items: flex-start; justify-content: center; gap: 46px;
+  padding: 26px 10px 8px; flex-wrap: wrap;
+}
+.deck-cluster {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  min-height: 172px;
+}
+.deck-shoulders { display: flex; gap: 12px; height: 32px; align-items: flex-start; }
+.dpad {
+  display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px);
+  margin: 8px 24px 0;                 /* the arrow tips overhang by 22px */
+}
+.dpad .arrow-up    { grid-area: 1 / 2; }
+.dpad .arrow-left  { grid-area: 2 / 1; }
+.dpad .arrow-right { grid-area: 2 / 3; }
+.dpad .arrow-down  { grid-area: 3 / 2; }
+.dpad-hub { grid-area: 2 / 2; background: #3C3D3F; }
+.face { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); gap: 3px; }
+.face .triangle { grid-area: 1 / 2; }
+.face .square   { grid-area: 2 / 1; }
+.face .circle   { grid-area: 2 / 3; }
+.face .x        { grid-area: 3 / 2; }
+.deck-mid { display: flex; gap: 16px; align-items: center; margin-top: 84px; }
+
+/* ══════════════════════════════════════════════════════════════════
+   MEDIA STAGE — the loaded game's contents
+   ══════════════════════════════════════════════════════════════════ */
+.disc-media {
+  display: none; margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid rgba(0,255,204,0.25);
+}
+.disc-media.open { display: block; animation: fadeIn .25s ease forwards; }
+.disc-media .tab-panel.active {
+  max-height: 340px; overflow-y: auto; overflow-x: hidden;
+  padding-right: 6px;
+}
+/* once a disc is loaded the box art steps back so the files get the room */
+.console-screen.loaded .disc-rail { height: 142px; }
+.console-screen.loaded .disc-slot { width: 108px; }
+.console-screen.loaded .disc-case { width: 108px; height: 108px; }
+.console-screen.loaded .disc-case .disc-num { font-size: 11px; padding: 0 4px; }
+.console-screen.loaded .disc-slot-name { font-size: 13px; margin-top: 6px; }
+.console-screen.loaded .rail-arrow { top: 38px; font-size: 26px; }
+.console-screen.loaded .disc-desc { display: none; }
+.console-screen.loaded .disc-title { font-size: 24px; }
+.disc-rail, .disc-slot, .disc-case, .disc-slot-name { transition: width .3s ease, height .3s ease, font-size .3s ease; }
+.disc-media .tab-panel::-webkit-scrollbar { width: 5px; }
+.disc-media .tab-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.4); }
+.disc-media .tab-panel::-webkit-scrollbar-thumb { background: var(--mgs-cyan); }
 .media-tabs {
-  display: flex; gap: 0; margin-bottom: 16px;
-  border-bottom: 2px solid rgba(0,170,136,0.3);
+  display: flex; gap: 10px; margin-bottom: 16px;
+  border-bottom: 2px solid rgba(0,255,204,0.22);
 }
 .media-tab {
-  padding: 7px 18px; cursor: pointer;
-  font-family: 'Orbitron', monospace; font-size: 10px;
-  color: var(--mgs-border); letter-spacing: 1px;
-  border: none; background: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 9px 20px; cursor: pointer; border: 0;
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  font-family: 'MGS1 Codec', monospace; font-size: 18px; color: #6fae9c;
+  background: linear-gradient(to top, rgba(0,255,204,0.05), transparent);
+  transition: color .15s, background .15s;
 }
-.media-tab:hover { color: var(--mgs-cyan); }
-.media-tab.active { color: var(--mgs-cyan); border-bottom-color: var(--mgs-cyan); }
-.tab-count {
-  font-size: 9px; color: var(--mgs-border);
-  background: rgba(0,170,136,0.12);
-  padding: 1px 5px; margin-left: 5px;
-  font-family: 'Share Tech Mono', monospace;
+.media-tab .lbl { transform: scaleY(1.25); }
+.media-tab:hover { color: #d9fff5; }
+.media-tab.active {
+  color: #eafff9; border-bottom-color: var(--mgs-cyan);
+  background: linear-gradient(to top, rgba(0,255,204,0.26), transparent);
+  text-shadow: 0 0 10px var(--glow-cyan);
 }
-.media-tab.active .tab-count { color: var(--mgs-cyan); background: rgba(0,255,204,0.1); }
-
+.tab-count { font-size: 15px; color: #5fa393; border: 1px solid rgba(0,255,204,0.28); padding: 1px 7px; background: rgba(0,0,0,0.4); }
+.media-tab.active .tab-count { color: var(--mgs-cyan); border-color: rgba(0,255,204,0.6); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
+.empty-msg { color: #4e8579; font-size: 17px; padding: 18px 0; transform: scaleY(1.2); transform-origin: left top; }
 
-.empty-msg {
-  color: rgba(0,170,136,0.4); font-size: 11px;
-  font-family: 'Share Tech Mono', monospace;
-  padding: 16px 0;
-}
-
-/* ── MASONRY GRID ── */
-.masonry-grid {
-  columns: 4 180px;
-  column-gap: 8px;
-}
-@media(max-width: 960px) { .masonry-grid { columns: 3 160px; } }
-@media(max-width: 640px) { .masonry-grid { columns: 2 130px; } }
-
+.masonry-grid { columns: 4 190px; column-gap: 9px; }
+@media(max-width: 960px) { .masonry-grid { columns: 3 165px; } }
+@media(max-width: 640px) { .masonry-grid { columns: 2 135px; } }
 .masonry-item {
-  break-inside: avoid;
-  margin-bottom: 8px;
-  position: relative;
-  cursor: pointer;
-  overflow: hidden;
-  border: 2px solid rgba(0,170,136,0.2);
-  transition: border-color .15s, box-shadow .15s;
-  background: rgba(0,10,10,0.9);
+  break-inside: avoid; margin-bottom: 9px; position: relative; cursor: pointer;
+  overflow: hidden; background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0,255,204,0.25); transition: border-color .15s, box-shadow .15s;
 }
-.masonry-item:hover {
-  border-color: var(--mgs-cyan);
-  box-shadow: 0 0 12px rgba(0,255,204,0.14);
-}
+.masonry-item:hover { border-color: var(--mgs-cyan); box-shadow: 0 0 16px rgba(0,255,204,0.28); }
 .masonry-item img {
   width: 100%; height: auto; display: block;
-  filter: brightness(0.82) saturate(0.88);
-  transition: filter .2s;
+  filter: brightness(.8) saturate(.85); transition: filter .2s, transform .3s;
 }
-.masonry-item:hover img { filter: brightness(1) saturate(1); }
-
-.masonry-overlay {
-  position: absolute; inset: 0;
-  opacity: 0; transition: opacity .15s;
-  display: flex; align-items: flex-end;
-}
+.masonry-item:hover img { filter: brightness(1) saturate(1); transform: scale(1.04); }
+.masonry-overlay { position: absolute; inset: 0; opacity: 0; transition: opacity .15s; display: flex; align-items: flex-end; }
 .masonry-item:hover .masonry-overlay { opacity: 1; }
 .masonry-label {
-  width: 100%; padding: 5px 8px;
-  background: rgba(0,6,6,0.9);
-  border-top: 1px solid rgba(0,170,136,0.25);
-  font-size: 9px; color: var(--mgs-border);
-  font-family: 'Share Tech Mono', monospace;
+  width: 100%; padding: 5px 9px; background: rgba(0,6,6,0.92);
+  border-top: 1px solid rgba(0,255,204,0.3); font-size: 14px; color: #a8e9d8;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+/* the ✕ prompt PS1 menus put on the highlighted entry */
+.masonry-item .tile-x, .video-tile .tile-x {
+  position: absolute; top: 6px; left: 6px; z-index: 3;
+  width: 26px; height: 26px; opacity: 0; transform: scale(.7);
+  transition: opacity .15s, transform .15s; pointer-events: none;
+}
+.masonry-item:hover .tile-x, .video-tile:hover .tile-x { opacity: 1; transform: scale(1); }
+.tile-x.x::before, .tile-x.x::after { top: 11px; left: 5px; right: 5px; border-width: 2px; }
+/* the deck sets the icon scale; inline copies ride smaller */
+.media-tab .icon { transform: scale(.62); margin: -6px -10px; }
+.lb-btn .icon    { transform: scale(.62); margin: -8px -12px; }
 
-/* ── VIDEO GRID ── */
-.video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 10px;
-}
+.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 11px; }
 .video-tile {
-  border: 2px solid rgba(0,170,136,0.2);
-  background: rgba(0,10,10,0.9);
-  overflow: hidden; cursor: pointer;
-  transition: border-color .15s, box-shadow .15s; position: relative;
+  position: relative; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0,255,204,0.25); transition: border-color .15s, box-shadow .15s;
 }
-.video-tile:hover { border-color: var(--mgs-cyan); box-shadow: 0 0 12px rgba(0,255,204,0.14); }
-.video-tile video { width: 100%; height: 150px; object-fit: cover; display: block; filter: brightness(0.82); transition: filter .2s; }
+.video-tile:hover { border-color: var(--mgs-cyan); box-shadow: 0 0 16px rgba(0,255,204,0.28); }
+.video-tile video { width: 100%; height: 152px; object-fit: cover; display: block; filter: brightness(.8); transition: filter .2s; }
 .video-tile:hover video { filter: brightness(1); }
 .video-tile-overlay {
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 150px;
+  position: absolute; top: 0; left: 0; right: 0; height: 152px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0,255,204,0.03); opacity: 0; transition: opacity .15s;
+  background: rgba(0,255,204,0.04); opacity: 0; transition: opacity .15s;
 }
 .video-tile:hover .video-tile-overlay { opacity: 1; }
 .play-circle {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 2px solid var(--mgs-cyan);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--mgs-cyan); font-size: 14px;
+  width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--mgs-cyan);
+  display: grid; place-items: center; color: var(--mgs-cyan); font-size: 17px;
+  box-shadow: 0 0 14px rgba(0,255,204,0.4); background: rgba(0,6,6,0.6);
 }
 .video-tile-label {
-  padding: 6px 10px; font-size: 10px; color: var(--mgs-border);
-  border-top: 1px solid rgba(0,170,136,0.2);
-  font-family: 'Share Tech Mono', monospace;
+  padding: 7px 11px; font-size: 15px; color: #a8e9d8;
+  border-top: 1px solid rgba(0,255,204,0.25);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tile-type-badge {
-  position: absolute; top: 6px; right: 6px;
-  background: rgba(0,8,8,0.9);
-  border: 1px solid #ffaa00; color: #ffaa00;
-  font-size: 9px; padding: 1px 5px;
-  font-family: 'Orbitron', monospace; letter-spacing: 1px;
+  position: absolute; top: 6px; right: 6px; z-index: 2;
+  background: rgba(0,6,6,0.9); border: 1px solid #ffaa00; color: #ffaa00;
+  font-size: 14px; padding: 1px 7px;
 }
 
-/* ── LIGHTBOX ── */
+/* ══ VIEWER ══ */
 #lightbox {
   display: none; position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,3,3,0.97);
-  align-items: center; justify-content: center;
-  flex-direction: column; gap: 12px;
+  background: rgba(0,3,3,0.97); align-items: center; justify-content: center;
+  flex-direction: column; gap: 14px; padding: 64px 20px 30px;
 }
 #lightbox.open { display: flex; }
-
-#lightbox-media-wrap {
-  display: flex; align-items: center; justify-content: center;
-  max-width: 92vw; max-height: 80vh;
+#lightbox-media-wrap { display: flex; align-items: center; justify-content: center; max-width: 92vw; max-height: 72vh; }
+#lightbox-media-wrap img, #lightbox-media-wrap video {
+  max-width: 92vw; max-height: 72vh; display: block; object-fit: contain;
+  border: 2px solid rgba(0,255,204,0.55); box-shadow: 0 0 40px rgba(0,255,204,0.18);
 }
-#lightbox-media-wrap img {
-  max-width: 92vw; max-height: 80vh;
-  border: 2px solid var(--mgs-border); display: block;
-  object-fit: contain;
-}
-#lightbox-media-wrap video {
-  max-width: 92vw; max-height: 80vh;
-  border: 2px solid var(--mgs-border);
-}
-
-#lightbox-caption {
-  color: var(--mgs-border); font-size: 10px;
-  letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; text-align: center;
-}
-#lightbox-close {
-  position: fixed; top: 14px; right: 18px;
-  background: none; border: 2px solid rgba(0,170,136,0.35);
-  color: var(--mgs-border); font-family: 'Orbitron', monospace;
-  font-size: 10px; padding: 5px 14px; cursor: pointer;
-  transition: all .15s; letter-spacing: 1px;
-}
-#lightbox-close:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); }
+#lightbox-caption { color: #8fd6c4; font-size: 17px; text-align: center; transform: scaleY(1.22); }
 #lightbox-counter {
-  position: fixed; top: 14px; left: 18px;
-  color: var(--mgs-border); font-family: 'Orbitron', monospace;
-  font-size: 10px; letter-spacing: 2px;
+  position: fixed; top: 16px; left: 20px;
+  font-family: 'MGS1 Codec', monospace; font-size: 20px; color: var(--mgs-cyan);
+  border: 1px solid rgba(0,255,204,0.4); background: rgba(0,10,14,0.9); padding: 6px 14px;
 }
-#lightbox-nav { display: flex; gap: 12px; }
-.lb-nav-btn {
-  background: none; border: 2px solid rgba(0,170,136,0.35);
-  color: var(--mgs-border); font-family: 'Orbitron', monospace;
-  font-size: 10px; padding: 7px 22px; cursor: pointer;
-  transition: all .15s; letter-spacing: 1px;
+#lightbox-counter b { display: inline-block; transform: scaleY(1.22); }
+#lightbox-nav { display: flex; gap: 26px; align-items: center; }
+.lb-btn {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 7px;
+  background: none; border: 0; cursor: pointer;
+  font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #a8e9d8;
 }
-.lb-nav-btn:hover { color: var(--mgs-cyan); border-color: var(--mgs-cyan); box-shadow: 0 0 10px var(--glow-cyan); }
+.lb-btn span { transform: scaleY(1.2); }
+.lb-btn:hover { color: #eafff9; text-shadow: 0 0 10px var(--glow-cyan); }
+#lightbox-close { position: fixed; top: 14px; right: 20px; }
 
-@media(max-width: 680px) {
-  #sidebar { display: none; }
-  .season-header { flex-direction: row; flex-wrap: wrap; gap: 10px; }
-  .masonry-grid { columns: 2 120px; }
+@media(max-width: 760px) {
+  .console-deck { gap: 24px; }
+  .disc-slot, .disc-case { width: 140px; }
+  .disc-case { height: 140px; }
+  .masonry-grid { columns: 2 125px; }
+  .deck-mid { display: none; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PSone.css DEFAULT THEME
+   The console runs on PSone.css's own palette rather than the codec cyan:
+   the FF7-blue container gradient, its light border and inner white ring,
+   lightgrey titles over hard black shadows, and its progress-bar colours.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* the codec grid backdrop is cyan; the console sets its own ground */
+.grid-overlay { display: none; }
+body { background: #05060a; }
+
+/* .container — FF7 blue menu window */
+.console-screen {
+  background: linear-gradient(#0a1447, #04061f);
+  border: 1px solid #c6c6c6;
+  border-radius: 8px;
+  box-shadow: inset 0 0 2px 2px rgba(0,0,0,0.35);
+  padding: 0 18px 22px;
+}
+/* PSone .container:before — the inner white ring */
+.console-screen::before {
+  background: none;
+  border: 2px solid #fff; border-radius: 7px;
+  box-sizing: border-box; opacity: .85; z-index: 5;
+}
+/* the veil that keeps menu text readable over the disc's backdrop; it used
+   to live on ::before, which the ring took over */
+.console-screen::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 22%, rgba(10,20,71,0.25) 0%, rgba(3,5,26,0.82) 58%, rgba(0,0,0,0.96) 100%),
+    linear-gradient(to bottom, rgba(3,5,26,0.35), rgba(0,0,0,0.8));
+}
+.console-bg { filter: saturate(0.6) brightness(0.85); }
+.console-bg.on { opacity: 0.42; }
+
+/* .container.dark — the nested panels */
+.disc-info { border-top-color: rgba(255,255,255,0.35); }
+.disc-media {
+  border-top-color: rgba(255,255,255,0.35);
+  background-color: rgba(0,0,0,0.55);
+  margin-left: -8px; margin-right: -8px; padding: 12px 8px 4px;
+  border-radius: 4px;
+}
+
+/* .title / p — lightgrey over a hard black shadow */
+.disc-head .dh-t, .disc-title {
+  color: lightgrey; text-shadow: 4px 4px black; text-transform: uppercase;
+}
+.disc-head .dh-r { color: #AEAFAE; text-shadow: 2px 2px black; }
+.disc-desc { color: #fff; text-shadow: 2px 2px black; }
+.disc-slot-name { color: #AEAFAE; text-shadow: 2px 2px black; }
+.disc-slot.active .disc-slot-name { color: #fff; }
+.disc-case .disc-num {
+  color: #fff; text-shadow: 2px 2px black;
+  background: rgba(0,0,0,0.55); border-color: rgba(255,255,255,0.45);
+}
+.disc-case { border-color: rgba(255,255,255,0.35); }
+.disc-slot.active .disc-case {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.35), 0 6px 20px rgba(0,0,0,0.7);
+}
+.disc-slot.active .disc-case img { filter: brightness(1); }
+.rail-arrow { color: #fff; text-shadow: 3px 3px black; }
+
+/* .progress — PSone's well and bar colours */
+.disc-meters .ps-prog {
+  background-color: rgba(0,0,0,0.5); border: 0; padding: 3px; height: 18px;
+}
+.disc-meters .ps-fill {
+  background-image: linear-gradient(to right, #2C6776, #4EA35B); box-shadow: none;
+}
+.disc-meters .ps-row.ps-dim .ps-fill {
+  background-image: linear-gradient(to right, #3E8CA5, #49a7c6);
+}
+.disc-meters .ps-nm { color: lightgrey; text-shadow: 2px 2px black; }
+.disc-meters .ps-pc { color: #C6C843; text-shadow: 2px 2px black; }
+.disc-meters .ps-row.ps-dim .ps-nm, .disc-meters .ps-row.ps-dim .ps-pc { color: #AEAFAE; }
+
+/* .btn — lit through the centre, PSone grey, blue when active */
+.media-tabs { border-bottom-color: rgba(255,255,255,0.3); gap: 0; }
+.media-tab {
+  color: #fff; text-shadow: 2px 2px black; text-transform: uppercase;
+  background: linear-gradient(to left, transparent, rgba(174,175,174,0.35), transparent);
+  border-top: 3px solid; border-bottom: 3px solid;
+  border-image: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+  border-image-slice: 1; margin: 0 4px;
+}
+.media-tab:hover { background: linear-gradient(to left, transparent, #AEAFAE, transparent); color: #fff; }
+.media-tab.active { background: linear-gradient(to left, transparent, #3E8CA5, transparent); }
+.tab-count {
+  color: #C6C843; text-shadow: 2px 2px black;
+  background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.3);
+}
+.media-tab.active .tab-count { color: #fff; border-color: rgba(255,255,255,0.5); }
+.empty-msg { color: #AEAFAE; text-shadow: 2px 2px black; }
+
+/* tiles */
+.masonry-item, .video-tile { border-color: rgba(255,255,255,0.28); }
+.masonry-item:hover, .video-tile:hover { border-color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.3); }
+.masonry-label, .video-tile-label {
+  color: #fff; text-shadow: 2px 2px black;
+  background: rgba(0,0,0,0.75); border-top-color: rgba(255,255,255,0.25);
+}
+.play-circle { border-color: #fff; color: #fff; box-shadow: 0 0 14px rgba(255,255,255,0.35); background: rgba(0,0,0,0.5); }
+.tile-type-badge { border-color: #F19C42; color: #F19C42; text-shadow: 2px 2px black; }
+.disc-media .tab-panel::-webkit-scrollbar-thumb { background: #AEAFAE; }
+
+/* viewer */
+#lightbox { background: rgba(5,6,10,0.97); }
+#lightbox-media-wrap img, #lightbox-media-wrap video {
+  border-color: rgba(255,255,255,0.6); box-shadow: 0 0 40px rgba(0,0,0,0.9);
+}
+#lightbox-caption { color: #fff; text-shadow: 2px 2px black; }
+#lightbox-counter {
+  color: #C6C843; text-shadow: 2px 2px black;
+  background: linear-gradient(#0D2289, #06093B);
+  border: 1px solid #c6c6c6; border-radius: 4px;
+}
+.lb-btn { color: #fff; text-shadow: 2px 2px black; }
+.lb-btn:hover { color: #C6C843; }
+
+/* Black page, like the PSone.css demo. There is no titlebar and no plastic
+   bezel any more: the .container is the whole interface, sitting on black. */
+html, body, #screen { background: #000; }
+body::after { display: none; }
+#stage::-webkit-scrollbar-thumb { background: #AEAFAE; }
+#stage::-webkit-scrollbar-track { background: #0c0c0c; }
+.console-shell {
+  max-width: 1060px; margin: 0 auto 22px;
+  background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0;
+}
+
+/* the container's own title bar, with the PSone logo */
+.disc-titlebar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 18px 12px; position: relative; z-index: 4;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+.disc-titlebar .dt-name {
+  font-family: 'MGS1 Codec', monospace; font-size: 26px; color: lightgrey;
+  text-shadow: 4px 4px black; text-transform: uppercase; transform: scaleY(1.28);
+}
+.disc-titlebar .dt-sub {
+  margin-left: auto; font-family: 'MGS1 Codec', monospace; font-size: 17px;
+  color: #AEAFAE; text-shadow: 2px 2px black; text-transform: uppercase; transform: scaleY(1.2);
+}
+
+/* the PSone radio cursor was removed: it read as a stray magenta blob */
+.disc-slot { position: relative; }
+
+

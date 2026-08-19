@@ -11,6 +11,15 @@ SEASON_DESCRIPTIONS = {
     4: "Groid Pack Seven Seas - Pirates PvP",
 }
 
+# Screenshot used as the backdrop behind each disc on the gallery screen.
+# Picked for legibility; falls back to a mid-list screenshot if missing.
+SEASON_HEROES = {
+    1: "2023-10-24_22.23.28.png",
+    2: "2024-09-04_12.45.03.png",
+    3: "2025-01-29_12.23.36.png",
+    4: "2026-01-26_00.31.43.png",
+}
+
 SEASON_NAMES = {
     2: "SEASON 2 - Spells and Dragons",
     3: "SEASON 3 (PART 1)",
@@ -82,6 +91,11 @@ def gallery(request):
 
         screenshots.sort(key=lambda x: x['date'])
 
+        hero_name = SEASON_HEROES.get(season_num)
+        hero = next((x['url'] for x in screenshots if x['filename'] == hero_name), None)
+        if hero is None and screenshots:
+            hero = screenshots[len(screenshots) // 2]['url']
+
         seasons.append({
             'number':           season_num,
             'name':             SEASON_NAMES.get(season_num, f'SEASON {season_num}'),
@@ -90,6 +104,7 @@ def gallery(request):
             'logo_file':        logo_file,
             'screenshots':      screenshots,
             'videos':           videos,
+            'hero':             hero,
             'screenshot_count': len(screenshots),
             'video_count':      len(videos),
         })
