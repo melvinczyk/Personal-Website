@@ -139,19 +139,32 @@ function renderRoster() {
               </div>
               <div class="rc-tabs">
                 <button class="rc-tab" onclick="showPanel(event, ${i}, 'bag')">
-                  ▦ INVENTORY <b>${p.carried.filter(Boolean).length}/36</b>
+                  <span class="icon triangle"></span><span class="lbl">INVENTORY</span>
+                  <b>${p.carried.filter(Boolean).length}/36</b>
                 </button>
                 <button class="rc-tab" onclick="showPanel(event, ${i}, 'attr')">
-                  ◈ ATTRIBUTES <b>${p.attributes.length}</b>
+                  <span class="icon square"></span><span class="lbl">ATTRIBUTES</span>
+                  <b>${p.attributes.length}</b>
                 </button>
               </div>
             </div>
             <div class="rc-panel" id="rc-panel-${i}" onclick="event.stopPropagation()">
               <div class="rp-head">
                 <span class="rp-title"></span>
-                <button class="rp-close" onclick="hidePanel(${i})" aria-label="Close">✕</button>
+                <button class="rp-close" onclick="hidePanel(${i})" aria-label="Close">
+                  <span class="icon circle"></span><span class="lbl">CLOSE</span>
+                </button>
               </div>
               <div class="rp-body"></div>
+              <div class="rp-foot">
+                <button class="rp-nav" onclick="panelStep(event, -1)">
+                  <span class="icon l1"></span><span class="lbl">PREV</span>
+                </button>
+                <span class="rp-who">${p.name}</span>
+                <button class="rp-nav" onclick="panelStep(event, 1)">
+                  <span class="lbl">NEXT</span><span class="icon r1"></span>
+                </button>
+              </div>
             </div>
           </div>
         </div>`).join('')}
@@ -202,7 +215,8 @@ function selectPlayer(i) {
   const players = SEASONS[discIdx].roster || [];
   if (!players.length) return;
   playerIdx = (i + players.length) % players.length;
-  document.querySelectorAll('.rc-panel.on').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('.rc-panel.on').forEach(el =>
+    hidePanel(Number(el.id.replace('rc-panel-', ''))));
   document.querySelectorAll('.roster-slot').forEach((el, n) =>
     el.classList.toggle('active', n === playerIdx));
   document.getElementById('roster-pos').textContent = playerIdx + 1;
@@ -233,7 +247,7 @@ function playerClick(i) { if (i !== playerIdx) selectPlayer(i); }
 // The two drawers: the card is only so big, so each opens over the whole of
 // it rather than pushing the rest of the card around.
 function showPanel(event, i, view) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   const panel = document.getElementById(`rc-panel-${i}`);
   if (!panel) return;
   if (panel.classList.contains('on') && panel.dataset.view === view) {
@@ -246,11 +260,30 @@ function showPanel(event, i, view) {
   panel.querySelector('.rp-body').innerHTML =
     view === 'bag' ? bagPanel(player) : attrPanel(player);
   panel.classList.add('on');
+  markTabs(i, view);
+}
+
+function markTabs(i, view) {
+  const tabs = document.querySelectorAll(`#player-${i} .rc-tab`);
+  tabs.forEach((tab, n) => tab.classList.toggle('active',
+    view === (n === 0 ? 'bag' : 'attr')));
 }
 
 function hidePanel(i) {
   const panel = document.getElementById(`rc-panel-${i}`);
   if (panel) panel.classList.remove('on');
+  markTabs(i, null);
+}
+
+function panelOpen() { return document.querySelector('.rc-panel.on'); }
+
+// the shoulder buttons walk the roster without leaving the drawer
+function panelStep(event, dir) {
+  event.stopPropagation();
+  const drawer = panelOpen();
+  const view = drawer && drawer.dataset.view;
+  playerStep(dir);
+  if (view) showPanel(null, playerIdx, view);
 }
 
 // the grid the game itself uses: three rows of storage over the hotbar
@@ -265,14 +298,16 @@ function bagPanel(p) {
       ${art}${item.count > 1 ? `<b>${item.count}</b>` : ''}</span>`;
   };
   const cells = p.carried.map(tile);
-  return `<div class="bag-grid">${cells.slice(0, 27).join('')}</div>
-          <div class="bag-grid hot">${cells.slice(27).join('')}</div>`;
+  return `<div class="bag-wrap">
+    <div class="bag-grid">${cells.slice(0, 27).join('')}</div>
+    <div class="bag-grid hot">${cells.slice(27).join('')}</div>
+  </div>`;
 }
 
 function attrPanel(p) {
   if (!p.attributes.length) return '<p class="rp-none">nothing recorded</p>';
   return `<div class="attr-list">${p.attributes.map(a => `
-    <span class="attr-row${a.core ? ' core' : ''}">
+    <span class="attr-row${a.core ? ' core' : ''}" title="${a.label}${a.mod ? ` · ${a.mod}` : ''}">
       <b>${a.label}</b>${a.mod ? `<i>${a.mod}</i>` : ''}
       <em>${a.value}</em>
     </span>`).join('')}</div>`;
@@ -361,6 +396,8 @@ function loadDisc()  { toggleMedia(); }
 // ○ backs out one level: viewer, then the open disc, then home
 function psxBack() {
   if (lbOpen()) { closeLightbox(); return; }
+  const drawer = panelOpen();
+  if (drawer) { hidePanel(Number(drawer.id.replace('rc-panel-', ''))); return; }
   if (document.getElementById('disc-media').classList.contains('open')) { toggleMedia(false); return; }
   window.location.href = HOME_URL;
 }

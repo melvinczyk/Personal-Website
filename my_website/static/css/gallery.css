@@ -613,76 +613,130 @@ body::after { display: none; }
 .rc-model, .rc-noskin { position: relative; z-index: 2; width: 99px; height: 171px; }
 .rc-pad, .rc-scan { display: none; }
 
-/* ── the two drawers ─────────────────────────────────────────────────── */
-.rc-tabs { display: flex; gap: 6px; margin-top: 6px; }
-.rc-tab {
-  flex: 1; padding: 3px 6px; cursor: pointer;
-  font-family: 'MGS1 Codec', monospace; font-size: 11px; letter-spacing: .04em;
-  color: #cfd6e4; background: rgba(0,0,0,0.4);
-  border: 1px solid rgba(255,255,255,0.22);
-  transition: color .15s, border-color .15s, background .15s;
+/* ── the two drawers ──────────────────────────────────────────────────
+   Both are console screens, so they speak the console's language: the face
+   buttons are the same ported PSone.css art the deck below the disc rail
+   uses, at the size a prompt is drawn at, and circle backs out of a drawer
+   just as it backs out of everything else. */
+.rc-tabs {
+  display: flex; gap: 8px; margin-top: 7px;
+  border-top: 1px solid rgba(255,255,255,0.16); padding-top: 5px;
 }
-.rc-tab b { color: var(--rc, #ffd479); font-weight: normal; }
-.rc-tab:hover { color: #fff; border-color: var(--rc, #ffd479); background: rgba(0,0,0,0.6); }
+.rc-tab {
+  flex: 1; display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 8px; cursor: pointer; border: 0;
+  border-bottom: 2px solid transparent;
+  font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #9fb0c6;
+  background: linear-gradient(to top, rgba(255,255,255,0.07), transparent);
+  transition: color .15s, background .15s, border-color .15s;
+}
+.rc-tab .icon { transform: scale(.3); margin: -18px -19px; flex-shrink: 0; }
+.rc-tab .lbl { transform: scaleY(1.2); }
+.rc-tab b { margin-left: auto; font-weight: normal; color: var(--rc, #ffd479); }
+.rc-tab:hover { color: #eef4ff; background: linear-gradient(to top, rgba(255,255,255,0.14), transparent); }
+.rc-tab.active {
+  color: #fff; border-bottom-color: var(--rc, #ffd479);
+  background: linear-gradient(to top, rgba(255,255,255,0.16), transparent);
+}
 .roster-slot:not(.active) .rc-tab { pointer-events: none; }
 
 .rc-panel {
   position: absolute; inset: 0; z-index: 6; display: none;
-  flex-direction: column; padding: 8px 10px 6px;
-  background: rgba(6,8,16,0.94);
-  box-shadow: inset 0 0 0 1px var(--rc, rgba(255,255,255,0.4));
+  flex-direction: column; padding: 7px 11px 8px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.35) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(10,14,26,0.97), rgba(4,6,12,0.98));
+  box-shadow: inset 0 0 0 1px var(--rc, rgba(255,255,255,0.4)),
+              inset 0 0 0 4px rgba(0,0,0,0.55);
 }
 .rc-panel.on { display: flex; }
 .rp-head {
   display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0; margin-bottom: 6px; padding-bottom: 4px;
+  flex-shrink: 0; margin-bottom: 7px; padding-bottom: 4px;
   border-bottom: 1px solid rgba(255,255,255,0.18);
-  font-family: 'MGS1 Codec', monospace; font-size: 13px; letter-spacing: .1em;
+  font-family: 'MGS1 Codec', monospace; font-size: 13px; letter-spacing: .12em;
   color: var(--rc, #ffd479);
 }
+.rp-title { transform: scaleY(1.2); transform-origin: left; }
 .rp-close {
-  padding: 0 4px; cursor: pointer; font-size: 13px; line-height: 1;
-  color: #9fb0c6; background: none; border: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0; cursor: pointer; background: none; border: 0;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #9fb0c6;
 }
+.rp-close .icon { transform: scale(.28); margin: -19px -19px; }
+.rp-close .lbl { transform: scaleY(1.2); }
 .rp-close:hover { color: #fff; }
+
+.rp-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; margin-top: 6px; padding-top: 6px; min-height: 20px;
+  border-top: 1px solid rgba(255,255,255,0.14);
+}
+.rp-nav {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0; cursor: pointer; background: none; border: 0;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #8fa0b6;
+}
+.rp-nav .icon { transform: scale(.5); margin: -8px -14px; }
+.rp-nav .lbl { transform: scaleY(1.2); }
+.rp-nav:hover { color: #fff; }
+.rp-who {
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; letter-spacing: .08em;
+  color: var(--rc, #ffd479); transform: scaleY(1.2);
+}
 .rp-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .rp-body::-webkit-scrollbar { width: 6px; }
 .rp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
 .rp-none { font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #7f8ea3; }
 
-/* inventory: the game's own grid, three rows over the hotbar */
+/* inventory: the game's own grid, three rows of storage over the hotbar */
+.bag-wrap {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: 100%;
+}
 .bag-grid {
-  display: grid; grid-template-columns: repeat(9, 30px); gap: 3px;
+  display: grid; grid-template-columns: repeat(9, 40px); gap: 4px;
   justify-content: center;
 }
-.bag-grid.hot { margin-top: 7px; padding-top: 7px; border-top: 1px dashed rgba(255,255,255,0.2); }
-.bag-cell {
-  position: relative; width: 30px; height: 30px;
-  background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+.bag-grid.hot {
+  margin-top: 9px; padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,0.18);
 }
-.bag-cell.full { background: rgba(255,255,255,0.1); }
+.bag-cell {
+  position: relative; width: 40px; height: 40px;
+  background: rgba(255,255,255,0.04);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.09);
+}
+.bag-cell.full {
+  background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.05));
+}
 .bag-cell.ench { box-shadow: inset 0 0 0 1px var(--rc, #ffd479); }
 .bag-cell img {
-  width: 24px; height: 24px; margin: 3px; display: block;
+  width: 32px; height: 32px; margin: 4px; display: block;
   image-rendering: pixelated;
 }
 .bag-cell i {
-  display: block; padding-top: 9px; text-align: center; font-style: normal;
-  font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #93a3b8;
+  display: block; padding-top: 13px; text-align: center; font-style: normal;
+  font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #93a3b8;
 }
 .bag-cell b {
-  position: absolute; right: 1px; bottom: 0; font-weight: normal;
-  font-family: 'MGS1 Codec', monospace; font-size: 10px; color: #fff;
+  position: absolute; right: 2px; bottom: 0; font-weight: normal;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #fff;
   text-shadow: 1px 1px black;
 }
 
 /* attributes: as many columns as fit, so the list stays one screen */
-.attr-list { columns: 3; column-gap: 14px; }
+.attr-list { columns: 3; column-gap: 16px; }
 .attr-row {
-  display: flex; align-items: baseline; gap: 4px; break-inside: avoid;
-  padding: 1px 0; font-family: 'MGS1 Codec', monospace; font-size: 11px;
+  display: flex; align-items: baseline; gap: 5px; break-inside: avoid;
+  padding: 2px 0; line-height: 1.4;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
-.attr-row b { flex: 1; font-weight: normal; color: #a9b7c9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attr-row b {
+  flex: 1; min-width: 0; font-weight: normal; color: #a9b7c9;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .attr-row i { font-style: normal; font-size: 9px; color: #5f6f83; }
 .attr-row em { font-style: normal; color: #e8eef7; }
 .attr-row.core b { color: #dfe7f2; }
