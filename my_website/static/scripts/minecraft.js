@@ -30,8 +30,8 @@ async function ensureSounds() {
   if (soundsLoaded) return;
   soundsLoaded = true;
   [hoverBuffer, clickBuffer] = await Promise.all([
-    loadSound(GALLERY_URLS.hover),
-    loadSound(GALLERY_URLS.click),
+    loadSound(PORTAL_URLS.hover),
+    loadSound(PORTAL_URLS.click),
   ]);
 }
 const HOT = 'button, a, .masonry-item, .video-tile, .disc-slot';
@@ -273,6 +273,7 @@ function hidePanel(i) {
   const panel = document.getElementById(`rc-panel-${i}`);
   if (panel) panel.classList.remove('on');
   markTabs(i, null);
+  hideItemTip();
 }
 
 function panelOpen() { return document.querySelector('.rc-panel.on'); }
@@ -294,7 +295,7 @@ function bagPanel(p) {
       ? `<img src="${item.icon}" alt="" loading="lazy">`
       : `<i>${item.label.slice(0, 2)}</i>`;
     return `<span class="bag-cell full${item.enchants ? ' ench' : ''}"
-      title="${item.label}${item.count > 1 ? ` x${item.count}` : ''} · ${item.mod}">
+      data-name="${item.label}">
       ${art}${item.count > 1 ? `<b>${item.count}</b>` : ''}</span>`;
   };
   const cells = p.carried.map(tile);
@@ -303,6 +304,43 @@ function bagPanel(p) {
     <div class="bag-grid hot">${cells.slice(27).join('')}</div>
   </div>`;
 }
+
+// A slot names what is in it while the pointer is over it. The tip hangs off
+// the page rather than the panel, so a slot in the top row is not cut off by
+// the drawer it sits in.
+let itemTip = null;
+let tipCell = null;
+
+function showItemTip(cell) {
+  if (!itemTip) {
+    itemTip = document.createElement('div');
+    itemTip.id = 'item-tip';
+    document.body.appendChild(itemTip);
+  }
+  itemTip.textContent = cell.dataset.name;
+  itemTip.style.borderColor =
+    getComputedStyle(cell).getPropertyValue('--rc').trim() || 'rgba(255,255,255,0.45)';
+  itemTip.classList.add('on');
+
+  const slot = cell.getBoundingClientRect();
+  const tip = itemTip.getBoundingClientRect();
+  const left = Math.min(Math.max(6, slot.left + (slot.width - tip.width) / 2),
+                        window.innerWidth - tip.width - 6);
+  const above = slot.top - tip.height - 6;
+  itemTip.style.left = `${Math.round(left)}px`;
+  itemTip.style.top = `${Math.round(above < 6 ? slot.bottom + 6 : above)}px`;
+}
+
+function hideItemTip() {
+  tipCell = null;
+  if (itemTip) itemTip.classList.remove('on');
+}
+
+document.addEventListener('mouseover', e => {
+  const cell = e.target.closest ? e.target.closest('.bag-cell.full') : null;
+  if (cell === tipCell) return;
+  if (cell) { tipCell = cell; showItemTip(cell); } else { hideItemTip(); }
+});
 
 function attrPanel(p) {
   if (!p.attributes.length) return '<p class="rp-none">nothing recorded</p>';

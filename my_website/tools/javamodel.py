@@ -185,7 +185,7 @@ def parse(listing):
     return [p for p in parts if p is not root], sheet
 
 
-# --- turning the tree into the gallery's cubes -----------------------------
+# --- turning the tree into the portal's cubes -----------------------------
 
 def matmul(a, b):
     return [[sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
@@ -207,9 +207,9 @@ def apply(matrix, vector):
 
 
 def euler_zyx(m):
-    """Back out the z, y, x angles the gallery will replay, in degrees.
+    """Back out the z, y, x angles the portal will replay, in degrees.
 
-    The gallery rebuilds the turn as Rz then Ry then Rx, and for that product
+    The portal rebuilds the turn as Rz then Ry then Rx, and for that product
     m[2][0] is -sin(y), m[2][1]/m[2][2] give x and m[1][0]/m[0][0] give z.
     """
     sy = max(-1.0, min(1.0, -m[2][0]))
@@ -224,12 +224,12 @@ def euler_zyx(m):
 
 
 # the model's own axes put y downward from the neck and the face toward -z
-def to_gallery(point):
+def to_portal(point):
     return [point[0], point[1], -point[2]]
 
 
 def convert(parts, sheet, binding=None, slot=None):
-    """parts -> {slot: {body part: [cube, ...]}} in the gallery's coordinates.
+    """parts -> {slot: {body part: [cube, ...]}} in the portal's coordinates.
 
     `binding` names the limb each top part rides on, for a model whose own
     names say nothing (the item class is what pairs them up). `slot` forces
@@ -260,7 +260,7 @@ def convert(parts, sheet, binding=None, slot=None):
         translation = [0.0, -8.0, 0.0]           # the root sits at the neck
         matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         for node in chain:
-            step = apply(matrix, to_gallery(node.offset))
+            step = apply(matrix, to_portal(node.offset))
             translation = [translation[i] + step[i] for i in range(3)]
             rx, ry, rz = node.rotation
             matrix = matmul(matrix, rotation_matrix(-rx, -ry, rz))
@@ -273,7 +273,7 @@ def convert(parts, sheet, binding=None, slot=None):
             x, y, z = cube['origin']
             w, h, d = cube['size']
             grow = cube['grow']
-            centre = to_gallery([x + w / 2, y + h / 2, z + d / 2])
+            centre = to_portal([x + w / 2, y + h / 2, z + d / 2])
 
             faces = box_uv(cube['uv'][0], cube['uv'][1], w, h, d)
             if cube['mirror']:

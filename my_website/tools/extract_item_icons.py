@@ -9,7 +9,7 @@ the game actually draws. Flat items give it as layer0; a block's item gives the
 faces of the block instead, any of which will do for a 16 pixel tile.
 
 Items a mod draws with a real 3D model have no icon at all. Those are reported
-and the gallery falls back to a lettered tile.
+and the portal falls back to a lettered tile.
 """
 
 import io

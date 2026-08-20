@@ -2,7 +2,7 @@
 
 Run from my_website/:  python tools/fetch_player_skins.py [--force]
 
-Skins are downloaded once and served from static/, so the gallery never has to
+Skins are downloaded once and served from static/, so the portal never has to
 call Mojang at request time (and never hits the browser's CORS wall). Re-run it
 when new .dat files land or someone changes their skin.
 """
@@ -18,7 +18,7 @@ STATIC    = os.path.join(os.path.dirname(HERE), 'static', 'minecraft')
 SKIN_DIR  = os.path.join(STATIC, 'skins')
 INDEX     = os.path.join(SKIN_DIR, 'players.json')
 PROFILE   = 'https://sessionserver.mojang.com/session/minecraft/profile/{}'
-UA        = {'User-Agent': 'nicholasburczyk.com gallery/1.0'}
+UA        = {'User-Agent': 'nicholasburczyk.com minecraft-portal/1.0'}
 
 
 def get(url, timeout=15):

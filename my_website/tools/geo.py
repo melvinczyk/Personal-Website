@@ -1,4 +1,4 @@
-"""Convert a Blockbench/GeckoLib .geo.json armor model into cubes the gallery
+"""Convert a Blockbench/GeckoLib .geo.json armor model into cubes the portal
 can build out of CSS boxes.
 
 Mods that draw their own armor ship a Bedrock-format model instead of the two
@@ -7,14 +7,14 @@ is exactly what the player model already is, so the work is coordinate
 conversion plus dropping everything that would render as nothing.
 
 Coordinates: Blockbench measures from the feet with +y up and the model facing
--z. The gallery measures from the middle of the figure with +y down and the
+-z. The portal measures from the middle of the figure with +y down and the
 model facing +z, so y' = 16 - y and z' = -z, which is a half turn about x.
 """
 
 import json
 import math
 
-# Where each biped bone attaches on the gallery's model, in its own units.
+# Where each biped bone attaches on the portal's model, in its own units.
 ATTACH = {
     'head': (0, -12, 0),
     'body': (0, -2, 0),
@@ -107,7 +107,7 @@ def convert_cube(cube, attach):
     grow = float(cube.get('inflate', 0) or 0)
     origin = [float(v) for v in cube['origin']]
 
-    # blockbench gives the low corner; the gallery positions boxes by centre
+    # blockbench gives the low corner; the portal positions boxes by centre
     cx = origin[0] + size[0] / 2
     cy = origin[1] + size[1] / 2
     cz = origin[2] + size[2] / 2

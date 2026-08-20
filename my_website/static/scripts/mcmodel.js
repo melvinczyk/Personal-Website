@@ -6,7 +6,7 @@
 // depth buffer settles it per pixel and the question stops existing, which also
 // lets a modded set bring its thousand boxes without the page minding.
 //
-// Measurements are in skin pixels throughout, in the gallery's own axes: +x
+// Measurements are in skin pixels throughout, in the portal's own axes: +x
 // right, +y down, +z toward the viewer. The model root is flipped in y so a
 // perfectly ordinary camera sees it the right way up.
 
@@ -273,7 +273,7 @@ function buildPlayerModel(el, opts) {
   camera.position.set(0, 0, DISTANCE);
 
   const root = new THREE.Group();
-  root.scale.y = -1;             // the gallery measures y downward, the camera up
+  root.scale.y = -1;             // the portal measures y downward, the camera up
   world.add(root);
 
   const limbs = {};

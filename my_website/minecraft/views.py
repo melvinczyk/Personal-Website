@@ -15,7 +15,7 @@ SEASON_DESCRIPTIONS = {
     5: "Groid Pack OG Remastered - The first pack, rebuilt",
 }
 
-# Screenshot used as the backdrop behind each disc on the gallery screen.
+# Screenshot used as the backdrop behind each disc on the portal screen.
 # Picked for legibility; falls back to a mid-list screenshot if missing.
 SEASON_HEROES = {
     1: "2023-09-06_23.01.52.png",
@@ -43,13 +43,13 @@ def parse_screenshot_date(filename):
         return datetime.min
 
 
-def gallery(request):
+def portal(request):
     minecraft_root = os.path.join(settings.STATICFILES_DIRS[0], 'minecraft')
 
     seasons = []
 
     if not os.path.isdir(minecraft_root):
-        return render(request, 'gallery.html', {'seasons': seasons})
+        return render(request, 'minecraft.html', {'seasons': seasons})
 
     season_dirs = sorted(
         [d for d in os.listdir(minecraft_root)
@@ -118,4 +118,4 @@ def gallery(request):
             'roster_json':      json.dumps(roster),
         })
 
-    return render(request, 'gallery.html', {'seasons': seasons})
+    return render(request, 'minecraft.html', {'seasons': seasons})

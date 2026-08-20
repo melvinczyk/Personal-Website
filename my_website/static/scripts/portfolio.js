@@ -276,7 +276,7 @@ project(id){
         <span class="proj-demo-sim">203K SONGS · 1305 GENRES · 985 TAGS</span>
       </div>
       <a href="/song2vec/" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN SONG2VEC DEMO /song2vec/</a>
-    </div>` : (p.id==='bird-classifier' ? psBirdPanel() : (p.id==='minecraft-server' ? psGalleryPanel() : '')));
+    </div>` : (p.id==='bird-classifier' ? psBirdPanel() : (p.id==='minecraft-server' ? psPortalPanel() : '')));
   addHtml(`<div class="proj-card">
     <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${tagsHtml}</div>
     <div class="proj-card-body">
@@ -328,9 +328,9 @@ map(){
   bl();
 },
 
-gallery(){
+minecraft(){
   bl();
-  addHtml(psGalleryPanel());
+  addHtml(psPortalPanel());
   bl();
 },
 
@@ -359,8 +359,7 @@ CMDS['song2vec'] = function() {
   const cd=document.getElementById('countdown2');
   const t=setInterval(()=>{ n--; if(cd) cd.textContent=n; if(n<=0){clearInterval(t);window.location.href='/song2vec/';} },1000);
 };
-CMDS['gallery']=CMDS['gallery'];
-CMDS['mc-gallery']=CMDS['gallery'];
+CMDS['mc']=CMDS['minecraft'];
 
 function runCmd(raw){
   const trimmed=(raw||'').trim();
@@ -1596,11 +1595,11 @@ function cxBackToProjects(){
   out.innerHTML = '';
   cxRenderProjectIndex();
 }
-function psGalleryPanel(){
+function psPortalPanel(){
   const thumbs = (STATIC_URLS.mcThumbs || []).map(t =>
-    `<a href="${STATIC_URLS.gallery}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
+    `<a href="${STATIC_URLS.minecraft}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
   return `<div class="ps-wrap fade-in"><div class="ps-win">
-    <div class="ps-bar"><span class="ps-t">◈ SERVER GALLERY</span><span class="ps-r">ALL SEASONS</span></div>
+    <div class="ps-bar"><span class="ps-t">◈ MINECRAFT PORTAL</span><span class="ps-r">ALL SEASONS</span></div>
     <div class="ps-body">
       <div class="ps-stats">
         <div><b>${MC_STATS.seasons}</b><i>SEASONS</i></div>
@@ -1609,9 +1608,9 @@ function psGalleryPanel(){
         <div><b>${MC_STATS.span}</b><i>UPTIME</i></div>
       </div>
       <div class="ps-thumbs">${thumbs}
-        <a href="${STATIC_URLS.gallery}" class="ps-more"><span>+${MC_STATS.shots - (STATIC_URLS.mcThumbs||[]).length}<br>MORE</span></a>
+        <a href="${STATIC_URLS.minecraft}" class="ps-more"><span>+${MC_STATS.shots - (STATIC_URLS.mcThumbs||[]).length}<br>MORE</span></a>
       </div>
-      <a class="ps-btn" href="${STATIC_URLS.gallery}"><span class="ps-lbl">OPEN FULL GALLERY</span></a>
+      <a class="ps-btn" href="${STATIC_URLS.minecraft}"><span class="ps-lbl">OPEN THE PORTAL</span></a>
       <div class="ps-hint">${MC_STATS.seasons} seasons · screenshots &amp; video clips</div>
     </div>
   </div></div>`;
@@ -1661,7 +1660,7 @@ function psBirdPanel(){
   </div></div>`;
 }
 function cxRenderMinecraft(){
-  addHtml(psGalleryPanel());
+  addHtml(psPortalPanel());
   addHtml(psMapPanel());
 }
 

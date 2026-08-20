@@ -22,7 +22,7 @@ import zipfile
 # the inner class MCreator names each piece with
 SLOT_CLASS = {'head': 'Helmet', 'chest': 'Chestplate', 'legs': 'Leggings', 'feet': 'Boots'}
 
-# vanilla's part names, as the limbs the gallery knows
+# vanilla's part names, as the limbs the portal knows
 LIMBS = {'head': 'head', 'hat': 'head', 'body': 'body',
          'left_arm': 'armL', 'right_arm': 'armR',
          'left_leg': 'legL', 'right_leg': 'legR'}

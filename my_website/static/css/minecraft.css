@@ -1,4 +1,4 @@
-/* Server gallery: a mock PS1 console. Each season is a "game" on the disc
+/* Minecraft portal: a mock PS1 console. Each season is a "game" on the disc
    rail. Controller icons are ported from PSone.css by micah5 (MIT), keeping
    its plastic gradient and face-button colours; sizes are pinned in px so
    they do not drift with the inherited font-size. */
@@ -724,6 +724,16 @@ body::after { display: none; }
   font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #fff;
   text-shadow: 1px 1px black;
 }
+
+#item-tip {
+  position: fixed; z-index: 60; display: none;
+  padding: 3px 9px; pointer-events: none; white-space: nowrap;
+  font-family: 'MGS1 Codec', monospace; font-size: 12px; letter-spacing: .07em;
+  color: #eef4ff; background: rgba(6,8,16,0.96);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+}
+#item-tip.on { display: block; }
 
 /* attributes: as many columns as fit, so the list stays one screen */
 .attr-list { columns: 3; column-gap: 16px; }

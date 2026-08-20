@@ -1,7 +1,7 @@
 """Minimal reader for Minecraft's NBT format (gzipped, big-endian).
 
 Only what playerdata needs: the tag types, no writing. Vendored rather than
-pulled in as a dependency so the gallery has no runtime package to install.
+pulled in as a dependency so the portal has no runtime package to install.
 """
 
 import gzip

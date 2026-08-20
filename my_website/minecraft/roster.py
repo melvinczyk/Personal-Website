@@ -1,4 +1,4 @@
-"""Turn a season's playerdata .dat files into a roster the gallery can render.
+"""Turn a season's playerdata .dat files into a roster the portal can render.
 
 Each season folder may hold a stats/ directory of <uuid>.dat files copied off
 the server. Names and skins come from static/minecraft/skins/players.json,

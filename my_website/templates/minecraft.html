@@ -4,10 +4,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Server Gallery</title>
+<title>Minecraft Portal</title>
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/gallery.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -23,7 +23,7 @@
         <div class="disc-titlebar">
           <span class="icon psone"></span>
           <span class="dt-name">GROID PACK</span>
-          <span class="dt-sub">SERVER GALLERY</span>
+          <span class="dt-sub">MINECRAFT PORTAL</span>
         </div>
 
         <div class="console-bg" id="console-bg"></div>
@@ -147,7 +147,7 @@
 </div>
 
 <script>
-const GALLERY_URLS = {
+const PORTAL_URLS = {
   hover: "{% static 'audio/hover.mp3' %}",
   click: "{% static 'audio/click.mp3' %}",
 };
@@ -177,6 +177,6 @@ const SEASONS = [
 ];
 </script>
 <script type="module" src="{% static 'scripts/mcmodel.js' %}?t={% now 'U' %}"></script>
-<script src="{% static 'scripts/gallery.js' %}?t={% now 'U' %}"></script>
+<script src="{% static 'scripts/minecraft.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>
