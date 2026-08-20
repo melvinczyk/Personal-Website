@@ -174,9 +174,10 @@ html, body { height: 100%; overflow: hidden; }
 .disc-head .dh-t { font-size: 21px; color: #d9fff5; text-shadow: 2px 2px 0 #000, 0 0 10px var(--glow-cyan); transform: scaleY(1.28); }
 .disc-head .dh-r { margin-left: auto; font-size: 16px; color: #5fbfa8; transform: scaleY(1.2); }
 
-.disc-rail { position: relative; height: 232px; overflow: hidden; }
+/* extra headroom so the aura is not clipped by the rail's overflow */
+.disc-rail { position: relative; height: 250px; overflow: hidden; }
 .disc-track {
-  position: absolute; top: 0; left: 50%; display: flex; gap: 26px;
+  position: absolute; top: 16px; left: 50%; display: flex; gap: 26px;
   transition: transform .38s cubic-bezier(.25,.8,.5,1);
 }
 .disc-slot {
@@ -267,12 +268,12 @@ html, body { height: 100%; overflow: hidden; }
   padding-right: 6px;
 }
 
-.console-screen.loaded .disc-rail { height: 142px; }
+.console-screen.loaded .disc-rail { height: 158px; }
 .console-screen.loaded .disc-slot { width: 108px; }
 .console-screen.loaded .disc-case { width: 108px; height: 108px; }
 .console-screen.loaded .disc-case .disc-num { font-size: 11px; padding: 0 4px; }
 .console-screen.loaded .disc-slot-name { font-size: 13px; margin-top: 6px; }
-.console-screen.loaded .rail-arrow { top: 38px; font-size: 26px; }
+.console-screen.loaded .rail-arrow { top: 54px; font-size: 26px; }
 .console-screen.loaded .disc-desc { display: none; }
 .console-screen.loaded .disc-title { font-size: 24px; }
 .disc-rail, .disc-slot, .disc-case, .disc-slot-name { transition: width .3s ease, height .3s ease, font-size .3s ease; }
@@ -535,26 +536,30 @@ body::after { display: none; }
 .disc-slot { position: relative; }
 
 
-/* Per-season glow. The colour rides on --disc-glow; the halo lives on ::after
-   so season 5's hue-rotate spins the light and not the box art. */
+/* Per-season aura. .disc-case clips its own children, so the halo has to be a
+   box-shadow on the case itself; season 5 cycles the colour instead of
+   hue-rotating, which would drag the box art around with it. */
 .disc-slot                  { --disc-glow: #9aa0a6; }
 .disc-slot[data-season="1"] { --disc-glow: #ffb52e; }
 .disc-slot[data-season="2"] { --disc-glow: #ff3d34; }
 .disc-slot[data-season="3"] { --disc-glow: #35d94b; }
 .disc-slot[data-season="4"] { --disc-glow: #3d9bff; }
-.disc-slot[data-season="5"] { --disc-glow: #ff2d55; }
 
-.disc-case::after {
-  content: ''; position: absolute; inset: -2px; z-index: 3; pointer-events: none;
-  border: 2px solid var(--disc-glow);
-  animation: disc-glow 3.4s ease-in-out infinite;
+.disc-case, .disc-slot.active .disc-case {
+  animation: disc-aura 3.4s ease-in-out infinite;
 }
-.disc-slot.active .disc-case::after { animation-duration: 2.2s; }
-@keyframes disc-glow {
-  0%, 100% { opacity: .32; box-shadow: 0 0  8px 0px var(--disc-glow), inset 0 0  8px -4px var(--disc-glow); }
-  50%      { opacity: 1;   box-shadow: 0 0 24px 3px var(--disc-glow), inset 0 0 18px -3px var(--disc-glow); }
+.disc-slot.active .disc-case { animation-duration: 2.4s; }
+@keyframes disc-aura {
+  0%, 100% { box-shadow: 0 0 10px 0px var(--disc-glow), 0 6px 20px rgba(0,0,0,0.7); }
+  50%      { box-shadow: 0 0 30px 7px var(--disc-glow), 0 6px 20px rgba(0,0,0,0.7); }
 }
-.disc-slot[data-season="5"] .disc-case::after {
-  animation: disc-glow 2.2s ease-in-out infinite, disc-rainbow 5s linear infinite;
+
+.disc-slot[data-season="5"] .disc-case { animation: disc-aura-rainbow 6s linear infinite; }
+@keyframes disc-aura-rainbow {
+  0%   { box-shadow: 0 0 26px 5px #ff3d34, 0 6px 20px rgba(0,0,0,0.7); }
+  20%  { box-shadow: 0 0 26px 5px #ffb52e, 0 6px 20px rgba(0,0,0,0.7); }
+  40%  { box-shadow: 0 0 26px 5px #35d94b, 0 6px 20px rgba(0,0,0,0.7); }
+  60%  { box-shadow: 0 0 26px 5px #26c9d6, 0 6px 20px rgba(0,0,0,0.7); }
+  80%  { box-shadow: 0 0 26px 5px #a06bff, 0 6px 20px rgba(0,0,0,0.7); }
+  100% { box-shadow: 0 0 26px 5px #ff3d34, 0 6px 20px rgba(0,0,0,0.7); }
 }
-@keyframes disc-rainbow { to { filter: hue-rotate(360deg); } }
