@@ -85,6 +85,153 @@ function selectDisc(i) {
   else        { bg.classList.remove('on'); }
 
   renderMedia();
+  renderRoster();
+}
+
+// The roster is a second rail: one card per player, centred like the discs.
+// Each card carries a CSS-3D model of that player's own skin (mcskin.js).
+const ROSTER_GAP = 18;
+let playerIdx = 0;
+
+function renderRoster() {
+  const el = document.getElementById('roster');
+  const players = SEASONS[discIdx].roster || [];
+  playerIdx = 0;
+
+  if (!players.length) { el.innerHTML = ''; el.classList.remove('on'); return; }
+  el.classList.add('on');
+  el.dataset.season = SEASONS[discIdx].number;
+
+  el.innerHTML = `
+    <div class="roster-head">
+      <span class="rh-t">${rosterTitle()}</span>
+      <span class="rh-r"><span id="roster-pos">1</span> OF ${players.length}</span>
+    </div>
+    <div class="roster-rail">
+      <button class="rr-arrow prev" onclick="playerStep(-1)" aria-label="Previous player">◂</button>
+      <button class="rr-arrow next" onclick="playerStep(1)" aria-label="Next player">▸</button>
+      <div class="roster-track" id="roster-track">${players.map((p, i) => `
+        <div class="roster-slot" id="player-${i}" onclick="playerClick(${i})">
+          <div class="roster-card">
+            <div class="rc-stage">
+              <div class="rc-pad"></div>
+              <div class="rc-model" id="rc-model-${i}"></div>
+              <div class="rc-scan"></div>
+            </div>
+            <div class="rc-info">
+              <div class="rc-name">${p.name}<span class="rc-mode">${p.gamemode}</span></div>
+              <div class="rc-id">ID ${p.uuid.slice(0, 8).toUpperCase()} · ${p.dimension}</div>
+              <div class="rc-meters">
+                ${meter('HEALTH', p.health_pct, `${p.health} / ${p.max_health}`, 'hp')}
+                ${meter('HUNGER', p.food_pct, `${p.food} / 20`, 'food')}
+                ${meter('LEVEL ' + p.level, p.xp_pct, `${p.xp} XP`, 'xp')}
+                ${meter('INVENTORY', p.slots_pct, `${p.slots_used} / 36`, 'inv')}
+              </div>
+              <div class="rc-gear">
+                ${gearChip('HELD', p.held)}
+                ${gearChip('OFF', p.offhand)}
+                ${p.armor.map(a => gearChip(a.slot, a)).join('')}
+              </div>
+              <div class="rc-where">
+                <span>X ${p.pos.x}</span><span>Y ${p.pos.y}</span><span>Z ${p.pos.z}</span>
+                ${p.absorption ? `<span class="rc-abs">+${p.absorption} ABSORB</span>` : ''}
+                ${p.effects ? `<span>${p.effects} EFFECT${p.effects > 1 ? 'S' : ''}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+  selectPlayer(0);
+}
+
+// A player in a modded set can run to a thousand boxes, so a model is only
+// built once its card is the one in the middle or sits next to it.
+function mountPlayer(i) {
+  const players = SEASONS[discIdx].roster || [];
+  if (i < 0 || i >= players.length) return;
+  const box = document.getElementById(`rc-model-${i}`);
+  // the renderer is a module, so it lands after this script has run
+  if (!box || box.dataset.built || typeof buildPlayerModel !== 'function') return;
+
+  box.dataset.built = '1';
+  const p = players[i];
+  if (p.skin) buildPlayerModel(box, { skin: p.skin, slim: p.slim, worn: p.worn });
+  else box.classList.add('rc-noskin');
+}
+
+// Each season theming its own roster: the heading is the first thing that
+// tells you which server you are looking at.
+const ROSTER_TITLES = {
+  1: '▣ SURVIVORS',
+  2: '✦ ADVENTURING PARTY',
+  3: '◈ PERSONNEL FILE',
+  4: '⚓ THE CREW',
+};
+function rosterTitle() {
+  return ROSTER_TITLES[SEASONS[discIdx].number] || '◈ PLAYER ROSTER';
+}
+
+function layoutRoster() {
+  const track = document.getElementById('roster-track');
+  if (!track) return;
+  const slot = track.querySelector('.roster-slot');
+  if (!slot) return;
+  const w = slot.offsetWidth;
+  track.style.transform = `translateX(${-(w / 2) - playerIdx * (w + ROSTER_GAP)}px)`;
+}
+window.addEventListener('resize', layoutRoster);
+
+function selectPlayer(i) {
+  const players = SEASONS[discIdx].roster || [];
+  if (!players.length) return;
+  playerIdx = (i + players.length) % players.length;
+  document.querySelectorAll('.roster-slot').forEach((el, n) =>
+    el.classList.toggle('active', n === playerIdx));
+  document.getElementById('roster-pos').textContent = playerIdx + 1;
+  [-1, 0, 1].forEach(d => mountPlayer(playerIdx + d));
+  if (typeof dressModel === 'function') dressRail();
+  layoutRoster();
+}
+
+// The model in the middle is the only one wearing its armor, and cards that
+// drift far enough along the rail give theirs back.
+function dressRail() {
+  document.querySelectorAll('#roster .rc-model[data-built]').forEach(el => {
+    if (el.id === `rc-model-${playerIdx}`) return;
+    undressModel(el);
+    // a card this far along the rail will not be looked at again soon
+    if (Math.abs(Number(el.id.replace('rc-model-', '')) - playerIdx) > 2) {
+      disposeModel(el);
+      el.innerHTML = '';
+      el.className = 'rc-model';
+      delete el.dataset.built;
+    }
+  });
+  dressModel(document.getElementById(`rc-model-${playerIdx}`));
+}
+function playerStep(dir) { selectPlayer(playerIdx + dir); }
+function playerClick(i) { if (i !== playerIdx) selectPlayer(i); }
+
+function meter(name, pct, value, cls) {
+  return `<div class="ps-row rc-row ${cls}">
+    <span class="ps-nm">${name}</span>
+    <div class="ps-prog"><div class="ps-fill" style="width:${pct}%"></div></div>
+    <span class="ps-pc">${value}</span>
+  </div>`;
+}
+
+// Enchanted gear gets the PS1 highlight, the way a menu marks a special item.
+// Armor the model cannot wear is marked so the card still accounts for it.
+function gearChip(slot, item) {
+  if (!item) return '';
+  const count = item.count > 1 ? ` x${item.count}` : '';
+  const off = item.shown === false;
+  const note = off ? `${item.mod} · drawn by the mod, not shown on the model` : item.mod;
+  return `<span class="rc-chip${item.enchants ? ' ench' : ''}${off ? ' unworn' : ''}" title="${note}">
+    <b>${slot}</b>${item.label}${count}${item.enchants ? `<i>+${item.enchants}</i>` : ''}
+  </span>`;
 }
 
 // Clicking the highlighted disc loads it; any other disc moves the rail first.
@@ -236,3 +383,7 @@ document.addEventListener('keydown', e => {
 });
 
 selectDisc(0);
+
+// the model renderer is a module and so arrives after this file: once it is
+// here, put the roster on
+window.addEventListener('mcmodel-ready', () => { if (SEASONS.length) selectPlayer(playerIdx); });

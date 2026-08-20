@@ -563,3 +563,366 @@ body::after { display: none; }
   80%  { box-shadow: 0 0 26px 5px #a06bff, 0 6px 20px rgba(0,0,0,0.7); }
   100% { box-shadow: 0 0 26px 5px #ff3d34, 0 6px 20px rgba(0,0,0,0.7); }
 }
+
+/* ══ PLAYER ROSTER ══
+   The model is six CSS-3D cuboids; --u is one skin pixel, so the whole figure
+   resizes from a single custom property. */
+.roster { display: none; margin-top: 16px; }
+.roster.on { display: block; }
+.roster-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  font-family: 'MGS1 Codec', monospace; font-size: 18px;
+  color: lightgrey; text-shadow: 2px 2px black; transform: scaleY(1.2);
+}
+.roster-head .rh-r { margin-left: auto; color: #C6C843; }
+
+/* a second rail, centred the same way the discs are */
+.roster-rail { position: relative; height: 332px; overflow: hidden; }
+.roster-track {
+  position: absolute; top: 0; left: 50%; display: flex; gap: 18px;
+  transition: transform .38s cubic-bezier(.25,.8,.5,1);
+}
+.roster-slot {
+  width: 540px; flex-shrink: 0; height: 320px; cursor: pointer;
+  /* a card cannot affect anything outside itself, so the browser can skip the
+     ones it is not drawing rather than walking a thousand boxes each frame */
+  contain: layout paint style;
+  opacity: .3; transform: scale(.92); transform-origin: center top;
+  transition: opacity .3s ease, transform .3s cubic-bezier(.25,.8,.5,1);
+}
+.roster-slot.active { opacity: 1; transform: scale(1); cursor: default; }
+.roster-card {
+  display: flex; gap: 16px; align-items: center; height: 100%; box-sizing: border-box;
+  padding: 12px 16px; position: relative; overflow: hidden;
+  background: linear-gradient(#131c53, #0a0f33);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.55);
+}
+.rr-arrow {
+  position: absolute; top: 138px; z-index: 4;
+  background: none; border: 0; cursor: pointer;
+  font-size: 30px; line-height: 1; color: #fff; text-shadow: 3px 3px black;
+  opacity: .75; transition: opacity .2s, transform .2s;
+}
+.rr-arrow:hover { opacity: 1; transform: scale(1.25); }
+.rr-arrow.prev { left: 6px; }
+.rr-arrow.next { right: 6px; }
+
+.rc-stage { position: relative; display: grid; place-items: center; flex-shrink: 0; }
+/* the box holds its size before the model is built, so nothing shifts */
+.rc-model, .rc-noskin { position: relative; z-index: 2; width: 99px; height: 171px; }
+.rc-pad, .rc-scan { display: none; }
+
+.rc-info { flex: 1; min-width: 0; font-family: 'MGS1 Codec', monospace; }
+.rc-name {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 21px; color: #fff; text-shadow: 3px 3px black;
+  text-transform: uppercase; transform: scaleY(1.2); transform-origin: left;
+}
+.rc-name .rc-mode { font-size: 12px; color: #C6C843; }
+.rc-id { margin: 6px 0 9px; font-size: 11px; letter-spacing: 1px; color: #7c7d83; }
+
+.rc-meters { display: grid; gap: 5px; margin-bottom: 9px; }
+.rc-row { display: flex; align-items: center; gap: 9px; }
+.rc-row .ps-nm { width: 96px; font-size: 13px; color: #AEAFAE; text-shadow: 2px 2px black; }
+.rc-row .ps-prog {
+  flex: 1; height: 14px; padding: 2px; position: relative;
+  background-color: rgba(0,0,0,0.5); border: 0;
+}
+.rc-row .ps-pc { width: 74px; text-align: right; font-size: 13px; color: #C6C843; }
+.rc-row.hp   .ps-fill { background-image: linear-gradient(#ff8a80, #c1352b); }
+.rc-row.food .ps-fill { background-image: linear-gradient(#e5c07b, #9c6b21); }
+.rc-row.xp   .ps-fill { background-image: linear-gradient(#9ee87a, #3f8f2a); }
+.rc-row.inv  .ps-fill { background-image: linear-gradient(#cfd0d2, #6b6c6e); }
+
+.rc-gear { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.rc-chip {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  padding: 2px 7px; font-size: 11px; color: #d6d7d9;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.25);
+}
+.rc-chip b { color: #8f9096; font-weight: normal; }
+.rc-chip i { color: #C6C843; font-style: normal; }
+.rc-chip.ench { border-color: rgba(198,200,67,0.55); }
+/* the model is not wearing this one, so the chip is the only record of it */
+.rc-chip.unworn { border-style: dashed; opacity: .72; }
+
+.rc-where {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: #8f9096; text-shadow: 1px 1px black;
+}
+.rc-where .rc-abs { color: #e5c07b; }
+
+/* ── SEASON 1: the first pack ran vanilla, so its roster is a stone inventory
+   panel: bevelled edges, blocky bars, no glow. ── */
+.roster[data-season="1"] { --rc: #ffb52e; }
+.roster[data-season="1"] .roster-head { color: #dcdcdc; }
+.roster[data-season="1"] .roster-head .rh-r { color: var(--rc); }
+.roster[data-season="1"] .roster-card {
+  border: 0;
+  background:
+    repeating-linear-gradient(0deg,  rgba(0,0,0,0.07) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 4px),
+    linear-gradient(#565656, #3d3d3d);
+  /* the light-top, dark-bottom bevel every Minecraft GUI panel has */
+  box-shadow: inset 3px 3px 0 rgba(255,255,255,0.22),
+              inset -3px -3px 0 rgba(0,0,0,0.55),
+              inset 0 0 0 1px rgba(0,0,0,0.75);
+}
+.roster[data-season="1"] .rc-name .rc-mode { color: var(--rc); }
+.roster[data-season="1"] .rc-id { color: #a8a8a8; }
+.roster[data-season="1"] .rc-row .ps-nm { color: #e4e4e4; }
+.roster[data-season="1"] .rc-row .ps-pc { color: var(--rc); }
+.roster[data-season="1"] .rc-row .ps-prog {
+  height: 16px; padding: 3px; background-color: #1b1b1b;
+  box-shadow: inset 0 0 0 2px #000;
+}
+.roster[data-season="1"] .rc-row .ps-fill {
+  box-shadow: inset 0 3px 0 rgba(255,255,255,0.28), inset 0 -3px 0 rgba(0,0,0,0.35);
+}
+/* chips borrow the sunken look of an inventory slot */
+.roster[data-season="1"] .rc-chip {
+  border: 0; color: #efefef; background: rgba(139,139,139,0.28);
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5), inset -2px -2px 0 rgba(255,255,255,0.22);
+}
+.roster[data-season="1"] .rc-chip b { color: #bcbcbc; }
+.roster[data-season="1"] .rc-chip i { color: var(--rc); }
+.roster[data-season="1"] .rc-chip.ench {
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5), inset -2px -2px 0 rgba(255,181,46,0.5);
+}
+.roster[data-season="1"] .rc-where { color: #b0b0b0; }
+.roster[data-season="1"] .rr-arrow { color: #efefef; }
+.roster[data-season="1"] .rc-pad {
+  display: block; position: absolute; bottom: 6px; left: 50%; z-index: 1;
+  width: 96px; height: 16px; margin-left: -48px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.65), transparent 70%);
+}
+
+/* ── SEASON 2: spells and dragons, so the card is an arcane page: rune bands
+   top and bottom, a summoning circle under the model, motes drifting up. ── */
+.roster[data-season="2"] { --rc: #c58bff; --rc-warm: #ff3d34; }
+.roster[data-season="2"] .roster-head {
+  color: #e8d4ff; text-shadow: 0 0 10px rgba(197,139,255,0.6), 2px 2px black;
+}
+.roster[data-season="2"] .roster-head .rh-r { color: var(--rc); }
+.roster[data-season="2"] .roster-card {
+  background:
+    radial-gradient(120% 80% at 22% 62%, rgba(150,70,255,0.20), transparent 62%),
+    linear-gradient(#1a0b2e, #0a0413);
+  border: 1px solid rgba(197,139,255,0.4);
+  box-shadow: inset 0 0 26px rgba(150,70,255,0.14), inset 0 0 0 2px rgba(0,0,0,0.55);
+}
+/* inscription bands that drift in opposite directions, like a spell in motion */
+.roster[data-season="2"] .roster-card::before,
+.roster[data-season="2"] .roster-card::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 3px; opacity: .7;
+  pointer-events: none;
+  background: repeating-linear-gradient(90deg,
+    var(--rc) 0 5px, transparent 5px 9px, var(--rc-warm) 9px 11px, transparent 11px 18px);
+  animation: s2-runes 6s linear infinite;
+}
+.roster[data-season="2"] .roster-card::before { top: 0; }
+.roster[data-season="2"] .roster-card::after  { bottom: 0; animation-direction: reverse; }
+@keyframes s2-runes { from { background-position: 0 0; } to { background-position: 36px 0; } }
+
+.roster[data-season="2"] .rc-name { color: #f3e6ff; text-shadow: 0 0 12px rgba(197,139,255,0.6), 3px 3px black; }
+.roster[data-season="2"] .rc-name .rc-mode,
+.roster[data-season="2"] .rc-id { color: var(--rc); }
+.roster[data-season="2"] .rc-row .ps-nm { color: #cbb0e6; }
+.roster[data-season="2"] .rc-row .ps-pc { color: var(--rc); }
+.roster[data-season="2"] .rc-row .ps-prog {
+  background-color: rgba(0,0,0,0.55); box-shadow: inset 0 0 0 1px rgba(197,139,255,0.3);
+}
+/* mana bars: no notches, a glow and a shimmer running along the fill */
+.roster[data-season="2"] .rc-row .ps-fill {
+  position: relative; overflow: hidden; box-shadow: 0 0 8px rgba(197,139,255,0.55);
+}
+.roster[data-season="2"] .rc-row .ps-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
+  animation: s2-shimmer 2.6s linear infinite;
+}
+@keyframes s2-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.roster[data-season="2"] .rc-chip {
+  color: #ecdcff; background: rgba(0,0,0,0.45); border-color: rgba(197,139,255,0.35);
+}
+.roster[data-season="2"] .rc-chip b { color: #9a7cb8; }
+.roster[data-season="2"] .rc-chip i { color: var(--rc); }
+.roster[data-season="2"] .rc-chip.ench { border-color: var(--rc); box-shadow: 0 0 10px rgba(197,139,255,0.4); }
+.roster[data-season="2"] .rc-where { color: #9b86b3; }
+.roster[data-season="2"] .rc-where .rc-abs { color: #ffb0ab; }
+.roster[data-season="2"] .rr-arrow { color: var(--rc); text-shadow: 0 0 10px rgba(197,139,255,0.6), 2px 2px black; }
+
+.roster[data-season="2"] .rc-pad {
+  display: block; position: absolute; bottom: 2px; left: 50%; z-index: 1;
+  width: 126px; height: 34px; margin-left: -63px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(197,139,255,0.45), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(197,139,255,0.55), 0 0 18px rgba(150,70,255,0.35);
+  animation: rc-pad-pulse 3.2s ease-in-out infinite;
+}
+/* a summoning circle: a conic sweep masked down to a ring so it reads as one */
+.roster[data-season="2"] .rc-pad::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 10%, rgba(255,61,52,0.75) 14%,
+              transparent 20% 46%, rgba(197,139,255,0.9) 52%, transparent 58%);
+  -webkit-mask: radial-gradient(ellipse at center, transparent 44%, #000 52%);
+          mask: radial-gradient(ellipse at center, transparent 44%, #000 52%);
+  animation: s2-circle 5.5s linear infinite;
+}
+@keyframes s2-circle { to { transform: rotate(360deg); } }
+/* motes lifting off the circle */
+.roster[data-season="2"] .rc-scan {
+  display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: .75;
+  background-image:
+    radial-gradient(circle, rgba(255,222,255,0.95) 1.2px, transparent 1.6px),
+    radial-gradient(circle, rgba(197,139,255,0.8) 1px, transparent 1.4px);
+  background-size: 46px 62px, 33px 45px;
+  animation: s2-motes 9s linear infinite;
+}
+@keyframes s2-motes {
+  from { background-position: 0 0, 18px 12px; }
+  to   { background-position: 0 -124px, 18px -123px; }
+}
+
+/* ── SEASON 3: guns and factories, so the roster reads as a personnel file
+   pulled off a terminal. Green phosphor, corner brackets, segmented meters
+   and a holo pad under the model. ── */
+.roster[data-season="3"] {
+  --rc: #35d94b;
+  --rc-dim: rgba(53,217,75,0.35);
+}
+.roster[data-season="3"] .roster-head { color: var(--rc); text-shadow: 0 0 8px rgba(53,217,75,0.5), 2px 2px black; }
+.roster[data-season="3"] .roster-head .rh-r { color: var(--rc); }
+.roster[data-season="3"] .roster-card {
+  background:
+    linear-gradient(180deg, rgba(53,217,75,0.07), transparent 40%),
+    linear-gradient(#07170d, #020806);
+  border: 1px solid var(--rc-dim);
+  box-shadow: inset 0 0 24px rgba(53,217,75,0.09), inset 0 0 0 2px rgba(0,0,0,0.6);
+}
+/* L-brackets at the corners, the way a targeting overlay frames a subject */
+.roster[data-season="3"] .roster-card::before,
+.roster[data-season="3"] .roster-card::after {
+  content: ''; position: absolute; width: 18px; height: 18px; pointer-events: none;
+  border: 2px solid var(--rc); opacity: .85;
+}
+.roster[data-season="3"] .roster-card::before { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+.roster[data-season="3"] .roster-card::after { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+
+.roster[data-season="3"] .rc-name { color: #dfffe6; text-shadow: 0 0 10px rgba(53,217,75,0.55), 3px 3px black; }
+.roster[data-season="3"] .rc-name .rc-mode,
+.roster[data-season="3"] .rc-id { color: var(--rc); }
+.roster[data-season="3"] .rc-row .ps-nm { color: #8fd79b; }
+.roster[data-season="3"] .rc-row .ps-pc { color: var(--rc); }
+.roster[data-season="3"] .rc-row .ps-prog {
+  background-color: rgba(0,0,0,0.6); box-shadow: inset 0 0 0 1px var(--rc-dim);
+}
+/* notches punched over the fill turn the bars into ammo segments */
+.roster[data-season="3"] .rc-row .ps-prog::after {
+  content: ''; position: absolute; inset: 2px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 7px, rgba(0,0,0,0.9) 7px 9px);
+}
+.roster[data-season="3"] .rc-chip {
+  color: #cdeed4; background: rgba(0,0,0,0.5); border-color: var(--rc-dim);
+}
+.roster[data-season="3"] .rc-chip b { color: #5f8f68; }
+.roster[data-season="3"] .rc-chip i { color: var(--rc); }
+.roster[data-season="3"] .rc-chip.ench { border-color: var(--rc); box-shadow: 0 0 8px rgba(53,217,75,0.3); }
+.roster[data-season="3"] .rc-where { color: #6f9c78; }
+.roster[data-season="3"] .rc-where .rc-abs { color: #b6f0c0; }
+.roster[data-season="3"] .rr-arrow { color: var(--rc); text-shadow: 0 0 10px rgba(53,217,75,0.6), 2px 2px black; }
+
+.roster[data-season="3"] .rc-pad {
+  display: block; position: absolute; bottom: 4px; left: 50%; z-index: 1;
+  width: 104px; height: 26px; margin-left: -52px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(53,217,75,0.55), transparent 70%);
+  animation: rc-pad-pulse 2.8s ease-in-out infinite;
+}
+@keyframes rc-pad-pulse {
+  0%, 100% { opacity: .45; transform: scaleX(0.9); }
+  50%      { opacity: .95; transform: scaleX(1.08); }
+}
+/* a scan line crawling up the figure, like the model is being read in */
+.roster[data-season="3"] .rc-scan {
+  display: block; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(transparent, rgba(53,217,75,0.55), transparent);
+  height: 14px; top: auto;
+  animation: rc-scan 3.6s linear infinite;
+}
+@keyframes rc-scan {
+  from { bottom: -14px; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  to   { bottom: 100%; opacity: 0; }
+}
+
+/* ── SEASON 4: seven seas, so the crew stands in the surf inside a roped
+   frame, with caustics playing over the card. ── */
+.roster[data-season="4"] { --rc: #ffd489; --rc-sea: #3d9bff; }
+.roster[data-season="4"] .roster-head {
+  color: #ffeccb; text-shadow: 0 0 10px rgba(61,155,255,0.45), 2px 2px black;
+}
+.roster[data-season="4"] .roster-head .rh-r { color: var(--rc); }
+.roster[data-season="4"] .roster-card {
+  background:
+    linear-gradient(180deg, rgba(61,155,255,0.14), transparent 48%),
+    linear-gradient(#0b2338, #04101d);
+  border: 1px solid rgba(255,212,137,0.35);
+  box-shadow: inset 0 -26px 34px rgba(61,155,255,0.13), inset 0 0 0 2px rgba(0,0,0,0.5);
+}
+/* the frame is a rope: a diagonal two-tone repeat run through border-image */
+.roster[data-season="4"] .roster-card::before {
+  content: ''; position: absolute; inset: 5px; pointer-events: none; opacity: .75;
+  border: 3px solid transparent;
+  border-image: repeating-linear-gradient(45deg, #c79a5b 0 4px, #8a6636 4px 8px) 3;
+}
+.roster[data-season="4"] .rc-name { color: #ffeccb; text-shadow: 0 0 10px rgba(255,212,137,0.35), 3px 3px black; }
+.roster[data-season="4"] .rc-name .rc-mode { color: var(--rc); }
+.roster[data-season="4"] .rc-id { color: #7fa8c8; }
+.roster[data-season="4"] .rc-row .ps-nm { color: #cbdcea; }
+.roster[data-season="4"] .rc-row .ps-pc { color: var(--rc); }
+.roster[data-season="4"] .rc-row .ps-prog {
+  background-color: rgba(0,0,0,0.55); box-shadow: inset 0 0 0 1px rgba(255,212,137,0.3);
+}
+/* seams, so the bars read as planking rather than the season 3 ammo notches */
+.roster[data-season="4"] .rc-row .ps-prog::after {
+  content: ''; position: absolute; inset: 2px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 14px, rgba(255,212,137,0.2) 14px 16px);
+}
+.roster[data-season="4"] .rc-chip {
+  color: #f0e3cd; background: rgba(0,0,0,0.45); border-color: rgba(255,212,137,0.3);
+}
+.roster[data-season="4"] .rc-chip b { color: #9d8865; }
+.roster[data-season="4"] .rc-chip i { color: var(--rc); }
+.roster[data-season="4"] .rc-chip.ench { border-color: var(--rc); box-shadow: 0 0 8px rgba(255,212,137,0.3); }
+.roster[data-season="4"] .rc-where { color: #85a3ba; }
+.roster[data-season="4"] .rc-where .rc-abs { color: var(--rc); }
+.roster[data-season="4"] .rr-arrow { color: #ffeccb; text-shadow: 0 0 10px rgba(61,155,255,0.5), 2px 2px black; }
+
+/* surf: two crests drifting opposite ways in front of the model's feet */
+.roster[data-season="4"] .rc-pad {
+  display: block; position: absolute; bottom: 2px; left: 50%; z-index: 3;
+  width: 172px; height: 24px; margin-left: -86px; overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+          mask: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+}
+.roster[data-season="4"] .rc-pad::before,
+.roster[data-season="4"] .rc-pad::after {
+  content: ''; position: absolute; left: -50%; width: 200%; height: 13px;
+  background: radial-gradient(ellipse 19px 9px at 20px 13px, rgba(120,200,255,0.7) 60%, transparent 62%);
+  background-size: 40px 13px;
+  animation: s4-swell 4.5s linear infinite;
+}
+.roster[data-season="4"] .rc-pad::before { bottom: 8px; }
+.roster[data-season="4"] .rc-pad::after  { bottom: 0; opacity: .55; animation-duration: 6.5s; animation-direction: reverse; }
+@keyframes s4-swell { from { transform: translateX(0); } to { transform: translateX(40px); } }
+
+/* only the centred card needs to move */
+.roster-slot:not(.active) .rc-scan,
+.roster-slot:not(.active) .rc-pad,
+.roster-slot:not(.active) .rc-pad::before,
+.roster-slot:not(.active) .rc-pad::after,
+.roster-slot:not(.active) .roster-card::before,
+.roster-slot:not(.active) .roster-card::after,
+.roster-slot:not(.active) .ps-fill::after { animation-play-state: paused; }

@@ -1,7 +1,10 @@
+import json
 import os
 from datetime import datetime
 from django.shortcuts import render
 from django.conf import settings
+
+from .roster import season_roster
 
 # Edit season descriptions here
 SEASON_DESCRIPTIONS = {
@@ -93,6 +96,8 @@ def gallery(request):
 
         screenshots.sort(key=lambda x: x['date'])
 
+        roster = season_roster(season_path)
+
         hero_name = SEASON_HEROES.get(season_num)
         hero = next((x['url'] for x in screenshots if x['filename'] == hero_name), None)
         if hero is None and screenshots:
@@ -109,6 +114,8 @@ def gallery(request):
             'hero':             hero,
             'screenshot_count': len(screenshots),
             'video_count':      len(videos),
+            'roster':           roster,
+            'roster_json':      json.dumps(roster),
         })
 
     return render(request, 'gallery.html', {'seasons': seasons})

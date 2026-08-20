@@ -70,6 +70,8 @@
             </div>
           </div>
 
+          <div class="roster" id="roster"></div>
+
           <div class="disc-media" id="disc-media">
             <div class="media-tabs">
               <button class="media-tab active" data-tab="screenshots" onclick="switchTab('screenshots')">
@@ -159,6 +161,7 @@ const SEASONS = [
     "name": "{{ season.name|escapejs }}",
     "description": "{{ season.description|escapejs }}",
     "hero": "{{ season.hero|default_if_none:'' }}",
+    "roster": {{ season.roster_json|safe }},
     "screenshots": [
       {% for item in season.screenshots %}
       { "type": "img", "url": "{{ item.url }}", "label": "{{ item.label|escapejs }}" }{% if not forloop.last %},{% endif %}
@@ -173,6 +176,7 @@ const SEASONS = [
   {% endfor %}
 ];
 </script>
+<script type="module" src="{% static 'scripts/mcmodel.js' %}?t={% now 'U' %}"></script>
 <script src="{% static 'scripts/gallery.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>

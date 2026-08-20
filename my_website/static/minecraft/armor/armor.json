@@ -1,0 +1,383 @@
+{
+  "armoroftheages:holy_armor_chest": {
+    "geo": {
+      "file": "armoroftheages__ChestHolyArmorModel_chest.model.json",
+      "slot": "chest"
+    }
+  },
+  "armoroftheages:holy_armor_feet": {
+    "geo": {
+      "file": "armoroftheages__FeetHolyArmorModel_feet.model.json",
+      "slot": "feet"
+    }
+  },
+  "armoroftheages:japanese_light_armor_legs": {
+    "geo": {
+      "file": "armoroftheages__LegsJapaneseLightArmorModel_legs.model.json",
+      "slot": "legs"
+    }
+  },
+  "armoroftheages:o_yoroi_armor_chest": {
+    "geo": {
+      "file": "armoroftheages__ChestOYoroiArmorModel_chest.model.json",
+      "slot": "chest"
+    }
+  },
+  "armoroftheages:o_yoroi_armor_feet": {
+    "geo": {
+      "file": "armoroftheages__FeetOYoroiArmorModel_feet.model.json",
+      "slot": "feet"
+    }
+  },
+  "born_in_chaos_v1:dark_metal_armor_boots": {
+    "geo": {
+      "file": "born_in_chaos_v1__Modeldarkboots_feet.model.json",
+      "slot": "feet"
+    }
+  },
+  "born_in_chaos_v1:dark_metal_armor_chestplate": {
+    "geo": {
+      "file": "born_in_chaos_v1__Modeldarkbib_chest.model.json",
+      "slot": "chest"
+    }
+  },
+  "born_in_chaos_v1:dark_metal_armor_leggings": {
+    "l2": {
+      "file": "born_in_chaos_v1__armord2_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "epicpaladins:bloodstone_boots": {
+    "geo": {
+      "file": "epicpaladins__bloodstone_armor.model.json",
+      "slot": "feet"
+    }
+  },
+  "epicpaladins:bloodstone_chestplate": {
+    "geo": {
+      "file": "epicpaladins__bloodstone_armor.model.json",
+      "slot": "chest"
+    }
+  },
+  "epicpaladins:bloodstone_helmet": {
+    "geo": {
+      "file": "epicpaladins__bloodstone_armor.model.json",
+      "slot": "head"
+    }
+  },
+  "epicpaladins:bloodstone_leggings": {
+    "geo": {
+      "file": "epicpaladins__bloodstone_armor.model.json",
+      "slot": "legs"
+    }
+  },
+  "epicpaladins:moonlight_boots": {
+    "geo": {
+      "file": "epicpaladins__moonlight_armor.model.json",
+      "slot": "feet"
+    }
+  },
+  "epicpaladins:moonlight_chestplate": {
+    "geo": {
+      "file": "epicpaladins__moonlight_armor.model.json",
+      "slot": "chest"
+    }
+  },
+  "epicpaladins:moonlight_helmet": {
+    "geo": {
+      "file": "epicpaladins__moonlight_armor.model.json",
+      "slot": "head"
+    }
+  },
+  "epicpaladins:moonlight_leggings": {
+    "geo": {
+      "file": "epicpaladins__moonlight_armor.model.json",
+      "slot": "legs"
+    }
+  },
+  "fromtheshadows:diabolium_chest": {
+    "geo": {
+      "file": "fromtheshadows__diabolium_armor.model.json",
+      "slot": "chest"
+    }
+  },
+  "fromtheshadows:diabolium_leggings": {
+    "geo": {
+      "file": "fromtheshadows__diabolium_armor.model.json",
+      "slot": "legs"
+    }
+  },
+  "gnumus:lucky_hat_helmet": {
+    "geo": {
+      "file": "gnumus__Modelhatluk_head.model.json",
+      "slot": "head"
+    }
+  },
+  "iceandfire:armor_red_boots": {
+    "l1": {
+      "file": "iceandfire__armor_red_layer_1.png",
+      "h": 64,
+      "w": 64
+    },
+    "l2": {
+      "file": "iceandfire__armor_red_layer_2.png",
+      "h": 64,
+      "w": 64
+    }
+  },
+  "minecraft:chainmail_boots": {
+    "l1": {
+      "file": "minecraft__chainmail_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__chainmail_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:chainmail_chestplate": {
+    "l1": {
+      "file": "minecraft__chainmail_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__chainmail_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:chainmail_leggings": {
+    "l1": {
+      "file": "minecraft__chainmail_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__chainmail_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:diamond_boots": {
+    "l1": {
+      "file": "minecraft__diamond_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__diamond_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:diamond_chestplate": {
+    "l1": {
+      "file": "minecraft__diamond_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__diamond_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:diamond_helmet": {
+    "l1": {
+      "file": "minecraft__diamond_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__diamond_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:diamond_leggings": {
+    "l1": {
+      "file": "minecraft__diamond_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__diamond_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:iron_boots": {
+    "l1": {
+      "file": "minecraft__iron_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__iron_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:iron_chestplate": {
+    "l1": {
+      "file": "minecraft__iron_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__iron_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:iron_helmet": {
+    "l1": {
+      "file": "minecraft__iron_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__iron_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:iron_leggings": {
+    "l1": {
+      "file": "minecraft__iron_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__iron_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:netherite_boots": {
+    "l1": {
+      "file": "minecraft__netherite_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__netherite_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:netherite_chestplate": {
+    "l1": {
+      "file": "minecraft__netherite_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__netherite_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minecraft:netherite_leggings": {
+    "l1": {
+      "file": "minecraft__netherite_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "minecraft__netherite_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "minepiece:uniform_marine_1_helmet": {
+    "geo": {
+      "file": "minepiece__clothes_marine1.model.json",
+      "slot": "head"
+    }
+  },
+  "minepiece:uniform_marine_1_leggings": {
+    "geo": {
+      "file": "minepiece__clothes_marine1.model.json",
+      "slot": "legs"
+    }
+  },
+  "mowziesmobs:wrought_helmet": {
+    "geo": {
+      "file": "mowziesmobs__WroughtHelmModel_head.model.json",
+      "slot": "head"
+    }
+  },
+  "mutantmonsters:mutant_skeleton_skull": {
+    "l1": {
+      "file": "mutantmonsters__mutant_skeleton_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "mutantmonsters__mutant_skeleton_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "oresabovediamonds:amethyst_chestplate": {
+    "l1": {
+      "file": "oresabovediamonds__amethyst_layer_1.png",
+      "h": 32,
+      "w": 64
+    },
+    "l2": {
+      "file": "oresabovediamonds__amethyst_layer_2.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "stalwart_dungeons:tungsten_boots": {
+    "l1": {
+      "file": "stalwart_dungeons__tungsten_layer_1.png",
+      "h": 32,
+      "w": 64
+    }
+  },
+  "terramity:conjuror_boots": {
+    "geo": {
+      "file": "terramity__Modelconjuror_armor_feet.model.json",
+      "slot": "feet"
+    }
+  },
+  "terramity:conjuror_chestplate": {
+    "geo": {
+      "file": "terramity__Modelconjuror_armor_chest.model.json",
+      "slot": "chest"
+    }
+  },
+  "terramity:conjuror_leggings": {
+    "geo": {
+      "file": "terramity__Modelconjuror_armor_legs.model.json",
+      "slot": "legs"
+    }
+  },
+  "terramity:virentium_armor_chestplate": {
+    "geo": {
+      "file": "terramity__Modelvirentium_armor_chest.model.json",
+      "slot": "chest"
+    }
+  },
+  "terramity:virentium_armor_helmet": {
+    "geo": {
+      "file": "terramity__Modelvirentium_armor_head.model.json",
+      "slot": "head"
+    }
+  },
+  "threateningly_mobs:ebonlord_armor_boots": {
+    "l1": {
+      "file": "threateningly_mobs__ebonlord_layer_1.png",
+      "h": 32,
+      "w": 64
+    }
+  }
+}
