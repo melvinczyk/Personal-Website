@@ -86,6 +86,12 @@ function selectDisc(i) {
 
   renderMedia();
   renderRoster();
+  document.getElementById('entry-roster-count').textContent = (s.roster || []).length;
+  document.getElementById('entry-gallery-count').textContent =
+    s.screenshots.length + s.videos.length;
+  document.getElementById('entry-roster').classList.toggle('empty', !(s.roster || []).length);
+  document.getElementById('entry-gallery').classList.toggle('empty',
+    !(s.screenshots.length + s.videos.length));
 }
 
 // The roster is a second rail: one card per player, centred like the discs.
@@ -205,7 +211,9 @@ function layoutRoster() {
   const track = document.getElementById('roster-track');
   if (!track) return;
   const slot = track.querySelector('.roster-slot');
-  if (!slot) return;
+  // a rail that is not on screen measures zero, and centring against that
+  // would throw away the offset the last real measurement worked out
+  if (!slot || !slot.offsetWidth) return;
   const w = slot.offsetWidth;
   track.style.transform = `translateX(${-(w / 2) - playerIdx * (w + ROSTER_GAP)}px)`;
 }
@@ -375,20 +383,47 @@ function gearChip(slot, item) {
 function discClick(i) {
   if (i === discIdx) { toggleMedia(); return; }
   selectDisc(i);
+  toggleMedia(false);
+  toggleRoster(false);
 }
-function toggleMedia(force) {
-  const el = document.getElementById('disc-media');
+// The disc has two screens on it and neither opens on its own: picking a
+// disc leaves you on its menu, the way a console does.
+function openSection(id, entry, force) {
+  const el = document.getElementById(id);
   const open = typeof force === 'boolean' ? force : !el.classList.contains('open');
   el.classList.toggle('open', open);
-  document.querySelector('.console-screen').classList.toggle('loaded', open);
-  layoutRail();   // the slots resized, so re-centre
-  if (open) requestAnimationFrame(() =>
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  document.getElementById(entry).classList.toggle('open', open);
+  if (open) closeOthers(id);
+  syncScreen();
+  layoutRail();     // the slots resized, so re-centre
+  layoutRoster();   // the roster rail could not be measured while it was shut
+  if (open) requestAnimationFrame(() => {
+    layoutRoster();
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
 }
+
+function closeOthers(keep) {
+  for (const [id, entry] of [['roster', 'entry-roster'], ['disc-media', 'entry-gallery']]) {
+    if (id === keep) continue;
+    document.getElementById(id).classList.remove('open');
+    document.getElementById(entry).classList.remove('open');
+  }
+}
+
+// the disc rail gives up room whenever either screen is showing
+function syncScreen() {
+  const open = document.querySelector('#roster.open, #disc-media.open');
+  document.querySelector('.console-screen').classList.toggle('loaded', !!open);
+}
+
+function toggleMedia(force)  { openSection('disc-media', 'entry-gallery', force); }
+function toggleRoster(force) { openSection('roster', 'entry-roster', force); }
+function sectionOpen() { return document.querySelector('#roster.open, #disc-media.open'); }
 function discStep(dir) {
-  const wasOpen = document.getElementById('disc-media').classList.contains('open');
   selectDisc(discIdx + dir);
-  toggleMedia(wasOpen);
+  toggleMedia(false);
+  toggleRoster(false);
 }
 // L1/R1 page the viewer while it is open, otherwise they change disc
 function shoulder(dir) {
@@ -436,7 +471,10 @@ function psxBack() {
   if (lbOpen()) { closeLightbox(); return; }
   const drawer = panelOpen();
   if (drawer) { hidePanel(Number(drawer.id.replace('rc-panel-', ''))); return; }
-  if (document.getElementById('disc-media').classList.contains('open')) { toggleMedia(false); return; }
+  const screen = sectionOpen();
+  if (screen) {
+    return screen.id === 'roster' ? toggleRoster(false) : toggleMedia(false);
+  }
   window.location.href = HOME_URL;
 }
 

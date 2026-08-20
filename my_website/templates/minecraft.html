@@ -70,6 +70,23 @@
             </div>
           </div>
 
+          <div class="disc-menu">
+            <button class="disc-entry" id="entry-roster" onclick="toggleRoster()">
+              <span class="icon triangle"></span>
+              <span class="de-text">
+                <b>ROSTER</b><i>Who was on the server, and what they carried</i>
+              </span>
+              <span class="de-count" id="entry-roster-count">0</span>
+            </button>
+            <button class="disc-entry" id="entry-gallery" onclick="toggleMedia()">
+              <span class="icon x"></span>
+              <span class="de-text">
+                <b>GALLERY</b><i>Screenshots and clips from the season</i>
+              </span>
+              <span class="de-count" id="entry-gallery-count">0</span>
+            </button>
+          </div>
+
           <div class="roster" id="roster"></div>
 
           <div class="disc-media" id="disc-media">
@@ -119,7 +136,7 @@
             <button class="icon r1 clickable" onclick="shoulder(1)" title="Next disc"></button>
           </div>
           <div class="face">
-            <button class="icon triangle clickable" onclick="jumpTop()"  title="Top"></button>
+            <button class="icon triangle clickable" onclick="toggleRoster()" title="Roster"></button>
             <button class="icon square clickable"   onclick="cycleTab()" title="Switch media"></button>
             <button class="icon circle clickable"   onclick="psxBack()"  title="Back"></button>
             <button class="icon x clickable"        onclick="loadDisc()" title="Load disc"></button>

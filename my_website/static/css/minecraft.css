@@ -568,7 +568,48 @@ body::after { display: none; }
    The model is six CSS-3D cuboids; --u is one skin pixel, so the whole figure
    resizes from a single custom property. */
 .roster { display: none; margin-top: 16px; }
-.roster.on { display: block; }
+.roster.on.open { display: block; animation: fadeIn .25s ease forwards; }
+
+/* ── the disc's own menu ──────────────────────────────────────────────
+   A disc opens on a menu rather than straight into a screen, so the two
+   entries sit here as plates you pick, each showing the button that opens
+   it. Both are shut whenever the disc changes. */
+.disc-menu { display: flex; gap: 12px; margin-top: 18px; }
+.disc-entry {
+  flex: 1; display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; cursor: pointer; text-align: left;
+  background: linear-gradient(180deg, rgba(0,255,204,0.06), rgba(0,0,0,0.35));
+  border: 1px solid rgba(0,255,204,0.3);
+  transition: border-color .18s, background .18s, box-shadow .18s;
+}
+.disc-entry .icon { transform: scale(.5); margin: -13px -14px; flex-shrink: 0; }
+.disc-entry .de-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.disc-entry b {
+  font-family: 'MGS1 Codec', monospace; font-size: 17px; letter-spacing: .1em;
+  font-weight: normal; color: #d9fff5; transform: scaleY(1.2); transform-origin: left;
+}
+.disc-entry i {
+  font-style: normal; font-size: 11px; color: #6fae9c;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.disc-entry .de-count {
+  margin-left: auto; padding: 2px 8px;
+  font-family: 'MGS1 Codec', monospace; font-size: 13px; color: #C6C843;
+  background: rgba(0,0,0,0.5); border: 1px solid rgba(198,200,67,0.35);
+}
+.disc-entry:hover {
+  border-color: var(--mgs-cyan); background: linear-gradient(180deg, rgba(0,255,204,0.14), rgba(0,0,0,0.35));
+}
+.disc-entry.open {
+  border-color: var(--mgs-cyan);
+  background: linear-gradient(180deg, rgba(0,255,204,0.2), rgba(0,0,0,0.4));
+  box-shadow: 0 0 14px rgba(0,255,204,0.25), inset 0 0 0 1px rgba(0,255,204,0.35);
+}
+/* a disc with nothing on it leaves its entry showing but out of reach */
+.disc-entry.empty { opacity: .4; pointer-events: none; }
+.disc-entry.empty .de-count { color: #7b8b86; border-color: rgba(255,255,255,0.15); }
+
+@media(max-width: 760px) { .disc-menu { flex-direction: column; } }
 .roster-head {
   display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
   font-family: 'MGS1 Codec', monospace; font-size: 18px;
