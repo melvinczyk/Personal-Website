@@ -524,6 +524,22 @@ body::after { display: none; }
   padding: 12px 18px 12px; position: relative; z-index: 4;
   border-bottom: 1px solid rgba(255,255,255,0.3);
 }
+/* the way out, in the corner a console puts it */
+.disc-titlebar .dt-back {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 3px 10px 3px 4px; text-decoration: none;
+  font-family: 'MGS1 Codec', monospace; font-size: 13px; letter-spacing: .1em;
+  color: #a8e9d8; background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,255,204,0.3);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.disc-titlebar .dt-back .icon { transform: scale(.32); margin: -17px -18px; }
+.disc-titlebar .dt-back .lbl { transform: scaleY(1.2); }
+.disc-titlebar .dt-back:hover {
+  color: #eafff9; border-color: var(--mgs-cyan);
+  background: rgba(0,255,204,0.12); text-shadow: 0 0 10px var(--glow-cyan);
+}
+
 .disc-titlebar .dt-name {
   font-family: 'MGS1 Codec', monospace; font-size: 26px; color: lightgrey;
   text-shadow: 4px 4px black; text-transform: uppercase; transform: scaleY(1.28);
