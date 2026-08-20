@@ -123,9 +123,9 @@ function renderRoster() {
               <div class="rc-id">ID ${p.uuid.slice(0, 8).toUpperCase()} · ${p.dimension}</div>
               <div class="rc-meters">
                 ${meter('HEALTH', p.health_pct, `${p.health} / ${p.max_health}`, 'hp')}
-                ${meter('HUNGER', p.food_pct, `${p.food} / 20`, 'food')}
+                ${meter('ARMOR', p.defence_pct, `${p.defence}${p.defence_whole ? '' : '+'}`, 'armor')}
+                ${meter('TOUGHNESS', p.tough_pct, `${p.toughness}${p.defence_whole ? '' : '+'}`, 'tough')}
                 ${meter('LEVEL ' + p.level, p.xp_pct, `${p.xp} XP`, 'xp')}
-                ${meter('INVENTORY', p.slots_pct, `${p.slots_used} / 36`, 'inv')}
               </div>
               <div class="rc-gear">
                 ${gearChip('HELD', p.held)}
@@ -137,6 +137,21 @@ function renderRoster() {
                 ${p.absorption ? `<span class="rc-abs">+${p.absorption} ABSORB</span>` : ''}
                 ${p.effects ? `<span>${p.effects} EFFECT${p.effects > 1 ? 'S' : ''}</span>` : ''}
               </div>
+              <div class="rc-tabs">
+                <button class="rc-tab" onclick="showPanel(event, ${i}, 'bag')">
+                  ▦ INVENTORY <b>${p.carried.filter(Boolean).length}/36</b>
+                </button>
+                <button class="rc-tab" onclick="showPanel(event, ${i}, 'attr')">
+                  ◈ ATTRIBUTES <b>${p.attributes.length}</b>
+                </button>
+              </div>
+            </div>
+            <div class="rc-panel" id="rc-panel-${i}" onclick="event.stopPropagation()">
+              <div class="rp-head">
+                <span class="rp-title"></span>
+                <button class="rp-close" onclick="hidePanel(${i})" aria-label="Close">✕</button>
+              </div>
+              <div class="rp-body"></div>
             </div>
           </div>
         </div>`).join('')}
@@ -187,6 +202,7 @@ function selectPlayer(i) {
   const players = SEASONS[discIdx].roster || [];
   if (!players.length) return;
   playerIdx = (i + players.length) % players.length;
+  document.querySelectorAll('.rc-panel.on').forEach(el => el.classList.remove('on'));
   document.querySelectorAll('.roster-slot').forEach((el, n) =>
     el.classList.toggle('active', n === playerIdx));
   document.getElementById('roster-pos').textContent = playerIdx + 1;
@@ -213,6 +229,54 @@ function dressRail() {
 }
 function playerStep(dir) { selectPlayer(playerIdx + dir); }
 function playerClick(i) { if (i !== playerIdx) selectPlayer(i); }
+
+// The two drawers: the card is only so big, so each opens over the whole of
+// it rather than pushing the rest of the card around.
+function showPanel(event, i, view) {
+  event.stopPropagation();
+  const panel = document.getElementById(`rc-panel-${i}`);
+  if (!panel) return;
+  if (panel.classList.contains('on') && panel.dataset.view === view) {
+    return hidePanel(i);
+  }
+  const player = (SEASONS[discIdx].roster || [])[i];
+  panel.dataset.view = view;
+  panel.querySelector('.rp-title').textContent =
+    view === 'bag' ? 'INVENTORY' : 'ATTRIBUTES';
+  panel.querySelector('.rp-body').innerHTML =
+    view === 'bag' ? bagPanel(player) : attrPanel(player);
+  panel.classList.add('on');
+}
+
+function hidePanel(i) {
+  const panel = document.getElementById(`rc-panel-${i}`);
+  if (panel) panel.classList.remove('on');
+}
+
+// the grid the game itself uses: three rows of storage over the hotbar
+function bagPanel(p) {
+  const tile = item => {
+    if (!item) return '<span class="bag-cell"></span>';
+    const art = item.icon
+      ? `<img src="${item.icon}" alt="" loading="lazy">`
+      : `<i>${item.label.slice(0, 2)}</i>`;
+    return `<span class="bag-cell full${item.enchants ? ' ench' : ''}"
+      title="${item.label}${item.count > 1 ? ` x${item.count}` : ''} · ${item.mod}">
+      ${art}${item.count > 1 ? `<b>${item.count}</b>` : ''}</span>`;
+  };
+  const cells = p.carried.map(tile);
+  return `<div class="bag-grid">${cells.slice(0, 27).join('')}</div>
+          <div class="bag-grid hot">${cells.slice(27).join('')}</div>`;
+}
+
+function attrPanel(p) {
+  if (!p.attributes.length) return '<p class="rp-none">nothing recorded</p>';
+  return `<div class="attr-list">${p.attributes.map(a => `
+    <span class="attr-row${a.core ? ' core' : ''}">
+      <b>${a.label}</b>${a.mod ? `<i>${a.mod}</i>` : ''}
+      <em>${a.value}</em>
+    </span>`).join('')}</div>`;
+}
 
 function meter(name, pct, value, cls) {
   return `<div class="ps-row rc-row ${cls}">

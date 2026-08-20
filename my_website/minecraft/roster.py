@@ -12,6 +12,7 @@ from . import nbt
 
 SKIN_DIR   = '/static/minecraft/skins'
 ARMOR_DIR  = '/static/minecraft/armor'
+ITEM_DIR   = '/static/minecraft/items'
 ARMOR_SLOTS = {103: 'HELMET', 102: 'CHEST', 101: 'LEGS', 100: 'BOOTS'}
 # which body part each slot dresses, and which of the two armor sheets carries
 # it: layer 2 is the leggings sheet, layer 1 everything else
@@ -22,6 +23,8 @@ OFFHAND     = -106
 # Vanilla caps, used to scale the meters. A modded server can push past these,
 # so every bar is clamped rather than assumed to fit.
 FOOD_MAX = 20
+ARMOR_MAX = 20          # a full set of netherite
+TOUGH_MAX = 12
 
 _cache = {}
 
@@ -40,6 +43,7 @@ _STATIC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
                        'static', 'minecraft')
 PLAYERS_JSON = os.path.join(_STATIC, 'skins', 'players.json')
 ARMOR_JSON   = os.path.join(_STATIC, 'armor', 'armor.json')
+ITEMS_JSON   = os.path.join(_STATIC, 'items', 'items.json')
 
 
 def _load_json(path):
@@ -99,7 +103,88 @@ def _worn(by_slot, textures):
     return worn
 
 
-def read_player(dat_path, uuid, profile, textures):
+def _defence(by_slot, textures):
+    """Armor points and toughness, added up from the pieces being worn.
+
+    A player's save says nothing about either: the game works them out from
+    the gear every time it loads them. tools/extract_armor_textures.py reads
+    what each piece is worth out of the mod that added it, and the few pieces
+    it cannot read leave the total a floor rather than an answer.
+    """
+    points = tough = 0.0
+    whole = True
+    for slot in ARMOR_SLOTS:
+        entry = by_slot.get(slot)
+        if not entry:
+            continue
+        record = textures.get(entry.get('id')) or {}
+        if 'def' not in record:
+            whole = False
+            continue
+        points += record['def']
+        tough += record.get('tough', 0)
+    return points, tough, whole
+
+
+# the attributes worth putting first, and what to call them
+CORE = ('minecraft:generic.max_health', 'minecraft:generic.armor',
+        'minecraft:generic.armor_toughness', 'minecraft:generic.attack_damage',
+        'minecraft:generic.attack_speed', 'minecraft:generic.movement_speed',
+        'minecraft:generic.knockback_resistance', 'minecraft:generic.luck')
+
+
+def _pretty(name):
+    """'minecraft:generic.max_health' -> ('MAX HEALTH', '') """
+    mod, _, rest = name.partition(':')
+    rest = rest.split('.')[-1]
+    return rest.replace('_', ' ').upper(), '' if mod == 'minecraft' else mod
+
+
+def _attributes(data):
+    """Every attribute the player actually has a value for.
+
+    A modded save carries a hundred of them and most sit at nothing, so the
+    ones left at zero are dropped: what is left is what the player earned.
+    """
+    rows = []
+    for attr in data.get('Attributes', []):
+        name = attr.get('Name')
+        if not name:
+            continue
+        value = _attribute(data, name)
+        if abs(value) < 1e-9 and name not in CORE:
+            continue
+        label, mod = _pretty(name)
+        rows.append({
+            'label': label,
+            'mod':   mod,
+            'value': round(value, 3),
+            'core':  name in CORE,
+            'rank':  CORE.index(name) if name in CORE else len(CORE),
+        })
+    rows.sort(key=lambda row: (row['rank'], row['label']))
+    return rows
+
+
+def _carried(inventory, icons):
+    """The 36 slots the player carries, in the order the game lays them out."""
+    by_slot = {e.get('Slot'): e for e in inventory if 0 <= e.get('Slot', -1) <= 35}
+    rows = []
+    for slot in list(range(9, 36)) + list(range(9)):
+        entry = by_slot.get(slot)
+        if not entry:
+            rows.append(None)
+            continue
+        item = _item(entry)
+        item['slot'] = slot
+        item['hotbar'] = slot < 9
+        icon = icons.get(entry.get('id'))
+        item['icon'] = f'{ITEM_DIR}/{icon}' if icon else None
+        rows.append(item)
+    return rows
+
+
+def read_player(dat_path, uuid, profile, textures, icons=None):
     data = nbt.load(dat_path)
 
     inventory = data.get('Inventory', [])
@@ -122,6 +207,7 @@ def read_player(dat_path, uuid, profile, textures):
     # player had left is a floor under what their maximum must have been.
     max_health = max(_attribute(data, 'minecraft:generic.max_health', 20.0), health)
     food      = data.get('foodLevel', 0)
+    points, tough, whole = _defence(by_slot, textures)
     pos       = [int(round(v)) for v in data.get('Pos', [0, 0, 0])]
     death     = data.get('LastDeathLocation') or {}
 
@@ -136,6 +222,12 @@ def read_player(dat_path, uuid, profile, textures):
         'absorption': round(data.get('AbsorptionAmount', 0.0), 1),
         'food':       food,
         'food_pct':   min(100, round(food / FOOD_MAX * 100)),
+        'defence':    round(points, 1),
+        'defence_pct': min(100, round(points / ARMOR_MAX * 100)),
+        'toughness':  round(tough, 1),
+        'tough_pct':  min(100, round(tough / TOUGH_MAX * 100)),
+        # false when a piece's mod keeps its armor value somewhere unreadable
+        'defence_whole': whole,
         'level':      data.get('XpLevel', 0),
         'xp':         data.get('XpTotal', 0),
         'xp_pct':     round(data.get('XpP', 0.0) * 100),
@@ -151,6 +243,8 @@ def read_player(dat_path, uuid, profile, textures):
         'effects':    len(data.get('ActiveEffects', [])),
         'died_at':    {'x': death['pos'][0], 'y': death['pos'][1], 'z': death['pos'][2]}
                       if death.get('pos') else None,
+        'carried':    _carried(inventory, icons or {}),
+        'attributes': _attributes(data),
     }
 
 
@@ -162,11 +256,12 @@ def season_roster(season_path):
 
     profiles = _load_json(PLAYERS_JSON)
     textures = _load_json(ARMOR_JSON)
+    icons    = _load_json(ITEMS_JSON)
     roster   = []
     # the cache key covers the two index files too: re-running either fetcher
     # has to take effect even though the .dat files themselves never changed
     profile_stamp = []
-    for index in (PLAYERS_JSON, ARMOR_JSON):
+    for index in (PLAYERS_JSON, ARMOR_JSON, ITEMS_JSON):
         try:
             profile_stamp.append(os.path.getmtime(index))
         except OSError:
@@ -186,7 +281,7 @@ def season_roster(season_path):
             continue
 
         try:
-            player = read_player(path, uuid, profiles.get(uuid, {}), textures)
+            player = read_player(path, uuid, profiles.get(uuid, {}), textures, icons)
         except Exception:
             continue                       # a corrupt save should not 500 the page
         player['saved'] = stamp[0]

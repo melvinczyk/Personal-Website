@@ -613,6 +613,81 @@ body::after { display: none; }
 .rc-model, .rc-noskin { position: relative; z-index: 2; width: 99px; height: 171px; }
 .rc-pad, .rc-scan { display: none; }
 
+/* ── the two drawers ─────────────────────────────────────────────────── */
+.rc-tabs { display: flex; gap: 6px; margin-top: 6px; }
+.rc-tab {
+  flex: 1; padding: 3px 6px; cursor: pointer;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; letter-spacing: .04em;
+  color: #cfd6e4; background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.22);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.rc-tab b { color: var(--rc, #ffd479); font-weight: normal; }
+.rc-tab:hover { color: #fff; border-color: var(--rc, #ffd479); background: rgba(0,0,0,0.6); }
+.roster-slot:not(.active) .rc-tab { pointer-events: none; }
+
+.rc-panel {
+  position: absolute; inset: 0; z-index: 6; display: none;
+  flex-direction: column; padding: 8px 10px 6px;
+  background: rgba(6,8,16,0.94);
+  box-shadow: inset 0 0 0 1px var(--rc, rgba(255,255,255,0.4));
+}
+.rc-panel.on { display: flex; }
+.rp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; margin-bottom: 6px; padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  font-family: 'MGS1 Codec', monospace; font-size: 13px; letter-spacing: .1em;
+  color: var(--rc, #ffd479);
+}
+.rp-close {
+  padding: 0 4px; cursor: pointer; font-size: 13px; line-height: 1;
+  color: #9fb0c6; background: none; border: 0;
+}
+.rp-close:hover { color: #fff; }
+.rp-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.rp-body::-webkit-scrollbar { width: 6px; }
+.rp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+.rp-none { font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #7f8ea3; }
+
+/* inventory: the game's own grid, three rows over the hotbar */
+.bag-grid {
+  display: grid; grid-template-columns: repeat(9, 30px); gap: 3px;
+  justify-content: center;
+}
+.bag-grid.hot { margin-top: 7px; padding-top: 7px; border-top: 1px dashed rgba(255,255,255,0.2); }
+.bag-cell {
+  position: relative; width: 30px; height: 30px;
+  background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+.bag-cell.full { background: rgba(255,255,255,0.1); }
+.bag-cell.ench { box-shadow: inset 0 0 0 1px var(--rc, #ffd479); }
+.bag-cell img {
+  width: 24px; height: 24px; margin: 3px; display: block;
+  image-rendering: pixelated;
+}
+.bag-cell i {
+  display: block; padding-top: 9px; text-align: center; font-style: normal;
+  font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #93a3b8;
+}
+.bag-cell b {
+  position: absolute; right: 1px; bottom: 0; font-weight: normal;
+  font-family: 'MGS1 Codec', monospace; font-size: 10px; color: #fff;
+  text-shadow: 1px 1px black;
+}
+
+/* attributes: as many columns as fit, so the list stays one screen */
+.attr-list { columns: 3; column-gap: 14px; }
+.attr-row {
+  display: flex; align-items: baseline; gap: 4px; break-inside: avoid;
+  padding: 1px 0; font-family: 'MGS1 Codec', monospace; font-size: 11px;
+}
+.attr-row b { flex: 1; font-weight: normal; color: #a9b7c9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attr-row i { font-style: normal; font-size: 9px; color: #5f6f83; }
+.attr-row em { font-style: normal; color: #e8eef7; }
+.attr-row.core b { color: #dfe7f2; }
+.attr-row.core em { color: var(--rc, #ffd479); }
+
 .rc-info { flex: 1; min-width: 0; font-family: 'MGS1 Codec', monospace; }
 .rc-name {
   display: flex; align-items: baseline; gap: 8px;
@@ -631,9 +706,9 @@ body::after { display: none; }
 }
 .rc-row .ps-pc { width: 74px; text-align: right; font-size: 13px; color: #C6C843; }
 .rc-row.hp   .ps-fill { background-image: linear-gradient(#ff8a80, #c1352b); }
-.rc-row.food .ps-fill { background-image: linear-gradient(#e5c07b, #9c6b21); }
+.rc-row.armor .ps-fill { background-image: linear-gradient(#cfe3ff, #6a89b5); }
+.rc-row.tough .ps-fill { background-image: linear-gradient(#b7a6ff, #5b4a9c); }
 .rc-row.xp   .ps-fill { background-image: linear-gradient(#9ee87a, #3f8f2a); }
-.rc-row.inv  .ps-fill { background-image: linear-gradient(#cfd0d2, #6b6c6e); }
 
 .rc-gear { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
 .rc-chip {

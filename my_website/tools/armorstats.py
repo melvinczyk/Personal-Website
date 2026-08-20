@@ -45,6 +45,8 @@ PUT      = re.compile(r'^\s*\d+:\s+putstatic\s+#\d+\s+// Field ([\w$]+):')
 METHOD   = re.compile(r'^  [\w$<>. ]*[\s.]([\w$<>]+)\(')
 INT      = re.compile(r'^\s*\d+:\s+(?:iconst_(\d)|bipush\s+(\d+)|sipush\s+(\d+))$')
 FLOAT    = re.compile(r'^\s*\d+:\s+(?:fconst_(\d)|ldc\w*\s+#\d+\s+// float ([\d.]+)f)$')
+GETFIELD = re.compile(r'^\s*\d+:\s+getfield\s+#\d+\s+// Field ([\w/$]+)\.([\w$]+):([IF])')
+PUTFIELD = re.compile(r'^\s*\d+:\s+putfield\s+#\d+\s+// Field ([\w$]+):([IF])')
 TYPE_REF = re.compile(r'getstatic\s+#\d+\s+// Field net/minecraft/world/item/ArmorItem\$Type\.(\w+):')
 LAMBDA   = re.compile(r'^\s+\S.*\s(lambda\$[\w$]+)\(')
 DYNAMIC  = re.compile(r'invokedynamic\s+#\d+,\s+\d+\s+// InvokeDynamic #(\d+):')
@@ -52,12 +54,20 @@ BOOT     = re.compile(r'^\s{2}(\d+): #\d+ REF_')
 TARGET   = re.compile(r'^\s+#\d+ REF_invokeStatic [\w/$]+\.(lambda\$[\w$]+):')
 
 
+_listings = {}
+
+
 def disassemble(jar, entry, verbose=False):
-    with tempfile.TemporaryDirectory() as work:
-        with zipfile.ZipFile(jar) as zf:
-            path = zf.extract(entry, work)
-        return subprocess.run(['javap', '-v' if verbose else '-c', '-p', path],
-                              capture_output=True, text=True, check=True).stdout
+    """javap is slow and the same class comes up repeatedly, so keep it."""
+    key = (jar, entry, verbose)
+    if key not in _listings:
+        with tempfile.TemporaryDirectory() as work:
+            with zipfile.ZipFile(jar) as zf:
+                path = zf.extract(entry, work)
+            _listings[key] = subprocess.run(
+                ['javap', '-v' if verbose else '-c', '-p', path],
+                capture_output=True, text=True, check=True).stdout
+    return _listings[key]
 
 
 def number(line):
@@ -126,6 +136,87 @@ def floats(lines):
     return out
 
 
+SLOT_IN_NAME = (('helmet', 'head'), ('head', 'head'), ('chest', 'chest'),
+                ('body', 'chest'), ('legs', 'legs'), ('legging', 'legs'),
+                ('feet', 'feet'), ('boot', 'feet'))
+
+
+def defaults(jar, entry):
+    """{field: value} for the numbers a class sets up in its constructor.
+
+    Only a field set straight from a constant counts: the same class usually
+    carries setters that write the field from an argument, and those would
+    otherwise read as whatever number happened to come last.
+    """
+    found, last = {}, None
+    for line in disassemble(jar, entry).splitlines():
+        value = number(line)
+        if value is not None:
+            last = float(value)
+            continue
+        m = FLOAT.match(line)
+        if m:
+            last = float(m.group(1) or m.group(2))
+            continue
+        m = PUTFIELD.match(line)
+        if m:
+            if last is not None:
+                found[m.group(1)] = last
+            last = None
+            continue
+        last = None
+    return found
+
+
+def by_config(jar, lines, have):
+    """Protection and toughness read out of another class's settings.
+
+    A mod that lets its armor be tuned holds the numbers in a config object
+    and reads them by field, so the field's name is what says which slot it
+    is for and the class it belongs to is what says what it was set to.
+    """
+    protection, tough, seen = {}, 0.0, {}
+    for line in lines:
+        m = GETFIELD.match(line)
+        if not m:
+            continue
+        owner, field, kind = m.group(1) + '.class', m.group(2), m.group(3)
+        if owner not in have:
+            continue
+        if owner not in seen:
+            seen[owner] = defaults(jar, owner)
+        if field not in seen[owner]:
+            continue
+        plain = field.lower()
+        if kind == 'F' and 'toughness' in plain:
+            tough = seen[owner][field]
+        elif kind == 'I' and 'def' in plain:
+            for word, slot in SLOT_IN_NAME:
+                if word in plain:
+                    protection[slot] = int(seen[owner][field])
+                    break
+    return protection, tough
+
+
+ARRAY_PUT = re.compile(r'^\s*\d+:\s+putstatic\s+#\d+\s+// Field ([\w$]+):\[I')
+ARRAY_GET = re.compile(r'getstatic\s+#\d+\s+// Field ([\w$]+):\[I')
+
+
+def arrays(listing):
+    """{field: protection by slot} for int arrays set up in a static block."""
+    found, window = {}, []
+    for line in clinit(listing):
+        m = ARRAY_PUT.match(line)
+        if m:
+            values = by_index(window)
+            if values:
+                found[m.group(1)] = values
+            window = []
+            continue
+        window.append(line)
+    return found
+
+
 def material_of(jar, entry):
     """Where the item's material comes from: its own class, or a shared one."""
     with zipfile.ZipFile(jar) as zf:
@@ -146,13 +237,21 @@ def material_of(jar, entry):
 
 
 def from_inner(jar, entry):
-    """A material written as one anonymous class: read its two methods."""
-    parts = methods(disassemble(jar, entry))
+    """A material written as its own class: read its two methods."""
+    listing = disassemble(jar, entry)
+    parts = methods(listing)
     protection = {}
     for name in DEFENSE:
-        if name in parts:
-            protection = by_index(parts[name]) or by_type(parts[name])
-            break
+        if name not in parts:
+            continue
+        protection = by_index(parts[name]) or by_type(parts[name])
+        if not protection:
+            # the method may only index an array the class set up earlier
+            held = next((ARRAY_GET.search(line) for line in parts[name]
+                         if ARRAY_GET.search(line)), None)
+            if held:
+                protection = arrays(listing).get(held.group(1), {})
+        break
     tough = 0.0
     for name in TOUGHNESS:
         if name in parts:
@@ -221,10 +320,14 @@ def from_field(jar, entry, field):
     protection = by_type(window)
     if len(protection) != 4 and any('newarray' in line for line in window):
         protection = by_index(window)
-    if len(protection) != 4:
-        return None
-    values = floats(window)
-    return protection, (values[0] if values else 0.0)
+    if len(protection) == 4:
+        values = floats(window)
+        return protection, (values[0] if values else 0.0)
+
+    with zipfile.ZipFile(jar) as zf:
+        have = set(zf.namelist())
+    protection, tough = by_config(jar, window, have)
+    return (protection, tough) if len(protection) == 4 else None
 
 
 def material(jar, entry):
@@ -275,6 +378,10 @@ def registration(jar, item_id):
         entries = [e for e in have if e.endswith('.class')
                    and any(n.encode() in zf.read(e) for n in names)]
 
+    # the class that registers the item is worth looking at before the rest
+    entries.sort(key=lambda e: (0 if re.search(r'(item|regist|init)', e, re.I)
+                                else 1, len(e)))
+    hits = []
     for entry in entries:
         listing = disassemble(jar, entry, verbose=True)
         bodies, boots = lambdas(listing)
@@ -298,16 +405,29 @@ def registration(jar, item_id):
                 got = STATIC.match(inner)
                 if got and not field and got.group(1) + '.class' in have:
                     field = (got.group(1) + '.class', got.group(2))
-            if made or field:
+            if not (made or field):
+                continue
+            # a name can be registered more than once in a mod, so prefer the
+            # one that is plainly an armor piece and the one registered under
+            # the item's own name rather than the name of its set
+            armor = any('ArmorItem' in inner or 'ArmorMaterial' in inner
+                        for inner in window)
+            rank = (0 if armor else 1, names.index(m.group(1)))
+            if rank == (0, 0):
                 return made, field
-    return None, None
+            hits.append((*rank, made, field))
+
+    hits.sort(key=lambda hit: hit[:2])
+    return (hits[0][2], hits[0][3]) if hits else (None, None)
 
 
 def stats(jar, item_id):
     """(protection by slot, toughness) for one item, or None."""
     made, field = registration(jar, item_id)
     if field:
-        found = from_field(jar, *field)
+        # the constant may name a whole material class rather than one built
+        # in place, in which case the values are in its methods as usual
+        found = from_field(jar, *field) or from_inner(jar, field[0])
         if found:
             return found
     with zipfile.ZipFile(jar) as zf:

@@ -23,6 +23,7 @@ import tempfile
 
 from PIL import Image
 
+import armorstats
 import geo as geo_model
 import javamodel
 import mcreator
@@ -517,6 +518,53 @@ def write_geo(item_id, ns, stem, model_ref, tex_ref, slot, out, written, note):
     return True
 
 
+def add_stats(out, all_jars):
+    """Note down what each piece protects for.
+
+    The armor a player is wearing is worth nothing in their save: the game
+    works the points out from the pieces every time it loads them. The pieces
+    themselves are recorded, though, and armorstats reads what each one is
+    worth out of the mod that added it.
+    """
+    owner = {}
+    for path in all_jars:
+        try:
+            zf = zipfile.ZipFile(path)
+        except Exception:
+            continue
+        with zf:
+            for entry in zf.namelist():
+                if entry.startswith('assets/') and entry.count('/') > 1:
+                    owner.setdefault(entry.split('/')[1], path)
+
+    unknown = []
+    for item_id, record in out.items():
+        slot = slot_for(item_id)
+        ns = item_id.partition(':')[0]
+        if ns == 'minecraft':
+            material = item_id.partition(':')[2].rsplit('_', 1)[0]
+            found = armorstats.VANILLA.get(material)
+            if found:
+                protection = dict(zip(armorstats.ORDER, found[0]))
+                found = (protection, found[1])
+        else:
+            try:
+                found = armorstats.stats(owner[ns], item_id) if ns in owner else None
+            except Exception:
+                found = None
+        if not found or slot not in found[0]:
+            unknown.append(item_id)
+            continue
+        record['def'] = found[0][slot]
+        record['tough'] = round(found[1], 2)
+
+    if unknown:
+        print('\nno armor value for these, so a player wearing one counts as '
+              'at least what the rest come to:')
+        for item_id in unknown:
+            print(f'  {item_id}')
+
+
 def main():
     folders = [f for f in sys.argv[1:] if os.path.isdir(f)]
     if not folders:
@@ -560,6 +608,8 @@ def main():
             record[f'l{layer}'] = {'file': filename, 'w': w, 'h': h}
         out[item_id] = record
         print(f'{item_id:<48} {ns}:{material}')
+
+    add_stats(out, all_jars)
 
     with open(INDEX, 'w') as fh:
         json.dump(out, fh, indent=2, sort_keys=True)
