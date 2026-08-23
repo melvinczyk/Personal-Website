@@ -171,8 +171,8 @@ html, body { height: 100%; overflow: hidden; }
   display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
   font-family: 'MGS1 Codec', monospace;
 }
-.disc-head .dh-t { font-size: 21px; color: #d9fff5; text-shadow: 2px 2px 0 #000, 0 0 10px var(--glow-cyan); transform: scaleY(1.28); }
-.disc-head .dh-r { margin-left: auto; font-size: 16px; color: #5fbfa8; transform: scaleY(1.2); }
+.disc-head .dh-t { font-size: 21px; color: #d9fff5; text-shadow: 2px 2px 0 #000, 0 0 10px var(--glow-cyan);}
+.disc-head .dh-r { margin-left: auto; font-size: 16px; color: #5fbfa8;}
 
 /* extra headroom so the aura is not clipped by the rail's overflow */
 .disc-rail { position: relative; height: 250px; overflow: hidden; }
@@ -206,7 +206,7 @@ html, body { height: 100%; overflow: hidden; }
 }
 .disc-slot-name {
   margin-top: 9px; font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #6fae9c;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: scaleY(1.2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .disc-slot.active .disc-slot-name { color: var(--mgs-cyan); }
 
@@ -226,9 +226,8 @@ html, body { height: 100%; overflow: hidden; }
 .disc-title {
   font-family: 'MGS1 Codec', monospace; font-size: 28px; font-weight: 900; color: var(--mgs-cyan);
   text-shadow: 0 0 14px var(--glow-cyan), 2px 2px 0 #000;
-  transform: scaleY(1.3); transform-origin: left top;
 }
-.disc-desc { color: #8fd6c4; font-size: 18px; margin-top: 14px; transform: scaleY(1.25); transform-origin: left top; }
+.disc-desc { color: #8fd6c4; font-size: 18px; margin-top: 14px;}
 .disc-meters { margin-top: 18px; max-width: 520px; }
 .disc-meters .ps-row { grid-template-columns: 150px 1fr 74px; }
 .disc-meters .ps-prog { height: 15px; }
@@ -292,7 +291,6 @@ html, body { height: 100%; overflow: hidden; }
   background: linear-gradient(to top, rgba(0,255,204,0.05), transparent);
   transition: color .15s, background .15s;
 }
-.media-tab .lbl { transform: scaleY(1.25); }
 .media-tab:hover { color: #d9fff5; }
 .media-tab.active {
   color: #eafff9; border-bottom-color: var(--mgs-cyan);
@@ -303,7 +301,7 @@ html, body { height: 100%; overflow: hidden; }
 .media-tab.active .tab-count { color: var(--mgs-cyan); border-color: rgba(0,255,204,0.6); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-.empty-msg { color: #4e8579; font-size: 17px; padding: 18px 0; transform: scaleY(1.2); transform-origin: left top; }
+.empty-msg { color: #4e8579; font-size: 17px; padding: 18px 0;}
 
 .masonry-grid { columns: 4 190px; column-gap: 9px; }
 @media(max-width: 960px) { .masonry-grid { columns: 3 165px; } }
@@ -379,20 +377,19 @@ html, body { height: 100%; overflow: hidden; }
   max-width: 92vw; max-height: 72vh; display: block; object-fit: contain;
   border: 2px solid rgba(0,255,204,0.55); box-shadow: 0 0 40px rgba(0,255,204,0.18);
 }
-#lightbox-caption { color: #8fd6c4; font-size: 17px; text-align: center; transform: scaleY(1.22); }
+#lightbox-caption { color: #8fd6c4; font-size: 17px; text-align: center;}
 #lightbox-counter {
   position: fixed; top: 16px; left: 20px;
   font-family: 'MGS1 Codec', monospace; font-size: 20px; color: var(--mgs-cyan);
   border: 1px solid rgba(0,255,204,0.4); background: rgba(0,10,14,0.9); padding: 6px 14px;
 }
-#lightbox-counter b { display: inline-block; transform: scaleY(1.22); }
+#lightbox-counter b { display: inline-block;}
 #lightbox-nav { display: flex; gap: 26px; align-items: center; }
 .lb-btn {
   display: inline-flex; flex-direction: column; align-items: center; gap: 7px;
   background: none; border: 0; cursor: pointer;
   font-family: 'MGS1 Codec', monospace; font-size: 15px; color: #a8e9d8;
 }
-.lb-btn span { transform: scaleY(1.2); }
 .lb-btn:hover { color: #eafff9; text-shadow: 0 0 10px var(--glow-cyan); }
 #lightbox-close { position: fixed; top: 14px; right: 20px; }
 
@@ -534,7 +531,6 @@ body::after { display: none; }
   transition: color .15s, border-color .15s, background .15s;
 }
 .disc-titlebar .dt-back .icon { transform: scale(.32); margin: -17px -18px; }
-.disc-titlebar .dt-back .lbl { transform: scaleY(1.2); }
 .disc-titlebar .dt-back:hover {
   color: #eafff9; border-color: var(--mgs-cyan);
   background: rgba(0,255,204,0.12); text-shadow: 0 0 10px var(--glow-cyan);
@@ -542,11 +538,11 @@ body::after { display: none; }
 
 .disc-titlebar .dt-name {
   font-family: 'MGS1 Codec', monospace; font-size: 26px; color: lightgrey;
-  text-shadow: 4px 4px black; text-transform: uppercase; transform: scaleY(1.28);
+  text-shadow: 4px 4px black; text-transform: uppercase;
 }
 .disc-titlebar .dt-sub {
   margin-left: auto; font-family: 'MGS1 Codec', monospace; font-size: 17px;
-  color: #AEAFAE; text-shadow: 2px 2px black; text-transform: uppercase; transform: scaleY(1.2);
+  color: #AEAFAE; text-shadow: 2px 2px black; text-transform: uppercase;
 }
 
 .disc-slot { position: relative; }
@@ -602,8 +598,7 @@ body::after { display: none; }
 .disc-entry .de-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .disc-entry b {
   font-family: 'MGS1 Codec', monospace; font-size: 17px; letter-spacing: .1em;
-  font-weight: normal; color: #d9fff5; transform: scaleY(1.2); transform-origin: left;
-}
+  font-weight: normal; color: #d9fff5;}
 .disc-entry i {
   font-style: normal; font-size: 11px; color: #6fae9c;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -629,7 +624,7 @@ body::after { display: none; }
 .roster-head {
   display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
   font-family: 'MGS1 Codec', monospace; font-size: 18px;
-  color: lightgrey; text-shadow: 2px 2px black; transform: scaleY(1.2);
+  color: lightgrey; text-shadow: 2px 2px black;
 }
 .roster-head .rh-r { margin-left: auto; color: #C6C843; }
 
@@ -688,7 +683,6 @@ body::after { display: none; }
   transition: color .15s, background .15s, border-color .15s;
 }
 .rc-tab .icon { transform: scale(.3); margin: -18px -19px; flex-shrink: 0; }
-.rc-tab .lbl { transform: scaleY(1.2); }
 .rc-tab b { margin-left: auto; font-weight: normal; color: var(--rc, #ffd479); }
 .rc-tab:hover { color: #eef4ff; background: linear-gradient(to top, rgba(255,255,255,0.14), transparent); }
 .rc-tab.active {
@@ -714,14 +708,13 @@ body::after { display: none; }
   font-family: 'MGS1 Codec', monospace; font-size: 13px; letter-spacing: .12em;
   color: var(--rc, #ffd479);
 }
-.rp-title { transform: scaleY(1.2); transform-origin: left; }
+.rp-title {}
 .rp-close {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 0; cursor: pointer; background: none; border: 0;
   font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #9fb0c6;
 }
 .rp-close .icon { transform: scale(.28); margin: -19px -19px; }
-.rp-close .lbl { transform: scaleY(1.2); }
 .rp-close:hover { color: #fff; }
 
 .rp-foot {
@@ -735,11 +728,10 @@ body::after { display: none; }
   font-family: 'MGS1 Codec', monospace; font-size: 11px; color: #8fa0b6;
 }
 .rp-nav .icon { transform: scale(.5); margin: -8px -14px; }
-.rp-nav .lbl { transform: scaleY(1.2); }
 .rp-nav:hover { color: #fff; }
 .rp-who {
   font-family: 'MGS1 Codec', monospace; font-size: 11px; letter-spacing: .08em;
-  color: var(--rc, #ffd479); transform: scaleY(1.2);
+  color: var(--rc, #ffd479);
 }
 .rp-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 .rp-body::-webkit-scrollbar { width: 6px; }
@@ -809,13 +801,343 @@ body::after { display: none; }
 .attr-row.core b { color: #dfe7f2; }
 .attr-row.core em { color: var(--rc, #ffd479); }
 
+
+/* ── the live season ──────────────────────────────────────────────────────
+   The season being played now is not a disc. A disc is finished: you take it
+   off the shelf and look at what happened. This one is still being written,
+   so it sits above the rail with its own chrome, warm where the discs are
+   cold, and its numbers come off the server rather than out of a folder. */
+
+@font-face {
+  font-family: 'Minecraft';
+  src: url('../fonts/minecraft.woff2') format('woff2'),
+       url('../fonts/minecraft.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Through the portal the whole screen is Minecraft, not just the live stage:
+   the disc rail, the deck along the bottom, the lightbox, all of it.
+   portfolio.css sets the codec face on some fifty selectors and this sheet on
+   thirty more, so the page is told once here rather than chased one rule at a
+   time. The codec face stays on the chain behind it, which is what draws the
+   arrows and lozenges: a pixel font has no glyph for those, and a browser
+   falls back per character, so they come through unchanged. */
+#screen, #screen * {
+  font-family: 'Minecraft', 'MGS1 Codec', monospace !important;
+}
+
+/* portfolio.css stretches its text vertically by about a third, because the
+   codec face was drawn for the PS1's non-square pixels and looks squat on a
+   square one. Minecraft's face has no such quirk, so the correction has to come
+   off with the font it corrected: named one by one rather than blanketed,
+   because the rail and its slots are moved by transforms of their own. */
+#screen .ps-row .ps-nm,
+#screen .ps-row .ps-pc,
+#screen .ps-bar .ps-t,
+#screen .ps-bar .ps-r,
+#screen .ps-p,
+#screen .ps-hint,
+#screen .ps-btn .ps-lbl,
+#screen .ps-stats b,
+#screen .ps-stats i,
+#screen .line,
+#screen .proj-desc,
+#screen .codec-sub,
+#screen .codec-call-text {
+  transform: none;
+}
+
+/* ── the live season ───────────────────────────────────────────────────────
+   The rest of the portal is a PS1 console. This part is not: it is the game
+   it is reporting on, so it is built like a Minecraft screen instead. Flat
+   dark panels with a two-pixel bevel, sunken slots for the cards, and the
+   game's own colours doing the talking - experience green for what is alive,
+   heart red for what is not, gold for a count that matters. */
+:root {
+  --mc-panel:  #16161a;
+  --mc-slot:   #232329;
+  --mc-lit:    #3d3d46;   /* bevel, top-left  */
+  --mc-shade:  #08080a;   /* bevel, bottom-right */
+  --mc-text:   #e6e6e8;
+  --mc-dim:    #9b9ba4;
+  --mc-faint:  #63636d;
+  --mc-xp:     #7bc518;
+  --mc-heart:  #d94a3d;
+  --mc-gold:   #ffd24a;
+}
+
+.live-stage {
+  margin-bottom: 22px;
+  /* Not the codec font the rest of the console uses. That one is uppercase
+     only, which is most of why this panel read as a briefing screen rather
+     than a game. This is the game's own face, and it has lowercase. */
+  font-family: 'Minecraft', 'MGS1 Codec', monospace;
+  background: var(--mc-panel);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+
+.ls-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: rgba(0,0,0,0.28);
+  border-bottom: 2px solid var(--mc-shade);
+}
+.ls-logo { height: 30px; width: auto; flex: none; image-rendering: pixelated; }
+.ls-name {
+  font-size: 20px; color: var(--mc-text); text-shadow: 2px 2px #000;
+}
+.ls-sub  { font-size: 13px; color: var(--mc-faint); }
+.ls-read {
+  margin-left: auto; display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px; color: var(--mc-dim); text-align: right;
+}
+.ls-age:not(:empty)::before { content: '\00b7'; margin-right: 8px; color: var(--mc-faint); }
+
+/* a Minecraft button: raised, and pressed down rather than lit up */
+.ls-btn {
+  flex: none; padding: 4px 12px; font: inherit; font-size: 14px;
+  color: var(--mc-text); text-shadow: 1px 1px #000; cursor: pointer;
+  background: #4a4a52;
+  border: 2px solid #6e6e78;
+  border-right-color: #26262c; border-bottom-color: #26262c;
+}
+.ls-btn:hover  { background: #5a5a64; }
+.ls-btn:active { border-color: #26262c #6e6e78 #6e6e78 #26262c; }
+
+/* the numbers, as a row of inventory slots */
+.ls-tiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 4px; padding: 8px 10px;
+}
+/* a number that wraps takes its whole row with it, so none of them may */
+.ls-tile {
+  display: flex; align-items: baseline; gap: 6px; padding: 5px 8px;
+  white-space: nowrap; overflow: hidden;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.ls-tile i { font-style: normal; font-size: 13px; color: var(--mc-faint);
+             overflow: hidden; text-overflow: ellipsis; }
+.ls-tile b { margin-left: auto; font-weight: 600; font-size: 17px; color: var(--mc-text); }
+.ls-tile.hot b { color: var(--mc-gold); }
+
+.ls-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; font-size: 14px; color: var(--mc-dim);
+  border-top: 2px solid var(--mc-shade);
+}
+.ls-bar .lb-t { color: var(--mc-text); }
+.ls-bar .lb-r { margin-left: auto; color: var(--mc-dim); }
+
+/* the boss list is sixty cards long, so it gets a way to cut itself down */
+.ls-only { display: flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; }
+.ls-only input { accent-color: var(--mc-xp); margin: 0; }
+
+/* a folded section: see toggleSection() */
+.ls-sec.shut { display: none; }
+
+#ls-map {
+  height: 420px; max-height: 60vh; margin: 0 10px 10px; background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+#ls-map iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+.ls-btn.sm { padding: 2px 9px; font-size: 13px; }
+/* the way out to the map's own page, which is the one that still works when
+   the frame will not load: worth a button rather than a word */
+.ls-btn.alt {
+  text-decoration: none; background: #3a4a36;
+  border-color: #5d7256; border-right-color: #1e2a1c; border-bottom-color: #1e2a1c;
+}
+.ls-btn.alt:hover { background: #47593f; }
+
+.ls-grid, .ls-bosses {
+  display: grid; gap: 4px; padding: 0 10px 10px;
+}
+.ls-grid   { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+.ls-bosses { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+
+/* every card is a slot: sunken, flat, and the same size as its neighbours */
+.pcard, .bcard {
+  position: relative; cursor: pointer; background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.pcard:hover, .bcard:hover { background: #2f2f37; }
+.pcard.open { border-color: var(--mc-xp); }
+.pcard.on   { background: #1f2a1c; }
+
+.pc-stage, .bc-stage {
+  display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+}
+/* a card holds its shape before its model arrives, so the list is the right
+   length from the start and only what is on screen gets built */
+.pc-stage { min-height: 168px; }
+.bc-stage { min-height: 124px; }
+.pc-model canvas, .bc-model canvas { display: block; }
+/* an offline player is a record, not a presence */
+.pcard:not(.on) .pc-stage { filter: grayscale(.6) brightness(.75); }
+.pcard.down .pc-stage { filter: grayscale(.4) brightness(.6); }
+
+.pc-foot, .bc-foot {
+  padding: 5px 7px 6px; background: rgba(0,0,0,0.32);
+  border-top: 2px solid var(--mc-shade);
+}
+.pc-name, .bc-name {
+  display: flex; align-items: baseline; gap: 5px;
+  font-size: 14px; color: var(--mc-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pc-seen { margin-top: 1px; font-size: 12px; color: var(--mc-faint); }
+.pc-seen.on   { color: var(--mc-xp); }
+.pc-seen.dead { color: var(--mc-heart); }
+
+/* health reads as hearts do: red, on a sunken strip */
+.pc-hp {
+  display: block; height: 6px; margin: 4px 0 3px;
+  background-color: #0d0d10;
+  border: 1px solid var(--mc-shade);
+}
+.pc-hp .ps-fill { display: block; height: 100%; background: var(--mc-heart); }
+.pc-nums {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--mc-dim);
+}
+.pcard.worst .pc-nums span:last-child { color: var(--mc-heart); }
+
+/* ── the boss roster ───────────────────────────────────────────────────────
+   Every boss has a place from the start. One nobody has beaten is drawn in
+   black: the shape is there, the thing itself is not, and the gap is the
+   point of the line. */
+.bcard { cursor: default; }
+.bcard.beaten { background: #262019; }
+.bcard.hidden { display: none; }
+/* a boss name is often two words long and the card is narrow, so it gets two
+   lines rather than an ellipsis: every card the same height, nothing clipped */
+.bc-name {
+  display: block; color: var(--mc-text);
+  white-space: normal; line-height: 1.15; height: 2.3em; overflow: hidden;
+}
+.bcard.locked .bc-name { color: var(--mc-faint); }
+.bc-mod {
+  margin-top: 1px; font-size: 12px; color: var(--mc-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bc-kills { margin-top: 2px; font-size: 13px; color: var(--mc-gold); }
+
+.bc-killers { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.bc-killer {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--mc-dim);
+}
+.bc-face {
+  width: 14px; height: 14px; flex: none; background-image: var(--skin);
+  background-size: 112px 112px; background-position: -14px -14px;
+  image-rendering: pixelated; border: 1px solid var(--mc-shade);
+}
+.bc-killer b { font-weight: normal; }
+.bc-killer em { font-style: normal; color: var(--mc-faint); }
+
+/* the record of whichever player is open, under the grid it came from */
+.ls-drawer { display: none; margin: 0 10px 10px; }
+.ls-drawer.open {
+  display: block; padding: 9px 10px 10px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.lsd-head {
+  display: flex; align-items: baseline; gap: 9px; margin-bottom: 8px;
+  padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
+}
+.lsd-who { font-size: 17px; color: var(--mc-text); }
+.lsd-sub { font-size: 13px; color: var(--mc-faint); }
+.lsd-head .rp-close { margin-left: auto; }
+
+.ls-state { color: var(--mc-dim); }
+.ls-state.warn { color: var(--mc-gold); }
+.ls-state.bad  { color: var(--mc-heart); }
+.ls-btn[disabled] { opacity: .45; cursor: default; }
+
+@media (max-width: 820px) {
+  .ls-head { flex-wrap: wrap; }
+  .ls-read { width: 100%; margin-left: 0; order: 3; }
+  .ls-bar  { flex-wrap: wrap; }
+}
+
+/* the server record: hours, deaths, damage, ground covered. A save holds none
+   of this, so the drawer is the only place any of it can be read. */
+.live-wrap {
+  display: flex; flex-direction: column; gap: 10px;
+  font-family: 'MGS1 Codec', monospace; min-height: 100%;
+}
+.live-grid {
+  /* four across on a full card, folding to two when the drawer is narrow */
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 1px;
+  background: rgba(255,255,255,0.07);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.07);
+}
+.live-cell {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 7px 9px; background: #10141c;
+}
+.live-cell i {
+  font-style: normal; font-size: 9px; letter-spacing: 1px; color: #5f6f83;
+}
+.live-cell b {
+  font-weight: normal; font-size: 17px; color: #e8eef7;
+}
+.live-cell u {
+  text-decoration: none; font-size: 9px; letter-spacing: .5px;
+  color: var(--rc, #ffd479); opacity: .8;
+}
+
+.live-boss { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
+.live-boss.empty {
+  padding: 9px; font-size: 11px; color: #5f6f83; text-align: center;
+}
+.lb-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 5px 9px; font-size: 10px; letter-spacing: 1px; color: #a9b7c9;
+  background: rgba(255,255,255,0.06);
+}
+.lb-head b { font-weight: normal; color: var(--rc, #ffd479); }
+.lb-row {
+  display: flex; align-items: baseline; gap: 8px; padding: 5px 9px;
+  font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05);
+}
+.lb-row b { flex: 1; font-weight: normal; color: #fff; }
+.lb-row i { font-style: normal; font-size: 9px; color: #5f6f83; }
+.lb-row em { font-style: normal; color: var(--rc, #ffd479); }
+.lb-row u {
+  text-decoration: none; font-size: 9px; color: #5f6f83; min-width: 108px;
+  text-align: right;
+}
+
+.live-when {
+  margin-top: auto; padding-top: 4px;
+  font-size: 9px; letter-spacing: 1px; color: #4d5b6d; text-align: right;
+}
+
+/* deaths stand in for armor on a card with no save behind it */
+.rc-row.deaths .ps-fill {
+  background: linear-gradient(180deg, #ff9d6e, #c4452b);
+}
+
+/* a card fed by the live export says so on the same line as its coordinates */
+.rc-live { color: var(--rc, #ffd479); }
+
 .rc-info { flex: 1; min-width: 0; font-family: 'MGS1 Codec', monospace; }
 .rc-name {
   display: flex; align-items: baseline; gap: 8px;
   font-size: 21px; color: #fff; text-shadow: 3px 3px black;
-  text-transform: uppercase; transform: scaleY(1.2); transform-origin: left;
-}
+  text-transform: uppercase;}
 .rc-name .rc-mode { font-size: 12px; color: #C6C843; }
+/* a player the server last saw on no hearts is on the respawn screen */
+.rc-name .rc-mode.down { color: #ff6b57; }
 .rc-id { margin: 6px 0 9px; font-size: 11px; letter-spacing: 1px; color: #7c7d83; }
 
 .rc-meters { display: grid; gap: 5px; margin-bottom: 9px; }

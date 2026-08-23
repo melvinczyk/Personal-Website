@@ -141,26 +141,43 @@ class Batch {
 
   get empty() { return this.position.length === 0; }
 
-  mesh(map) {
+  mesh(map, opts = {}) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.position, 3));
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(this.color, 3));
     // alphaTest leaves every pixel either drawn or not drawn, so armor writes
     // depth like anything else and nothing anywhere has to be sorted
+    // a blacked-out model still needs its texture: the alpha is what gives a
+    // silhouette its shape, and multiplying by black leaves only that
+    // and a see-through shell is the one thing that cannot be drawn that way:
+    // it blends instead, writes no depth, and goes on last so whatever it is
+    // sheltering is already there to show through it
     const material = new THREE.MeshBasicMaterial({
-      map, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide,
+      map,
+      color: opts.locked ? 0x000000 : 0xffffff,
+      vertexColors: !opts.locked,
+      side: THREE.DoubleSide,
+      ...(opts.veil
+        ? { transparent: true, depthWrite: false }
+        : { alphaTest: 0.5 }),
     });
-    return new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, material);
+    if (opts.veil) mesh.renderOrder = 1;
+    return mesh;
   }
 }
 
-/** The turn a converted cube carries: z, then y, then x, about its own pivot. */
+/** The turn a converted cube carries, about its own pivot.
+ *  Composed z, then y, then x, unless the model asks for the reverse. */
 function turner(cube) {
   const [rx, ry, rz] = cube.r.map(d => d * Math.PI / 180);
-  const matrix = new THREE.Matrix4().makeRotationZ(rz)
-    .multiply(new THREE.Matrix4().makeRotationY(ry))
-    .multiply(new THREE.Matrix4().makeRotationX(rx));
+  const X = new THREE.Matrix4().makeRotationX(rx);
+  const Y = new THREE.Matrix4().makeRotationY(ry);
+  const Z = new THREE.Matrix4().makeRotationZ(rz);
+  const matrix = cube.o === 'xyz'
+    ? X.clone().multiply(Y).multiply(Z)
+    : Z.clone().multiply(Y).multiply(X);
   const pivot = new THREE.Vector3(...cube.p);
   const point = new THREE.Vector3();
   return ([x, y, z]) => {
@@ -195,6 +212,8 @@ function loadModel(url) {
 // ---------------------------------------------------------------------------
 
 const WIDTH = 99, HEIGHT = 171, UNIT = 4.5, DISTANCE = 138;
+// how far a worn skin sits inside the one over it, in skin pixels
+const INSET = 0.2;
 
 let renderer = null;
 const views = new Set();
@@ -203,16 +222,41 @@ function ensureRenderer() {
   if (!renderer) {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(WIDTH, HEIGHT, false);
     renderer.setClearAlpha(0);
   }
   return renderer;
 }
 
 function paint(view) {
-  ensureRenderer().render(view.scene, view.camera);
+  const gl = ensureRenderer();
+  gl.setSize(view.w, view.h, false);
+  gl.render(view.scene, view.camera);
   view.ctx.clearRect(0, 0, view.canvas.width, view.canvas.height);
-  view.ctx.drawImage(renderer.domElement, 0, 0, view.canvas.width, view.canvas.height);
+  view.ctx.drawImage(gl.domElement, 0, 0,
+                     Math.round(view.w * gl.getPixelRatio()),
+                     Math.round(view.h * gl.getPixelRatio()),
+                     0, 0, view.canvas.width, view.canvas.height);
+}
+
+/** A canvas of the right size for a view, already in the element. */
+function canvasFor(el, w, h) {
+  const canvas = document.createElement('canvas');
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(w * ratio);
+  canvas.height = Math.round(h * ratio);
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  el.innerHTML = '';
+  el.appendChild(canvas);
+  return canvas;
+}
+
+/** A camera framing `h / UNIT` pixels of model from DISTANCE away. */
+function eye(w, h, unit) {
+  const camera = new THREE.PerspectiveCamera(
+    2 * Math.atan((h / unit / 2) / DISTANCE) * 180 / Math.PI, w / h, 1, 900);
+  camera.position.set(0, 0, DISTANCE);
+  return camera;
 }
 
 function paintAll() {
@@ -229,6 +273,7 @@ function animate(now) {
   const t = now / 1000;
   for (const view of turning) {
     view.root.rotation.y = (t / 18) * Math.PI * 2 - 0.35;
+    if (!view.limbs || !view.limbs.armR) { paint(view); continue; }
     const swing = Math.sin(t * Math.PI * 2 / 3.4) * 0.17;
     view.limbs.armR.rotation.x = swing;
     view.limbs.legL.rotation.x = swing;
@@ -257,20 +302,11 @@ function buildPlayerModel(el, opts) {
     (piece.model ? built : flat)[part] = piece;
   }
 
-  const canvas = document.createElement('canvas');
-  const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.round(WIDTH * ratio);
-  canvas.height = Math.round(HEIGHT * ratio);
-  canvas.style.width = `${WIDTH}px`;
-  canvas.style.height = `${HEIGHT}px`;
-  el.innerHTML = '';
-  el.appendChild(canvas);
-
+  const w = opts.width || WIDTH;
+  const h = opts.height || HEIGHT;
+  const canvas = canvasFor(el, w, h);
   const world = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    2 * Math.atan((HEIGHT / UNIT / 2) / DISTANCE) * 180 / Math.PI,
-    WIDTH / HEIGHT, 1, 600);
-  camera.position.set(0, 0, DISTANCE);
+  const camera = eye(w, h, UNIT * (h / HEIGHT));
 
   const root = new THREE.Group();
   root.scale.y = -1;             // the portal measures y downward, the camera up
@@ -335,7 +371,7 @@ function buildPlayerModel(el, opts) {
   }
 
   const view = { el, canvas, ctx: canvas.getContext('2d'), scene: world, camera,
-                 root, limbs, wearing, built, armW,
+                 root, limbs, wearing, built, armW, w, h,
                  turning: false, dressed: false, worn: [] };
   el._view = view;
   views.add(view);
@@ -409,7 +445,146 @@ function disposeModel(el) {
   el._view = null;
 }
 
+
+/**
+ * Render a mob into `el` from a model read out of the game's own client.
+ *
+ * opts: { model, locked, width, height }. A locked mob is drawn in black:
+ * the shape is there, kept honest by the texture's own transparency, but
+ * nothing of what it looks like is given away until somebody has felled it.
+ */
+function buildMobModel(el, opts) {
+  loadModel(opts.model).then(model => {
+    disposeModel(el);
+
+    const w = opts.width || 150, h = opts.height || 190;
+    const canvas = canvasFor(el, w, h);
+    const world = new THREE.Scene();
+    const camera = eye(w, h, UNIT * (h / HEIGHT));
+
+    const root = new THREE.Group();
+    root.scale.y = -1;              // the portal measures y downward
+    world.add(root);
+    const fit = new THREE.Group();  // carries the framing
+    root.add(fit);
+    const shell = new THREE.Group();
+    fit.add(shell);
+
+    const map = texture(opts.model.replace(/[^/]+$/, model.texture));
+    // Some mobs are worn: a suit of armour with a ghost inside it, drawn by the
+    // game as the same bones a second time in a second skin. Holding the ghost
+    // a fraction inside the armour keeps the two off each other's faces and
+    // lets it show through wherever the outer skin is see-through.
+    const under = model.ghost
+      ? texture(opts.model.replace(/[^/]+$/, model.ghost)) : null;
+    // and armour is the same trick the other way about: the game hangs it off
+    // the mob's own bones a shade wider, so it sits over the skin
+    const over = model.coat
+      ? texture(opts.model.replace(/[^/]+$/, model.coat)) : null;
+    // A bone may wear a skin of its own: a serpent's body segments come from
+    // a second model with a second sheet, and the two are drawn as one mob.
+    const skins = (model.skins || []).map(skin => ({
+      map: texture(opts.model.replace(/[^/]+$/, skin.texture)),
+      tw: skin.tw, th: skin.th, veil: !!skin.veil,
+    }));
+    const bones = {};
+
+    for (const bone of model.bones) {
+      const group = new THREE.Group();
+      group.position.set(...bone.pivot);
+      // Minecraft turns a part about z, then y, then x. Three's default is the
+      // other way round, which quietly scrambles any bone rotated on two axes.
+      if (bone.rot && bone.rot.some(Boolean)) group.rotation.set(...bone.rot, 'ZYX');
+      (bones[bone.parent] || shell).add(group);
+      bones[bone.name] = group;
+
+      const skin = skins[bone.skin || 0];
+      const batch = new Batch(skin ? skin.tw : model.tw, skin ? skin.th : model.th);
+      const inner = under ? new Batch(model.tw, model.th) : null;
+      const outer = over ? new Batch(model.tw, model.th) : null;
+      for (const cube of bone.cubes) {
+        // a cube of its own may be turned about a point inside the bone
+        const turn = cube.r ? turner(cube) : null;
+        const worn = inner ? cube.s.map(v => Math.max(v - INSET, 0.01)) : null;
+        const armed = outer ? cube.s.map(v => v + INSET) : null;
+        for (const [name, rect] of Object.entries(cube.f)) {
+          batch.face(name, cube.c, cube.s, rect, turn);
+          if (inner) inner.face(name, cube.c, worn, rect, turn);
+          if (outer) outer.face(name, cube.c, armed, rect, turn);
+        }
+      }
+      if (inner && !inner.empty) group.add(inner.mesh(under, { locked: opts.locked }));
+      if (!batch.empty) {
+        group.add(batch.mesh(skin ? skin.map : map,
+                             { locked: opts.locked, veil: skin && skin.veil }));
+      }
+      if (outer && !outer.empty) group.add(outer.mesh(over, { locked: opts.locked }));
+    }
+
+    // Mobs are all sizes and all shapes: a wither is wider than it is tall, a
+    // warden three times a player, and the Luxtructosaurus four hundred pixels
+    // of neck and tail. Something that long reads as a heap of slabs seen
+    // head-on, so turn it side-on first and frame what is then in front. A mob
+    // that the side-on turn does not suit carries a turn of its own instead,
+    // and that one is taken as its chosen pose.
+    if (model.pose) shell.rotation.set(...model.pose.map(d => d * Math.PI / 180), 'ZYX');
+    let box = new THREE.Box3().setFromObject(shell);
+    let size = box.getSize(new THREE.Vector3());
+    if (!model.pose && size.z > size.x * 1.4) {
+      shell.rotation.y = Math.PI / 2;
+      box = new THREE.Box3().setFromObject(shell);
+      size = box.getSize(new THREE.Vector3());
+    }
+    const visible = HEIGHT / UNIT;
+    const scale = Math.min(
+      visible * 0.92 / (size.y || 1),
+      visible * (w / h) * 0.92 / (size.x || 1),
+      // and never so close that the near half of it is behind the camera
+      DISTANCE * 0.55 / ((size.z / 2) || 1)) * (model.zoom || 1);
+
+    // Something far longer than a card can hold reads as a rope at any size the
+    // whole of it will fit in. Those name a bone to put in the middle instead,
+    // and lean on the zoom to bring it in close: a portrait, not a map. Only
+    // along an axis that overruns, though: a serpent wants its head centred
+    // across the card, and still wants to sit level down it.
+    const middle = box.getCenter(new THREE.Vector3());
+    if (model.focus && bones[model.focus]) {
+      const at = new THREE.Vector3();
+      bones[model.focus].updateWorldMatrix(true, false);
+      bones[model.focus].getWorldPosition(at);
+      // the box is measured in the frame's own axes, before the root turns the
+      // model the right way up, so the bone has to be read back into them
+      fit.worldToLocal(at);
+      // depth has no such limit: the part being framed belongs at the camera's
+      // own distance whatever the rest of the mob is doing behind it
+      const room = [visible * (w / h), visible, 0];
+      ['x', 'y', 'z'].forEach((axis, i) => {
+        if (size[axis] * scale > room[i]) middle[axis] = at[axis];
+      });
+    }
+    fit.scale.setScalar(scale);
+    fit.position.set(-middle.x * scale, -middle.y * scale, -middle.z * scale);
+
+    const view = { el, canvas, ctx: canvas.getContext('2d'), scene: world,
+                   camera, root, w, h, turning: false, worn: [] };
+    el._view = view;
+    views.add(view);
+    root.rotation.y = -0.35;
+    paint(view);
+  }).catch(() => {});
+}
+
+/** Start or stop a mob turning on the spot. */
+function turnModel(el, on) {
+  const view = el && el._view;
+  if (!view) return;
+  view.turning = on !== false;
+  if (view.turning) startTurning(); else paint(view);
+}
+
 window.buildPlayerModel = buildPlayerModel;
+window.buildMobModel = buildMobModel;
+window.turnModel = turnModel;
 window.dressModel = dressModel;
 window.undressModel = undressModel;
 window.disposeModel = disposeModel;

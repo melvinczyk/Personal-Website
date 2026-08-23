@@ -8,6 +8,7 @@ which tools/fetch_player_skins.py builds from the Mojang API.
 import json
 import os
 
+from . import live as live_data
 from . import nbt
 
 SKIN_DIR   = '/static/minecraft/skins'
@@ -248,27 +249,77 @@ def read_player(dat_path, uuid, profile, textures, icons=None):
     }
 
 
+def faces():
+    """uuid -> the head we have on file, for anything that draws a player."""
+    return {uuid: {'skin': f'{SKIN_DIR}/{p["skin"]}' if p.get('skin') else None,
+                   'slim': p.get('slim', False)}
+            for uuid, p in _load_json(PLAYERS_JSON).items()}
+
+
+def _from_live(uuid, info, profile):
+    """A card for someone the server knows about but who has no save here.
+
+    A running season is the usual case: the export lands every minute while the
+    playerdata is only copied off by hand. Everything the save would have told
+    us is left empty rather than guessed at, and the card leans on what the
+    server did send.
+    """
+    max_health = info['max_health'] or 20.0
+    return {
+        'uuid':       uuid,
+        'name':       info['name'] or profile.get('name', uuid[:8]),
+        'slim':       profile.get('slim', False),
+        'skin':       f'{SKIN_DIR}/{profile["skin"]}' if profile.get('skin') else None,
+        'health':     info['health'],
+        'max_health': max_health,
+        'health_pct': min(100, round(info['health'] / max_health * 100)),
+        'absorption': 0,
+        'food':       info['food'],
+        'food_pct':   min(100, round(info['food'] / FOOD_MAX * 100)),
+        # armor is worn gear, and worn gear only exists in a save
+        'defence':    0, 'defence_pct': 0,
+        'toughness':  0, 'tough_pct': 0,
+        'defence_whole': True,
+        'level':      info['level'],
+        'xp':         0,
+        'xp_pct':     0,
+        'dimension':  info['dimension'],
+        'pos':        None,
+        'gamemode':   'DOWN' if info['dead'] else 'LIVE',
+        'held':       None,
+        'offhand':    None,
+        'armor':      [],
+        'worn':       {},
+        'slots_used': 0,
+        'slots_pct':  0,
+        'effects':    0,
+        'died_at':    None,
+        'carried':    [],
+        'attributes': [],
+        'live':       info,
+    }
+
+
 def season_roster(season_path):
-    """Every player with a .dat in <season>/stats, newest save first."""
+    """Every player in a season: saved bodies, server records, or both."""
     stats_dir = os.path.join(season_path, 'stats')
-    if not os.path.isdir(stats_dir):
-        return []
+    served    = live_data.load(season_path)
 
     profiles = _load_json(PLAYERS_JSON)
     textures = _load_json(ARMOR_JSON)
     icons    = _load_json(ITEMS_JSON)
     roster   = []
-    # the cache key covers the two index files too: re-running either fetcher
-    # has to take effect even though the .dat files themselves never changed
+    # the cache key covers the index files and the server export too: re-running
+    # either fetcher has to take effect even though no .dat file changed
     profile_stamp = []
     for index in (PLAYERS_JSON, ARMOR_JSON, ITEMS_JSON):
         try:
             profile_stamp.append(os.path.getmtime(index))
         except OSError:
             profile_stamp.append(0)
-    profile_stamp = tuple(profile_stamp)
+    profile_stamp = tuple(profile_stamp) + live_data.stamp(season_path)
 
-    for filename in sorted(os.listdir(stats_dir)):
+    for filename in sorted(os.listdir(stats_dir) if os.path.isdir(stats_dir) else []):
         if not filename.endswith('.dat'):
             continue
         uuid = os.path.splitext(filename)[0]
@@ -285,8 +336,15 @@ def season_roster(season_path):
         except Exception:
             continue                       # a corrupt save should not 500 the page
         player['saved'] = stamp[0]
+        player['live']  = served.get(uuid)
         _cache[path] = (stamp, player)
         roster.append(player)
+
+    # anyone the server reported who has no save in this season
+    seen = {p['uuid'] for p in roster}
+    for uuid, info in served.items():
+        if uuid not in seen:
+            roster.append(_from_live(uuid, info, profiles.get(uuid, {})))
 
     roster.sort(key=lambda p: p['name'].lower())
     return roster

@@ -27,29 +27,33 @@ REF_TEXT = ("Tomorrow, the president and his Russian counterpart are scheduled t
 # clone pronounces things right; the on-screen text keeps real spellings.
 LINES = {
     "c0_l0": "Snake, this is Nick Burcheck. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a Titans software R and D intern.",
-    "c0_l1": "Everything we've gathered on him is laid out on this codec. For specific information look through different channels, or open MEMORY for the full contact list.",
+    "c0_l1": "Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list.",
     "c1_l0": "His operation records. Twelve declassified projects on file.",
     "c1_l1": "For the details, get Ottacon on the line. Hal's been cataloguing all of it.",
     "c1_l2": "He's already listening.",
     "c2_l0": "He also records as Zero Barbecue. A one-man operation.",
     "c2_l1": "First single's out now. Listen below.",
-    "c3_l0": "A private Minecraft world: custom modpack, custom server.",
-    "c3_l1": "We gathered enough information to make a 3D reconstruction. The map below is rendering live.",
-    "c4_l0": "These are his direct channels. They're secure. Use them.",
+    "c3_p0": "A private Minecraft world: custom modpack, custom server. Five seasons on record.",
+    "c3_p1": "We've opened a portal into it. The live map, who's online, and every boss still standing. Go through it, Snake.",
 }
 
 # Lines assembled from separately generated parts with silence between them
 # (a TTS can't be trusted to hold a beat). Generators that support it should
 # prefer this over the flat LINES text for these keys.
 SPLIT_LINES = {
+    "c0_l1": {"parts": ["Everything we've gathered on him is laid out below.",
+                         "We've also attached his direct links.",
+                         "For anything specific, tune through the other channels, or open MEMORY for the list."], "gap_ms": 430},
     "c1_l0": {"parts": ["His operation records.", "Twelve declassified projects on file."], "gap_ms": 450},
     "c1_l1": {"parts": ["For the details, get Ottacon on the line.",
                          "Hal's been cataloguing all of it."], "gap_ms": 420},
     "c2_l0": {"parts": ["He also records as Zero Barbecue.", "A one-man operation."], "gap_ms": 420},
     "c2_l1": {"parts": ["First single's out now.", "Listen below."], "gap_ms": 450},
-    "c3_l1": {"parts": ["We gathered enough information to make a 3D reconstruction.",
-                         "The map below is rendering live."], "gap_ms": 450},
-    "c4_l0": {"parts": ["These are his direct channels.", "They're secure.", "Use them."], "gap_ms": 400},
+    "c3_p0": {"parts": ["A private Minecraft world: custom modpack, custom server.",
+                         "Five seasons on record."], "gap_ms": 450},
+    "c3_p1": {"parts": ["We've opened a portal into it.",
+                         "The live map, who's online, and every boss still standing.",
+                         "Go through it, Snake."], "gap_ms": 420},
 }
 
 
@@ -68,14 +72,12 @@ SNAKE_LINES = {
     "snake_hmm": "Hmmm...",
     "snake_hal": "Hal Emmerick. Been a while since Shadow Moses. Patch him in.",
     "snake_look": "Alright. Let's take a look, then.",
-    "c4_l1": "Got it. I'll make contact.",
 }
 
 SNAKE_SPLIT_LINES = {
     "snake_hal": {"parts": ["Hal Emmerick.", "Been a while since Shadow Moses.",
                              "Patch him in."], "gap_ms": 380},
     "snake_look": {"parts": ["Alright.", "Let's take a look, then."], "gap_ms": 380},
-    "c4_l1": {"parts": ["Got it.", "I'll make contact."], "gap_ms": 380},
 }
 
 # ── Otacon (Hal Emmerich, left portrait on the PROJECTS channel) ──

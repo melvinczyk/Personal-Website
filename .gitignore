@@ -10,3 +10,7 @@ media
 node_modules/
 .DS_Store
 */temp_mels/
+mc_sync.json
+config.json
+known_hosts
+*.sync.lock

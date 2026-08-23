@@ -490,11 +490,6 @@ body::after {
   background: rgba(0,255,204,0.08);
 }
 
-.contact-row { display:flex; align-items:center; gap:16px; border:2px solid rgba(0,136,136,0.3); border-left:4px solid var(--mgs-cyan); background:rgba(0,25,25,0.5); padding:12px 16px; margin:8px 0; transition:all 0.2s; }
-.contact-row:hover { border-color:var(--mgs-cyan); background:rgba(0,255,204,0.15); }
-.contact-label { color:var(--mgs-border); font-size: 19px; font-weight:700; width:140px; flex-shrink:0; font-family:'MGS1 Codec',monospace; letter-spacing: normal; }
-.contact-link { color:var(--mgs-cyan); font-size: 20px; text-decoration:none; flex:1; min-width:0; overflow-wrap:anywhere; }
-.contact-link:hover { text-shadow:0 0 10px var(--glow-cyan); }
 a.tl { color:var(--mgs-cyan); text-decoration:none; font-family:'MGS1 Codec',monospace; }
 a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 
@@ -784,7 +779,6 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 .who-name, .who-key, .who-val,
 .proj-name, .proj-tech,
 .cx-proj-freq, .cx-proj-name,
-.contact-label, .contact-link,
 .cx-mem-title, .cx-mem-foot,
 .codec-sub {
   transform: scaleY(1.3);
@@ -916,6 +910,39 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 .ps-thumbs a.ps-more:hover { background: rgba(0,255,204,0.18); }
 
 .ps-frame { position: relative; border: 1px solid rgba(0,255,204,0.25); overflow: hidden; margin-bottom: 14px; background: #04100f; }
+
+/* A corner of the live map, on the codec. Short on purpose: it is a look at
+   the world, not a way to explore it, and the portal is where you go to do
+   that. BlueMap is a WebGL renderer, so one frame is all this panel gets. */
+.ps-map { height: 190px; }
+.ps-map iframe { width: 100%; height: 100%; }
+
+/* Who is on the server right now, drawn the way Minecraft draws a player: the
+   head off their own skin, eight pixels square, blown up and left hard-edged.
+   Everyone tracked gets a face so an empty server still shows a crew, with the
+   ones actually online lit and the rest dimmed back. */
+.ps-faces {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px;
+  margin-bottom: 14px; padding: 9px 10px;
+  background: rgba(0,0,0,0.35); border: 1px solid rgba(0,255,204,0.18);
+}
+.ps-faces-t {
+  width: 100%; font-size: 14px; letter-spacing: .08em; color: var(--mgs-cyan);
+}
+.ps-face { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 58px; opacity: .38; }
+.ps-face.on { opacity: 1; }
+.ps-face i {
+  width: 24px; height: 24px;
+  background-size: 192px 192px; background-position: -24px -24px;
+  background-color: #0b1a18; image-rendering: pixelated;
+  border: 1px solid rgba(0,255,204,0.3);
+}
+.ps-face.on i { border-color: var(--mgs-cyan); box-shadow: 0 0 8px var(--glow-cyan); }
+.ps-face b {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 11px; font-weight: normal; color: #8fd6c4;
+}
+.ps-face-none { font-size: 15px; color: #4e8579; }
 .ps-frame iframe { display: block; width: 100%; border: 0; }
 
 .ps-spec { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
@@ -978,13 +1005,13 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
   color: #d9fff5; text-shadow: 2px 2px 0 #000, 0 0 10px var(--glow-cyan);
 }
 
-.cx-proj-row, .contact-row {
+.cx-proj-row {
   border: 0;
   border-top: 2px solid transparent; border-bottom: 2px solid transparent;
   background: linear-gradient(to left, transparent, rgba(0,255,204,0.05), transparent);
   margin: 4px 0; transition: background 0.18s ease;
 }
-.cx-proj-row:hover, .contact-row:hover {
+.cx-proj-row:hover {
   background: linear-gradient(to left, transparent, rgba(0,255,204,0.34), transparent);
   border-image: linear-gradient(to right, transparent, rgba(0,255,204,0.6), transparent);
   border-image-slice: 1;
@@ -993,16 +1020,15 @@ a.tl:hover { text-shadow:0 0 10px var(--glow-cyan); text-decoration:underline; }
 
 .cx-proj-name { white-space: nowrap; }
 .cx-proj-row .tag { margin-left: 6px; padding: 1px 6px; font-size: 17px; }
-.contact-row { padding: 10px 30px; margin: 4px 0; }
 
-.cx-proj-row, .contact-row { position: relative; }
-.cx-proj-row::before, .contact-row::before {
+.cx-proj-row { position: relative; }
+.cx-proj-row::before {
   content: '\25B6'; position: absolute; left: 8px; top: 50%;
   transform: translateY(-50%); font-size: 16px; color: var(--mgs-cyan);
   opacity: 0; transition: opacity 0.15s, left 0.15s;
   text-shadow: 0 0 10px var(--mgs-cyan);
 }
-.cx-proj-row:hover::before, .contact-row:hover::before {
+.cx-proj-row:hover::before {
   opacity: 1; left: 14px; animation: ps-blink 1s steps(1) infinite;
 }
 

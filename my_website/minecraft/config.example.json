@@ -1,0 +1,28 @@
+{
+  "_comment": "Copy this to mc_sync.json in the project root (next to manage.py) and fill in user + one credential. That file is gitignored: never paste its contents into a chat, a commit, or a bug report.",
+
+  "host": "u2.oddblox.io",
+  "port": 2022,
+  "user": "",
+
+  "_auth": "Prefer key_path if the host allows it. Use password only if it does not.",
+  "key_path": "",
+  "key_passphrase": "",
+  "password": "",
+
+  "_remote": "Directory holding kubejs/. Run `python manage.py sync_server --explore` to find it, then set this exactly.",
+  "remote_root": ".",
+
+  "_files": "Which files to fetch, relative to remote_root.",
+  "files": [
+    "kubejs/exported/players.json",
+    "kubejs/exported/boss_kills.json",
+    "kubejs/exported/boss_kills.tsv"
+  ],
+
+  "_season": "Which static/minecraft/<season>/data folder these land in.",
+  "season": "season5",
+
+  "_hostkey": "Verified host fingerprint. A relative path is read next to this config file.",
+  "known_hosts": "known_hosts"
+}

@@ -1,0 +1,415 @@
+[
+ {
+  "key": "warden",
+  "id": "minecraft:warden",
+  "name": "Warden",
+  "mod": "minecraft",
+  "model": "warden.model.json"
+ },
+ {
+  "key": "wither",
+  "id": "minecraft:wither",
+  "name": "Wither",
+  "mod": "minecraft",
+  "model": "wither.model.json"
+ },
+ {
+  "key": "aether__slider",
+  "id": "aether:slider",
+  "name": "Slider",
+  "mod": "aether",
+  "model": "aether__slider.model.json"
+ },
+ {
+  "key": "aether__sun_spirit",
+  "id": "aether:sun_spirit",
+  "name": "Sun Spirit",
+  "mod": "aether",
+  "model": "aether__sun_spirit.model.json"
+ },
+ {
+  "key": "aether__valkyrie_queen",
+  "id": "aether:valkyrie_queen",
+  "name": "Valkyrie Queen",
+  "mod": "aether",
+  "model": "aether__valkyrie_queen.model.json"
+ },
+ {
+  "key": "alexscaves__luxtructosaurus",
+  "id": "alexscaves:luxtructosaurus",
+  "name": "Luxtructosaurus",
+  "mod": "alexscaves",
+  "model": "alexscaves__luxtructosaurus.model.json"
+ },
+ {
+  "key": "alexscaves__tremorzilla",
+  "id": "alexscaves:tremorzilla",
+  "name": "Tremorzilla",
+  "mod": "alexscaves",
+  "model": "alexscaves__tremorzilla.model.json"
+ },
+ {
+  "key": "alexsmobs__void_worm",
+  "id": "alexsmobs:void_worm",
+  "name": "Void Worm",
+  "mod": "alexsmobs",
+  "model": "alexsmobs__void_worm.model.json"
+ },
+ {
+  "key": "ancient_aether__ancient_guardian",
+  "id": "ancient_aether:ancient_guardian",
+  "name": "Ancient Guardian",
+  "mod": "ancient_aether",
+  "model": "ancient_aether__ancient_guardian.model.json"
+ },
+ {
+  "key": "aquamirae__captain_cornelia",
+  "id": "aquamirae:captain_cornelia",
+  "name": "Captain Cornelia",
+  "mod": "aquamirae",
+  "model": "aquamirae__captain_cornelia.model.json"
+ },
+ {
+  "key": "arkane_domains__cursed_pharaoh",
+  "id": "arkane_domains:cursed_pharaoh",
+  "name": "Cursed Pharaoh",
+  "mod": "arkane_domains",
+  "model": "arkane_domains__cursed_pharaoh.model.json"
+ },
+ {
+  "key": "arkane_domains__dark_shaman",
+  "id": "arkane_domains:dark_shaman",
+  "name": "Dark Shaman",
+  "mod": "arkane_domains",
+  "model": "arkane_domains__dark_shaman.model.json"
+ },
+ {
+  "key": "arkane_domains__savage_druid",
+  "id": "arkane_domains:savage_druid",
+  "name": "Savage Druid",
+  "mod": "arkane_domains",
+  "model": "arkane_domains__savage_druid.model.json"
+ },
+ {
+  "key": "arkane_domains__warlock",
+  "id": "arkane_domains:warlock",
+  "name": "Warlock",
+  "mod": "arkane_domains",
+  "model": "arkane_domains__warlock.model.json"
+ },
+ {
+  "key": "better_minoshroomtaur__better_minoshroomtaur",
+  "id": "better_minoshroomtaur:better_minoshroomtaur",
+  "name": "Better Minoshroomtaur",
+  "mod": "better_minoshroomtaur",
+  "model": "better_minoshroomtaur__better_minoshroomtaur.model.json"
+ },
+ {
+  "key": "block_factorys_bosses__infernal_dragon",
+  "id": "block_factorys_bosses:infernal_dragon",
+  "name": "Infernal Dragon",
+  "mod": "block_factorys_bosses",
+  "model": "block_factorys_bosses__infernal_dragon.model.json"
+ },
+ {
+  "key": "block_factorys_bosses__kraken",
+  "id": "block_factorys_bosses:kraken",
+  "name": "Kraken",
+  "mod": "block_factorys_bosses",
+  "model": "block_factorys_bosses__kraken.model.json"
+ },
+ {
+  "key": "block_factorys_bosses__sandworm",
+  "id": "block_factorys_bosses:sandworm",
+  "name": "Sandworm",
+  "mod": "block_factorys_bosses",
+  "model": "block_factorys_bosses__sandworm.model.json"
+ },
+ {
+  "key": "block_factorys_bosses__underworld_knight",
+  "id": "block_factorys_bosses:underworld_knight",
+  "name": "Underworld Knight",
+  "mod": "block_factorys_bosses",
+  "model": "block_factorys_bosses__underworld_knight.model.json"
+ },
+ {
+  "key": "block_factorys_bosses__yeti",
+  "id": "block_factorys_bosses:yeti",
+  "name": "Yeti",
+  "mod": "block_factorys_bosses",
+  "model": "block_factorys_bosses__yeti.model.json"
+ },
+ {
+  "key": "cataclysm__ancient_remnant",
+  "id": "cataclysm:ancient_remnant",
+  "name": "Ancient Remnant",
+  "mod": "cataclysm",
+  "model": "cataclysm__ancient_remnant.model.json"
+ },
+ {
+  "key": "cataclysm__ender_guardian",
+  "id": "cataclysm:ender_guardian",
+  "name": "Ender Guardian",
+  "mod": "cataclysm",
+  "model": "cataclysm__ender_guardian.model.json"
+ },
+ {
+  "key": "cataclysm__ignis",
+  "id": "cataclysm:ignis",
+  "name": "Ignis",
+  "mod": "cataclysm",
+  "model": "cataclysm__ignis.model.json"
+ },
+ {
+  "key": "cataclysm__maledictus",
+  "id": "cataclysm:maledictus",
+  "name": "Maledictus",
+  "mod": "cataclysm",
+  "model": "cataclysm__maledictus.model.json"
+ },
+ {
+  "key": "cataclysm__netherite_monstrosity",
+  "id": "cataclysm:netherite_monstrosity",
+  "name": "Netherite Monstrosity",
+  "mod": "cataclysm",
+  "model": "cataclysm__netherite_monstrosity.model.json"
+ },
+ {
+  "key": "cataclysm__scylla",
+  "id": "cataclysm:scylla",
+  "name": "Scylla",
+  "mod": "cataclysm",
+  "model": "cataclysm__scylla.model.json"
+ },
+ {
+  "key": "cataclysm__the_harbinger",
+  "id": "cataclysm:the_harbinger",
+  "name": "The Harbinger",
+  "mod": "cataclysm",
+  "model": "cataclysm__the_harbinger.model.json"
+ },
+ {
+  "key": "cataclysm__the_leviathan",
+  "id": "cataclysm:the_leviathan",
+  "name": "The Leviathan",
+  "mod": "cataclysm",
+  "model": "cataclysm__the_leviathan.model.json"
+ },
+ {
+  "key": "dungeonnowloading__chaos_spawner",
+  "id": "dungeonnowloading:chaos_spawner",
+  "name": "Chaos Spawner",
+  "mod": "dungeonnowloading",
+  "model": "dungeonnowloading__chaos_spawner.model.json"
+ },
+ {
+  "key": "dungeonnowloading__fairkeeper_boros",
+  "id": "dungeonnowloading:fairkeeper_boros",
+  "name": "Fairkeeper Boros",
+  "mod": "dungeonnowloading",
+  "model": "dungeonnowloading__fairkeeper_boros.model.json"
+ },
+ {
+  "key": "dungeonnowloading__fairkeeper_ouros",
+  "id": "dungeonnowloading:fairkeeper_ouros",
+  "name": "Fairkeeper Ouros",
+  "mod": "dungeonnowloading",
+  "model": "dungeonnowloading__fairkeeper_ouros.model.json"
+ },
+ {
+  "key": "fdbosses__chesed",
+  "id": "fdbosses:chesed",
+  "name": "Chesed",
+  "mod": "fdbosses",
+  "model": "fdbosses__chesed.model.json"
+ },
+ {
+  "key": "fdbosses__geburah",
+  "id": "fdbosses:geburah",
+  "name": "Geburah",
+  "mod": "fdbosses",
+  "model": "fdbosses__geburah.model.json"
+ },
+ {
+  "key": "fdbosses__malkuth",
+  "id": "fdbosses:malkuth",
+  "name": "Malkuth",
+  "mod": "fdbosses",
+  "model": "fdbosses__malkuth.model.json"
+ },
+ {
+  "key": "galosphere__berserker",
+  "id": "galosphere:berserker",
+  "name": "Berserker",
+  "mod": "galosphere",
+  "model": "galosphere__berserker.model.json"
+ },
+ {
+  "key": "graveyard__lich",
+  "id": "graveyard:lich",
+  "name": "Lich",
+  "mod": "graveyard",
+  "model": "graveyard__lich.model.json"
+ },
+ {
+  "key": "legendary_monsters__ancient_guardian",
+  "id": "legendary_monsters:ancient_guardian",
+  "name": "Ancient Guardian",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__ancient_guardian.model.json"
+ },
+ {
+  "key": "legendary_monsters__annihilation_pursuer",
+  "id": "legendary_monsters:annihilation_pursuer",
+  "name": "Annihilation Pursuer",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__annihilation_pursuer.model.json"
+ },
+ {
+  "key": "legendary_monsters__cloud_golem",
+  "id": "legendary_monsters:cloud_golem",
+  "name": "Cloud Golem",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__cloud_golem.model.json"
+ },
+ {
+  "key": "legendary_monsters__dune_sentinel",
+  "id": "legendary_monsters:dune_sentinel",
+  "name": "Dune Sentinel",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__dune_sentinel.model.json"
+ },
+ {
+  "key": "legendary_monsters__endersent",
+  "id": "legendary_monsters:endersent",
+  "name": "Endersent",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__endersent.model.json"
+ },
+ {
+  "key": "legendary_monsters__frostbitten_golem",
+  "id": "legendary_monsters:frostbitten_golem",
+  "name": "Frostbitten Golem",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__frostbitten_golem.model.json"
+ },
+ {
+  "key": "legendary_monsters__overgrown_colossus",
+  "id": "legendary_monsters:overgrown_colossus",
+  "name": "Overgrown Colossus",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__overgrown_colossus.model.json"
+ },
+ {
+  "key": "legendary_monsters__posessed_paladin",
+  "id": "legendary_monsters:posessed_paladin",
+  "name": "Posessed Paladin",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__posessed_paladin.model.json"
+ },
+ {
+  "key": "legendary_monsters__the_obliterator",
+  "id": "legendary_monsters:the_obliterator",
+  "name": "The Obliterator",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__the_obliterator.model.json"
+ },
+ {
+  "key": "lost_aether_content__aerwhale_king",
+  "id": "lost_aether_content:aerwhale_king",
+  "name": "Aerwhale King",
+  "mod": "lost_aether_content",
+  "model": "lost_aether_content__aerwhale_king.model.json"
+ },
+ {
+  "key": "netherman__azazel",
+  "id": "netherman:azazel",
+  "name": "Azazel",
+  "mod": "netherman",
+  "model": "netherman__azazel.model.json"
+ },
+ {
+  "key": "netherman__azazel_human",
+  "id": "netherman:azazel_human",
+  "name": "Azazel Human",
+  "mod": "netherman",
+  "model": "netherman__azazel_human.model.json"
+ },
+ {
+  "key": "stalwart_dungeons__awful_ghast",
+  "id": "stalwart_dungeons:awful_ghast",
+  "name": "Awful Ghast",
+  "mod": "stalwart_dungeons",
+  "model": "stalwart_dungeons__awful_ghast.model.json"
+ },
+ {
+  "key": "stalwart_dungeons__nether_keeper",
+  "id": "stalwart_dungeons:nether_keeper",
+  "name": "Nether Keeper",
+  "mod": "stalwart_dungeons",
+  "model": "stalwart_dungeons__nether_keeper.model.json"
+ },
+ {
+  "key": "stalwart_dungeons__shelterer",
+  "id": "stalwart_dungeons:shelterer",
+  "name": "Shelterer",
+  "mod": "stalwart_dungeons",
+  "model": "stalwart_dungeons__shelterer.model.json"
+ },
+ {
+  "key": "twilightforest__alpha_yeti",
+  "id": "twilightforest:alpha_yeti",
+  "name": "Alpha Yeti",
+  "mod": "twilightforest",
+  "model": "twilightforest__alpha_yeti.model.json"
+ },
+ {
+  "key": "twilightforest__hydra",
+  "id": "twilightforest:hydra",
+  "name": "Hydra",
+  "mod": "twilightforest",
+  "model": "twilightforest__hydra.model.json"
+ },
+ {
+  "key": "twilightforest__knight_phantom",
+  "id": "twilightforest:knight_phantom",
+  "name": "Knight Phantom",
+  "mod": "twilightforest",
+  "model": "twilightforest__knight_phantom.model.json"
+ },
+ {
+  "key": "twilightforest__lich",
+  "id": "twilightforest:lich",
+  "name": "Lich",
+  "mod": "twilightforest",
+  "model": "twilightforest__lich.model.json"
+ },
+ {
+  "key": "twilightforest__minoshroom",
+  "id": "twilightforest:minoshroom",
+  "name": "Minoshroom",
+  "mod": "twilightforest",
+  "model": "twilightforest__minoshroom.model.json"
+ },
+ {
+  "key": "twilightforest__naga",
+  "id": "twilightforest:naga",
+  "name": "Naga",
+  "mod": "twilightforest",
+  "model": "twilightforest__naga.model.json"
+ },
+ {
+  "key": "twilightforest__snow_queen",
+  "id": "twilightforest:snow_queen",
+  "name": "Snow Queen",
+  "mod": "twilightforest",
+  "model": "twilightforest__snow_queen.model.json"
+ },
+ {
+  "key": "twilightforest__ur_ghast",
+  "id": "twilightforest:ur_ghast",
+  "name": "Ur Ghast",
+  "mod": "twilightforest",
+  "model": "twilightforest__ur_ghast.model.json"
+ }
+]
