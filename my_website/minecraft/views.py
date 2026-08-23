@@ -1,10 +1,35 @@
 import json
 import os
 from datetime import datetime
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.conf import settings
 
-from .roster import season_roster
+from . import live as live_data
+from . import puller
+from .roster import faces, season_roster
+
+# STATICFILES_DIRS holds a relative path, which resolves against whatever the
+# process happens to be started in. That is the project root under manage.py
+# and something else entirely under a service manager, so the puller writes to
+# one folder while a page reads another. Anchor both to BASE_DIR.
+MINECRAFT_ROOT = os.path.join(puller.static_root(), 'minecraft')
+
+# The season currently being played. It is not a disc: a disc is something you
+# put back on the shelf, and this one is still being written. It gets the top
+# of the screen and a feed that keeps itself up to date instead. Set this to
+# None the day the season ends and it drops into the rail with the others.
+LIVE_SEASON = 5
+
+# The live world map: a BlueMap render the game host serves on a port of its
+# own. It only ever draws the world being played, which is why it belongs in
+# the live stage rather than on a disc: the finished seasons are gone off the
+# server and there is nothing left of them to render. The fragment is a camera
+# position, so the embed opens over the base instead of the middle of an ocean.
+# Addressed by number because the servermap.minecraft.bz name it used to be
+# reached by no longer resolves anywhere.
+LIVE_MAP      = 'http://216.219.93.66:8100/'
+LIVE_MAP_VIEW = '#server_v3:189:0:87:1500:0:0:0:0:perspective'
 
 # Edit season descriptions here
 SEASON_DESCRIPTIONS = {
@@ -44,7 +69,7 @@ def parse_screenshot_date(filename):
 
 
 def portal(request):
-    minecraft_root = os.path.join(settings.STATICFILES_DIRS[0], 'minecraft')
+    minecraft_root = MINECRAFT_ROOT
 
     seasons = []
 
@@ -56,6 +81,8 @@ def portal(request):
          if d.startswith('season') and os.path.isdir(os.path.join(minecraft_root, d))],
         key=lambda d: int(''.join(filter(str.isdigit, d)) or '0')
     )
+
+    live = None
 
     for season_dir in season_dirs:
         digits = ''.join(filter(str.isdigit, season_dir))
@@ -103,7 +130,7 @@ def portal(request):
         if hero is None and screenshots:
             hero = screenshots[len(screenshots) // 2]['url']
 
-        seasons.append({
+        entry = {
             'number':           season_num,
             'name':             SEASON_NAMES.get(season_num, f'SEASON {season_num}'),
             'description':      SEASON_DESCRIPTIONS.get(season_num, f'Season {season_num}.'),
@@ -116,6 +143,64 @@ def portal(request):
             'video_count':      len(videos),
             'roster':           roster,
             'roster_json':      json.dumps(roster),
-        })
+        }
 
-    return render(request, 'minecraft.html', {'seasons': seasons})
+        if season_num == LIVE_SEASON:
+            live = entry
+        else:
+            seasons.append(entry)
+
+    # the first paint carries a board of its own, so the stage is never an
+    # empty box waiting on a fetch to say anything
+    board = _board(f'season{LIVE_SEASON}') if live else None
+    if board:
+        board.update({'live': True, 'season': LIVE_SEASON,
+                      'source': puller.state()})
+
+    return render(request, 'minecraft.html', {
+        'seasons': seasons,
+        'live': live,
+        'live_json': json.dumps(board) if board else 'null',
+        'map_url':  LIVE_MAP + LIVE_MAP_VIEW if live and LIVE_MAP else None,
+        'map_home': LIVE_MAP,
+    })
+
+
+def _board(key):
+    """The live board with a face on every row, or None if nothing is synced."""
+    path  = os.path.join(MINECRAFT_ROOT, key)
+    board = live_data.board(path)
+    if board is None:
+        return None
+    known = faces()
+    for player in board['players']:
+        player.update(known.get(player['uuid'], {'skin': None, 'slim': False}))
+    # a boss's killers are drawn with their own faces too
+    for boss in board.get('bosses', []):
+        for killer in boss['killers']:
+            killer.update(known.get(killer['uuid'], {'skin': None}))
+    return board
+
+
+def live_board(request):
+    """The live season's numbers, as fresh as the server will give them.
+
+    Asking for the board asks for a pull, which happens on a background thread
+    and is throttled: the response is always whatever is on disk right now, so
+    the page never waits on the network to draw itself.
+    """
+    if not LIVE_SEASON:
+        return JsonResponse({'live': False}, status=404)
+
+    key   = f'season{LIVE_SEASON}'
+    # the PULL NOW button skips the throttle; the polling loop does not
+    pull  = puller.refresh(key, force=request.GET.get('force') == '1')
+    board = _board(key)
+
+    if board is None:
+        return JsonResponse({'live': True, 'players': [], 'source': pull})
+
+    board['live']   = True
+    board['season'] = LIVE_SEASON
+    board['source'] = pull
+    return JsonResponse(board)

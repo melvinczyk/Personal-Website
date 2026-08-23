@@ -78,6 +78,8 @@ const STATIC_URLS = {
   minecraft:  "{% url 'minecraft' %}",
   codecBase:  "{% static 'codec' %}",
   voiceBase:  "{% static 'audio/codec' %}",
+  mcMap: "{{ map_url }}",
+  live: "{% url 'minecraft-live' %}",
   mcThumbs: [
     { s: 'S1', url: "{% static 'minecraft/season1/2023-12-19_16.03.58.png' %}" },
     { s: 'S2', url: "{% static 'minecraft/season2/2024-09-04_12.45.03.png' %}" },

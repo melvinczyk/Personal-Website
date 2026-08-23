@@ -1,9 +1,9 @@
-// Shared by the about card (140.85) and the CONTACT channel (140.15).
-// Counts come from static/minecraft/ (4 seasons, 590 png, 4 mp4 + 1 gif).
-const MC_STATS = { seasons: 4, shots: 590, clips: 5, span: '2023-26' };
+// Counts come from static/minecraft/ (5 seasons, the fifth still being played;
+// 590 png, 4 mp4 + 1 gif).
+const MC_STATS = { seasons: 5, shots: 590, clips: 5, span: '2023-26' };
 
-// Brightened from the brand colours so they read on black. About card only;
-// the CONTACT channel stays on palette.
+// Brightened from the brand colours so they read on black. The about card at
+// 140.85 is the only place they appear now.
 const SOCIAL_LINKS = [
   { label:'GitHub',   url:'https://github.com/melvinczyk',                          color:'#b07cff' },
   { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',          color:'#4da3e8' },
@@ -311,26 +311,11 @@ music(){
   bl();
 },
 
-contact(){
-  bl();
-  const rows = SOCIAL_LINKS.map(({label,url}) =>
-    `<a class="contact-row" href="${url}" target="_blank" rel="noopener"><span class="contact-label">${label}</span><span class="contact-link">${url}</span></a>`).join('');
-  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">◈ DIRECT CHANNELS</span><span class="ps-r">${SOCIAL_LINKS.length} ON FILE</span></div>
-    <div class="ps-body">${rows}</div>
-  </div></div>`);
-  bl();
-},
-
-map(){
-  bl();
-  addHtml(psMapPanel());
-  bl();
-},
 
 minecraft(){
   bl();
   addHtml(psPortalPanel());
+  psFillFaces();
   bl();
 },
 
@@ -360,6 +345,13 @@ CMDS['song2vec'] = function() {
   const t=setInterval(()=>{ n--; if(cd) cd.textContent=n; if(n<=0){clearInterval(t);window.location.href='/song2vec/';} },1000);
 };
 CMDS['mc']=CMDS['minecraft'];
+// the links have their own row on the about card, so the channel that used to
+// list them separately is gone; anyone still typing `contact` lands there
+CMDS['contact']=CMDS['about'];
+CMDS['links']=CMDS['about'];
+// the live map renders the world being played, so it moved to the live season
+// inside the portal; anyone still typing `map` should be sent after it
+CMDS['map']=CMDS['minecraft'];
 
 function runCmd(raw){
   const trimmed=(raw||'').trim();
@@ -1129,7 +1121,7 @@ function cxSetPortrait(speakerKey){
 const CX_CONTACTS = [
   { freq:'140.85', name:'COLONEL',
     lines:["Snake, this is Nick Burczyk. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a TITANS software R&D intern.",
-           "Everything we've gathered on him is laid out on this codec. For specific information look through different channels, or open MEMORY for the full contact list."],
+           "Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list."],
     render(){ CMDS.about(); } },
   { freq:'141.12', name:'PROJECTS',
     lines:["His operation records. Twelve declassified projects on file.",
@@ -1139,14 +1131,14 @@ const CX_CONTACTS = [
     lines:["He also records as Zero Barbecue. A one-man operation.",
            "First single's out now. Listen below."],
     render(){ CMDS.music(); } },
-  { freq:'140.07', name:'MC WORLD',
-    lines:["A private Minecraft world: custom modpack, custom server.",
-           "We gathered enough information to make a 3D reconstruction. The map below is rendering live."],
+  // These carry their own voice keys because the lines were rewritten when the
+  // map moved into the portal: the old c3_l0/c3_l1 recordings say the old
+  // words, and a key that has no file plays as text, which is the right
+  // failure. Record c3_p0/c3_p1 to give the Colonel his voice back.
+  { freq:'140.07', name:'MC PORTAL',
+    lines:[{ text:"A private Minecraft world: custom modpack, custom server. Five seasons on record.", key:'c3_p0' },
+           { text:"We've opened a portal into it. The live map, who's online, and every boss still standing. Go through it, Snake.", key:'c3_p1' }],
     render(){ cxRenderMinecraft(); } },
-  { freq:'140.15', name:'CONTACT',
-    lines:["These are his direct channels. They're secure. Use them.",
-           { text:"Got it. I'll make contact.", speaker:'snake' }],
-    render(){ CMDS.contact(); } },
 ];
 let cxIdx = 0;
 let cxBooted = false;
@@ -1405,7 +1397,7 @@ function cxSay(lines, keys){
   cxHardStop();
   cxQueue = lines.map((l, i) => {
     const o = typeof l === 'string' ? { text: l } : l;
-    return { text: o.text, key: (keys && keys[i]) || o.key,
+    return { text: o.text, key: o.key || (keys && keys[i]),
              speaker: CX_SPEAKERS[o.speaker] || CX_SPEAKERS.colonel };
   });
   cxTypeNext();
@@ -1599,7 +1591,7 @@ function psPortalPanel(){
   const thumbs = (STATIC_URLS.mcThumbs || []).map(t =>
     `<a href="${STATIC_URLS.minecraft}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
   return `<div class="ps-wrap fade-in"><div class="ps-win">
-    <div class="ps-bar"><span class="ps-t">◈ MINECRAFT PORTAL</span><span class="ps-r">ALL SEASONS</span></div>
+    <div class="ps-bar"><span class="ps-t">◈ MINECRAFT PORTAL</span><span class="ps-r">${MC_STATS.seasons} SEASONS</span></div>
     <div class="ps-body">
       <div class="ps-stats">
         <div><b>${MC_STATS.seasons}</b><i>SEASONS</i></div>
@@ -1607,25 +1599,40 @@ function psPortalPanel(){
         <div><b>${MC_STATS.clips}</b><i>CLIPS</i></div>
         <div><b>${MC_STATS.span}</b><i>UPTIME</i></div>
       </div>
+      <div class="ps-frame ps-map"><iframe src="${STATIC_URLS.mcMap}" loading="lazy" title="Live world map"></iframe></div>
+      <div class="ps-faces" id="ps-faces"><span class="ps-face-none">reading the server...</span></div>
       <div class="ps-thumbs">${thumbs}
         <a href="${STATIC_URLS.minecraft}" class="ps-more"><span>+${MC_STATS.shots - (STATIC_URLS.mcThumbs||[]).length}<br>MORE</span></a>
       </div>
       <a class="ps-btn" href="${STATIC_URLS.minecraft}"><span class="ps-lbl">OPEN THE PORTAL</span></a>
-      <div class="ps-hint">${MC_STATS.seasons} seasons · screenshots &amp; video clips</div>
+      <div class="ps-hint">${MC_STATS.seasons} seasons · the live map and the full roster are inside</div>
     </div>
   </div></div>`;
 }
-function psMapPanel(){
-  return `<div class="ps-wrap fade-in"><div class="ps-win">
-    <div class="ps-bar"><span class="ps-t">◈ LIVE WORLD MAP</span><span class="ps-r"><span class="ps-live"></span>RENDERING</span></div>
-    <div class="ps-body">
-      <div class="ps-frame"><iframe src="http://servermap.minecraft.bz:8100/#server_v3:189:0:87:1500:0:0:0:0:perspective" height="300" loading="lazy" title="Live Bluemap render"></iframe></div>
-      <div class="ps-btnrow">
-        <a class="ps-btn ps-sm ps-alt" href="http://216.219.93.66:8100/" target="_blank" rel="noopener"><span class="ps-lbl">FULLSCREEN MAP</span></a>
-        <a class="ps-btn ps-sm ps-alt" href="https://github.com/melvinczyk/Datapacks" target="_blank" rel="noopener"><span class="ps-lbl">DATAPACK SOURCE</span></a>
-      </div>
-    </div>
-  </div></div>`;
+
+// The panel is drawn the moment the channel opens; who is on the server has to
+// be asked for. The row fills itself in when the answer lands and says plainly
+// if it never does, because a codec panel left reading "reading the server"
+// looks broken rather than patient. Everyone tracked gets a face, the ones
+// online lit and the rest dimmed, so an empty server still shows a crew.
+async function psFillFaces(){
+  const row = document.getElementById('ps-faces');
+  if (!row) return;
+  try {
+    const res = await fetch(STATIC_URLS.live, { headers: { 'X-Requested-With': 'fetch' } });
+    const board = await res.json();
+    const players = (board.players || []).slice()
+      .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
+    if (!players.length) throw new Error('nobody on file');
+    const on = players.filter(p => p.online).length;
+    row.innerHTML = `<span class="ps-faces-t">${on} OF ${players.length} ONLINE</span>` +
+      players.map(p => `<span class="ps-face${p.online ? ' on' : ''}" title="${esc(p.name)}">
+        <i${p.skin ? ` style="background-image:url('${p.skin}')"` : ''}></i>
+        <b>${esc(p.name)}</b>
+      </span>`).join('');
+  } catch (err) {
+    row.innerHTML = '<span class="ps-face-none">roster unavailable</span>';
+  }
 }
 function psBirdPanel(){
   const u = STATIC_URLS.uploadFile;
@@ -1661,7 +1668,7 @@ function psBirdPanel(){
 }
 function cxRenderMinecraft(){
   addHtml(psPortalPanel());
-  addHtml(psMapPanel());
+  psFillFaces();
 }
 
 function initCodec(){
