@@ -33,6 +33,12 @@ class ConfigError(SyncError):
     """
 
 
+# Dropped in the destination folder every time a check completes, whether or
+# not it brought anything back. Without it the only record of a check is a file
+# whose contents changed, so a board could say it had not been updated in hours
+# when in truth it had been asked every hour and told there was nothing new.
+STAMP = ".checked"
+
 DEFAULT_FILES = [
     "kubejs/exported/players.json",
     "kubejs/exported/boss_kills.json",
@@ -194,6 +200,14 @@ def fetch(sftp, cfg, dest_dir, dry_run=False, log=print):
             raise
         log(f"  fetched   {rel} ({size} B)")
         got += 1
+
+
+    # the run got all the way through, so record that it happened
+    if not dry_run:
+        try:
+            open(os.path.join(dest_dir, STAMP), "w").close()
+        except OSError:
+            pass                             # a stamp is a nicety, never a fault
 
     return got, same, missing, skipped
 

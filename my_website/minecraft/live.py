@@ -13,6 +13,9 @@ played, it carries the card on its own.
 
 import json
 import os
+import time
+
+from . import sync
 from datetime import datetime, timezone
 
 DATA_DIR = 'data'
@@ -263,6 +266,14 @@ def board(season_path):
     age      = int((datetime.now(timezone.utc) - stamped).total_seconds()) \
                if stamped else None
 
+    # When the server was last asked, which is not the same as when it last had
+    # something new to say. A quiet hour still leaves a stamp, so the board can
+    # show it is being kept up rather than looking abandoned.
+    try:
+        checked = int(time.time() - os.path.getmtime(os.path.join(data_dir, sync.STAMP)))
+    except OSError:
+        checked = None
+
     # whoever is standing in the world comes first, then the most recently gone
     order = sorted(players.values(),
                    key=lambda p: (not p['online'],
@@ -278,6 +289,8 @@ def board(season_path):
         'read':    (raw.get('updated') or '')[11:16],
         'age':     age,
         'age_txt': _span(age) if age is not None else '',
+        'checked':     checked,
+        'checked_txt': _span(checked) if checked is not None else '',
         'totals': {
             'online':  sum(1 for p in order if p['online']),
             'tracked': len(order),

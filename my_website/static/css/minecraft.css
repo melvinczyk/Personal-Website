@@ -891,7 +891,6 @@ body::after { display: none; }
   margin-left: auto; display: flex; align-items: baseline; gap: 8px;
   font-size: 13px; color: var(--mc-dim); text-align: right;
 }
-.ls-age:not(:empty)::before { content: '\00b7'; margin-right: 8px; color: var(--mc-faint); }
 
 /* a Minecraft button: raised, and pressed down rather than lit up */
 .ls-btn {
@@ -1056,9 +1055,6 @@ body::after { display: none; }
 .lsd-sub { font-size: 13px; color: var(--mc-faint); }
 .lsd-head .rp-close { margin-left: auto; }
 
-.ls-state { color: var(--mc-dim); }
-.ls-state.warn { color: var(--mc-gold); }
-.ls-state.bad  { color: var(--mc-heart); }
 .ls-btn[disabled] { opacity: .45; cursor: default; }
 
 @media (max-width: 820px) {

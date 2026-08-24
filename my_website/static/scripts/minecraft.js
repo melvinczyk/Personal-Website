@@ -662,8 +662,6 @@ let liveAt    = Date.now();     // when the board we are showing was read
 let liveOpen  = null;           // uuid of the row expanded, if any
 let liveDue   = LIVE_EVERY;
 let livePolling = false;
-let liveChase   = null;         // timer chasing a pull that has not finished
-let liveChases  = 0;            // how many times this one has been chased
 
 // matches _span() on the server, so the age counter reads the same whether it
 // came down with the page or was counted up here since
@@ -896,82 +894,27 @@ function toggleLive(uuid) {
   }
 }
 
-// How old the numbers are: a timestamp the game server writes into the export
-// itself, counted up second by second. Refresh does not reset it, because
-// refreshing fetches the same file until the game writes a new one; the state
-// beside it is what says whether the fetch went through. An export that has
-// stopped being written therefore says so, instead of either looking current
-// or looking like a failed download.
+// When the server was last asked, counted up second by second. Deliberately
+// not the age of the numbers: the export only changes when something in the
+// world does, so a board keyed to that would claim to be hours stale on a
+// quiet night when in fact it had been checked minutes ago. This says the
+// thing a reader actually wants to know, which is whether anyone is still
+// listening.
 function liveTick() {
-  const age = document.getElementById('ls-age');
-  if (!age || !liveBoard) return;
-  const old = (liveBoard.age || 0) + (Date.now() - liveAt) / 1000;
-  age.textContent = `last updated ${fmtSpan(old)} ago`;
-  age.style.color = old > 600 ? 'var(--mc-gold)' : '';
+  const el = document.getElementById('ls-age');
+  if (!el || !liveBoard) return;
+  const since = liveBoard.checked;
+  if (since == null) { el.textContent = ''; return; }
+  el.textContent = `last updated ${fmtSpan(since + (Date.now() - liveAt) / 1000)} ago`;
 }
 
-function liveState(source) {
-  const el = document.getElementById('ls-state');
-  if (!el || !source) return;
-  const say = {
-    // nothing fetched is the usual outcome, not a failure: the server rewrites
-    // its export once a minute and most reads land on the same copy
-    ok:           ['', source.fetched
-                       ? `pulled ${source.fetched} file${source.fetched === 1 ? '' : 's'} from the server`
-                       : 'up to date with the server'],
-    idle:         ['', 'standing by'],
-    // this host fetches on a schedule instead: Refresh re-reads what the last
-    // scheduled run left on disk, which is all there is to read
-    scheduled:    ['', source.message || 'read on a schedule'],
-    busy:         ['', 'a pull is already running'],
-    // the server says which part is still missing; showing that beats a fixed
-    // line that goes on naming a file which by then exists
-    unconfigured: ['warn', `not pulling: ${source.message || 'no mc_sync.json'}`
-                           + ', showing the last synced copy'],
-    // and say when it will try again, so a refusal does not read as a page
-    // that has simply given up
-    error:        ['bad', (source.message || 'the server could not be reached')
-                          + (source.wait > 60 ? `, retrying in ${Math.round(source.wait / 60)}m` : '')],
-  }[source.state] || ['', source.state];
-  el.className = `ls-state ${say[0]}`;
-  el.textContent = source.running ? 'reading the server…' : say[1];
-}
-
-function pullBtn(busy) {
-  const btn = document.getElementById('ls-pull');
-  if (btn) btn.disabled = !!busy;
-}
-
-// A pull runs on a thread of its own, so the answer that starts one comes back
-// before it has finished. The board is read again a few seconds later to pick
-// up whatever landed. That chase keeps a timer of its own rather than borrowing
-// the countdown below: the countdown holds still while the tab is in the
-// background, and a refresh somebody asked for should finish saying what
-// happened either way. It gives up after a minute, so a pull left hanging on an
-// unreachable host cannot strand the footer on "reading the server".
-function chaseLive() {
-  clearTimeout(liveChase);
-  if (++liveChases > 20) { pullBtn(false); return; }
-  liveChase = setTimeout(() => { liveChase = null; pollLive(); }, 3000);
-}
-
-async function pollLive(force) {
-  // a click landing on top of a read in flight waits for it rather than being
-  // swallowed, so the button always does something
-  if (livePolling) {
-    if (force) { clearTimeout(liveChase); liveChase = setTimeout(() => pollLive(true), 400); }
-    return;
-  }
-  clearTimeout(liveChase);
-  liveChase = null;
+async function pollLive() {
+  if (livePolling) return;
   livePolling = true;
-  if (force) { liveChases = 0; pullBtn(true); }
   liveTick();
   liveDue = LIVE_EVERY;
   try {
-    const res = await fetch(LIVE_URL + (force ? '?force=1' : ''), {
-      headers: { 'X-Requested-With': 'fetch' },
-    });
+    const res = await fetch(LIVE_URL, { headers: { 'X-Requested-With': 'fetch' } });
     if (!res.ok) throw new Error(res.status);
     const board = await res.json();
     if (board && board.players) {
@@ -979,14 +922,9 @@ async function pollLive(force) {
       liveAt = Date.now();
       renderLive(board);
     }
-    liveState(board && board.source);
-    // the button stays down for as long as the pull it asked for is running,
-    // so it reads as work in progress instead of a click that did nothing
-    if (board && board.source && board.source.running) chaseLive();
-    else { liveChases = 0; pullBtn(false); }
   } catch (err) {
-    liveState({ state: 'error', message: 'could not reach the site' });
-    pullBtn(false);
+    /* a poll that does not land leaves the last good board on screen, and the
+       counter keeps rising, which is itself the honest signal */
   } finally {
     livePolling = false;
     if (liveDue > LIVE_EVERY || liveDue <= 0) liveDue = LIVE_EVERY;
@@ -1019,15 +957,9 @@ function toggleSection(key) {
   requestAnimationFrame(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
 
-function pullNow() {
-  pullBtn(true);
-  pollLive(true);
-}
-
 function bootLive() {
   if (!document.getElementById('live-stage')) return;
   renderLive(liveBoard);
-  liveState(liveBoard && liveBoard.source);
   liveTick();
 
   setInterval(() => {
