@@ -13,7 +13,6 @@ Credentials live in a JSON config file outside version control — see
 config.example.json. They are never logged or echoed.
 """
 
-import errno
 import json
 import os
 import posixpath
@@ -37,7 +36,6 @@ class ConfigError(SyncError):
 DEFAULT_FILES = [
     "kubejs/exported/players.json",
     "kubejs/exported/boss_kills.json",
-    "kubejs/exported/boss_kills.tsv",
 ]
 
 
@@ -122,6 +120,25 @@ def connect(cfg):
 
 # ── fetching ─────────────────────────────────────────────────────────────────
 
+def _listings(sftp, root, files):
+    """Size and mtime for every wanted file, in one request per directory.
+
+    The wanted files sit together in one folder, so asking the folder what it
+    holds costs a single round trip where asking after each file in turn costs
+    one apiece, and a file that is not there costs a failed one. The host is a
+    game panel's SFTP gateway rather than a fileserver, and it is the number of
+    requests it minds, not their size.
+    """
+    out = {}
+    for folder in {posixpath.dirname(rel) for rel in files}:
+        where = posixpath.join(root, folder) if folder else root
+        try:
+            out[folder] = {a.filename: a for a in sftp.listdir_attr(where)}
+        except IOError:
+            out[folder] = {}                 # unreadable or absent: all missing
+    return out
+
+
 def fetch(sftp, cfg, dest_dir, dry_run=False, log=print):
     """Bring dest_dir up to date.
 
@@ -131,18 +148,17 @@ def fetch(sftp, cfg, dest_dir, dry_run=False, log=print):
     root = cfg["remote_root"]
     got = same = missing = skipped = 0
 
+    listings = _listings(sftp, root, cfg["files"])
+
     for rel in cfg["files"]:
         remote = posixpath.join(root, rel)
         local = os.path.join(dest_dir, os.path.basename(rel))
 
-        try:
-            attr = sftp.stat(remote)
-        except IOError as exc:
-            if exc.errno in (errno.ENOENT, None):
-                log(f"  missing   {rel}")
-                missing += 1
-                continue
-            raise
+        attr = listings.get(posixpath.dirname(rel), {}).get(posixpath.basename(rel))
+        if attr is None:
+            log(f"  missing   {rel}")
+            missing += 1
+            continue
 
         size = attr.st_size or 0
         mtime = int(attr.st_mtime or 0)
