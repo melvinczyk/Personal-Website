@@ -210,15 +210,44 @@ class Lock:
     thing that could hand a page a torn file.
     """
 
-    STALE = 30 * 60
+    # A backstop only. The usual way a lock outlives its run is the process
+    # being taken away mid-pull, and that is caught by the pid below long
+    # before this expires; this covers the rest, such as a lock left by a
+    # process whose number has since been handed to somebody else.
+    STALE = 10 * 60
 
     def __init__(self, path):
         self.path = path
         self.held = False
 
+    def _dead(self):
+        """True if the lock names a process that is no longer running.
+
+        Hosts that recycle their web workers kill the pull thread wherever it
+        happens to be, and the lock it was holding stays on disk. Waiting out
+        the stale window then means every refresh for the next ten minutes is
+        told a pull is already running, when nothing is. Asking after the
+        process settles it at once.
+        """
+        try:
+            with open(self.path) as fh:
+                pid = int(fh.read().strip())
+        except (OSError, ValueError):
+            return False                     # unreadable: let STALE decide
+        if pid == os.getpid():
+            return False
+        try:
+            os.kill(pid, 0)                  # signal 0 only asks, never sends
+        except ProcessLookupError:
+            return True
+        except OSError:
+            return False                     # alive, just not ours to signal
+        return False
+
     def __enter__(self):
         try:
-            if time.time() - os.path.getmtime(self.path) < self.STALE:
+            fresh = time.time() - os.path.getmtime(self.path) < self.STALE
+            if fresh and not self._dead():
                 return self
             os.remove(self.path)              # a previous run died holding it
         except OSError:
