@@ -920,6 +920,9 @@ function liveState(source) {
                        ? `pulled ${source.fetched} file${source.fetched === 1 ? '' : 's'} from the server`
                        : 'up to date with the server'],
     idle:         ['', 'standing by'],
+    // this host fetches on a schedule instead: Refresh re-reads what the last
+    // scheduled run left on disk, which is all there is to read
+    scheduled:    ['', source.message || 'read on a schedule'],
     busy:         ['', 'a pull is already running'],
     // the server says which part is still missing; showing that beats a fixed
     // line that goes on naming a file which by then exists

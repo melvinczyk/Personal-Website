@@ -39,6 +39,26 @@ _last    = {'at': 0.0, 'state': 'idle', 'message': '', 'fetched': 0,
             'wait': MIN_INTERVAL}
 
 
+# Some hosts put their web workers somewhere the outside world is harder to
+# reach from than a console on the same machine is: the socket dies during the
+# SSH handshake and paramiko reports "No existing session", while the identical
+# config pulls happily from a shell. Recycled workers make it worse, killing a
+# pull mid-flight and leaving its lock behind.
+#
+# Where that is so, stop the page dialling out at all. A scheduled
+# `manage.py sync_server` does the fetching, the page reads what it leaves on
+# disk, and Refresh re-reads that rather than opening a connection nobody is
+# going to answer. MC_SYNC_WEB_PULL=0 turns the page's own pulling off.
+def web_pull_allowed():
+    return os.environ.get("MC_SYNC_WEB_PULL", "1").strip().lower() not in (
+        "0", "false", "no", "off")
+
+
+SCHEDULED = {'at': 0.0, 'state': 'scheduled', 'fetched': 0, 'wait': 0,
+             'message': 'the server is read on a schedule',
+             'running': False, 'ago': None}
+
+
 def config_path():
     return (os.environ.get("MC_SYNC_CONFIG")
             or os.path.join(str(settings.BASE_DIR), DEFAULT_CONFIG))
@@ -112,6 +132,8 @@ def _report(running):
 def refresh(season, force=False):
     """Ask for a pull. Returns at once, whether or not one was started."""
     global _running
+    if not web_pull_allowed():
+        return dict(SCHEDULED)
     with _lock:
         if _running:
             return _report(True)
@@ -130,4 +152,6 @@ def refresh(season, force=False):
 
 
 def state():
+    if not web_pull_allowed():
+        return dict(SCHEDULED)
     return _report(_running)
