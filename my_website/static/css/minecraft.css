@@ -1006,6 +1006,58 @@ body::after { display: none; }
 }
 .pcard.worst .pc-nums span:last-child { color: var(--mc-heart); }
 
+/* one pixel star per tier beaten, greyed out for minibosses. Pinned to the
+   left edge of the card over the model rather than sitting in the text flow
+   below it, so .pcard (already position:relative) is the anchor regardless
+   of where this div sits in the markup; empty when nothing's down yet, so it
+   never reserves space or shows a bare corner on a fresh player. */
+.pc-badges {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  display: flex; flex-direction: column; gap: 4px;
+  margin: 0;
+}
+.pc-badges:empty { display: none; }
+.pc-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(8,8,12,0.72); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 4px; padding: 2px 6px 2px 3px;
+  font-size: 12px; line-height: 1; color: #fff;
+}
+.badge-star {
+  width: 22px; height: 20px; flex-shrink: 0;   /* 11:10, matching the source art */
+  image-rendering: pixelated; shape-rendering: crispEdges;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.7));
+}
+.px-o { fill: var(--px-o); }
+.px-b { fill: var(--px-b); }
+.px-s { fill: var(--px-s); }
+.px-h { fill: var(--px-h); }
+
+/* Shared by the card-corner badges (.pc-badge) and the server-record boss
+   list (.lb-star) — one palette per tier, defined once so the two views
+   never drift out of sync. */
+/* tier 1, Lesser Boss — gold (the exact colors sampled from the source star) */
+.pc-badge.t1, .lb-star.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
+/* tier 2, Greater Boss — diamond */
+.pc-badge.t2, .lb-star.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
+/* tier 3, Apex Boss — red, glowing */
+.pc-badge.t3, .lb-star.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
+.pc-badge.t3 .badge-star, .lb-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
+/* tier 4 — reserved for the next boss above apex: rainbow, animated */
+.pc-badge.t4, .lb-star.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
+.pc-badge.t4 .badge-star, .lb-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
+/* miniboss — grey, regardless of the tier it's tagged with */
+.pc-badge.mini, .lb-star.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
+
+@keyframes pc-glow-red {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(229,56,59,0.55)); }
+  50%      { filter: drop-shadow(0 0 6px rgba(255,143,163,0.95)); }
+}
+@keyframes pc-rainbow-spin {
+  from { filter: hue-rotate(0deg)   drop-shadow(0 0 3px rgba(255,255,255,0.6)); }
+  to   { filter: hue-rotate(360deg) drop-shadow(0 0 3px rgba(255,255,255,0.6)); }
+}
+
 /* ── the boss roster ───────────────────────────────────────────────────────
    Every boss has a place from the start. One nobody has beaten is drawn in
    black: the shape is there, the thing itself is not, and the gap is the
@@ -1101,16 +1153,29 @@ body::after { display: none; }
   background: rgba(255,255,255,0.06);
 }
 .lb-head b { font-weight: normal; color: var(--rc, #ffd479); }
+
+/* two lines per boss instead of one cramped baseline: name+count on top,
+   tier+damage underneath, with the tier star leading so the category reads
+   at a glance instead of from a 9px "TIER 2" label */
 .lb-row {
-  display: flex; align-items: baseline; gap: 8px; padding: 5px 9px;
-  font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; gap: 9px; padding: 6px 9px;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
-.lb-row b { flex: 1; font-weight: normal; color: #fff; }
-.lb-row i { font-style: normal; font-size: 9px; color: #5f6f83; }
-.lb-row em { font-style: normal; color: var(--rc, #ffd479); }
-.lb-row u {
-  text-decoration: none; font-size: 9px; color: #5f6f83; min-width: 108px;
-  text-align: right;
+.lb-star { flex-shrink: 0; display: flex; }
+.lb-star .badge-star { width: 20px; height: 18px; }
+.lb-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lb-top, .lb-sub {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+.lb-top b {
+  font-weight: normal; font-size: 13px; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lb-top em { font-style: normal; font-size: 12px; color: var(--rc, #ffd479); flex-shrink: 0; }
+.lb-sub i { font-style: normal; font-size: 9px; letter-spacing: .5px; color: #5f6f83; }
+.lb-sub u {
+  text-decoration: none; font-size: 9px; color: #5f6f83; text-align: right;
+  flex-shrink: 0;
 }
 
 .live-when {

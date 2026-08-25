@@ -430,10 +430,16 @@ function livePanel(p) {
   const bosses = L.bosses.length ? `
     <div class="live-boss">
       <div class="lb-head"><span>BOSSES</span><b>${L.boss_kills} KILL${L.boss_kills === 1 ? '' : 'S'}</b></div>
-      ${L.bosses.map(b => `<span class="lb-row">
-        <b>${b.name}</b><i>TIER ${b.tier}</i>
-        <em>x${b.kills}</em><u>${b.damage} DMG · ${b.last}</u>
-      </span>`).join('')}
+      ${L.bosses.map(b => {
+        const cls = b.category === 'miniboss' ? 'mini' : `t${b.tier}`;
+        return `<span class="lb-row">
+          <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
+          <span class="lb-main">
+            <span class="lb-top"><b>${b.name}</b><em>x${b.kills}</em></span>
+            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${b.damage} DMG · ${b.last}</u></span>
+          </span>
+        </span>`;
+      }).join('')}
     </div>` : '<div class="live-boss empty">no boss has gone down yet</div>';
 
   return `<div class="live-wrap">
@@ -721,6 +727,7 @@ function buildLive(board) {
         <div class="pc-name">${p.name}</div>
         <div class="pc-seen" id="pcs-${p.uuid}"></div>
         <div class="ps-prog pc-hp"><div class="ps-fill" id="pch-${p.uuid}"></div></div>
+        <div class="pc-badges" id="pcb-${p.uuid}"></div>
         <div class="pc-nums">
           <span id="pct-${p.uuid}"></span><span id="pcd-${p.uuid}"></span>
         </div>
@@ -822,6 +829,34 @@ function watchBosses(board) {
   document.querySelectorAll('.bc-model').forEach(box => bossWatcher.observe(box));
 }
 
+// The exact star pixel art the user supplied, extracted from the source PNG
+// (each in-game pixel measured 10x10 source pixels, sampled at cell centers)
+// rather than redrawn or rasterised from a polygon. Reused for every tier:
+// each class repaints the same four regions (outline, base, shadow, glint)
+// through CSS custom properties.
+const PIXEL_STAR_SVG = `<svg class="badge-star" viewBox="0 0 11 10" shape-rendering="crispEdges">
+<rect x="5" y="0" width="1" height="1" class="px-o"/><rect x="4" y="1" width="1" height="1" class="px-o"/><rect x="5" y="1" width="1" height="1" class="px-s"/><rect x="6" y="1" width="1" height="1" class="px-o"/><rect x="4" y="2" width="1" height="1" class="px-o"/><rect x="5" y="2" width="1" height="1" class="px-b"/><rect x="6" y="2" width="1" height="1" class="px-o"/><rect x="1" y="3" width="1" height="1" class="px-o"/><rect x="2" y="3" width="1" height="1" class="px-o"/><rect x="3" y="3" width="1" height="1" class="px-o"/><rect x="4" y="3" width="1" height="1" class="px-b"/><rect x="5" y="3" width="1" height="1" class="px-h"/><rect x="6" y="3" width="1" height="1" class="px-s"/><rect x="7" y="3" width="1" height="1" class="px-o"/><rect x="8" y="3" width="1" height="1" class="px-o"/><rect x="9" y="3" width="1" height="1" class="px-o"/>
+<rect x="0" y="4" width="1" height="1" class="px-o"/><rect x="1" y="4" width="1" height="1" class="px-b"/><rect x="2" y="4" width="1" height="1" class="px-h"/><rect x="3" y="4" width="1" height="1" class="px-h"/><rect x="4" y="4" width="1" height="1" class="px-h"/><rect x="5" y="4" width="1" height="1" class="px-h"/><rect x="6" y="4" width="1" height="1" class="px-b"/><rect x="7" y="4" width="1" height="1" class="px-b"/><rect x="8" y="4" width="1" height="1" class="px-h"/><rect x="9" y="4" width="1" height="1" class="px-s"/><rect x="10" y="4" width="1" height="1" class="px-o"/><rect x="1" y="5" width="1" height="1" class="px-o"/><rect x="2" y="5" width="1" height="1" class="px-b"/><rect x="3" y="5" width="1" height="1" class="px-h"/><rect x="4" y="5" width="1" height="1" class="px-h"/><rect x="5" y="5" width="1" height="1" class="px-b"/>
+<rect x="6" y="5" width="1" height="1" class="px-b"/><rect x="7" y="5" width="1" height="1" class="px-h"/><rect x="8" y="5" width="1" height="1" class="px-s"/><rect x="9" y="5" width="1" height="1" class="px-o"/><rect x="2" y="6" width="1" height="1" class="px-o"/><rect x="3" y="6" width="1" height="1" class="px-s"/><rect x="4" y="6" width="1" height="1" class="px-b"/><rect x="5" y="6" width="1" height="1" class="px-b"/><rect x="6" y="6" width="1" height="1" class="px-h"/><rect x="7" y="6" width="1" height="1" class="px-b"/><rect x="8" y="6" width="1" height="1" class="px-o"/><rect x="2" y="7" width="1" height="1" class="px-o"/><rect x="3" y="7" width="1" height="1" class="px-b"/><rect x="4" y="7" width="1" height="1" class="px-s"/><rect x="5" y="7" width="1" height="1" class="px-o"/><rect x="6" y="7" width="1" height="1" class="px-s"/>
+<rect x="7" y="7" width="1" height="1" class="px-b"/><rect x="8" y="7" width="1" height="1" class="px-o"/><rect x="1" y="8" width="1" height="1" class="px-o"/><rect x="2" y="8" width="1" height="1" class="px-b"/><rect x="3" y="8" width="1" height="1" class="px-s"/><rect x="4" y="8" width="1" height="1" class="px-o"/><rect x="6" y="8" width="1" height="1" class="px-o"/><rect x="7" y="8" width="1" height="1" class="px-s"/><rect x="8" y="8" width="1" height="1" class="px-b"/><rect x="9" y="8" width="1" height="1" class="px-o"/><rect x="1" y="9" width="1" height="1" class="px-o"/><rect x="2" y="9" width="1" height="1" class="px-o"/><rect x="3" y="9" width="1" height="1" class="px-o"/><rect x="7" y="9" width="1" height="1" class="px-o"/><rect x="8" y="9" width="1" height="1" class="px-o"/><rect x="9" y="9" width="1" height="1" class="px-o"/>
+</svg>`;
+
+// One star per tier beaten, plus a grey star for minibosses. p.bosses already
+// holds one entry per boss ID beaten, so counting entries (not summing kills)
+// is what makes a boss killed three times still worth one star. Tier 4 has no
+// bosses yet, but the counter and the CSS (.pc-badge.t4) are ready for it.
+function bossBadges(p) {
+  const counts = { 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
+  for (const b of p.bosses || []) {
+    if (b.category === 'miniboss') counts.mini++;
+    else if (counts[b.tier] !== undefined) counts[b.tier]++;
+  }
+  const chip = (cls, n) => n
+    ? `<span class="pc-badge ${cls}">${PIXEL_STAR_SVG}x${n}</span>` : '';
+  return [chip('t4', counts[4]), chip('t3', counts[3]), chip('t2', counts[2]), chip('t1', counts[1]), chip('mini', counts.mini)]
+    .join('');
+}
+
 function updateLive(board) {
   const T = board.totals;
   if (!T) return;
@@ -851,6 +886,8 @@ function updateLive(board) {
     if (seen) seen.className = `pc-seen${p.dead ? ' dead' : p.online ? ' on' : ''}`;
     set(`pct-${p.uuid}`, p.playtime);
     set(`pcd-${p.uuid}`, `${p.deaths} deaths`);
+    const badges = document.getElementById(`pcb-${p.uuid}`);
+    if (badges) badges.innerHTML = bossBadges(p);
     const bar = document.getElementById(`pch-${p.uuid}`);
     if (bar) bar.style.width =
       `${p.max_health ? Math.round(p.health / p.max_health * 100) : 0}%`;

@@ -95,13 +95,15 @@ def _bosses(raw):
     out = []
     for entry in (raw.get('bosses') or {}).values():
         out.append({
-            'name':   entry.get('name') or 'UNKNOWN',
-            'tier':   _int(entry.get('tier')),
-            'kills':  _int(entry.get('kills')),
+            'name':     entry.get('name') or 'UNKNOWN',
+            'tier':     _int(entry.get('tier')),
+            # records written before the boss/miniboss split default to 'boss'
+            'category': entry.get('category') or 'boss',
+            'kills':    _int(entry.get('kills')),
             # damage stats are kept in tenths of a heart-point, the same way
             # the game's own statistics screen divides before showing them
-            'damage': _float(_int(entry.get('lastDamage')) / 10),
-            'last':   (entry.get('last') or '')[:10],
+            'damage':   _float(_int(entry.get('lastDamage')) / 10),
+            'last':     (entry.get('last') or '')[:10],
         })
     out.sort(key=lambda b: (-b['tier'], -b['kills'], b['name']))
     return out
