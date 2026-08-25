@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>miniboss geometry check</title>
+<style>
+  body { background:#111; color:#ccc; font-family: monospace; margin:0; padding:12px; }
+  .grid { display:flex; flex-wrap:wrap; gap:8px; }
+  .card { width:180px; background:#1a1a1a; border:1px solid #333; padding:4px; text-align:center; }
+  .stage { width:172px; height:200px; background:#000; }
+  .name { font-size:11px; margin-top:4px; word-break:break-all; }
+</style>
+</head>
+<body>
+<div id="grid" class="grid"></div>
+<script type="module">
+import '/static/scripts/mcmodel.js';
+
+const FOLDER = new URLSearchParams(location.search).get('folder') || 'minibosses';
+const res = await fetch(`/static/minecraft/${FOLDER}/index.json`);
+const index = await res.json();
+const grid = document.getElementById('grid');
+
+for (const b of index) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const stage = document.createElement('div');
+  stage.className = 'stage';
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.textContent = `${b.name} (${b.key})`;
+  card.appendChild(stage);
+  card.appendChild(name);
+  grid.appendChild(card);
+  window.buildMobModel(stage, {
+    model: `/static/minecraft/${FOLDER}/${b.model}`,
+    locked: false, width: 172, height: 200,
+  });
+}
+</script>
+</body>
+</html>

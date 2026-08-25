@@ -1,0 +1,310 @@
+[
+ {
+  "key": "alexscaves__hullbreaker",
+  "id": "alexscaves:hullbreaker",
+  "name": "Hullbreaker",
+  "mod": "alexscaves",
+  "model": "alexscaves__hullbreaker.model.json"
+ },
+ {
+  "key": "alexscaves__tremorsaurus",
+  "id": "alexscaves:tremorsaurus",
+  "name": "Tremorsaurus",
+  "mod": "alexscaves",
+  "model": "alexscaves__tremorsaurus.model.json"
+ },
+ {
+  "key": "aquamirae__eel",
+  "id": "aquamirae:eel",
+  "name": "Eel",
+  "mod": "aquamirae",
+  "model": "aquamirae__eel.model.json"
+ },
+ {
+  "key": "aquamirae__maze_mother",
+  "id": "aquamirae:maze_mother",
+  "name": "Maze Mother",
+  "mod": "aquamirae",
+  "model": "aquamirae__maze_mother.model.json"
+ },
+ {
+  "key": "cataclysm__amethyst_crab",
+  "id": "cataclysm:amethyst_crab",
+  "name": "Amethyst Crab",
+  "mod": "cataclysm",
+  "model": "cataclysm__amethyst_crab.model.json"
+ },
+ {
+  "key": "cataclysm__aptrgangr",
+  "id": "cataclysm:aptrgangr",
+  "name": "Aptrgangr",
+  "mod": "cataclysm",
+  "model": "cataclysm__aptrgangr.model.json"
+ },
+ {
+  "key": "cataclysm__clawdian",
+  "id": "cataclysm:clawdian",
+  "name": "Clawdian",
+  "mod": "cataclysm",
+  "model": "cataclysm__clawdian.model.json"
+ },
+ {
+  "key": "cataclysm__coral_golem",
+  "id": "cataclysm:coral_golem",
+  "name": "Coral Golem",
+  "mod": "cataclysm",
+  "model": "cataclysm__coral_golem.model.json"
+ },
+ {
+  "key": "cataclysm__coralssus",
+  "id": "cataclysm:coralssus",
+  "name": "Coralssus",
+  "mod": "cataclysm",
+  "model": "cataclysm__coralssus.model.json"
+ },
+ {
+  "key": "cataclysm__ender_golem",
+  "id": "cataclysm:ender_golem",
+  "name": "Ender Golem",
+  "mod": "cataclysm",
+  "model": "cataclysm__ender_golem.model.json"
+ },
+ {
+  "key": "cataclysm__kobolediator",
+  "id": "cataclysm:kobolediator",
+  "name": "Kobolediator",
+  "mod": "cataclysm",
+  "model": "cataclysm__kobolediator.model.json"
+ },
+ {
+  "key": "cataclysm__the_prowler",
+  "id": "cataclysm:the_prowler",
+  "name": "The Prowler",
+  "mod": "cataclysm",
+  "model": "cataclysm__the_prowler.model.json"
+ },
+ {
+  "key": "cataclysm__wadjet",
+  "id": "cataclysm:wadjet",
+  "name": "Wadjet",
+  "mod": "cataclysm",
+  "model": "cataclysm__wadjet.model.json"
+ },
+ {
+  "key": "fromtheshadows__bulldrogioth",
+  "id": "fromtheshadows:bulldrogioth",
+  "name": "Bulldrogioth",
+  "mod": "fromtheshadows",
+  "model": "fromtheshadows__bulldrogioth.model.json"
+ },
+ {
+  "key": "fromtheshadows__nehemoth",
+  "id": "fromtheshadows:nehemoth",
+  "name": "Nehemoth",
+  "mod": "fromtheshadows",
+  "model": "fromtheshadows__nehemoth.model.json"
+ },
+ {
+  "key": "illagerinvasion__invoker",
+  "id": "illagerinvasion:invoker",
+  "name": "Invoker",
+  "mod": "illagerinvasion",
+  "model": "illagerinvasion__invoker.model.json"
+ },
+ {
+  "key": "legendary_monsters__beheaded_knight",
+  "id": "legendary_monsters:beheaded_knight",
+  "name": "Beheaded Knight",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__beheaded_knight.model.json"
+ },
+ {
+  "key": "legendary_monsters__lava_eater",
+  "id": "legendary_monsters:lava_eater",
+  "name": "Lava Eater",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__lava_eater.model.json"
+ },
+ {
+  "key": "legendary_monsters__mossy_golem",
+  "id": "legendary_monsters:mossy_golem",
+  "name": "Mossy Golem",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__mossy_golem.model.json"
+ },
+ {
+  "key": "legendary_monsters__resurrected_knight",
+  "id": "legendary_monsters:resurrected_knight",
+  "name": "Resurrected Knight",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__resurrected_knight.model.json"
+ },
+ {
+  "key": "legendary_monsters__shulker_mimic",
+  "id": "legendary_monsters:shulker_mimic",
+  "name": "Shulker Mimic",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__shulker_mimic.model.json"
+ },
+ {
+  "key": "legendary_monsters__skeletosaurus",
+  "id": "legendary_monsters:skeletosaurus",
+  "name": "Skeletosaurus",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__skeletosaurus.model.json"
+ },
+ {
+  "key": "legendary_monsters__withered_abomination",
+  "id": "legendary_monsters:withered_abomination",
+  "name": "Withered Abomination",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__withered_abomination.model.json"
+ },
+ {
+  "key": "mutantmonsters__mutant_creeper",
+  "id": "mutantmonsters:mutant_creeper",
+  "name": "Mutant Creeper",
+  "mod": "mutantmonsters",
+  "model": "mutantmonsters__mutant_creeper.model.json"
+ },
+ {
+  "key": "mutantmonsters__mutant_enderman",
+  "id": "mutantmonsters:mutant_enderman",
+  "name": "Mutant Enderman",
+  "mod": "mutantmonsters",
+  "model": "mutantmonsters__mutant_enderman.model.json"
+ },
+ {
+  "key": "mutantmonsters__mutant_skeleton",
+  "id": "mutantmonsters:mutant_skeleton",
+  "name": "Mutant Skeleton",
+  "mod": "mutantmonsters",
+  "model": "mutantmonsters__mutant_skeleton.model.json"
+ },
+ {
+  "key": "mutantmonsters__mutant_snow_golem",
+  "id": "mutantmonsters:mutant_snow_golem",
+  "name": "Mutant Snow Golem",
+  "mod": "mutantmonsters",
+  "model": "mutantmonsters__mutant_snow_golem.model.json"
+ },
+ {
+  "key": "mutantmonsters__mutant_zombie",
+  "id": "mutantmonsters:mutant_zombie",
+  "name": "Mutant Zombie",
+  "mod": "mutantmonsters",
+  "model": "mutantmonsters__mutant_zombie.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_blaze",
+  "id": "mutantmore:mutant_blaze",
+  "name": "Mutant Blaze",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_blaze.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_frozen_zombie",
+  "id": "mutantmore:mutant_frozen_zombie",
+  "name": "Mutant Frozen Zombie",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_frozen_zombie.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_hoglin",
+  "id": "mutantmore:mutant_hoglin",
+  "name": "Mutant Hoglin",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_hoglin.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_husk",
+  "id": "mutantmore:mutant_husk",
+  "name": "Mutant Husk",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_husk.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_jungle_zombie",
+  "id": "mutantmore:mutant_jungle_zombie",
+  "name": "Mutant Jungle Zombie",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_jungle_zombie.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_phantom",
+  "id": "mutantmore:mutant_phantom",
+  "name": "Mutant Phantom",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_phantom.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_shulker",
+  "id": "mutantmore:mutant_shulker",
+  "name": "Mutant Shulker",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_shulker.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_shulker_turret",
+  "id": "mutantmore:mutant_shulker_turret",
+  "name": "Mutant Shulker Turret",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_shulker_turret.model.json"
+ },
+ {
+  "key": "mutantmore__mutant_wither_skeleton",
+  "id": "mutantmore:mutant_wither_skeleton",
+  "name": "Mutant Wither Skeleton",
+  "mod": "mutantmore",
+  "model": "mutantmore__mutant_wither_skeleton.model.json"
+ },
+ {
+  "key": "netherman__bell_guardian",
+  "id": "netherman:bell_guardian",
+  "name": "Bell Guardian",
+  "mod": "netherman",
+  "model": "netherman__bell_guardian.model.json"
+ },
+ {
+  "key": "notsoshrimple__crayfish",
+  "id": "notsoshrimple:crayfish",
+  "name": "Crayfish",
+  "mod": "notsoshrimple",
+  "model": "notsoshrimple__crayfish.model.json"
+ },
+ {
+  "key": "notsoshrimple__maneater",
+  "id": "notsoshrimple:maneater",
+  "name": "Maneater",
+  "mod": "notsoshrimple",
+  "model": "notsoshrimple__maneater.model.json"
+ },
+ {
+  "key": "realmrpg_demons__ancient_demon_lord",
+  "id": "realmrpg_demons:ancient_demon_lord",
+  "name": "Ancient Demon Lord",
+  "mod": "realmrpg_demons",
+  "model": "realmrpg_demons__ancient_demon_lord.model.json"
+ },
+ {
+  "key": "skarrier_mobs__carnager",
+  "id": "skarrier_mobs:carnager",
+  "name": "Carnager",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__carnager.model.json"
+ },
+ {
+  "key": "skarrier_mobs__tunnel_gore",
+  "id": "skarrier_mobs:tunnel_gore",
+  "name": "Tunnel Gore",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__tunnel_gore.model.json"
+ },
+ {
+  "key": "skarrier_mobs__wrought",
+  "id": "skarrier_mobs:wrought",
+  "name": "Wrought",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__wrought.model.json"
+ }
+]

@@ -24,11 +24,17 @@ BOSSES   = 'boss_kills.json'
 
 # The bosses we hold a model for, and where the portal serves them from. Only
 # these can appear on the board: a boss nobody can draw is not a boss anyone
-# can look at.
-BOSS_DIR   = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                          'static', 'minecraft', 'bosses')
+# can look at. Minibosses are built the same way, into a folder of their own,
+# and stand ahead of the bosses on the roster rather than mixed in with them.
+_STATIC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       'static', 'minecraft')
+BOSS_DIR   = os.path.join(_STATIC, 'bosses')
 BOSS_URL   = '/static/minecraft/bosses'
 BOSS_INDEX = os.path.join(BOSS_DIR, 'index.json')
+
+MINIBOSS_DIR   = os.path.join(_STATIC, 'minibosses')
+MINIBOSS_URL   = '/static/minecraft/minibosses'
+MINIBOSS_INDEX = os.path.join(MINIBOSS_DIR, 'index.json')
 
 # The exporter runs through KubeJS, where every number arrives as a double, so
 # counts come back as 3.0 rather than 3 and have to be pushed back into shape.
@@ -177,11 +183,19 @@ def load(season_path):
     return out
 
 
-def _stamp(name):
+def _stamp(folder, name):
     try:
-        return int(os.path.getmtime(os.path.join(BOSS_DIR, name)))
+        return int(os.path.getmtime(os.path.join(folder, name)))
     except OSError:
         return 0
+
+
+def _known(index_path):
+    try:
+        with open(index_path) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return []
 
 
 def bosses(season_path, faces=None):
@@ -190,11 +204,16 @@ def bosses(season_path, faces=None):
     The export records kills the other way round, per player, so this turns it
     inside out. A boss nobody has beaten still gets a place in the line: the
     point of the roster is the gap where a kill has not happened yet.
+
+    Minibosses are read from their own index and drawn from their own folder,
+    but otherwise go through the same reckoning as a boss - they just lead the
+    roster instead of sitting in it.
     """
-    try:
-        with open(BOSS_INDEX) as fh:
-            known = json.load(fh)
-    except (OSError, ValueError):
+    known = ([{**b, 'category': 'miniboss', 'dir': MINIBOSS_DIR, 'url': MINIBOSS_URL}
+              for b in _known(MINIBOSS_INDEX)] +
+             [{**b, 'category': 'boss', 'dir': BOSS_DIR, 'url': BOSS_URL}
+              for b in _known(BOSS_INDEX)])
+    if not known:
         return []
 
     raw = _load(os.path.join(season_path, DATA_DIR, BOSSES))
@@ -234,20 +253,22 @@ def bosses(season_path, faces=None):
             'id':      boss['id'],
             'name':    boss['name'],
             'mod':     boss.get('mod', ''),
+            'category': boss['category'],
             # the server's own script grades them; the roster does not presume to
             'tier':    hit['tier'] if hit and hit.get('tier') else None,
             # the file's own mtime rides along so a rebuilt model is never
             # served from a browser cache that still holds the old one
-            'model':   f'{BOSS_URL}/{boss["model"]}?v={_stamp(boss["model"])}',
+            'model':   f'{boss["url"]}/{boss["model"]}?v={_stamp(boss["dir"], boss["model"])}',
             'felled':  bool(hit),
             'kills':   hit['kills'] if hit else 0,
             'killers': killers,
             'first':   hit['first'] if hit else '',
             'last':    hit['last'] if hit else '',
         })
-    # what has been beaten leads; the rest stand in line behind it
-    out.sort(key=lambda b: (not b['felled'], b['mod'] != 'minecraft',
-                            b['mod'], b['name']))
+    # bosses lead the roster, minibosses stand behind them in a section of
+    # their own; within each, what has been beaten leads the rest
+    out.sort(key=lambda b: (b['category'] == 'miniboss', not b['felled'],
+                            b['mod'] != 'minecraft', b['mod'], b['name']))
     return out
 
 

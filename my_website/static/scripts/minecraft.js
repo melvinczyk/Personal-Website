@@ -413,9 +413,30 @@ function livePanel(p) {
 
   const cell = (label, value, note) => value === null || value === undefined ? '' :
     `<span class="live-cell"><i>${label}</i><b>${value}</b>${note ? `<u>${note}</u>` : ''}</span>`;
+  const section = (label, right, body) => `
+    <div class="live-section">
+      <div class="lb-head"><span>${label}</span>${right ? `<b>${right}</b>` : ''}</div>
+      <div class="live-grid">${body}</div>
+    </div>`;
 
-  const stats = [
+  // health and hunger are the two numbers with a natural scale to bar against,
+  // so they read as meters the way the season roster's own stats do rather
+  // than as one more pair of bare numbers lost in the grid
+  const hpPct   = Math.max(0, Math.min(100, (L.health / (L.max_health || 20)) * 100));
+  const foodPct = Math.max(0, Math.min(100, (L.food / 20) * 100));
+  const vitals = `<div class="live-vitals">
+    ${meter('HEALTH', hpPct, `${L.health}/${L.max_health}`, 'hp')}
+    ${meter('HUNGER', foodPct, `${L.food}/20`, 'food')}
+  </div>`;
+
+  const activity = [
     cell('PLAY TIME', L.playtime),
+    cell('LEVEL', L.level),
+    cell('BLOCKS MOVED', L.travelled, `${L.sprinted} SPRINTED`),
+    cell('JUMPS', L.jumps),
+  ].join('');
+
+  const combat = [
     cell('DEATHS', L.deaths,
          L.dead ? 'ON THE RESPAWN SCREEN'
          : L.deaths ? `LAST ${L.since_death} AGO` : 'UNBEATEN'),
@@ -423,8 +444,6 @@ function livePanel(p) {
     cell('PVP KILLS', L.player_kills),
     cell('DAMAGE DEALT', L.dealt),
     cell('DAMAGE TAKEN', L.taken),
-    cell('BLOCKS MOVED', L.travelled, `${L.sprinted} SPRINTED`),
-    cell('JUMPS', L.jumps),
   ].join('');
 
   const bosses = L.bosses.length ? `
@@ -443,7 +462,9 @@ function livePanel(p) {
     </div>` : '<div class="live-boss empty">no boss has gone down yet</div>';
 
   return `<div class="live-wrap">
-    <div class="live-grid">${stats}</div>
+    ${vitals}
+    ${section('ACTIVITY', L.dimension, activity)}
+    ${section('COMBAT', null, combat)}
     ${bosses}
     <div class="live-when">SERVER READ ${L.recorded}</div>
   </div>`;
@@ -734,15 +755,14 @@ function buildLive(board) {
       </div>
     </div>`).join('') : '<p class="rp-none">the server has not reported anybody yet</p>';
 
-  const bosses = board.bosses || [];
-  document.getElementById('ls-bosses').innerHTML = bosses.map(b => `
-    <div class="bcard${b.felled ? ' beaten' : ' locked'}" id="bc-${b.key}"
+  const bossCard = b => `
+    <div class="bcard${b.felled ? ' beaten' : ' locked'} ${b.category}" id="bc-${b.key}"
          data-beaten="${b.felled ? 1 : 0}"
          onmouseenter="spin('bm-${b.key}', true)" onmouseleave="spin('bm-${b.key}', false)">
       <div class="bc-stage"><div class="bc-model" id="bm-${b.key}" data-boss="${b.key}"></div></div>
       <div class="bc-foot">
         <div class="bc-name">${b.felled || REVEAL ? b.name : '???'}</div>
-        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.tier ? ` \u00b7 tier ${b.tier}` : ''}</div>
+        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.category === 'miniboss' ? ' \u00b7 miniboss' : (b.tier ? ` \u00b7 tier ${b.tier}` : '')}</div>
         ${b.felled ? `
           <div class="bc-kills">${b.kills} kill${b.kills === 1 ? '' : 's'}</div>
           <div class="bc-killers">${b.killers.map(k => `
@@ -751,28 +771,43 @@ function buildLive(board) {
             </span>`).join('')}</div>
         ` : ''}
       </div>
-    </div>`).join('');
+    </div>`;
+
+  const all = board.bosses || [];
+  document.getElementById('ls-bosses').innerHTML =
+    all.filter(b => b.category !== 'miniboss').map(bossCard).join('');
+  document.getElementById('ls-minibosses').innerHTML =
+    all.filter(b => b.category === 'miniboss').map(bossCard).join('');
   filterBosses();
 }
 
 // The list can be cut down to the ones already felled. A card that is filtered
 // out is display: none, which means it never comes into view and never builds
-// its model, so hiding sixty of them costs nothing.
-function filterBosses() {
-  const only = (document.getElementById('ls-beaten') || {}).checked;
-  let shown = 0;
-  for (const card of document.querySelectorAll('.bcard')) {
-    const hide = only && card.dataset.beaten !== '1';
+// its model, so hiding sixty of them costs nothing. Bosses and minibosses are
+// two separate grids with their own checkbox and their own count, so each is
+// filtered and counted on its own rather than off the combined totals.
+function filterSection(gridId, checkboxId, countId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  const only = (document.getElementById(checkboxId) || {}).checked;
+  let shown = 0, beaten = 0, total = 0;
+  for (const card of grid.querySelectorAll('.bcard')) {
+    total += 1;
+    const isBeaten = card.dataset.beaten === '1';
+    if (isBeaten) beaten += 1;
+    const hide = only && !isBeaten;
     card.classList.toggle('hidden', hide);
     if (!hide) shown += 1;
   }
-  const count = document.getElementById('ls-boss-count');
-  if (count && liveBoard && liveBoard.totals) {
-    const T = liveBoard.totals;
-    count.textContent = only
-      ? `${shown} shown of ${T.boss_all}`
-      : `${T.bosses} beaten of ${T.boss_all}`;
+  const count = document.getElementById(countId);
+  if (count) {
+    count.textContent = only ? `${shown} shown of ${total}` : `${beaten} beaten of ${total}`;
   }
+}
+
+function filterBosses() {
+  filterSection('ls-bosses', 'ls-beaten', 'ls-boss-count');
+  filterSection('ls-minibosses', 'ls-mini-beaten', 'ls-mini-count');
 }
 
 // a model turns while the pointer is on it and stands still otherwise: ten
@@ -907,10 +942,14 @@ function drawDrawer(board) {
   const player = (board.players || []).find(p => p.uuid === liveOpen);
   if (!player) { drawer.className = 'ls-drawer'; drawer.innerHTML = ''; return; }
   drawer.className = 'ls-drawer open';
+  const state = player.dead ? 'respawning' : player.online ? 'online' : 'offline';
   drawer.innerHTML = `
     <div class="lsd-head">
-      <span class="lsd-who">${player.name}</span>
-      <span class="lsd-sub">SERVER RECORD</span>
+      <span class="lsd-face"${player.skin ? ` style="--skin:url('${player.skin}')"` : ''}></span>
+      <span class="lsd-id">
+        <span class="lsd-who">${player.name}</span>
+        <span class="lsd-sub">SERVER RECORD <i class="lsd-pill ${state}">${state}</i></span>
+      </span>
       <button class="rp-close" onclick="toggleLive('${player.uuid}')" aria-label="Close">
         <span class="icon circle"></span><span class="lbl">CLOSE</span>
       </button>

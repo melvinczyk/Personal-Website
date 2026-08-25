@@ -1,0 +1,197 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "alexscaves:forsaken",
+      "required": false
+    },
+    {
+      "id": "alexscaves:hullbreaker",
+      "required": false
+    },
+    {
+      "id": "alexscaves:tremorsaurus",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:warped_mosco",
+      "required": false
+    },
+    {
+      "id": "aquamirae:eel",
+      "required": false
+    },
+    {
+      "id": "aquamirae:maze_mother",
+      "required": false
+    },
+    {
+      "id": "cataclysm:amethyst_crab",
+      "required": false
+    },
+    {
+      "id": "cataclysm:aptrgangr",
+      "required": false
+    },
+    {
+      "id": "cataclysm:clawdian",
+      "required": false
+    },
+    {
+      "id": "cataclysm:coral_golem",
+      "required": false
+    },
+    {
+      "id": "cataclysm:coralssus",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ender_golem",
+      "required": false
+    },
+    {
+      "id": "cataclysm:kobolediator",
+      "required": false
+    },
+    {
+      "id": "cataclysm:the_prowler",
+      "required": false
+    },
+    {
+      "id": "cataclysm:wadjet",
+      "required": false
+    },
+    {
+      "id": "fromtheshadows:bulldrogioth",
+      "required": false
+    },
+    {
+      "id": "fromtheshadows:nehemoth",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:invoker",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:beheaded_knight",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:lava_eater",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:mossy_golem",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:resurrected_knight",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:shulker_mimic",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:skeletosaurus",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:withered_abomination",
+      "required": false
+    },
+    {
+      "id": "majruszsdifficulty:cerberus",
+      "required": false
+    },
+    {
+      "id": "minecraft:elder_guardian",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_creeper",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_enderman",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_skeleton",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_snow_golem",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_zombie",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_blaze",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_frozen_zombie",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_hoglin",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_husk",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_jungle_zombie",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_phantom",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_shulker",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_shulker_turret",
+      "required": false
+    },
+    {
+      "id": "mutantmore:mutant_wither_skeleton",
+      "required": false
+    },
+    {
+      "id": "netherman:bell_guardian",
+      "required": false
+    },
+    {
+      "id": "notsoshrimple:crayfish",
+      "required": false
+    },
+    {
+      "id": "notsoshrimple:maneater",
+      "required": false
+    },
+    {
+      "id": "realmrpg_demons:ancient_demon_lord",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:carnager",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:tunnel_gore",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:wrought",
+      "required": false
+    }
+  ]
+}

@@ -29,7 +29,7 @@ import entity_model as em
 import geo as geolib
 
 MODS = os.path.expanduser(
-    '~/Documents/curseforge/minecraft/Instances/Groid Pack OG/mods')
+    '~/curseforge/minecraft/Instances/Groid Pack OG/mods')
 TAG = os.path.expanduser(
     '~/Desktop/Minecraft server stuff/Datapacks/Groid Pack OG/Groid Tags'
     '/data/groid/tags/entity_types/bosses.json')

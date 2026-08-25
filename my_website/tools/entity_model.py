@@ -20,7 +20,7 @@ import tempfile
 import zipfile
 
 JAR = os.path.expanduser(
-    '~/Documents/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar')
+    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar')
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
 
