@@ -44,6 +44,32 @@ MOBS = {
         'name':    'Warden',
         'id':      'minecraft:warden',
     },
+    # Elder Guardian is drawn with the plain Guardian's own model class -
+    # the renderer just scales it up - so "tail0" (its numbered tail
+    # segments) is enough on its own to land on it.
+    'elder_guardian': {
+        'tier':    0,
+        'order':   3,
+        'marker':  'tail0',
+        'reject':  None,
+        'texture': 'textures/entity/guardian_elder.png',
+        'name':    'Elder Guardian',
+        'id':      'minecraft:elder_guardian',
+    },
+    # "mouth" and "horn" are each shared with several other mobs' models (a
+    # wolf, a llama, a goat...) and no single reject clears all of them, so
+    # this one is pinned to its resolved class - fcs.class in this jar -
+    # rather than searched for by marker.
+    'ravager': {
+        'tier':    0,
+        'order':   4,
+        'marker':  'mouth',
+        'class':   'fcs.class',
+        'reject':  None,
+        'texture': 'textures/entity/illager/ravager.png',
+        'name':    'Ravager',
+        'id':      'minecraft:ravager',
+    },
 }
 
 PUSH_INT = {
@@ -549,8 +575,190 @@ def parse_advanced(text):
     return bones, read.size
 
 
+# The Ender Dragon's own createBodyLayer is not built the way every other
+# mob's is: instead of CubeListBuilder.addBox(x, y, z, w, h, d) - a pair of
+# ints then six floats, which is what parse() above looks for - it calls the
+# older named-box overload, addBox(String, x, y, z, w, h, d, u, v): three
+# floats then five ints, with a throwaway label per box ("upperlip", "scale",
+# "nostril"...) that names nothing about the skeleton. parse()'s scorer never
+# counts these calls, so the dragon's real 525-line body-layer method scores
+# 0 and loses to a shorter, unrelated one. Rather than teach the shared
+# scorer a second box shape - and risk every one of the sixty-odd mobs that
+# already read correctly through it - this walks that one method on its own.
+#
+# The dragon's skeleton is also flat: every one of its 20 parts is added
+# straight to the root PartDefinition (the bytecode reuses the same local
+# variable - aload_1 - as the receiver each time), never to one another. So
+# there is no parent chain to recover, only a pivot per part, which is either
+# PartPose.ZERO (left at [0, 0, 0]) or PartPose.offset(x, y, z) - a static
+# call taking the three floats pushed just before it.
+DRAGON_NAME_BOX = re.compile(r'\(Ljava/lang/String;FFFIIIII\)')
+
+
+def parse_dragon(text):
+    """Read fot.class's `public static fek a()` - EnderDragonModel's own
+    createBodyLayer - by hand, using the calling convention above."""
+    methods, cur = [], []
+    for line in text.splitlines():
+        if re.match(r'^  \S.*\(.*\)', line) and not line.startswith('    '):
+            if cur:
+                methods.append(cur)
+            cur = []
+        cur.append(line)
+    if cur:
+        methods.append(cur)
+    body = next((b for b in methods if 'public static fek a();' in b[0]), None)
+    if body is None:
+        return None
+
+    parts, cur_part, stack, mirror = [], None, [], False
+    # local variable slot -> the name of the part whose PartDefinition lives
+    # there. Slot 1 holds the root (astore_1, from meshdefinition.getRoot());
+    # every other slot is filled by astore-ing what a part's own fen.a(...)
+    # call returns - a PartDefinition of its own, which is exactly what a
+    # child reads back with aload before building itself. jaw is added to
+    # aload_3 - head's own slot, not the root's - which is what makes it a
+    # child of head rather than a sibling standing next to it.
+    slot_owner = {1: None}
+    held_slot = 1
+    last_part = None      # the part just finalized, until its astore (if any)
+
+    def flush():
+        nonlocal last_part
+        if cur_part and cur_part['cubes']:
+            parts.append(cur_part)
+        last_part = cur_part
+
+    for raw in body:
+        m = LINE.match(raw)
+        if not m:
+            continue
+        op, rest = m.group(1), m.group(2)
+
+        if op.startswith('aload'):
+            slot = op.split('_')[-1] if '_' in op else rest.strip()
+            if slot.isdigit():
+                held_slot = int(slot)
+            continue
+        if op.startswith('astore'):
+            slot = op.split('_')[-1] if '_' in op else rest.strip()
+            if slot.isdigit() and last_part:
+                slot_owner[int(slot)] = last_part['name']
+            continue
+
+        if op in PUSH_INT:
+            stack.append(PUSH_INT[op])
+            continue
+        if op in ('bipush', 'sipush'):
+            stack.append(int(rest.split()[0]))
+            continue
+        if op.startswith('ldc'):
+            num = LDC_NUM.search(rest)
+            if num:
+                stack.append(float(num.group(1)))
+                continue
+            s = LDC_STR.search(rest)
+            if s:
+                stack.append(('STR', s.group(1).strip()))
+            continue
+
+        if op == 'invokestatic':
+            d = DESC.search(rest)
+            if not d:
+                stack.clear()
+                continue
+            name, args = d.group(2), d.group(3)
+            if name == 'c' and args == '()':
+                # CubeListBuilder.create() - the string just under it on the
+                # stack, pushed before this call, is the part it belongs to;
+                # whichever slot was most recently aload'd is its parent
+                flush()
+                part_name = next((v[1] for v in reversed(stack)
+                                  if isinstance(v, tuple) and v[0] == 'STR'), None)
+                cur_part = {'name': part_name, 'parent': slot_owner.get(held_slot),
+                           'cubes': [], 'pivot': [0.0, 0.0, 0.0]}
+                mirror = False
+            elif args == '(FFF)':
+                # PartPose.offset(x, y, z) - already relative to the parent
+                # this part was just built against, the same as every other
+                # vanilla mob's own pivot; no world-space math to undo here
+                floats = [v for v in stack if isinstance(v, float)]
+                if len(floats) >= 3 and cur_part:
+                    x, y, z = floats[-3:]
+                    cur_part['pivot'] = [round(x, 3), round(y, 3), round(-z, 3)]
+            stack.clear()
+            continue
+
+        if op == 'getstatic':      # PartPose.ZERO - pivot stays [0, 0, 0]
+            stack.clear()
+            continue
+
+        if op == 'invokevirtual':
+            d = DESC.search(rest)
+            if not d:
+                stack.clear()
+                continue
+            owner, args = d.group(1), d.group(3)
+            if DRAGON_NAME_BOX.match(args):
+                floats = [v for v in stack if isinstance(v, float)]
+                ints = [v for v in stack if isinstance(v, int)]
+                if cur_part and len(floats) >= 3 and len(ints) >= 5:
+                    x, y, z = floats[-3:]
+                    w, h, d_, u, v = ints[-5:]
+                    faces = box_uv(u, v, w, h, d_)
+                    cur_part['cubes'].append({
+                        'c': [round(x + w / 2, 3), round(y + h / 2, 3),
+                             round(-(z + d_ / 2), 3)],
+                        's': [round(w, 3), round(h, 3), round(d_, 3)],
+                        'f': mirrored(faces) if mirror else faces,
+                    })
+            elif args == '()' and (owner or '').endswith('fej'):
+                mirror = not mirror       # the builder's own mirror toggle
+            elif args == '(Ljava/lang/String;Lfej;Lfeg;)':
+                flush()
+                cur_part = None
+            stack.clear()
+            continue
+
+    flush()
+    return [{'name': p['name'], 'parent': p['parent'], 'pivot': p['pivot'],
+             'rot': [0, 0, 0], 'cubes': p['cubes']} for p in parts]
+
+
+def build_dragon():
+    text = disassemble(JAR, 'fot.class')
+    bones = parse_dragon(text)
+    if not bones:
+        raise SystemExit('ender_dragon: createBodyLayer did not parse')
+    os.makedirs(OUT, exist_ok=True)
+    with zipfile.ZipFile(JAR) as zf:
+        png = zf.read('assets/minecraft/textures/entity/enderdragon/dragon.png')
+    with open(os.path.join(OUT, 'ender_dragon.png'), 'wb') as fh:
+        fh.write(png)
+    model = {
+        'id': 'minecraft:ender_dragon', 'name': 'Ender Dragon', 'class': 'fot.class',
+        # a 136-unit wingspan next to a head barely a tenth that wide means the
+        # auto-fit's whole-model framing is spent almost entirely on empty air
+        # between the wingtips - the same trade spiritcaller and azazel make,
+        # focus on the head/neck and lean on zoom rather than show it all small
+        'focus': 'neck', 'zoom': 3.0,
+        'tw': 256, 'th': 256, 'texture': 'ender_dragon.png', 'bones': bones,
+    }
+    with open(os.path.join(OUT, 'ender_dragon.model.json'), 'w') as fh:
+        json.dump(model, fh, separators=(',', ':'))
+    cubes = sum(len(b['cubes']) for b in bones)
+    print(f'ender_dragon fot.class {len(bones):>2} bones {cubes:>3} cubes  256x256')
+    return model
+
+
 def build(key, spec):
-    candidates = find_classes(JAR, spec['marker'], spec.get('reject'))
+    # A single marker string is usually enough to land on one class, or on a
+    # handful where the right one reads first. Ravager's "mouth"/"horn"
+    # strings are each shared with several other mobs' models (a wolf, a
+    # llama, a goat...), and no single reject clears all of them at once -
+    # so its spec names the resolved class directly rather than searching.
+    candidates = [spec['class']] if spec.get('class') else find_classes(
+        JAR, spec['marker'], spec.get('reject'))
     if not candidates:
         raise SystemExit(f'{key}: no class holds "{spec["marker"]}"')
 

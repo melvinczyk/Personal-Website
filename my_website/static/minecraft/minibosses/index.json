@@ -1,5 +1,19 @@
 [
  {
+  "key": "elder_guardian",
+  "id": "minecraft:elder_guardian",
+  "name": "Elder Guardian",
+  "mod": "minecraft",
+  "model": "elder_guardian.model.json"
+ },
+ {
+  "key": "ravager",
+  "id": "minecraft:ravager",
+  "name": "Ravager",
+  "mod": "minecraft",
+  "model": "ravager.model.json"
+ },
+ {
   "key": "alexscaves__forsaken",
   "id": "alexscaves:forsaken",
   "name": "Forsaken",
@@ -173,6 +187,27 @@
   "name": "Withered Abomination",
   "mod": "legendary_monsters",
   "model": "legendary_monsters__withered_abomination.model.json"
+ },
+ {
+  "key": "majruszsdifficulty__cerberus",
+  "id": "majruszsdifficulty:cerberus",
+  "name": "Cerberus",
+  "mod": "majruszsdifficulty",
+  "model": "majruszsdifficulty__cerberus.model.json"
+ },
+ {
+  "key": "majruszsdifficulty__giant",
+  "id": "majruszsdifficulty:giant",
+  "name": "Giant",
+  "mod": "majruszsdifficulty",
+  "model": "majruszsdifficulty__giant.model.json"
+ },
+ {
+  "key": "majruszsdifficulty__tank",
+  "id": "majruszsdifficulty:tank",
+  "name": "Tank",
+  "mod": "majruszsdifficulty",
+  "model": "majruszsdifficulty__tank.model.json"
  },
  {
   "key": "mutantmonsters__mutant_creeper",

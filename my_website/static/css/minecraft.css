@@ -1077,9 +1077,27 @@ body::after { display: none; }
    black: the shape is there, the thing itself is not, and the gap is the
    point of the line. */
 .bcard { cursor: default; }
+/* the roster's own border carries the same tier colour as its star badge -
+   grey for a miniboss, gold/diamond/red/rainbow for tiers 1-4 - the same
+   --px-b tone each .pc-badge.tN uses for its own star, so the two never
+   drift apart. It shows whether or not the card is felled yet, so a player
+   can read a card's rank at a glance before ever beating it. */
+.bcard.t1, .bcard.t2, .bcard.t3, .bcard.t4, .bcard.mini {
+  border-color: var(--tier); border-right-color: var(--tier); border-bottom-color: var(--tier);
+}
+.bcard.t1   { --tier: #eeba62; }
+.bcard.t2   { --tier: #6fe0ee; }
+.bcard.t3   { --tier: #e6484b; }
+.bcard.t4   { --tier: #b23cff; animation: bcard-rainbow 3s linear infinite; }
+.bcard.mini { --tier: #8a97a8; }
+@keyframes bcard-rainbow {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(360deg); }
+}
 /* a beaten boss reads green, the game's own colour for something felled and
    done with; a beaten miniboss stays the warmer brown it always was, so the
-   two ranks read apart at a glance even before the name is read */
+   two ranks read apart at a glance even before the name is read. The tier
+   border above stays put underneath either way - only the fill changes. */
 .bcard.beaten { background: #262019; box-shadow: inset 0 0 0 1px rgba(190,140,80,0.22); }
 .bcard.beaten.boss { background: #172218; box-shadow: inset 0 0 0 1px rgba(123,197,24,0.28); }
 .bcard.hidden { display: none; }

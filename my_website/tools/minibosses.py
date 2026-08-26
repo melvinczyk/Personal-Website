@@ -166,6 +166,11 @@ B.TAG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                      'data', 'minibosses.json')
 B.OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                      'static', 'minecraft', 'minibosses')
+# em.build()/build_dragon() write to entity_model's own OUT, which B.OUT
+# above does not touch - a vanilla miniboss (Elder Guardian, Ravager) would
+# otherwise land in the boss gallery instead of its own. Nothing here is a
+# dragon or reads em.MOBS by tier, so redirecting it wholesale is safe.
+B.em.OUT = B.OUT
 
 # The constant part of each mutantmore rig's idle animation, in degrees, read
 # out of its <Mob>SineWaveAnimations.mutant<Mob>IdleAnimation. Every one of
@@ -281,6 +286,27 @@ MUTANT_JUNGLE_ZOMBIE_IDLE = {
 # the same reasoning as bosses.py's OVERRIDES, kept separate so a miniboss fix
 # never collides with a boss id.
 MINIBOSS_OVERRIDES = {
+    # Cerberus and Tank ship their own bedrock-format geometry - the same
+    # shape geckolib reads - but as assets/majruszsdifficulty/custom/*.json
+    # rather than a *.geo.json, which is the only thing geo_route's own
+    # auto-discovery looks for. Pinning the exact path here routes them
+    # through read_model instead, which B.read_model is taught to read a
+    # bedrock file from regardless of what it's named.
+    'majruszsdifficulty:cerberus': {
+        'model': 'assets/majruszsdifficulty/custom/cerberus_model.json',
+        'texture': 'textures/entity/cerberus.png'},
+    'majruszsdifficulty:tank': {
+        'model': 'assets/majruszsdifficulty/custom/tank_model.json',
+        'texture': 'textures/entity/tank.png'},
+    # Giant's own GiantModel class builds nothing itself - it only scales up
+    # what it extends, vanilla's HumanoidModel - so the automatic search
+    # finds a class with no boxes in it. Pinning the model routes it through
+    # read_model, which already falls back to the vanilla base class when a
+    # mod's own chain runs out.
+    'majruszsdifficulty:giant': {
+        'model': 'com/majruszsdifficulty/entity/GiantModel.class',
+        'texture': 'textures/entity/giant.png'},
+
     # Every illageandspillage mob wears the same tiny party hat and candle -
     # "birthday" and the "thingy" hanging off it - year round, the way its
     # boss-roster cousins do. It reads as a fruit stuck to the head rather

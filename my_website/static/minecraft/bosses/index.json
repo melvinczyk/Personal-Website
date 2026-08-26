@@ -1,450 +1,522 @@
 [
  {
+  "key": "ender_dragon",
+  "id": "minecraft:ender_dragon",
+  "name": "Ender Dragon",
+  "mod": "minecraft",
+  "model": "ender_dragon.model.json",
+  "tier": 3
+ },
+ {
   "key": "warden",
   "id": "minecraft:warden",
   "name": "Warden",
   "mod": "minecraft",
-  "model": "warden.model.json"
+  "model": "warden.model.json",
+  "tier": 2
  },
  {
   "key": "wither",
   "id": "minecraft:wither",
   "name": "Wither",
   "mod": "minecraft",
-  "model": "wither.model.json"
+  "model": "wither.model.json",
+  "tier": 3
  },
  {
   "key": "aether__slider",
   "id": "aether:slider",
   "name": "Slider",
   "mod": "aether",
-  "model": "aether__slider.model.json"
+  "model": "aether__slider.model.json",
+  "tier": 2
  },
  {
   "key": "aether__sun_spirit",
   "id": "aether:sun_spirit",
   "name": "Sun Spirit",
   "mod": "aether",
-  "model": "aether__sun_spirit.model.json"
+  "model": "aether__sun_spirit.model.json",
+  "tier": 2
  },
  {
   "key": "aether__valkyrie_queen",
   "id": "aether:valkyrie_queen",
   "name": "Valkyrie Queen",
   "mod": "aether",
-  "model": "aether__valkyrie_queen.model.json"
+  "model": "aether__valkyrie_queen.model.json",
+  "tier": 2
  },
  {
   "key": "alexscaves__luxtructosaurus",
   "id": "alexscaves:luxtructosaurus",
   "name": "Luxtructosaurus",
   "mod": "alexscaves",
-  "model": "alexscaves__luxtructosaurus.model.json"
+  "model": "alexscaves__luxtructosaurus.model.json",
+  "tier": 3
  },
  {
   "key": "alexscaves__tremorzilla",
   "id": "alexscaves:tremorzilla",
   "name": "Tremorzilla",
   "mod": "alexscaves",
-  "model": "alexscaves__tremorzilla.model.json"
+  "model": "alexscaves__tremorzilla.model.json",
+  "tier": 3
  },
  {
   "key": "alexsmobs__void_worm",
   "id": "alexsmobs:void_worm",
   "name": "Void Worm",
   "mod": "alexsmobs",
-  "model": "alexsmobs__void_worm.model.json"
+  "model": "alexsmobs__void_worm.model.json",
+  "tier": 3
  },
  {
   "key": "ancient_aether__ancient_guardian",
   "id": "ancient_aether:ancient_guardian",
   "name": "Ancient Guardian",
   "mod": "ancient_aether",
-  "model": "ancient_aether__ancient_guardian.model.json"
+  "model": "ancient_aether__ancient_guardian.model.json",
+  "tier": 2
  },
  {
   "key": "aquamirae__captain_cornelia",
   "id": "aquamirae:captain_cornelia",
   "name": "Captain Cornelia",
   "mod": "aquamirae",
-  "model": "aquamirae__captain_cornelia.model.json"
+  "model": "aquamirae__captain_cornelia.model.json",
+  "tier": 1
  },
  {
   "key": "arkane_domains__cursed_pharaoh",
   "id": "arkane_domains:cursed_pharaoh",
   "name": "Cursed Pharaoh",
   "mod": "arkane_domains",
-  "model": "arkane_domains__cursed_pharaoh.model.json"
+  "model": "arkane_domains__cursed_pharaoh.model.json",
+  "tier": 2
  },
  {
   "key": "arkane_domains__dark_shaman",
   "id": "arkane_domains:dark_shaman",
   "name": "Dark Shaman",
   "mod": "arkane_domains",
-  "model": "arkane_domains__dark_shaman.model.json"
+  "model": "arkane_domains__dark_shaman.model.json",
+  "tier": 2
  },
  {
   "key": "arkane_domains__savage_druid",
   "id": "arkane_domains:savage_druid",
   "name": "Savage Druid",
   "mod": "arkane_domains",
-  "model": "arkane_domains__savage_druid.model.json"
+  "model": "arkane_domains__savage_druid.model.json",
+  "tier": 2
  },
  {
   "key": "arkane_domains__warlock",
   "id": "arkane_domains:warlock",
   "name": "Warlock",
   "mod": "arkane_domains",
-  "model": "arkane_domains__warlock.model.json"
+  "model": "arkane_domains__warlock.model.json",
+  "tier": 2
  },
  {
   "key": "better_minoshroomtaur__better_minoshroomtaur",
   "id": "better_minoshroomtaur:better_minoshroomtaur",
   "name": "Better Minoshroomtaur",
   "mod": "better_minoshroomtaur",
-  "model": "better_minoshroomtaur__better_minoshroomtaur.model.json"
+  "model": "better_minoshroomtaur__better_minoshroomtaur.model.json",
+  "tier": 2
  },
  {
   "key": "block_factorys_bosses__infernal_dragon",
   "id": "block_factorys_bosses:infernal_dragon",
   "name": "Infernal Dragon",
   "mod": "block_factorys_bosses",
-  "model": "block_factorys_bosses__infernal_dragon.model.json"
+  "model": "block_factorys_bosses__infernal_dragon.model.json",
+  "tier": 3
  },
  {
   "key": "block_factorys_bosses__kraken",
   "id": "block_factorys_bosses:kraken",
   "name": "Kraken",
   "mod": "block_factorys_bosses",
-  "model": "block_factorys_bosses__kraken.model.json"
+  "model": "block_factorys_bosses__kraken.model.json",
+  "tier": 3
  },
  {
   "key": "block_factorys_bosses__sandworm",
   "id": "block_factorys_bosses:sandworm",
   "name": "Sandworm",
   "mod": "block_factorys_bosses",
-  "model": "block_factorys_bosses__sandworm.model.json"
+  "model": "block_factorys_bosses__sandworm.model.json",
+  "tier": 3
  },
  {
   "key": "block_factorys_bosses__underworld_knight",
   "id": "block_factorys_bosses:underworld_knight",
   "name": "Underworld Knight",
   "mod": "block_factorys_bosses",
-  "model": "block_factorys_bosses__underworld_knight.model.json"
+  "model": "block_factorys_bosses__underworld_knight.model.json",
+  "tier": 3
  },
  {
   "key": "block_factorys_bosses__yeti",
   "id": "block_factorys_bosses:yeti",
   "name": "Yeti",
   "mod": "block_factorys_bosses",
-  "model": "block_factorys_bosses__yeti.model.json"
+  "model": "block_factorys_bosses__yeti.model.json",
+  "tier": 2
  },
  {
   "key": "cataclysm__ancient_remnant",
   "id": "cataclysm:ancient_remnant",
   "name": "Ancient Remnant",
   "mod": "cataclysm",
-  "model": "cataclysm__ancient_remnant.model.json"
+  "model": "cataclysm__ancient_remnant.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__ender_guardian",
   "id": "cataclysm:ender_guardian",
   "name": "Ender Guardian",
   "mod": "cataclysm",
-  "model": "cataclysm__ender_guardian.model.json"
+  "model": "cataclysm__ender_guardian.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__ignis",
   "id": "cataclysm:ignis",
   "name": "Ignis",
   "mod": "cataclysm",
-  "model": "cataclysm__ignis.model.json"
+  "model": "cataclysm__ignis.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__maledictus",
   "id": "cataclysm:maledictus",
   "name": "Maledictus",
   "mod": "cataclysm",
-  "model": "cataclysm__maledictus.model.json"
+  "model": "cataclysm__maledictus.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__netherite_monstrosity",
   "id": "cataclysm:netherite_monstrosity",
   "name": "Netherite Monstrosity",
   "mod": "cataclysm",
-  "model": "cataclysm__netherite_monstrosity.model.json"
+  "model": "cataclysm__netherite_monstrosity.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__scylla",
   "id": "cataclysm:scylla",
   "name": "Scylla",
   "mod": "cataclysm",
-  "model": "cataclysm__scylla.model.json"
+  "model": "cataclysm__scylla.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__the_harbinger",
   "id": "cataclysm:the_harbinger",
   "name": "The Harbinger",
   "mod": "cataclysm",
-  "model": "cataclysm__the_harbinger.model.json"
+  "model": "cataclysm__the_harbinger.model.json",
+  "tier": 4
  },
  {
   "key": "cataclysm__the_leviathan",
   "id": "cataclysm:the_leviathan",
   "name": "The Leviathan",
   "mod": "cataclysm",
-  "model": "cataclysm__the_leviathan.model.json"
+  "model": "cataclysm__the_leviathan.model.json",
+  "tier": 4
  },
  {
   "key": "dungeonnowloading__chaos_spawner",
   "id": "dungeonnowloading:chaos_spawner",
   "name": "Chaos Spawner",
   "mod": "dungeonnowloading",
-  "model": "dungeonnowloading__chaos_spawner.model.json"
+  "model": "dungeonnowloading__chaos_spawner.model.json",
+  "tier": 2
  },
  {
   "key": "dungeonnowloading__fairkeeper_boros",
   "id": "dungeonnowloading:fairkeeper_boros",
   "name": "Fairkeeper Boros",
   "mod": "dungeonnowloading",
-  "model": "dungeonnowloading__fairkeeper_boros.model.json"
+  "model": "dungeonnowloading__fairkeeper_boros.model.json",
+  "tier": 3
  },
  {
   "key": "dungeonnowloading__fairkeeper_ouros",
   "id": "dungeonnowloading:fairkeeper_ouros",
   "name": "Fairkeeper Ouros",
   "mod": "dungeonnowloading",
-  "model": "dungeonnowloading__fairkeeper_ouros.model.json"
+  "model": "dungeonnowloading__fairkeeper_ouros.model.json",
+  "tier": 3
  },
  {
   "key": "fdbosses__chesed",
   "id": "fdbosses:chesed",
   "name": "Chesed",
   "mod": "fdbosses",
-  "model": "fdbosses__chesed.model.json"
+  "model": "fdbosses__chesed.model.json",
+  "tier": 3
  },
  {
   "key": "fdbosses__geburah",
   "id": "fdbosses:geburah",
   "name": "Geburah",
   "mod": "fdbosses",
-  "model": "fdbosses__geburah.model.json"
+  "model": "fdbosses__geburah.model.json",
+  "tier": 3
  },
  {
   "key": "fdbosses__malkuth",
   "id": "fdbosses:malkuth",
   "name": "Malkuth",
   "mod": "fdbosses",
-  "model": "fdbosses__malkuth.model.json"
+  "model": "fdbosses__malkuth.model.json",
+  "tier": 3
  },
  {
   "key": "galosphere__berserker",
   "id": "galosphere:berserker",
   "name": "Berserker",
   "mod": "galosphere",
-  "model": "galosphere__berserker.model.json"
+  "model": "galosphere__berserker.model.json",
+  "tier": 1
  },
  {
   "key": "graveyard__lich",
   "id": "graveyard:lich",
   "name": "Lich",
   "mod": "graveyard",
-  "model": "graveyard__lich.model.json"
+  "model": "graveyard__lich.model.json",
+  "tier": 2
  },
  {
   "key": "illageandspillage__freakager",
   "id": "illageandspillage:freakager",
   "name": "Freakager",
   "mod": "illageandspillage",
-  "model": "illageandspillage__freakager.model.json"
+  "model": "illageandspillage__freakager.model.json",
+  "tier": 2
  },
  {
   "key": "illageandspillage__magispeller",
   "id": "illageandspillage:magispeller",
   "name": "Magispeller",
   "mod": "illageandspillage",
-  "model": "illageandspillage__magispeller.model.json"
+  "model": "illageandspillage__magispeller.model.json",
+  "tier": 2
  },
  {
   "key": "illageandspillage__ragno",
   "id": "illageandspillage:ragno",
   "name": "Ragno",
   "mod": "illageandspillage",
-  "model": "illageandspillage__ragno.model.json"
+  "model": "illageandspillage__ragno.model.json",
+  "tier": 2
  },
  {
   "key": "illageandspillage__spiritcaller",
   "id": "illageandspillage:spiritcaller",
   "name": "Spiritcaller",
   "mod": "illageandspillage",
-  "model": "illageandspillage__spiritcaller.model.json"
+  "model": "illageandspillage__spiritcaller.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__ancient_guardian",
   "id": "legendary_monsters:ancient_guardian",
   "name": "Ancient Guardian",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__ancient_guardian.model.json"
+  "model": "legendary_monsters__ancient_guardian.model.json",
+  "tier": 1
  },
  {
   "key": "legendary_monsters__annihilation_pursuer",
   "id": "legendary_monsters:annihilation_pursuer",
   "name": "Annihilation Pursuer",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__annihilation_pursuer.model.json"
+  "model": "legendary_monsters__annihilation_pursuer.model.json",
+  "tier": 3
  },
  {
   "key": "legendary_monsters__cloud_golem",
   "id": "legendary_monsters:cloud_golem",
   "name": "Cloud Golem",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__cloud_golem.model.json"
+  "model": "legendary_monsters__cloud_golem.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__dune_sentinel",
   "id": "legendary_monsters:dune_sentinel",
   "name": "Dune Sentinel",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__dune_sentinel.model.json"
+  "model": "legendary_monsters__dune_sentinel.model.json",
+  "tier": 1
  },
  {
   "key": "legendary_monsters__endersent",
   "id": "legendary_monsters:endersent",
   "name": "Endersent",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__endersent.model.json"
+  "model": "legendary_monsters__endersent.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__frostbitten_golem",
   "id": "legendary_monsters:frostbitten_golem",
   "name": "Frostbitten Golem",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__frostbitten_golem.model.json"
+  "model": "legendary_monsters__frostbitten_golem.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__overgrown_colossus",
   "id": "legendary_monsters:overgrown_colossus",
   "name": "Overgrown Colossus",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__overgrown_colossus.model.json"
+  "model": "legendary_monsters__overgrown_colossus.model.json",
+  "tier": 1
  },
  {
   "key": "legendary_monsters__posessed_paladin",
   "id": "legendary_monsters:posessed_paladin",
   "name": "Posessed Paladin",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__posessed_paladin.model.json"
+  "model": "legendary_monsters__posessed_paladin.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__shulker_mimic",
   "id": "legendary_monsters:shulker_mimic",
   "name": "Shulker Mimic",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__shulker_mimic.model.json"
+  "model": "legendary_monsters__shulker_mimic.model.json",
+  "tier": 2
  },
  {
   "key": "legendary_monsters__the_obliterator",
   "id": "legendary_monsters:the_obliterator",
   "name": "The Obliterator",
   "mod": "legendary_monsters",
-  "model": "legendary_monsters__the_obliterator.model.json"
+  "model": "legendary_monsters__the_obliterator.model.json",
+  "tier": 4
  },
  {
   "key": "lost_aether_content__aerwhale_king",
   "id": "lost_aether_content:aerwhale_king",
   "name": "Aerwhale King",
   "mod": "lost_aether_content",
-  "model": "lost_aether_content__aerwhale_king.model.json"
+  "model": "lost_aether_content__aerwhale_king.model.json",
+  "tier": 3
  },
  {
   "key": "netherman__azazel",
   "id": "netherman:azazel",
   "name": "Azazel",
   "mod": "netherman",
-  "model": "netherman__azazel.model.json"
+  "model": "netherman__azazel.model.json",
+  "tier": 4
  },
  {
   "key": "netherman__azazel_human",
   "id": "netherman:azazel_human",
   "name": "Azazel Human",
   "mod": "netherman",
-  "model": "netherman__azazel_human.model.json"
+  "model": "netherman__azazel_human.model.json",
+  "tier": 4
  },
  {
   "key": "stalwart_dungeons__awful_ghast",
   "id": "stalwart_dungeons:awful_ghast",
   "name": "Awful Ghast",
   "mod": "stalwart_dungeons",
-  "model": "stalwart_dungeons__awful_ghast.model.json"
+  "model": "stalwart_dungeons__awful_ghast.model.json",
+  "tier": 1
  },
  {
   "key": "stalwart_dungeons__nether_keeper",
   "id": "stalwart_dungeons:nether_keeper",
   "name": "Nether Keeper",
   "mod": "stalwart_dungeons",
-  "model": "stalwart_dungeons__nether_keeper.model.json"
+  "model": "stalwart_dungeons__nether_keeper.model.json",
+  "tier": 1
  },
  {
   "key": "stalwart_dungeons__shelterer",
   "id": "stalwart_dungeons:shelterer",
   "name": "Shelterer",
   "mod": "stalwart_dungeons",
-  "model": "stalwart_dungeons__shelterer.model.json"
+  "model": "stalwart_dungeons__shelterer.model.json",
+  "tier": 2
  },
  {
   "key": "twilightforest__alpha_yeti",
   "id": "twilightforest:alpha_yeti",
   "name": "Alpha Yeti",
   "mod": "twilightforest",
-  "model": "twilightforest__alpha_yeti.model.json"
+  "model": "twilightforest__alpha_yeti.model.json",
+  "tier": 2
  },
  {
   "key": "twilightforest__hydra",
   "id": "twilightforest:hydra",
   "name": "Hydra",
   "mod": "twilightforest",
-  "model": "twilightforest__hydra.model.json"
+  "model": "twilightforest__hydra.model.json",
+  "tier": 2
  },
  {
   "key": "twilightforest__knight_phantom",
   "id": "twilightforest:knight_phantom",
   "name": "Knight Phantom",
   "mod": "twilightforest",
-  "model": "twilightforest__knight_phantom.model.json"
+  "model": "twilightforest__knight_phantom.model.json",
+  "tier": 1
  },
  {
   "key": "twilightforest__lich",
   "id": "twilightforest:lich",
   "name": "Lich",
   "mod": "twilightforest",
-  "model": "twilightforest__lich.model.json"
+  "model": "twilightforest__lich.model.json",
+  "tier": 1
  },
  {
   "key": "twilightforest__minoshroom",
   "id": "twilightforest:minoshroom",
   "name": "Minoshroom",
   "mod": "twilightforest",
-  "model": "twilightforest__minoshroom.model.json"
+  "model": "twilightforest__minoshroom.model.json",
+  "tier": 1
  },
  {
   "key": "twilightforest__naga",
   "id": "twilightforest:naga",
   "name": "Naga",
   "mod": "twilightforest",
-  "model": "twilightforest__naga.model.json"
+  "model": "twilightforest__naga.model.json",
+  "tier": 1
  },
  {
   "key": "twilightforest__snow_queen",
   "id": "twilightforest:snow_queen",
   "name": "Snow Queen",
   "mod": "twilightforest",
-  "model": "twilightforest__snow_queen.model.json"
+  "model": "twilightforest__snow_queen.model.json",
+  "tier": 2
  },
  {
   "key": "twilightforest__ur_ghast",
   "id": "twilightforest:ur_ghast",
   "name": "Ur Ghast",
   "mod": "twilightforest",
-  "model": "twilightforest__ur_ghast.model.json"
+  "model": "twilightforest__ur_ghast.model.json",
+  "tier": 2
  }
 ]

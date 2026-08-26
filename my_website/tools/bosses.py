@@ -41,6 +41,14 @@ TAG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
 
+# boss_rewards.js's own BOSSES dict is the one place a tier is assigned to a
+# boss at all - it is graded there, once, by hand. Reading it here lets an
+# unfelled boss's card carry the right tier colour from the start, instead of
+# only after the server has recorded a first kill for it.
+TIER_SCRIPT = os.path.expanduser(
+    '~/curseforge/minecraft/Instances/Groid Pack OG/kubejs/server_scripts/'
+    'boss_rewards.js')
+
 VANILLA_JAR = em.JAR
 PNG = re.compile(rb'([a-z][a-z0-9_/]*\.png)')
 # A mod ships overlays beside the skin proper: glow maps, eye layers, the
@@ -238,8 +246,13 @@ OVERRIDES = {
                  'bones': ('bone',), 'veil': 0.32}},
 
     # Azazel's left wing is drawn from the right one's corner of the sheet.
-    'netherman:azazel': {'mirror': True},
-    'netherman:azazel_human': {'mirror': True},
+    # Framed whole, its own six-segment wings on each side reach far enough
+    # out that the auto-fit shrinks the whole card to hold them - the same
+    # trade spiritcaller makes, focus body and lean on zoom to bring it in.
+    'netherman:azazel': {'mirror': True, 'focus': 'body', 'zoom': 1.6},
+    # The human form's spear and shield reach out just as far as the wings
+    # do above, for the same reason.
+    'netherman:azazel_human': {'mirror': True, 'focus': 'body', 'zoom': 1.6},
     # Both of these read their cube rotations the other way round; taken the
     # usual way they come out as a heap of loose boxes.
     'graveyard:lich': {'model': 'geo/lich.geo.json',
@@ -290,9 +303,14 @@ OVERRIDES = {
     # Spiritcaller carries a second, unparented pair of legs alongside the
     # ones that hang off its body with everything else - the wings, the halo,
     # the book. Every other bone in the rig answers to body; a leg that
-    # answers to nothing is the leftover, not the mob.
+    # answers to nothing is the leftover, not the mob. Framed whole, the wings
+    # and halo reach far enough out that the auto-fit scales the whole card
+    # down to hold them, and what should be the mob's own centre reads small
+    # next to freakager, its close cousin in the same rig family - focus body
+    # and lean on zoom to bring it back in.
     'illageandspillage:spiritcaller': {
-        'drop': ('left_leg', 'right_leg', 'left_arm', 'right_arm', 'birthday')},
+        'drop': ('left_leg', 'right_leg', 'left_arm', 'right_arm', 'birthday'),
+        'focus': 'body', 'zoom': 1.5},
     # ragno is a spider and never grew the villager rig's arms to begin with;
     # it only needed the birthday candle dropped.
     'illageandspillage:ragno': {'drop': ('birthday',)},
@@ -312,6 +330,31 @@ def pretty(name):
 def read_tag(path):
     with open(path) as fh:
         return [v['id'] for v in json.load(fh)['values']]
+
+
+TIER_ENTRY = re.compile(r"'([a-z0-9_]+:[a-z0-9_]+)':\s*(\d+)")
+
+
+def read_tiers(path=TIER_SCRIPT):
+    """boss_id -> tier, read out of boss_rewards.js's own `var BOSSES = {...}`.
+
+    Read as text, not as JavaScript - there is no JS engine here, and the
+    object is simple enough (one quoted id, one integer, per line) that a
+    line-by-line scan is honest about what it is doing. Stops at the object's
+    own closing brace so `var MINIBOSSES = {...}`, where the tier is always 0
+    and would mean nothing here, is never read into the same dict.
+    """
+    try:
+        with open(path) as fh:
+            text = fh.read()
+    except OSError:
+        return {}
+    start = text.find('var BOSSES = {')
+    if start < 0:
+        return {}
+    end = text.find('\n}', start)
+    block = text[start:end if end >= 0 else None]
+    return {m.group(1): int(m.group(2)) for m in TIER_ENTRY.finditer(block)}
 
 
 def index_jars(folder):
@@ -800,6 +843,11 @@ def in_order(bones):
 VANILLA_MODELS = {
     'HumanoidModel': ('head', 'hat', 'body', 'right_arm', 'left_arm',
                       'right_leg', 'left_leg'),
+    # AbstractZombieModel builds no geometry of its own - it exists only to
+    # be a type every zombie variant shares - so a mod's Giant, built one
+    # step past it, needs the same part names HumanoidModel is found by.
+    'AbstractZombieModel': ('head', 'hat', 'body', 'right_arm', 'left_arm',
+                            'right_leg', 'left_leg'),
 }
 
 _bases = {}
@@ -834,7 +882,11 @@ def vanilla_base(kind):
 def read_model(jar, names, ns, entity, path, mirror=False, spin=None,
                cubespin=None, order=None):
     """One named model file or class, read with whichever reader suits it."""
-    if path.endswith('.geo.json'):
+    # Most mods that ship this format name the file *.geo.json; Majrusz's
+    # Difficulty names its own *_model.json instead. The format inside is
+    # the same bedrock geometry either way, so anything ending .json (not
+    # just .geo.json) is read as one.
+    if path.endswith('.geo.json') or path.endswith('.json'):
         with zipfile.ZipFile(jar) as zf:
             model = json.loads(zf.read(path))
         bones, description = geo_bones(model, mirror, spin, cubespin, order)
@@ -1010,6 +1062,14 @@ def graft_bones(found, jar, names, ns, entity, spec):
 def build(boss, jars, listing, write=True):
     ns, entity = boss.split(':')
     if ns == 'minecraft':
+        # the Ender Dragon doesn't fit em.MOBS's marker-and-CubeListBuilder
+        # scheme at all - see the note above em.build_dragon
+        if entity == 'ender_dragon':
+            if write:
+                em.build_dragon()
+            return {'id': boss, 'key': entity, 'route': 'client', 'ok': True,
+                    'name': 'Ender Dragon', 'mod': 'minecraft',
+                    'bones': 0, 'cubes': 0, 'source': 'fot.class'}
         # the game's own mobs come out of the client jar, not a mod
         spec = em.MOBS.get(entity)
         if not spec:
@@ -1272,8 +1332,14 @@ def main():
             print(f'  {boss:<44} -- {result.get("why")}')
 
     if write and not only:
+        # only real bosses are graded in boss_rewards.js's BOSSES dict - a
+        # miniboss's tier there is always 0 and would say nothing, so this
+        # stays unset for them and the roster keeps drawing minibosses grey
+        # by category rather than by a tier that was never meaningful
+        tiers = read_tiers()
         index = [{'key': r['key'], 'id': r['id'], 'name': r['name'],
-                  'mod': r['mod'], 'model': f'{r["key"]}.model.json'}
+                  'mod': r['mod'], 'model': f'{r["key"]}.model.json',
+                  **({'tier': tiers[r['id']]} if r['id'] in tiers else {})}
                  for r in done]
         index.sort(key=lambda b: (b['mod'] != 'minecraft', b['mod'], b['name']))
         with open(os.path.join(OUT, 'index.json'), 'w') as fh:

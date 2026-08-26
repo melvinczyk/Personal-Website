@@ -25,21 +25,29 @@
 
     <nav class="guide-nav">
       <div class="guide-nav-head">MECHANICS</div>
-      <a class="guide-nav-item active" href="#leveling">Leveling System</a>
-      <a class="guide-nav-item" href="#legendary">Legendary Weapons</a>
-      <a class="guide-nav-item" href="#enchanting">Apotheosis Enchanting</a>
+      <a class="guide-nav-item active acc-leveling" href="#leveling">Leveling System</a>
+      <a class="guide-nav-item acc-legendary" href="#legendary">Legendary Weapons</a>
+      <a class="guide-nav-item acc-enchanting" href="#enchanting">Apotheosis Enchanting</a>
+      <a class="guide-nav-item acc-affixes" href="#affixes">Affixes &amp; Gems</a>
       <div class="guide-nav-note">more sections are on the way</div>
     </nav>
 
     <main class="guide-content">
 
-      <section id="leveling" class="guide-section">
-        <h1>Leveling System</h1>
+      <section id="leveling" class="guide-section acc-leveling">
+        <div class="guide-banner">
+          <img class="gb-icon" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="">
+          <div class="gb-text">
+            <h1>Leveling System</h1>
+            <p class="gb-answer">Every player levels up — and the world gets tougher the farther you wander from spawn.</p>
+          </div>
+        </div>
 
+        <h2 id="skill-tree">The Skill Tree</h2>
         <div class="guide-flow">
           <div class="guide-flow-step">
             <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="Experience">
-            <span>XP</span>
+            <span>Raw XP</span>
           </div>
           <span class="guide-arrow">→</span>
           <div class="guide-flow-step">
@@ -50,23 +58,114 @@
               <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_hunter.png' %}" title="Hunter">
               <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_cook.png' %}" title="Cook">
               <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_miner.png' %}" title="Miner">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_runekiller.png' %}" title="Runekiller">
             </div>
-            <span>Skill Tree</span>
+            <span>Skill Point</span>
           </div>
         </div>
+        <div class="guide-nav-note">Points aren't earned by leveling up — they're bought directly by spending your raw, unspent XP. Each point costs more than the last, and the game asks you to confirm before it takes your XP.</div>
 
         <div class="guide-stat-box">
           <div class="guide-stat"><i>Point cap</i><b>120</b></div>
           <div class="guide-stat"><i>1st point</i><b>160 XP</b></div>
           <div class="guide-stat"><i>120th point</i><b>~2.79M XP</b></div>
+          <div class="guide-stat"><i>All 120 points</i><b>~25.2M XP</b></div>
+        </div>
+
+        <div class="guide-nodelegend">
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_class.png' %}" alt="Class node">
+            <b>Class</b>
+            <span>7 starting points, one per tree. A small always-on bonus for that class's playstyle.</span>
+          </div>
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_lesser.png' %}" alt="Lesser node">
+            <b>Lesser</b>
+            <span>The bulk of the tree — dozens per class. Small, cheap stat bumps that add up.</span>
+          </div>
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_notable.png' %}" alt="Notable node">
+            <b>Notable</b>
+            <span>A bigger bonus roughly every 4–5 Lesser nodes — where a path starts to matter.</span>
+          </div>
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_keystone.png' %}" alt="Keystone node">
+            <b>Keystone</b>
+            <span>A build-defining unique effect at the end of a path — the reason to commit that direction.</span>
+          </div>
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_mastery.png' %}" alt="Mastery node">
+            <b>Mastery</b>
+            <span>The single strongest node on the whole class tree — a distant, expensive capstone.</span>
+          </div>
+          <div class="gnl-item">
+            <img src="{% static 'minecraft/guide/icons/node_gateway.png' %}" alt="Gateway node">
+            <b>Gateway</b>
+            <span>A portal node linking two distant classes, so you can cross into another tree without walking every node between them.</span>
+          </div>
+        </div>
+
+        <div class="guide-nav-note">Every class tree runs roughly 100 nodes deep and eventually splits into two specializations further out — so no two players who picked the same class end up with an identical build.</div>
+
+        <div class="guide-classgrid">
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_blacksmith.png' %}" alt="Blacksmith"><div><b>Blacksmith</b><span>25% chance for anything you craft to get bonus durability.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_alchemist.png' %}" alt="Alchemist"><div><b>Alchemist</b><span>Potions you brew last 40% longer.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_cook.png' %}" alt="Cook"><div><b>Cook</b><span>Food restores 20% more saturation.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_miner.png' %}" alt="Miner"><div><b>Miner</b><span>Pickaxes break blocks 15% faster.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_enchanter.png' %}" alt="Enchanter"><div><b>Enchanter</b><span>Enchantments cost 30% fewer levels at the table.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_hunter.png' %}" alt="Hunter"><div><b>Hunter</b><span>15% chance for a killed mob to drop double loot.</span></div></div>
+          <div class="gcg-item"><img src="{% static 'minecraft/guide/icons/class_runekiller.png' %}" alt="Runekiller"><div><b>Runekiller</b><span>Every bonus needs a Legendary/rare weapon or armor piece equipped — every Simply Swords unique qualifies.</span></div></div>
         </div>
 
         <div class="guide-icon-row">
           <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/amnesia_scroll.png' %}" alt="Amnesia Scroll">
-          <span>Amnesia Scroll<br><b>−20% respec</b></span>
+          <span>Amnesia Scroll<br><b>−20% respec</b> — resets your tree, refunding 80% of the XP you spent</span>
         </div>
 
-        <h2>World Scaling</h2>
+        <div class="guide-xpchart">
+          <svg class="gxc-svg" viewBox="0 0 892 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gxc-fade" x1="0" y1="0" x2="0" y2="1">
+                <stop class="gxc-stop-top" offset="0%"/>
+                <stop class="gxc-stop-bot" offset="100%"/>
+              </linearGradient>
+            </defs>
+            <line class="gxc-gridline" x1="56" y1="204.4" x2="836" y2="204.4"/>
+            <text class="gxc-gridlabel" x="10" y="207.4">1K</text>
+            <line class="gxc-gridline" x1="56" y1="152.0" x2="836" y2="152.0"/>
+            <text class="gxc-gridlabel" x="6" y="155.0">10K</text>
+            <line class="gxc-gridline" x1="56" y1="99.7" x2="836" y2="99.7"/>
+            <text class="gxc-gridlabel" x="2" y="102.7">100K</text>
+            <line class="gxc-gridline" x1="56" y1="47.4" x2="836" y2="47.4"/>
+            <text class="gxc-gridlabel" x="6" y="50.4">1M</text>
+            <polygon class="gxc-area" points="56.0,246.0 62.6,239.2 69.1,233.3 75.7,228.1 82.2,220.4 88.8,215.5 95.3,210.9 101.9,206.5 108.4,204.4 115.0,202.4 121.5,200.5 128.1,198.6 134.7,196.8 141.2,195.0 147.8,191.5 154.3,189.8 160.9,188.1 167.4,186.4 174.0,183.1 180.5,181.6 187.1,180.0 193.6,177.0 200.2,175.5 206.8,172.7 213.3,171.4 219.9,170.1 226.4,167.5 233.0,165.0 239.5,163.9 246.1,161.6 252.6,160.5 259.2,158.3 265.7,156.3 272.3,154.3 278.9,153.3 285.4,151.5 292.0,149.7 298.5,147.9 305.1,146.2 311.6,144.6 318.2,143.1 324.7,142.3 331.3,140.8 337.8,138.6 344.4,137.2 351.0,135.9 357.5,134.6 364.1,133.3 370.6,132.1 377.2,130.9 383.7,129.1 390.3,128.0 396.8,126.9 403.4,125.8 409.9,124.2 416.5,123.2 423.1,121.7 429.6,120.7 436.2,119.8 442.7,118.4 449.3,117.5 455.8,116.2 462.4,114.9 468.9,114.0 475.5,112.8 482.1,111.6 488.6,110.8 495.2,109.7 501.7,108.6 508.3,107.5 514.8,106.8 521.4,105.7 527.9,104.7 534.5,103.7 541.0,102.7 547.6,101.7 554.2,100.8 560.7,99.9 567.3,99.0 573.8,98.1 580.4,97.2 586.9,96.3 593.5,95.2 600.0,94.4 606.6,93.6 613.1,92.8 619.7,91.8 626.3,91.0 632.8,90.3 639.4,89.3 645.9,88.6 652.5,87.9 659.0,86.9 665.6,86.2 672.1,85.4 678.7,84.7 685.2,83.8 691.8,83.0 698.4,82.3 704.9,81.5 711.5,79.3 718.0,77.1 724.6,74.9 731.1,72.5 737.7,70.0 744.2,67.4 750.8,64.8 757.3,62.2 763.9,59.3 770.5,56.5 777.0,53.6 783.6,50.6 790.1,47.5 796.7,44.4 803.2,41.2 809.8,37.8 816.3,34.5 822.9,31.1 829.4,27.6 836.0,24.0 836.0,260 56.0,260"/>
+            <polyline class="gxc-line" points="56.0,246.0 62.6,239.2 69.1,233.3 75.7,228.1 82.2,220.4 88.8,215.5 95.3,210.9 101.9,206.5 108.4,204.4 115.0,202.4 121.5,200.5 128.1,198.6 134.7,196.8 141.2,195.0 147.8,191.5 154.3,189.8 160.9,188.1 167.4,186.4 174.0,183.1 180.5,181.6 187.1,180.0 193.6,177.0 200.2,175.5 206.8,172.7 213.3,171.4 219.9,170.1 226.4,167.5 233.0,165.0 239.5,163.9 246.1,161.6 252.6,160.5 259.2,158.3 265.7,156.3 272.3,154.3 278.9,153.3 285.4,151.5 292.0,149.7 298.5,147.9 305.1,146.2 311.6,144.6 318.2,143.1 324.7,142.3 331.3,140.8 337.8,138.6 344.4,137.2 351.0,135.9 357.5,134.6 364.1,133.3 370.6,132.1 377.2,130.9 383.7,129.1 390.3,128.0 396.8,126.9 403.4,125.8 409.9,124.2 416.5,123.2 423.1,121.7 429.6,120.7 436.2,119.8 442.7,118.4 449.3,117.5 455.8,116.2 462.4,114.9 468.9,114.0 475.5,112.8 482.1,111.6 488.6,110.8 495.2,109.7 501.7,108.6 508.3,107.5 514.8,106.8 521.4,105.7 527.9,104.7 534.5,103.7 541.0,102.7 547.6,101.7 554.2,100.8 560.7,99.9 567.3,99.0 573.8,98.1 580.4,97.2 586.9,96.3 593.5,95.2 600.0,94.4 606.6,93.6 613.1,92.8 619.7,91.8 626.3,91.0 632.8,90.3 639.4,89.3 645.9,88.6 652.5,87.9 659.0,86.9 665.6,86.2 672.1,85.4 678.7,84.7 685.2,83.8 691.8,83.0 698.4,82.3 704.9,81.5 711.5,79.3 718.0,77.1 724.6,74.9 731.1,72.5 737.7,70.0 744.2,67.4 750.8,64.8 757.3,62.2 763.9,59.3 770.5,56.5 777.0,53.6 783.6,50.6 790.1,47.5 796.7,44.4 803.2,41.2 809.8,37.8 816.3,34.5 822.9,31.1 829.4,27.6 836.0,24.0"/>
+            <g>
+              <circle class="gxc-dot" cx="56.0" cy="246.0" r="4"/>
+              <text class="gxc-marklabel" x="56" y="272" text-anchor="middle">#1</text>
+              <text class="gxc-marksub" x="56" y="286" text-anchor="middle">160 XP</text>
+            </g>
+            <g>
+              <circle class="gxc-dot" cx="442.7" cy="118.4" r="4"/>
+              <text class="gxc-marklabel" x="442.7" y="272" text-anchor="middle">#60</text>
+              <text class="gxc-marksub" x="442.7" y="286" text-anchor="middle">43,922 XP</text>
+            </g>
+            <g>
+              <circle class="gxc-dot" cx="704.9" cy="81.5" r="4"/>
+              <text class="gxc-marklabel" x="704.9" y="272" text-anchor="middle">#100</text>
+              <text class="gxc-marksub" x="704.9" y="286" text-anchor="middle">222,420 XP</text>
+            </g>
+            <g>
+              <circle class="gxc-dot" cx="836.0" cy="24.0" r="4"/>
+              <text class="gxc-marklabel" x="800" y="18" text-anchor="middle">#120</text>
+              <text class="gxc-marksub" x="800" y="32" text-anchor="middle">2,794,607 XP</text>
+            </g>
+            <text class="gxc-axislabel" x="446" y="298" text-anchor="middle">skill point # (1 → 120)</text>
+          </svg>
+          <div class="gxc-note">Cost to buy each individual point, log scale — a straight climb like this means every point costs roughly the same <b>percentage</b> more than the last. In plain terms: your first 60 points cost about <b>720K XP total</b>, barely 3% of the grind. The last 60 cost the other <b>~24.5M</b>.</div>
+        </div>
+
+        <h2 id="world-scaling">World Scaling</h2>
         <div class="guide-icon-row">
           <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/compass.png' %}" alt="Compass">
           <span>Farther from spawn<br><b>= stronger, xp-richer mobs</b></span>
@@ -105,10 +204,34 @@
             </div>
           </div>
         </div>
+
+        <h2>Infernal Mobs</h2>
+        <div class="guide-icon-row">
+          <span class="guide-mob-face zombie"></span>
+          <span>Almost any mob can roll <b>Elite, Ultra, or Infernal</b><br><b>on spawn — stacking random combat abilities as it climbs</b></span>
+        </div>
+
+        <div class="guide-stat-box tight">
+          <div class="guide-stat"><i class="tier-elite">Elite</i><b>~1 in 10 · 1 ability</b></div>
+          <div class="guide-stat"><i class="tier-ultra">Ultra</i><b>~1 in 140 · 2 abilities</b></div>
+          <div class="guide-stat"><i class="tier-infernal">Infernal</i><b>~1 in 2,800 · 3 abilities</b></div>
+        </div>
+        <div class="guide-nav-note">Each tier rolls on top of the last, from a shared pool of ~20 abilities — lifesteal, regeneration, berserking, wither, fire, gravity wells, a second life, and more. Actual bosses and minibosses never roll this — it's strictly for the mobs already covered under World Scaling.</div>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/rare_material.png' %}" alt="Loot">
+          <span>Better tier, better drop<br><b>Gem Dust and Rarity Material scale with it, up to Sigils and Ancient Material on an Infernal kill</b></span>
+        </div>
       </section>
 
-      <section id="legendary" class="guide-section">
-        <h1>Legendary Weapons</h1>
+      <section id="legendary" class="guide-section acc-legendary">
+        <div class="guide-banner">
+          <img class="gb-icon" src="{% static 'minecraft/guide/icons/unique_thunderbrand.png' %}" alt="">
+          <div class="gb-text">
+            <h1>Legendary Weapons</h1>
+            <p class="gb-answer">The rarest weapons in the pack. Find one, then power it up at the Runic Forge.</p>
+          </div>
+        </div>
 
         <div class="guide-flow">
           <div class="guide-flow-step">
@@ -138,7 +261,7 @@
           <div class="guide-stat"><i>Runic Tablet pity</i><b>by 60th miss</b></div>
         </div>
 
-        <h2>Runic Forge</h2>
+        <h2 id="runic-forge">Runic Forge</h2>
         <div class="guide-icon-row">
           <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/runic_forge.png' %}" alt="Runic Forge">
           <span>Awaken and customize<br><b>up to 8 tablets, 2 gem sockets</b></span>
@@ -252,8 +375,14 @@
         </div>
       </section>
 
-      <section id="enchanting" class="guide-section">
-        <h1>Apotheosis Enchanting</h1>
+      <section id="enchanting" class="guide-section acc-enchanting">
+        <div class="guide-banner">
+          <img class="gb-icon" src="{% static 'minecraft/guide/icons/enchanting_table.png' %}" alt="">
+          <div class="gb-text">
+            <h1>Apotheosis Enchanting</h1>
+            <p class="gb-answer">A deeper enchanting system — 5 new stats replace flat bookshelf levels.</p>
+          </div>
+        </div>
 
         <div class="guide-icon-row">
           <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanting_table.png' %}" alt="Enchanting Table">
@@ -326,6 +455,193 @@
           <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanted_book.png' %}" alt="Unbreaking">
           <span>Unbreaking on anvils<br><b>each level cuts anvil-break chance</b></span>
         </div>
+      </section>
+
+      <section id="affixes" class="guide-section acc-affixes">
+        <div class="guide-banner">
+          <img class="gb-icon" src="{% static 'minecraft/guide/icons/netherite_sword.png' %}" alt="">
+          <div class="gb-text">
+            <h1>Affixes &amp; Gems</h1>
+            <p class="gb-answer">Random bonus stats and effects roll onto gear and mobs alike — this is where real power comes from.</p>
+          </div>
+        </div>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/netherite_sword.png' %}" alt="Affix Item">
+          <span>Procedurally-generated gear<br><b>random bonus stats, effects, and gem sockets</b></span>
+        </div>
+
+        <div class="guide-stat-box">
+          <div class="guide-stat"><i>Mobs spawn geared up</i><b>7.5%</b></div>
+          <div class="guide-stat"><i>Mob kill drops a gem</i><b>5% (+33% vs. bosses)</b></div>
+          <div class="guide-stat"><i>Affix item in chests</i><b>~30–35%</b></div>
+          <div class="guide-stat"><i>Gem in chests</i><b>~20–25%</b></div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:-6px;">Gems only drop from mobs killed by an actual player — automation and mob farms don't count.</div>
+
+        <h2>Rarity</h2>
+        <div class="guide-table-wrap">
+          <table class="guide-table">
+            <thead>
+              <tr><th>Rarity</th><th>Stats</th><th>Effects</th><th>Sockets</th><th>Durability</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="rarity-common">Common</td><td>1</td><td>—</td><td>—</td><td>—</td></tr>
+              <tr><td class="rarity-uncommon">Uncommon</td><td>2 (up to 3)</td><td>—</td><td>up to 1</td><td>—</td></tr>
+              <tr><td class="rarity-rare">Rare</td><td>3</td><td>1 (up to 2)</td><td>up to 1</td><td>slight bonus</td></tr>
+              <tr><td class="rarity-epic">Epic</td><td>3 (up to 4)</td><td>1 (up to 2)</td><td>up to 2</td><td>stronger bonus</td></tr>
+              <tr><td class="rarity-mythic">Mythic</td><td>4</td><td>2 (up to 3)</td><td>up to 3</td><td>significant bonus</td></tr>
+              <tr><td class="rarity-ancient">Ancient</td><td colspan="4">the pinnacle of creation — so rare the mod's own book jokes it "might not even be implemented yet"</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Higher rarity is always strictly stronger than the last. The Durability affix stacks multiplicatively with Unbreaking.</div>
+
+        <h2>A Real Example</h2>
+        <div class="guide-example">
+          <img class="guide-example-shot" src="{% static 'minecraft/guide/icons/example_affix_item.png' %}" alt="Tooltip for a Rare-tier affixed diamond sword">
+          <div class="guide-example-notes">
+            <div class="guide-lvl-tag"><span class="rarity-rare">RARE</span> — "Elusive Diamond Sword of the Frostlands"</div>
+            <p>This is what an affixed item actually looks like in your inventory — so if you spot a tooltip like this in a chest, you'll know exactly what you're holding.</p>
+          </div>
+        </div>
+
+        <h2>Affix Types</h2>
+        <div class="guide-statlist">
+          <div class="guide-statlist-item affix-stat">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Stat Affix">
+            <div class="gsl-body"><b>Stat Affixes</b><span>A flat bonus to a single attribute. The most common affix type, and the only one that can appear on a Common item.</span></div>
+          </div>
+          <div class="guide-statlist-item affix-effect">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/nether_star.png' %}" alt="Effect Affix">
+            <div class="gsl-body"><b>Effect Affixes</b><span>Bigger, weirder bonuses — utility or straight combat power. Rare and above only.</span></div>
+          </div>
+          <div class="guide-statlist-item affix-socket">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem.png' %}" alt="Socket">
+            <div class="gsl-body"><b>Sockets</b><span>A slot that holds one Gem. Uncommon and above only, and never more than the rarity's cap.</span></div>
+          </div>
+          <div class="guide-statlist-item affix-durability">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/rare_material.png' %}" alt="Durability">
+            <div class="gsl-body"><b>Durability</b><span>Makes the item more resistant to breaking. Guaranteed on Rare and above, scaling with rarity.</span></div>
+          </div>
+        </div>
+
+        <h2>Gems</h2>
+        <div class="guide-flow">
+          <div class="guide-flow-step">
+            <div class="guide-tree-icons">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_inferno.png' %}" title="Inferno">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_lightning.png' %}" title="Lightning">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_guardian.png' %}" title="Guardian">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_warlord.png' %}" title="Warlord">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_royalty.png' %}" title="Royalty">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/gem_endersurge.png' %}" title="Endersurge">
+            </div>
+            <span>Socketable Gems</span>
+          </div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Each gem gives a different bonus depending on the item it's socketed into, and some are Unique — only one copy of that gem can be socketed at a time. Socket one by combining gem + item in a smithing table.</div>
+
+        <div class="guide-compare">
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag">VIAL OF SEARING EXPULSION</div>
+            <div class="guide-icon-row">
+              <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/vial_expulsion.png' %}" alt="Vial of Searing Expulsion">
+              <span>Keeps the item<br><b>destroys the gems</b></span>
+            </div>
+          </div>
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag hot">VIAL OF ARCANE EXTRACTION</div>
+            <div class="guide-icon-row">
+              <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/vial_extraction.png' %}" alt="Vial of Arcane Extraction">
+              <span>Keeps the gems<br><b>destroys the item</b></span>
+            </div>
+          </div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Combine either vial with a socketed item in a smithing table to pull the gems back out — pick whichever half of the pair you actually want to keep.</div>
+
+        <h2>Upgrading Gems</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/gem_dust.png' %}" alt="Gem Dust">
+          <span>Gem Dust<br><b>crush a gem with an anvil, or use a Salvaging Table</b></span>
+        </div>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/gem.png' %}" alt="Gem Cutting Table">
+          <span>Gem Cutting Table<br><b>Gem Dust + Rarity Material + a 2nd same-rarity gem → upgrade</b></span>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Upgrade cost climbs with rarity — higher-tier gems need more Gem Dust and higher-tier Rarity Materials. Gems cap out at Ancient.</div>
+
+        <h2>Salvaging</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/salvaging_table.png' %}" alt="Salvaging Table">
+          <span>Salvaging Table<br><b>breaks an affix item down into its Rarity Material</b></span>
+        </div>
+        <div class="guide-flow">
+          <div class="guide-flow-step">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/common_material.png' %}" title="Common Material">
+            <span>Common</span>
+          </div>
+          <div class="guide-flow-step">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/uncommon_material.png' %}" title="Uncommon Material">
+            <span>Uncommon</span>
+          </div>
+          <div class="guide-flow-step">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/rare_material.png' %}" title="Rare Material">
+            <span>Rare</span>
+          </div>
+          <div class="guide-flow-step">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/epic_material.png' %}" title="Epic Material">
+            <span>Epic</span>
+          </div>
+          <div class="guide-flow-step">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/mythic_material.png' %}" title="Mythic Material">
+            <span>Mythic</span>
+          </div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Hang on to every affixed item you find, even the ones you'll never wear — anything you're not using is free Rarity Material once it goes through the Salvaging Table.</div>
+
+        <h2>Reforging</h2>
+        <div class="guide-nav-note" style="margin-top:0;">Reforging rerolls an item's affixes entirely — it works on any valid item, not just ones that already rolled affixes.</div>
+        <div class="guide-compare">
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag">SIMPLE REFORGING TABLE</div>
+            <div class="guide-icon-row">
+              <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/reforging_simple.png' %}" alt="Simple Reforging Table">
+              <span>Up to Rare rarity</span>
+            </div>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag hot">REFORGING TABLE</div>
+            <div class="guide-icon-row">
+              <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/reforging_table.png' %}" alt="Reforging Table">
+              <span>Epic rarity and above</span>
+            </div>
+          </div>
+        </div>
+        <div class="guide-stat-box tight">
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/rare_material.png' %}" alt=""></i><span class="guide-stat-lbl">Cheap reroll</span><b>2 each</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/epic_material.png' %}" alt=""></i><span class="guide-stat-lbl">Mid reroll</span><b>4 each</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/mythic_material.png' %}" alt=""></i><span class="guide-stat-lbl">Strong reroll</span><b>6 each</b></div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">"Each" = Gem Dust, Rarity Material, and XP levels. Fill all three slots (item, Rarity Material, Gem Dust) and pick one of three rerolled outcomes — no choice is inherently stronger, they're just different rolls. No limit on how many times an item can be reforged.</div>
+
+        <h2>Where to Find Better Gear</h2>
+        <div class="guide-table-wrap">
+          <table class="guide-table">
+            <thead>
+              <tr><th>Dimension</th><th>Rarity Range</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Overworld</td><td><span class="rarity-common">Common</span> – <span class="rarity-rare">Rare</span></td></tr>
+              <tr><td>Nether</td><td><span class="rarity-uncommon">Uncommon</span> – <span class="rarity-epic">Epic</span></td></tr>
+              <tr><td>End</td><td><span class="rarity-rare">Rare</span> – <span class="rarity-ancient">Ancient</span></td></tr>
+              <tr><td>Twilight Forest</td><td><span class="rarity-uncommon">Uncommon</span> – <span class="rarity-epic">Epic</span></td></tr>
+              <tr><td>Aether</td><td><span class="rarity-uncommon">Uncommon</span> – <span class="rarity-epic">Epic</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">This is the range of rarities that can generate directly onto gear and gems found in each dimension — the End is the only place Ancient-tier loot can appear at all.</div>
       </section>
 
     </main>

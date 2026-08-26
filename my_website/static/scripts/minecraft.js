@@ -778,14 +778,22 @@ function buildLive(board) {
       </div>
     </div>`).join('') : '<p class="rp-none">the server has not reported anybody yet</p>';
 
-  const bossCard = b => `
-    <div class="bcard${b.felled ? ' beaten' : ' locked'} ${b.category}" id="bc-${b.key}"
+  const bossCard = b => {
+    // the same tier -> class mapping the star badges use (t1..t4, or mini),
+    // so the card's own border can carry the tier's colour before anyone
+    // has felled it, not just after. A boss with no tier at all - the index
+    // and boss_rewards.js's own grading have gone out of sync - gets no
+    // class rather than a guessed one: the plain slot border says "unknown"
+    // honestly, where a fallback tier would just be a wrong colour.
+    const tierCls = b.category === 'miniboss' ? 'mini' : (b.tier ? `t${b.tier}` : '');
+    return `
+    <div class="bcard${b.felled ? ' beaten' : ' locked'} ${b.category} ${tierCls}" id="bc-${b.key}"
          data-beaten="${b.felled ? 1 : 0}"
          onmouseenter="spin('bm-${b.key}', true)" onmouseleave="spin('bm-${b.key}', false)">
       <div class="bc-stage"><div class="bc-model" id="bm-${b.key}" data-boss="${b.key}"></div></div>
       <div class="bc-foot">
         <div class="bc-name">${b.felled || REVEAL ? b.name : '???'}</div>
-        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.category === 'miniboss' ? '' : (b.tier ? ` \u00b7 tier ${b.tier}` : '')}</div>
+        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}</div>
         ${b.felled ? `
           <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}</div>
           <div class="bc-killers">${b.killers.map(k => `
@@ -795,6 +803,7 @@ function buildLive(board) {
         ` : ''}
       </div>
     </div>`;
+  };
 
   const all = board.bosses || [];
   document.getElementById('ls-bosses').innerHTML =

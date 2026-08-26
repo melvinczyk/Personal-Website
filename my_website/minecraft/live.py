@@ -254,8 +254,13 @@ def bosses(season_path, faces=None):
             'name':    boss['name'],
             'mod':     boss.get('mod', ''),
             'category': boss['category'],
-            # the server's own script grades them; the roster does not presume to
-            'tier':    hit['tier'] if hit and hit.get('tier') else None,
+            # a real kill's own tier wins once there is one - it is the same
+            # number either way, but a felled record needs no help from the
+            # index. Before that, tools/bosses.py has already baked the grade
+            # boss_rewards.js gives this boss into its own index entry, so
+            # the roster can show a card's rank before anyone has felled it,
+            # rather than only after.
+            'tier':    (hit['tier'] if hit and hit.get('tier') else None) or boss.get('tier'),
             # the file's own mtime rides along so a rebuilt model is never
             # served from a browser cache that still holds the old one
             'model':   f'{boss["url"]}/{boss["model"]}?v={_stamp(boss["dir"], boss["model"])}',
@@ -266,9 +271,12 @@ def bosses(season_path, faces=None):
             'last':    hit['last'] if hit else '',
         })
     # bosses lead the roster, minibosses stand behind them in a section of
-    # their own; within each, what has been beaten leads the rest
-    out.sort(key=lambda b: (b['category'] == 'miniboss', not b['felled'],
-                            b['mod'] != 'minecraft', b['mod'], b['name']))
+    # their own; within each, weakest tier first and strongest last, so the
+    # grid itself reads as a ladder. A miniboss has no tier worth ordering by
+    # (it is always 0), so it falls through to what's beaten, then name.
+    out.sort(key=lambda b: (b['category'] == 'miniboss', b['tier'] or 99,
+                            not b['felled'], b['mod'] != 'minecraft',
+                            b['mod'], b['name']))
     return out
 
 
