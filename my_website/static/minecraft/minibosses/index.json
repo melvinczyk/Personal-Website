@@ -294,13 +294,6 @@
   "model": "skarrier_mobs__carnager.model.json"
  },
  {
-  "key": "skarrier_mobs__tunnel_gore",
-  "id": "skarrier_mobs:tunnel_gore",
-  "name": "Tunnel Gore",
-  "mod": "skarrier_mobs",
-  "model": "skarrier_mobs__tunnel_gore.model.json"
- },
- {
   "key": "skarrier_mobs__wrought",
   "id": "skarrier_mobs:wrought",
   "name": "Wrought",
