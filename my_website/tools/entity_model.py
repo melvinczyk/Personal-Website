@@ -57,6 +57,7 @@ LINE = re.compile(r'^\s*\d+:\s+(\S+)\s*(.*)$')
 LDC_NUM = re.compile(r'//\s*(?:float|int|double|long)\s+(-?[\d.]+(?:[eE]-?\d+)?)')
 LDC_STR = re.compile(r'//\s*String\s+(.*)$')
 SUPER = re.compile(r'^\w[\w .<>,?]*class [\w.$]+(?:<[^>]*>)? extends ([\w.$]+)', re.M)
+CLASSNAME = re.compile(r'^\w[\w .<>,?]*\bclass ([\w.$]+)', re.M)
 # The owner is optional: a model that calls its own helper to pose a bone -
 # setRotationAngle(box, x, y, z), the usual Blockbench export - is written by
 # javap with no class in front of the name, and reading only qualified calls
@@ -455,7 +456,17 @@ def parse_advanced(text):
         return marks
 
     blocks = methods_of(text)
-    body = max(blocks, key=score) if blocks else []
+    # Citadel's own pose helpers - swing(), walk(), flap(), bob() - each take
+    # six floats too, so a setupAnim() full of them can out-score the
+    # constructor that actually builds the boxes. The constructor is never in
+    # doubt, though: javap names it after the class, so blocks are narrowed to
+    # that one first and only widened back to "whichever scores highest" if
+    # nothing matches it.
+    cls = CLASSNAME.search(text)
+    simple = re.split(r'[.$]', cls.group(1))[-1] if cls else None
+    ctor = re.compile(rf'\b{re.escape(simple)}\(') if simple else None
+    pool = [b for b in blocks if ctor and ctor.search(b[0])] or blocks
+    body = max(pool, key=score) if pool else []
     if not body or not score(body):
         return [], None
 
@@ -514,7 +525,7 @@ def parse_advanced(text):
             if read.refs and len(read.stack) >= 3:
                 x, y, z = read.stack[-3:]
                 read.part(read.refs[-1])['pivot'] = [round(x, 3), round(y, 3), round(-z, 3)]
-        elif 'setRotationAngle' in method and args.count('F') == 3:
+        elif ('setRotationAngle' in method or 'setRotateAngle' in method) and args.count('F') == 3:
             if read.refs and len(read.stack) >= 3:
                 rx, ry, rz = read.stack[-3:]
                 read.part(read.refs[-1])['rot'] = [round(-rx, 4), round(-ry, 4), round(rz, 4)]

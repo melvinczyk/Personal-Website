@@ -6,6 +6,10 @@
       "required": false
     },
     {
+      "id": "alexscaves:gum_worm",
+      "required": false
+    },
+    {
       "id": "alexscaves:hullbreaker",
       "required": false
     },
@@ -70,6 +74,10 @@
       "required": false
     },
     {
+      "id": "illageandspillage:absorber",
+      "required": false
+    },
+    {
       "id": "illagerinvasion:invoker",
       "required": false
     },
@@ -82,15 +90,7 @@
       "required": false
     },
     {
-      "id": "legendary_monsters:mossy_golem",
-      "required": false
-    },
-    {
       "id": "legendary_monsters:resurrected_knight",
-      "required": false
-    },
-    {
-      "id": "legendary_monsters:shulker_mimic",
       "required": false
     },
     {
@@ -106,7 +106,19 @@
       "required": false
     },
     {
+      "id": "majruszsdifficulty:giant",
+      "required": false
+    },
+    {
+      "id": "majruszsdifficulty:tank",
+      "required": false
+    },
+    {
       "id": "minecraft:elder_guardian",
+      "required": false
+    },
+    {
+      "id": "minecraft:ravager",
       "required": false
     },
     {
@@ -186,7 +198,15 @@
       "required": false
     },
     {
+      "id": "skarrier_mobs:trawler",
+      "required": false
+    },
+    {
       "id": "skarrier_mobs:wrought",
+      "required": false
+    },
+    {
+      "id": "wkcr:king",
       "required": false
     }
   ]

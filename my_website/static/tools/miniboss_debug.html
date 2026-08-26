@@ -6,8 +6,8 @@
 <style>
   body { background:#111; color:#ccc; font-family: monospace; margin:0; padding:12px; }
   .grid { display:flex; flex-wrap:wrap; gap:8px; }
-  .card { width:180px; background:#1a1a1a; border:1px solid #333; padding:4px; text-align:center; }
-  .stage { width:172px; height:200px; background:#000; }
+  .card { width:340px; background:#1a1a1a; border:1px solid #333; padding:4px; text-align:center; }
+  .stage { width:332px; height:380px; background:#000; }
   .name { font-size:11px; margin-top:4px; word-break:break-all; }
 </style>
 </head>
@@ -16,9 +16,12 @@
 <script type="module">
 import '/static/scripts/mcmodel.js';
 
-const FOLDER = new URLSearchParams(location.search).get('folder') || 'minibosses';
+const params = new URLSearchParams(location.search);
+const FOLDER = params.get('folder') || 'minibosses';
+const FILTER = params.get('filter') || '';
 const res = await fetch(`/static/minecraft/${FOLDER}/index.json`);
-const index = await res.json();
+let index = await res.json();
+if (FILTER) index = index.filter(b => b.key.includes(FILTER) || b.id.includes(FILTER));
 const grid = document.getElementById('grid');
 
 for (const b of index) {
@@ -34,7 +37,7 @@ for (const b of index) {
   grid.appendChild(card);
   window.buildMobModel(stage, {
     model: `/static/minecraft/${FOLDER}/${b.model}`,
-    locked: false, width: 172, height: 200,
+    locked: false, width: 332, height: 380,
   });
 }
 </script>

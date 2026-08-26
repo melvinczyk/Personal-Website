@@ -1,0 +1,265 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "aether:slider",
+      "required": false
+    },
+    {
+      "id": "aether:sun_spirit",
+      "required": false
+    },
+    {
+      "id": "aether:valkyrie_queen",
+      "required": false
+    },
+    {
+      "id": "alexscaves:luxtructosaurus",
+      "required": false
+    },
+    {
+      "id": "alexscaves:tremorzilla",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:void_worm",
+      "required": false
+    },
+    {
+      "id": "ancient_aether:ancient_guardian",
+      "required": false
+    },
+    {
+      "id": "aquamirae:captain_cornelia",
+      "required": false
+    },
+    {
+      "id": "arkane_domains:cursed_pharaoh",
+      "required": false
+    },
+    {
+      "id": "arkane_domains:dark_shaman",
+      "required": false
+    },
+    {
+      "id": "arkane_domains:savage_druid",
+      "required": false
+    },
+    {
+      "id": "arkane_domains:warlock",
+      "required": false
+    },
+    {
+      "id": "better_minoshroomtaur:better_minoshroomtaur",
+      "required": false
+    },
+    {
+      "id": "block_factorys_bosses:infernal_dragon",
+      "required": false
+    },
+    {
+      "id": "block_factorys_bosses:kraken",
+      "required": false
+    },
+    {
+      "id": "block_factorys_bosses:sandworm",
+      "required": false
+    },
+    {
+      "id": "block_factorys_bosses:underworld_knight",
+      "required": false
+    },
+    {
+      "id": "block_factorys_bosses:yeti",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ancient_remnant",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ender_guardian",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ignis",
+      "required": false
+    },
+    {
+      "id": "cataclysm:maledictus",
+      "required": false
+    },
+    {
+      "id": "cataclysm:netherite_monstrosity",
+      "required": false
+    },
+    {
+      "id": "cataclysm:scylla",
+      "required": false
+    },
+    {
+      "id": "cataclysm:the_harbinger",
+      "required": false
+    },
+    {
+      "id": "cataclysm:the_leviathan",
+      "required": false
+    },
+    {
+      "id": "dungeonnowloading:chaos_spawner",
+      "required": false
+    },
+    {
+      "id": "dungeonnowloading:fairkeeper_boros",
+      "required": false
+    },
+    {
+      "id": "dungeonnowloading:fairkeeper_ouros",
+      "required": false
+    },
+    {
+      "id": "fdbosses:chesed",
+      "required": false
+    },
+    {
+      "id": "fdbosses:geburah",
+      "required": false
+    },
+    {
+      "id": "fdbosses:malkuth",
+      "required": false
+    },
+    {
+      "id": "galosphere:berserker",
+      "required": false
+    },
+    {
+      "id": "graveyard:lich",
+      "required": false
+    },
+    {
+      "id": "illageandspillage:freakager",
+      "required": false
+    },
+    {
+      "id": "illageandspillage:magispeller",
+      "required": false
+    },
+    {
+      "id": "illageandspillage:ragno",
+      "required": false
+    },
+    {
+      "id": "illageandspillage:spiritcaller",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:ancient_guardian",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:annihilation_pursuer",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:cloud_golem",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:dune_sentinel",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:endersent",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:frostbitten_golem",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:overgrown_colossus",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:posessed_paladin",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:shulker_mimic",
+      "required": false
+    },
+    {
+      "id": "legendary_monsters:the_obliterator",
+      "required": false
+    },
+    {
+      "id": "lost_aether_content:aerwhale_king",
+      "required": false
+    },
+    {
+      "id": "minecraft:ender_dragon",
+      "required": false
+    },
+    {
+      "id": "minecraft:warden",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither",
+      "required": false
+    },
+    {
+      "id": "netherman:azazel",
+      "required": false
+    },
+    {
+      "id": "netherman:azazel_human",
+      "required": false
+    },
+    {
+      "id": "stalwart_dungeons:awful_ghast",
+      "required": false
+    },
+    {
+      "id": "stalwart_dungeons:nether_keeper",
+      "required": false
+    },
+    {
+      "id": "stalwart_dungeons:shelterer",
+      "required": false
+    },
+    {
+      "id": "twilightforest:alpha_yeti",
+      "required": false
+    },
+    {
+      "id": "twilightforest:hydra",
+      "required": false
+    },
+    {
+      "id": "twilightforest:knight_phantom",
+      "required": false
+    },
+    {
+      "id": "twilightforest:lich",
+      "required": false
+    },
+    {
+      "id": "twilightforest:minoshroom",
+      "required": false
+    },
+    {
+      "id": "twilightforest:naga",
+      "required": false
+    },
+    {
+      "id": "twilightforest:snow_queen",
+      "required": false
+    },
+    {
+      "id": "twilightforest:ur_ghast",
+      "required": false
+    }
+  ]
+}

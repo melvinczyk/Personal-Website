@@ -162,10 +162,6 @@ for _i in range(3):
         SKELETON_REST[f'side1{_j + 1}{_n}'] = (0.0, -_y * _narrow, 0.0)
         SKELETON_REST[f'side2{_j + 1}{_n}'] = (0.0, _y * _narrow, 0.0)
 
-# This machine's mods folder lives under Documents/curseforge, not directly
-# under the user profile like bosses.py's own default assumes.
-B.MODS = os.path.expanduser(
-    '~/Documents/curseforge/minecraft/Instances/Groid Pack OG/mods')
 B.TAG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                      'data', 'minibosses.json')
 B.OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -285,6 +281,12 @@ MUTANT_JUNGLE_ZOMBIE_IDLE = {
 # the same reasoning as bosses.py's OVERRIDES, kept separate so a miniboss fix
 # never collides with a boss id.
 MINIBOSS_OVERRIDES = {
+    # Every illageandspillage mob wears the same tiny party hat and candle -
+    # "birthday" and the "thingy" hanging off it - year round, the way its
+    # boss-roster cousins do. It reads as a fruit stuck to the head rather
+    # than the mob it is actually drawing.
+    'illageandspillage:absorber': {'drop': ('birthday',)},
+
     # From the Shadows keeps two other mobs' skins in the same folder as
     # theirs (frog.png, at 128x128, happens to be the size the model's own
     # geo file declares) and the size-matching pass reaches for that before

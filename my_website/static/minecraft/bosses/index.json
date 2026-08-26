@@ -252,6 +252,34 @@
   "model": "graveyard__lich.model.json"
  },
  {
+  "key": "illageandspillage__freakager",
+  "id": "illageandspillage:freakager",
+  "name": "Freakager",
+  "mod": "illageandspillage",
+  "model": "illageandspillage__freakager.model.json"
+ },
+ {
+  "key": "illageandspillage__magispeller",
+  "id": "illageandspillage:magispeller",
+  "name": "Magispeller",
+  "mod": "illageandspillage",
+  "model": "illageandspillage__magispeller.model.json"
+ },
+ {
+  "key": "illageandspillage__ragno",
+  "id": "illageandspillage:ragno",
+  "name": "Ragno",
+  "mod": "illageandspillage",
+  "model": "illageandspillage__ragno.model.json"
+ },
+ {
+  "key": "illageandspillage__spiritcaller",
+  "id": "illageandspillage:spiritcaller",
+  "name": "Spiritcaller",
+  "mod": "illageandspillage",
+  "model": "illageandspillage__spiritcaller.model.json"
+ },
+ {
   "key": "legendary_monsters__ancient_guardian",
   "id": "legendary_monsters:ancient_guardian",
   "name": "Ancient Guardian",
@@ -306,6 +334,13 @@
   "name": "Posessed Paladin",
   "mod": "legendary_monsters",
   "model": "legendary_monsters__posessed_paladin.model.json"
+ },
+ {
+  "key": "legendary_monsters__shulker_mimic",
+  "id": "legendary_monsters:shulker_mimic",
+  "name": "Shulker Mimic",
+  "mod": "legendary_monsters",
+  "model": "legendary_monsters__shulker_mimic.model.json"
  },
  {
   "key": "legendary_monsters__the_obliterator",

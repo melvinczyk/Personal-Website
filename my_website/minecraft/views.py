@@ -204,3 +204,13 @@ def live_board(request):
     board['season'] = LIVE_SEASON
     board['source'] = pull
     return JsonResponse(board)
+
+
+def guide(request):
+    """The modpack's own mechanics, for whoever just joined the live season.
+
+    A static page rather than anything read off the server: what a mod's
+    config says a system does does not change between restarts the way a
+    player's own numbers do, so there is nothing here worth polling for.
+    """
+    return render(request, 'minecraft_guide.html', {'season': LIVE_SEASON})

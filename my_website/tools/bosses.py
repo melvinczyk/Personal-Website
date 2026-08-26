@@ -30,9 +30,14 @@ import geo as geolib
 
 MODS = os.path.expanduser(
     '~/curseforge/minecraft/Instances/Groid Pack OG/mods')
-TAG = os.path.expanduser(
-    '~/Desktop/Minecraft server stuff/Datapacks/Groid Pack OG/Groid Tags'
-    '/data/groid/tags/entity_types/bosses.json')
+# The datapack itself now ships inside the instance's own global_packs, zipped
+# rather than laid out loose on the Desktop the way the old copy was. Rather
+# than unzip it on every run, a copy of the tag lives beside this file - the
+# same arrangement minibosses.py already used - and gets refreshed by hand
+# whenever the pack's tags change: unzip Groid Tags.zip's
+# data/groid/tags/entity_types/{bosses,minibosses}.json over tools/data/.
+TAG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                   'data', 'bosses.json')
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
 
@@ -260,6 +265,37 @@ OVERRIDES = {
         'model': 'com/github/alexmodguy/alexscaves/client/model/'
                  'TremorzillaModel.class',
         'texture': 'textures/entity/tremorzilla/tremorzilla.png', 'zoom': 1.6},
+
+    # The renderer's own bytecode draws it from the_warped_one's sheet, not
+    # a the_obliterator one - it never got its own, so the mod just points
+    # at another boss's. Nothing in the jar is named or foldered for it, so
+    # the general ranking heuristic has no way to land here on its own.
+    'legendary_monsters:the_obliterator': {
+        'texture': 'textures/entity/the_warped_one/the_warped_one.png'},
+
+    # Every illageandspillage villager-shaped mob builds its arms twice: once
+    # as left_arm/right_arm, holding whatever it holds, and again as a second,
+    # unrelated "arms"/"arms_rotation"/"arms_flipped" chain sat at the same
+    # height on the chest - a crossed-arms pose vanilla villagers switch to
+    # when idle. illagerinvasion's invoker is the same trick under different
+    # bone names, and there the loose pair is the one dropped; here the
+    # crossed pair reads better, so it is the loose pair that goes instead.
+    #
+    # Freakager is a villager in disguise on top of that: the model builds a
+    # second COMPLETE rig under its own "villager" root - the disguise - next
+    # to the true, scythe-armed one under "body". The card is for a boss
+    # somebody has felled, so it draws the form that was actually fought.
+    'illageandspillage:freakager': {'drop': ('villager', 'arms', 'birthday')},
+    'illageandspillage:magispeller': {'drop': ('left_arm', 'right_arm', 'birthday')},
+    # Spiritcaller carries a second, unparented pair of legs alongside the
+    # ones that hang off its body with everything else - the wings, the halo,
+    # the book. Every other bone in the rig answers to body; a leg that
+    # answers to nothing is the leftover, not the mob.
+    'illageandspillage:spiritcaller': {
+        'drop': ('left_leg', 'right_leg', 'left_arm', 'right_arm', 'birthday')},
+    # ragno is a spider and never grew the villager rig's arms to begin with;
+    # it only needed the birthday candle dropped.
+    'illageandspillage:ragno': {'drop': ('birthday',)},
 }
 
 
@@ -407,6 +443,12 @@ def pick_texture(jar, names, ns, entity, named=(), size=None):
             0 if f'/{target}/' in path or f'/{tail}/' in path else 1,
             0 if '/entit' in path else 1,
             0 if base.startswith(target) or base.startswith(tail) else 1,
+            # a reskin a mod ships as an option - illageandspillage's
+            # "arachnophobia mode" for ragno is the one that sent this
+            # looking for a tiebreaker - sits one folder deeper than the
+            # default it is an alternative to, and is otherwise named and
+            # sized identically enough to tie every check above this one
+            path.count('/'),
             len(base),
             0 if path in spoken else 1,
         )

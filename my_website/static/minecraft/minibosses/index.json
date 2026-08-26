@@ -1,5 +1,19 @@
 [
  {
+  "key": "alexscaves__forsaken",
+  "id": "alexscaves:forsaken",
+  "name": "Forsaken",
+  "mod": "alexscaves",
+  "model": "alexscaves__forsaken.model.json"
+ },
+ {
+  "key": "alexscaves__gum_worm",
+  "id": "alexscaves:gum_worm",
+  "name": "Gum Worm",
+  "mod": "alexscaves",
+  "model": "alexscaves__gum_worm.model.json"
+ },
+ {
   "key": "alexscaves__hullbreaker",
   "id": "alexscaves:hullbreaker",
   "name": "Hullbreaker",
@@ -12,6 +26,13 @@
   "name": "Tremorsaurus",
   "mod": "alexscaves",
   "model": "alexscaves__tremorsaurus.model.json"
+ },
+ {
+  "key": "alexsmobs__warped_mosco",
+  "id": "alexsmobs:warped_mosco",
+  "name": "Warped Mosco",
+  "mod": "alexsmobs",
+  "model": "alexsmobs__warped_mosco.model.json"
  },
  {
   "key": "aquamirae__eel",
@@ -105,6 +126,13 @@
   "model": "fromtheshadows__nehemoth.model.json"
  },
  {
+  "key": "illageandspillage__absorber",
+  "id": "illageandspillage:absorber",
+  "name": "Absorber",
+  "mod": "illageandspillage",
+  "model": "illageandspillage__absorber.model.json"
+ },
+ {
   "key": "illagerinvasion__invoker",
   "id": "illagerinvasion:invoker",
   "name": "Invoker",
@@ -126,25 +154,11 @@
   "model": "legendary_monsters__lava_eater.model.json"
  },
  {
-  "key": "legendary_monsters__mossy_golem",
-  "id": "legendary_monsters:mossy_golem",
-  "name": "Mossy Golem",
-  "mod": "legendary_monsters",
-  "model": "legendary_monsters__mossy_golem.model.json"
- },
- {
   "key": "legendary_monsters__resurrected_knight",
   "id": "legendary_monsters:resurrected_knight",
   "name": "Resurrected Knight",
   "mod": "legendary_monsters",
   "model": "legendary_monsters__resurrected_knight.model.json"
- },
- {
-  "key": "legendary_monsters__shulker_mimic",
-  "id": "legendary_monsters:shulker_mimic",
-  "name": "Shulker Mimic",
-  "mod": "legendary_monsters",
-  "model": "legendary_monsters__shulker_mimic.model.json"
  },
  {
   "key": "legendary_monsters__skeletosaurus",
@@ -294,10 +308,24 @@
   "model": "skarrier_mobs__carnager.model.json"
  },
  {
+  "key": "skarrier_mobs__trawler",
+  "id": "skarrier_mobs:trawler",
+  "name": "Trawler",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__trawler.model.json"
+ },
+ {
   "key": "skarrier_mobs__wrought",
   "id": "skarrier_mobs:wrought",
   "name": "Wrought",
   "mod": "skarrier_mobs",
   "model": "skarrier_mobs__wrought.model.json"
+ },
+ {
+  "key": "wkcr__king",
+  "id": "wkcr:king",
+  "name": "King",
+  "mod": "wkcr",
+  "model": "wkcr__king.model.json"
  }
 ]

@@ -1,0 +1,349 @@
+/* The modpack guide: a Minecraft-style page rather than a PS1 one, since it
+   is documenting the game rather than browsing discs. It reuses the live
+   season's own panel tokens (--mc-*) from minecraft.css so it reads as part
+   of the same portal instead of a bolted-on wiki. */
+
+/* minecraft.css pins html/body to a fixed, non-scrolling viewport for the
+   PS1 console shell (it scrolls its own #stage instead). This page has no
+   #stage - it is a plain document - so that rule is lifted back off just
+   here rather than globally, which would undo the console's own layout. */
+html:has(body.guide-body), body.guide-body { height: auto; overflow: auto; }
+
+.guide-body {
+  margin: 0; min-height: 100vh;
+  background: var(--mc-panel, #16161a);
+  font-family: 'Minecraft', 'MGS1 Codec', monospace;
+  color: var(--mc-text, #e6e6e8);
+}
+
+.guide-shell { max-width: 1320px; margin: 0 auto; padding: 18px 28px 60px; }
+
+.guide-head {
+  display: flex; align-items: center; gap: 14px;
+  padding-bottom: 14px; margin-bottom: 18px;
+  border-bottom: 2px solid var(--mc-shade, #08080a);
+}
+.guide-head .dt-back { flex: none; }
+.guide-head .dt-back .icon { transform: scale(.32); margin: -17px -18px; }
+.guide-title {
+  font-size: 25px; color: var(--mc-text, #e6e6e8); text-shadow: 2px 2px #000;
+}
+.guide-sub { font-size: 16px; color: var(--mc-faint, #63636d); }
+
+.guide-grid {
+  display: grid; grid-template-columns: 220px 1fr; gap: 28px;
+  align-items: start;
+}
+
+.guide-nav {
+  position: sticky; top: 18px;
+  background: var(--mc-slot, #232329);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+  padding: 10px 0;
+}
+.guide-nav-head {
+  padding: 0 12px 8px; margin-bottom: 4px;
+  font-size: 13px; letter-spacing: .08em; color: var(--mc-faint, #63636d);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.guide-nav-item {
+  display: block; padding: 8px 12px; font-size: 16px;
+  color: var(--mc-dim, #9b9ba4); text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.guide-nav-item:hover { color: var(--mc-text, #e6e6e8); background: rgba(255,255,255,0.04); }
+.guide-nav-item.active {
+  color: var(--mc-gold, #ffd24a); border-left-color: var(--mc-gold, #ffd24a);
+  background: rgba(255,210,74,0.08);
+}
+.guide-nav-note {
+  margin-top: 8px; padding: 8px 12px 0;
+  font-size: 13px; color: var(--mc-faint, #63636d); font-style: italic;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.guide-content {
+  background: var(--mc-slot, #232329);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+  padding: 30px 40px 36px;
+}
+
+/* a clear break between mechanics - each section after the first gets a
+   dark rule with a soft gold glow centred on it, echoing the gold used for
+   h2/b elsewhere, so it reads as "a new topic starts here" at a glance */
+.guide-section + .guide-section {
+  margin-top: 40px; padding-top: 34px;
+  border-top: 3px solid var(--mc-shade, #08080a);
+  position: relative;
+}
+.guide-section + .guide-section::before {
+  content: ''; position: absolute; top: -3px; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--mc-gold, #ffd24a) 50%, transparent);
+  opacity: 0.55;
+}
+.guide-section h1 {
+  margin: 0 0 6px; font-size: 30px; color: var(--mc-text, #e6e6e8);
+  text-shadow: 2px 2px #000;
+}
+.guide-section h2 {
+  margin: 28px 0 8px; font-size: 21px; color: var(--mc-gold, #ffd24a);
+  text-shadow: 1px 1px #000;
+}
+.guide-section b { color: var(--mc-gold, #ffd24a); font-weight: normal; }
+
+/* icons over words: a Minecraft item/skin sprite blown up but kept crisp,
+   the way the rest of the portal already draws inventory icons */
+.guide-icon {
+  width: 40px; height: 40px; image-rendering: pixelated;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.6));
+}
+.guide-icon.lg { width: 56px; height: 56px; }
+.guide-icon.sm { width: 26px; height: 26px; }
+
+/* the same front-face crop .bc-face/.lsd-face already use elsewhere in the
+   portal, just given its own class so this page doesn't need to know about
+   --skin custom properties to draw a mob's portrait */
+.guide-mob-face {
+  display: inline-block; width: 18px; height: 18px; margin-right: 6px;
+  vertical-align: -4px; image-rendering: pixelated;
+  border: 1px solid var(--mc-shade, #08080a);
+}
+.guide-mob-face.zombie {
+  background-image: url('/static/minecraft/guide/icons/zombie.png');
+  background-size: 144px 144px; background-position: -18px -18px;
+}
+
+.guide-flow {
+  display: flex; align-items: center; justify-content: center;
+  gap: 18px; margin: 10px 0 18px; flex-wrap: wrap;
+}
+.guide-flow-step {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--mc-faint, #63636d);
+}
+.guide-arrow { font-size: 24px; color: var(--mc-gold, #ffd24a); }
+.guide-tree-icons {
+  display: flex; gap: 6px; padding: 8px; background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+
+.guide-icon-row {
+  display: flex; align-items: center; gap: 12px; margin: 10px 0 4px;
+  padding: 10px 14px; background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+.guide-icon-row span { font-size: 16px; line-height: 1.5; color: var(--mc-dim, #9b9ba4); }
+.guide-icon-row b { color: var(--mc-gold, #ffd24a); font-weight: normal; }
+.guide-icon-row s { color: var(--mc-heart, #d94a3d); }
+
+.guide-stat-box {
+  display: flex; flex-wrap: wrap; gap: 4px; margin: 14px 0 16px;
+}
+.guide-stat {
+  flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 12px; background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+.guide-stat i { font-style: normal; font-size: 13px; color: var(--mc-faint, #63636d); }
+.guide-stat b { font-size: 20px; color: var(--mc-xp, #7bc518); font-weight: normal; }
+
+/* a denser stat tile: icon and number side by side rather than label over
+   number, for rows that are themselves inside a level-vs-level comparison */
+.guide-stat-box.tight { gap: 8px; margin: 10px 0; }
+.guide-stat-box.tight .guide-stat {
+  flex-direction: row; align-items: center; gap: 10px; min-width: 175px;
+  padding: 8px 14px;
+}
+.guide-stat-box.tight .guide-stat i { display: flex; flex: none; }
+.guide-stat-box.tight .guide-stat b { font-size: 19px; white-space: nowrap; }
+/* the icon alone (heart, iron sword...) never says what it stands for on
+   its own, so every tight tile also gets a plain-text label between the
+   icon and the number - always visible, not a hover tooltip */
+.guide-stat-box.tight .guide-stat .guide-stat-lbl {
+  flex: 1; font-size: 14px; letter-spacing: .03em; white-space: nowrap;
+  color: var(--mc-faint, #63636d); text-transform: uppercase;
+}
+
+/* a miniature crafting grid, drawn the same way the real bench shows it,
+   so a recipe reads at a glance instead of as a shopping list */
+.guide-recipe {
+  display: flex; align-items: center; gap: 16px; margin: 14px 0 4px;
+}
+.guide-recipe-grid {
+  display: grid; grid-template-columns: repeat(3, 40px);
+  grid-template-rows: repeat(3, 40px); gap: 3px;
+  padding: 10px; background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+.guide-recipe-slot {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background: var(--mc-slot, #232329);
+  border: 1px solid var(--mc-shade, #08080a);
+}
+.guide-recipe-slot img {
+  width: 32px; height: 32px; image-rendering: pixelated;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.6));
+}
+.guide-recipe-result {
+  display: flex; align-items: center; justify-content: center;
+  width: 76px; height: 76px; padding: 10px;
+  background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+.guide-recipe-result.sm { width: 52px; height: 52px; padding: 7px; }
+
+/* a single smithing-table row (template + base + addition -> result) - the
+   same slot look as the crafting grid, just laid out in one line since a
+   smithing recipe only ever has three inputs */
+.guide-smith { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
+.guide-smith-slot {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background: var(--mc-slot, #232329);
+  border: 1px solid var(--mc-shade, #08080a);
+}
+.guide-smith-slot img {
+  width: 32px; height: 32px; image-rendering: pixelated;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.6));
+}
+.guide-plus { font-size: 18px; color: var(--mc-faint, #63636d); }
+
+/* five different stats sitting in a row all read as the same thing if
+   they're all the same green - each gets its own accent color (echoing the
+   rainbow button's palette) on both the left edge and its own title, so the
+   row is scannable by color as well as by reading the label */
+.guide-statlist { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; }
+.guide-statlist-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+  border-left: 4px solid var(--accent);
+}
+.guide-statlist-item img { flex: none; }
+.guide-statlist-item .gsl-body { display: flex; flex-direction: column; gap: 2px; }
+.guide-statlist-item .gsl-body b { font-size: 16px; font-weight: normal; color: var(--accent); }
+.guide-statlist-item .gsl-body span { font-size: 14px; line-height: 1.55; color: var(--mc-dim, #9b9ba4); }
+.guide-statlist-item.eterna { --accent: #ffd24a; }
+.guide-statlist-item.quanta { --accent: #26c9d6; }
+.guide-statlist-item.arcana { --accent: #a06bff; }
+.guide-statlist-item.rectification { --accent: #4ab8ff; }
+.guide-statlist-item.clues { --accent: #ffb52e; }
+
+/* the shelf comparison table - wrapped so it scrolls on its own rather than
+   ever widening the page, and +/- values colored by whether they help or
+   hurt so a whole row of numbers reads at a glance */
+.guide-table-wrap { overflow-x: auto; margin: 14px 0 4px; }
+.guide-table {
+  border-collapse: collapse; width: 100%; min-width: 520px; font-size: 15px;
+  background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+}
+.guide-table th, .guide-table td { padding: 8px 12px; text-align: left; white-space: nowrap; }
+.guide-table th {
+  font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--mc-faint, #63636d); border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.guide-table td:first-child { display: flex; align-items: center; gap: 8px; color: var(--mc-text, #e6e6e8); }
+.guide-table tbody tr + tr td { border-top: 1px solid rgba(255,255,255,0.05); }
+.guide-table .gt-pos { color: var(--mc-xp, #7bc518); }
+.guide-table .gt-neg { color: var(--mc-heart, #d94a3d); }
+.guide-table .gt-zero { color: var(--mc-faint, #63636d); }
+
+/* a live mock of the actual in-game Runic Forge screen: its own GUI texture
+   as the backdrop, with real item icons dropped onto the weapon/gem/tablet
+   slots at the same coordinates the real screen draws them at. The caption
+   sits outside .gf-panel on purpose - .gf-slot positions are percentages of
+   .gf-panel's own box, which must equal the background image's box exactly
+   (nothing else in it adding height), or every slot drifts off its socket. */
+.guide-forge-ui { width: 600px; max-width: 100%; margin: 14px auto 6px; }
+.gf-panel { position: relative; }
+.guide-forge-ui .gf-bg {
+  display: block; width: 100%; height: auto; image-rendering: pixelated;
+  filter: drop-shadow(2px 4px 0 rgba(0,0,0,0.5));
+}
+.gf-slot {
+  position: absolute; transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center;
+}
+.gf-slot img {
+  width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;
+}
+.gf-weapon { left: 50%; top: 31%; width: 9%; height: 22%; }
+.gf-weapon img { filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.8)); }
+.gf-gem { top: 34%; width: 7%; height: 17%; }
+.gf-gem-l { left: 18.5%; }
+.gf-gem-r { left: 81.5%; }
+.gf-tablet { top: 77%; width: 7%; height: 16%; }
+.gf-t1 { left: 18%; } .gf-t2 { left: 27%; } .gf-t3 { left: 36%; } .gf-t4 { left: 45%; }
+.gf-t5 { left: 54%; } .gf-t6 { left: 63%; } .gf-t7 { left: 72%; } .gf-t8 { left: 81%; }
+.gf-gem img, .gf-tablet img {
+  filter: drop-shadow(0 0 3px rgba(255,210,74,0.85)) drop-shadow(1px 1px 0 rgba(0,0,0,0.8));
+}
+.gf-caption {
+  margin-top: 8px; text-align: center; font-size: 14px; letter-spacing: .06em;
+  color: var(--mc-gold, #ffd24a);
+}
+
+/* level 1 vs level 30, side by side with an arrow between - the "before"
+   card muted, the "after" card in the game's own danger-red */
+.guide-compare {
+  display: flex; align-items: center; gap: 14px; margin: 6px 0 4px;
+  flex-wrap: wrap;
+}
+.guide-compare-side { flex: 1; min-width: 220px; }
+.guide-lvl-tag {
+  display: flex; align-items: center; padding: 5px 10px;
+  font-size: 14px; letter-spacing: .04em; color: var(--mc-dim, #9b9ba4);
+  background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-right-color: var(--mc-lit, #3d3d46);
+  border-bottom-color: var(--mc-lit, #3d3d46);
+  border-bottom: none;
+}
+.guide-lvl-tag.hot { color: var(--mc-heart, #d94a3d); }
+.guide-compare .guide-arrow { align-self: center; }
+
+@media (max-width: 700px) {
+  .guide-grid { grid-template-columns: 1fr; }
+  .guide-nav { position: static; }
+  /* the two comparison cards stack instead of sitting side by side, so the
+     arrow between them turns to point down rather than floating sideways */
+  .guide-compare { flex-direction: column; align-items: stretch; }
+  .guide-compare .guide-arrow { align-self: center; transform: rotate(90deg); }
+}
+
+/* ── the rainbow button ─────────────────────────────────────────────────
+   Season 5's own disc case already cycles this palette for "the one that's
+   live right now"; the guide link borrows the same six-color sweep so it
+   reads as the current pack's own button rather than a generic one. */
+.ls-btn.rainbow {
+  position: relative; color: #fff; text-shadow: 1px 1px #000;
+  background: linear-gradient(120deg, #ff3d34, #ffb52e, #35d94b, #26c9d6, #a06bff, #ff3d34);
+  background-size: 300% 300%;
+  border-color: rgba(255,255,255,0.55);
+  border-right-color: rgba(0,0,0,0.4); border-bottom-color: rgba(0,0,0,0.4);
+  animation: guide-rainbow-sweep 5s linear infinite;
+  text-decoration: none; display: inline-flex; align-items: center;
+}
+.ls-btn.rainbow:hover { filter: brightness(1.15); }
+@keyframes guide-rainbow-sweep {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}

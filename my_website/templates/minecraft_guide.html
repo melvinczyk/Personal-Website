@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Groid Pack — Modpack Guide</title>
+<link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+<link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% static 'css/guide.css' %}?t={% now 'U' %}">
+</head>
+<body class="guide-body">
+
+<div class="guide-shell">
+
+  <div class="guide-head">
+    <a class="dt-back" href="{% url 'minecraft' %}" title="Back to the portal">
+      <span class="icon circle"></span><span class="lbl">BACK</span>
+    </a>
+    <span class="guide-title">GROID PACK</span>
+    <span class="guide-sub">MODPACK GUIDE</span>
+  </div>
+
+  <div class="guide-grid">
+
+    <nav class="guide-nav">
+      <div class="guide-nav-head">MECHANICS</div>
+      <a class="guide-nav-item active" href="#leveling">Leveling System</a>
+      <a class="guide-nav-item" href="#legendary">Legendary Weapons</a>
+      <a class="guide-nav-item" href="#enchanting">Apotheosis Enchanting</a>
+      <div class="guide-nav-note">more sections are on the way</div>
+    </nav>
+
+    <main class="guide-content">
+
+      <section id="leveling" class="guide-section">
+        <h1>Leveling System</h1>
+
+        <div class="guide-flow">
+          <div class="guide-flow-step">
+            <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="Experience">
+            <span>XP</span>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-flow-step">
+            <div class="guide-tree-icons">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_blacksmith.png' %}" title="Blacksmith">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_alchemist.png' %}" title="Alchemist">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_enchanter.png' %}" title="Enchanter">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_hunter.png' %}" title="Hunter">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_cook.png' %}" title="Cook">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/class_miner.png' %}" title="Miner">
+            </div>
+            <span>Skill Tree</span>
+          </div>
+        </div>
+
+        <div class="guide-stat-box">
+          <div class="guide-stat"><i>Point cap</i><b>120</b></div>
+          <div class="guide-stat"><i>1st point</i><b>160 XP</b></div>
+          <div class="guide-stat"><i>120th point</i><b>~2.79M XP</b></div>
+        </div>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/amnesia_scroll.png' %}" alt="Amnesia Scroll">
+          <span>Amnesia Scroll<br><b>−20% respec</b></span>
+        </div>
+
+        <h2>World Scaling</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/compass.png' %}" alt="Compass">
+          <span>Farther from spawn<br><b>= stronger, xp-richer mobs</b></span>
+        </div>
+
+        <div class="guide-stat-box tight">
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_health.png' %}" alt="Health"></i><span class="guide-stat-lbl">Health</span><b>+7.5%/lvl</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Damage"></i><span class="guide-stat-lbl">Damage</span><b>+2.5%/lvl</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_armor.png' %}" alt="Armor"></i><span class="guide-stat-lbl">Armor</span><b>+7.5%/lvl</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_speed.png' %}" alt="Speed"></i><span class="guide-stat-lbl">Speed</span><b>+0.1%/lvl</b></div>
+          <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="XP"></i><span class="guide-stat-lbl">XP drop</span><b>+10%/lvl</b></div>
+        </div>
+
+        <div class="guide-compare">
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag">
+              <span class="guide-mob-face zombie"></span>ZOMBIE · LV 1
+            </div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_health.png' %}" alt="Health"></i><span class="guide-stat-lbl">Health</span><b>21.5</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Damage"></i><span class="guide-stat-lbl">Damage</span><b>3.1</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_armor.png' %}" alt="Armor"></i><span class="guide-stat-lbl">Armor</span><b>2.2</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="XP"></i><span class="guide-stat-lbl">XP drop</span><b>5.5</b></div>
+            </div>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag hot">
+              <span class="guide-mob-face zombie"></span>ZOMBIE · LV 30
+            </div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_health.png' %}" alt="Health"></i><span class="guide-stat-lbl">Health</span><b>65.0</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Damage"></i><span class="guide-stat-lbl">Damage</span><b>5.3</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_armor.png' %}" alt="Armor"></i><span class="guide-stat-lbl">Armor</span><b>6.5</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="XP"></i><span class="guide-stat-lbl">XP drop</span><b>20.0</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="legendary" class="guide-section">
+        <h1>Legendary Weapons</h1>
+
+        <div class="guide-flow">
+          <div class="guide-flow-step">
+            <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Rare loot">
+            <span>Rare loot</span>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-flow-step">
+            <div class="guide-tree-icons">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_thunderbrand.png' %}" title="Thunderbrand">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_icewhisper.png' %}" title="Icewhisper">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_arcanethyst.png' %}" title="Arcanethyst">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_waxweaver.png' %}" title="Waxweaver">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_lichblade.png' %}" title="Lichblade">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_twisted_blade.png' %}" title="Twisted Blade">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_magiscythe.png' %}" title="Magiscythe">
+              <img class="guide-icon" src="{% static 'minecraft/guide/icons/unique_stars_edge.png' %}" title="Star's Edge">
+            </div>
+            <span>Legendary Weapon</span>
+          </div>
+        </div>
+
+        <div class="guide-stat-box">
+          <div class="guide-stat"><i>Chest loot chance</i><b>1%</b></div>
+          <div class="guide-stat"><i>Pity guarantee</i><b>by 75th miss</b></div>
+          <div class="guide-stat"><i>Wither / Ender Dragon</i><b>5% / 50%</b></div>
+          <div class="guide-stat"><i>Runic Tablet pity</i><b>by 60th miss</b></div>
+        </div>
+
+        <h2>Runic Forge</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/runic_forge.png' %}" alt="Runic Forge">
+          <span>Awaken and customize<br><b>up to 8 tablets, 2 gem sockets</b></span>
+        </div>
+
+        <div class="guide-recipe">
+          <div class="guide-recipe-grid">
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/obsidian.png' %}" alt="Obsidian" title="Obsidian"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/amethyst_shard.png' %}" alt="Amethyst Shard" title="Amethyst Shard"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/obsidian.png' %}" alt="Obsidian" title="Obsidian"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/amethyst_shard.png' %}" alt="Amethyst Shard" title="Amethyst Shard"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/smithing_table.png' %}" alt="Smithing Table" title="Smithing Table"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/amethyst_shard.png' %}" alt="Amethyst Shard" title="Amethyst Shard"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/obsidian.png' %}" alt="Obsidian" title="Obsidian"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Runic Tablet"></div>
+            <div class="guide-recipe-slot"><img src="{% static 'minecraft/guide/icons/obsidian.png' %}" alt="Obsidian" title="Obsidian"></div>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-recipe-result">
+            <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/runic_forge.png' %}" alt="Runic Forge">
+          </div>
+        </div>
+
+        <div class="guide-forge-ui">
+          <div class="gf-panel">
+            <img class="gf-bg" src="{% static 'minecraft/guide/icons/runic_forge_ui.png' %}" alt="Runic Forge interface">
+            <div class="gf-slot gf-weapon"><img src="{% static 'minecraft/guide/icons/unique_twisted_blade.png' %}" alt="Twisted Blade" title="Twisted Blade — weapon slot"></div>
+            <div class="gf-slot gf-gem gf-gem-l"><img src="{% static 'minecraft/guide/icons/runefused_gem.png' %}" alt="Runefused Gem" title="Runefused Gem socket"></div>
+            <div class="gf-slot gf-gem gf-gem-r"></div>
+            <div class="gf-slot gf-tablet gf-t1"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Awakening level 1"></div>
+            <div class="gf-slot gf-tablet gf-t2"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Awakening level 2"></div>
+            <div class="gf-slot gf-tablet gf-t3"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Awakening level 3"></div>
+            <div class="gf-slot gf-tablet gf-t4"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Awakening level 4"></div>
+            <div class="gf-slot gf-tablet gf-t5"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Awakening level 5"></div>
+            <div class="gf-slot gf-tablet gf-t6"></div>
+            <div class="gf-slot gf-tablet gf-t7"></div>
+            <div class="gf-slot gf-tablet gf-t8"></div>
+          </div>
+          <div class="gf-caption">AWAKENING LEVEL 5 / 8 · 3 TABLETS TO GO</div>
+        </div>
+
+        <div class="guide-compare">
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag">AWAKENING · LV 0</div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Damage"></i><span class="guide-stat-lbl">Attack damage</span><b>50%</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_speed.png' %}" alt="Speed"></i><span class="guide-stat-lbl">Attack speed</span><b>75%</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Ability"></i><span class="guide-stat-lbl">Ability</span><b>Locked</b></div>
+            </div>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag hot">AWAKENING · LV 8</div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_damage.png' %}" alt="Damage"></i><span class="guide-stat-lbl">Attack damage</span><b>100%</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/stat_speed.png' %}" alt="Speed"></i><span class="guide-stat-lbl">Attack speed</span><b>100%</b></div>
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Ability"></i><span class="guide-stat-lbl">Ability</span><b>Unlocked</b></div>
+            </div>
+          </div>
+        </div>
+
+        <h2>Gem Sockets</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/runefused_gem.png' %}" alt="Gem">
+          <span>A second power, socketed<br><b>on top of the weapon's own ability</b></span>
+        </div>
+
+        <div class="guide-compare">
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag">RUNEFUSED GEM</div>
+            <div class="guide-smith">
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Runic Tablet (template)"></div>
+              <span class="guide-plus">+</span>
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/empowered_remnant.png' %}" alt="Empowered Remnant" title="Empowered Remnant (base)"></div>
+              <span class="guide-plus">+</span>
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/crying_obsidian.png' %}" alt="Crying Obsidian" title="Crying Obsidian (addition)"></div>
+              <span class="guide-arrow">→</span>
+              <div class="guide-recipe-result sm"><img class="guide-icon" src="{% static 'minecraft/guide/icons/runefused_gem.png' %}" alt="Runefused Gem"></div>
+            </div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Rolls"></i><span class="guide-stat-lbl">Rolls a</span><b>Runic Power</b></div>
+            </div>
+          </div>
+          <span class="guide-arrow">→</span>
+          <div class="guide-compare-side">
+            <div class="guide-lvl-tag hot">NETHERFUSED GEM</div>
+            <div class="guide-smith">
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/runic_tablet.png' %}" alt="Runic Tablet" title="Runic Tablet (template)"></div>
+              <span class="guide-plus">+</span>
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/empowered_remnant.png' %}" alt="Empowered Remnant" title="Empowered Remnant (base)"></div>
+              <span class="guide-plus">+</span>
+              <div class="guide-smith-slot"><img src="{% static 'minecraft/guide/icons/netherite_ingot.png' %}" alt="Netherite Ingot" title="Netherite Ingot (addition)"></div>
+              <span class="guide-arrow">→</span>
+              <div class="guide-recipe-result sm"><img class="guide-icon" src="{% static 'minecraft/guide/icons/netherfused_gem.png' %}" alt="Netherfused Gem"></div>
+            </div>
+            <div class="guide-stat-box tight">
+              <div class="guide-stat"><i><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/netherfused_gem.png' %}" alt="Rolls"></i><span class="guide-stat-lbl">Rolls a</span><b>Nether Power</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Netherfused gems can't be rerolled directly — smelt one down and craft a fresh gem instead. Both types swap freely at the Runic Forge.</div>
+
+        <h2>Other Items</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/empowered_remnant.png' %}" alt="Empowered Remnant">
+          <span>Empowered Remnant<br><b>smelt a Legendary weapon to get one</b></span>
+        </div>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/contained_remnant.png' %}" alt="Contained Remnant">
+          <span>Contained Remnant<br><b>use on its matching block for a guaranteed, specific Legendary</b></span>
+        </div>
+      </section>
+
+      <section id="enchanting" class="guide-section">
+        <h1>Apotheosis Enchanting</h1>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanting_table.png' %}" alt="Enchanting Table">
+          <span>5 new stats replace<br><b>flat bookshelf levels</b></span>
+        </div>
+
+        <div class="guide-statlist">
+          <div class="guide-statlist-item eterna">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/enchanting_table.png' %}" alt="Eterna">
+            <div class="gsl-body"><b>Eterna</b><span>The main stat — each point raises the enchanting level cap by 2. It's what lets you go past vanilla's level 30 ceiling.</span></div>
+          </div>
+          <div class="guide-statlist-item quanta">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/shelf_beeshelf.png' %}" alt="Quanta">
+            <div class="gsl-body"><b>Quanta</b><span>How much your result can swing above or below what you spent. High Quanta means less consistent enchants — for better or worse.</span></div>
+          </div>
+          <div class="guide-statlist-item arcana">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/candle.png' %}" alt="Arcana">
+            <div class="gsl-body"><b>Arcana</b><span>Shifts the rarity odds toward the good stuff, and guarantees extra enchantments — 2 minimum at 25%, 3 at 75%.</span></div>
+          </div>
+          <div class="guide-statlist-item rectification">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/amethyst_cluster.png' %}" alt="Rectification">
+            <div class="gsl-body"><b>Rectification</b><span>Raises the low end of that Quanta swing, so a bad roll is less bad. Negative Rectification does the opposite.</span></div>
+          </div>
+          <div class="guide-statlist-item clues">
+            <img class="guide-icon" src="{% static 'minecraft/guide/icons/spyglass.png' %}" alt="Clues">
+            <div class="gsl-body"><b>Clues</b><span>How many of the available enchantments you're actually shown before committing to enchant.</span></div>
+          </div>
+        </div>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/xp_bottle.png' %}" alt="Experience">
+          <span>Enchanting &amp; anvil costs are optimal<br><b>not a flat charge off your current levels</b></span>
+        </div>
+
+        <h2>Power Sources</h2>
+        <div class="guide-table-wrap">
+          <table class="guide-table">
+            <thead>
+              <tr><th>Shelf</th><th>Eterna</th><th>Eterna Cap</th><th>Quanta</th><th>Arcana</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_bookshelf.png' %}" alt="">Bookshelf</td><td class="gt-pos">+1</td><td class="gt-zero">no cap</td><td class="gt-zero">—</td><td class="gt-zero">—</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_stoneshelf.png' %}" alt="">Stoneshelf</td><td class="gt-neg">−1.5</td><td class="gt-zero">no cap</td><td class="gt-zero">—</td><td class="gt-neg">−7.5</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_melonshelf.png' %}" alt="">Melonshelf</td><td class="gt-neg">−1</td><td class="gt-zero">no cap</td><td class="gt-neg">−10</td><td class="gt-zero">—</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_beeshelf.png' %}" alt="">Beeshelf</td><td class="gt-neg">−15</td><td class="gt-zero">no cap</td><td class="gt-pos">+100</td><td class="gt-zero">—</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_seashelf.png' %}" alt="">Seashelf</td><td class="gt-pos">+1.5</td><td class="gt-zero">22.5</td><td class="gt-zero">—</td><td class="gt-pos">+2</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_hellshelf.png' %}" alt="">Hellshelf</td><td class="gt-pos">+1.5</td><td class="gt-zero">22.5</td><td class="gt-pos">+3</td><td class="gt-zero">—</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_deepshelf.png' %}" alt="">Deepshelf</td><td class="gt-pos">+2.5</td><td class="gt-zero">35</td><td class="gt-pos">+5</td><td class="gt-pos">+5</td></tr>
+              <tr><td><img class="guide-icon sm" src="{% static 'minecraft/guide/icons/shelf_endshelf.png' %}" alt="">Endshelf</td><td class="gt-pos">+2.5</td><td class="gt-zero">45</td><td class="gt-pos">+5</td><td class="gt-pos">+5</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="guide-nav-note" style="margin-top:8px;">Values are per shelf block placed. Stone, melon, and bee shelves are early, cheap, and trade Eterna away for something else — bee shelves in particular tank your level cap for a huge Quanta swing. Sea and hell shelves are a straight step up; deep and end shelves are the late-game tier, strong across the board with a much higher Eterna cap.</div>
+
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/rectifier.png' %}" alt="Rectifier">
+          <span>Skulls add Quanta, Candles add Arcana<br><b>and a dedicated Rectifier block adds 10–25 Rectification</b></span>
+        </div>
+
+        <h2>The Anvil</h2>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanted_book.png' %}" alt="Splitting">
+          <span>Splitting<br><b>1 book, many enchants → 1 book per enchant</b></span>
+        </div>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanted_book.png' %}" alt="Obliteration">
+          <span>Obliteration<br><b>1 book → 2 books, 1 level lower each</b></span>
+        </div>
+        <div class="guide-icon-row">
+          <img class="guide-icon lg" src="{% static 'minecraft/guide/icons/enchanted_book.png' %}" alt="Unbreaking">
+          <span>Unbreaking on anvils<br><b>each level cuts anvil-break chance</b></span>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+</div>
+
+</body>
+</html>
