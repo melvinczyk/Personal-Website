@@ -1128,10 +1128,15 @@ body::after { display: none; }
   padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
 }
 /* the face crop is the same trick .bc-face uses on a killer's name, just
-   scaled up: the skin sprite at 5x, cropped to the front of the head */
+   scaled up. The head is 8x8 pixels on a 64x64 sheet, so a 32px box wants the
+   sheet at exactly 4x -- any other multiple crops the face instead of framing
+   it. The hat layer rides at (40,8) and paints over the face, the way the
+   card's own model wears it. */
 .lsd-face {
-  width: 32px; height: 32px; flex: none; background-image: var(--skin);
-  background-size: 320px 320px; background-position: -40px -40px;
+  width: 32px; height: 32px; flex: none;
+  background-image: var(--skin), var(--skin);
+  background-size: 256px 256px, 256px 256px;
+  background-position: -160px -32px, -32px -32px;
   image-rendering: pixelated; border: 2px solid var(--mc-shade);
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
 }

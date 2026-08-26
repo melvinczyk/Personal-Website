@@ -159,7 +159,7 @@ function renderRoster() {
                 ${p.saved ? meter('TOUGHNESS', p.tough_pct, `${p.toughness}${p.defence_whole ? '' : '+'}`, 'tough') : ''}
                 ${meter('LEVEL ' + p.level, p.xp_pct, p.saved ? `${p.xp} XP` : '', 'xp')}
                 ${p.saved || !p.live ? '' :
-                  meter('DEATHS', Math.round(p.live.deaths / worst * 100), `${p.live.deaths}`, 'deaths')}
+                  meter('DEATHS', Math.round(p.live.deaths / worst * 100), `${compact(p.live.deaths)}`, 'deaths')}
               </div>
               <div class="rc-gear">
                 ${gearChip('HELD', p.held)}
@@ -412,7 +412,7 @@ function livePanel(p) {
     return '<p class="rp-none">the server has not reported this player</p>';
 
   const cell = (label, value, note) => value === null || value === undefined ? '' :
-    `<span class="live-cell"><i>${label}</i><b>${value}</b>${note ? `<u>${note}</u>` : ''}</span>`;
+    `<span class="live-cell"><i>${label}</i><b${exact(value)}>${compact(value)}</b>${note ? `<u>${note}</u>` : ''}</span>`;
   const section = (label, right, body) => `
     <div class="live-section">
       <div class="lb-head"><span>${label}</span>${right ? `<b>${right}</b>` : ''}</div>
@@ -432,7 +432,7 @@ function livePanel(p) {
   const activity = [
     cell('PLAY TIME', L.playtime),
     cell('LEVEL', L.level),
-    cell('BLOCKS MOVED', L.travelled, `${L.sprinted} SPRINTED`),
+    cell('BLOCKS MOVED', L.travelled, `${compact(L.sprinted)} SPRINTED`),
     cell('JUMPS', L.jumps),
   ].join('');
 
@@ -455,7 +455,7 @@ function livePanel(p) {
           <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
           <span class="lb-main">
             <span class="lb-top"><b>${b.name}</b><em>x${b.kills}</em></span>
-            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${b.damage} DMG · ${b.last}</u></span>
+            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${compact(b.damage)} DMG · ${b.last}</u></span>
           </span>
         </span>`;
       }).join('')}
@@ -690,6 +690,29 @@ let liveOpen  = null;           // uuid of the row expanded, if any
 let liveDue   = LIVE_EVERY;
 let livePolling = false;
 
+// Six figures in a tile the width of a word is a wall, and nobody reads the
+// hundreds place of a number that size anyway. Past ten thousand a count gets
+// one decimal and a suffix; below that it still fits, so it stays exact. The
+// decimal is cut rather than rounded, so a number never reads as more than it
+// is - 10293 is 10.2k, not 10.3k. The figure itself is never lost: whatever
+// shows a compacted number hangs the full one off it as a title.
+function compact(n) {
+  if (typeof n !== 'number' || !isFinite(n)) return n;
+  const size = Math.abs(n);
+  if (size < 1e4) return `${n}`;
+  const sign = n < 0 ? '-' : '';
+  for (const [step, mark] of [[1e9, 'B'], [1e6, 'M'], [1e3, 'k']]) {
+    if (size >= step) return `${sign}${Math.floor(size / step * 10) / 10}${mark}`;
+  }
+  return `${n}`;
+}
+
+// what a compacted number wants hanging off it, and nothing at all otherwise
+function exact(n) {
+  return typeof n === 'number' && isFinite(n) && Math.abs(n) >= 1e4
+    ? ` title="${n}"` : '';
+}
+
 // matches _span() on the server, so the age counter reads the same whether it
 // came down with the page or was counted up here since
 function fmtSpan(seconds) {
@@ -764,7 +787,7 @@ function buildLive(board) {
         <div class="bc-name">${b.felled || REVEAL ? b.name : '???'}</div>
         <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.category === 'miniboss' ? '' : (b.tier ? ` \u00b7 tier ${b.tier}` : '')}</div>
         ${b.felled ? `
-          <div class="bc-kills">${b.kills} kill${b.kills === 1 ? '' : 's'}</div>
+          <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}</div>
           <div class="bc-killers">${b.killers.map(k => `
             <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
               <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
@@ -901,8 +924,8 @@ function updateLive(board) {
   document.getElementById('ls-tiles').innerHTML =
     tile('online', `${T.online}/${T.tracked}`, T.online > 0) +
     tile('played', T.played) +
-    tile('deaths', T.deaths) +
-    tile('mob kills', T.kills) +
+    tile('deaths', compact(T.deaths)) +
+    tile('mob kills', compact(T.kills)) +
     tile('bosses', `${T.bosses}/${T.boss_all}`, T.bosses > 0);
 
   document.getElementById('ls-count').textContent =
@@ -920,7 +943,7 @@ function updateLive(board) {
     const seen = document.getElementById(`pcs-${p.uuid}`);
     if (seen) seen.className = `pc-seen${p.dead ? ' dead' : p.online ? ' on' : ''}`;
     set(`pct-${p.uuid}`, p.playtime);
-    set(`pcd-${p.uuid}`, `${p.deaths} deaths`);
+    set(`pcd-${p.uuid}`, `${compact(p.deaths)} deaths`);
     const badges = document.getElementById(`pcb-${p.uuid}`);
     if (badges) badges.innerHTML = bossBadges(p);
     const bar = document.getElementById(`pch-${p.uuid}`);

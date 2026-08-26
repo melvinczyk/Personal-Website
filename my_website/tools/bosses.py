@@ -79,7 +79,9 @@ ROUTES = ('geckolib', 'vanilla', 'advanced')
 #   focus    the bone to put in the middle of the card, for a mob too long
 #            to read at the size the whole of it would fit in
 #   skin     a second sheet, and the bones that wear it instead of the first;
-#            'veil' marks it a see-through shell and says how strongly
+#            'veil' marks it a see-through shell and says how strongly, and
+#            'size' the sheet those bones were laid out against, for the
+#            layer that builds its part from a mesh measured its own way
 #   train    a body segment to lay out behind the mob, for a boss that is
 #            really a head with a line of part entities following it
 #   ghost    a second sheet the game draws over the same bones, for a mob
@@ -101,8 +103,6 @@ ROUTES = ('geckolib', 'vanilla', 'advanced')
 #   graft    a second model the mob is holding, drawn by a layer of its own:
 #            its class, its sheet, the bone it hangs off, and any rest pose
 #            of its own. It keeps its sheet as a second skin.
-#   hold     an item in a hand, which has no mesh at all: a sprite, the size
-#            to draw it, and where each copy hangs and how it is turned
 OVERRIDES = {
     # Twilight Forest keeps its skins in textures/model and ships an older
     # model beside the one it draws, so both ends are named here.
@@ -1130,34 +1130,6 @@ def build(boss, jars, listing, write=True):
         found = graft_bones(found, jar, names, ns, entity, fix['graft'])
         found['bones'] = in_order(found['bones'])
 
-    # What a mob holds is not always a model at all. The Mutant Wither
-    # Skeleton carries a scimitar in each hand, and a sword in Minecraft is a
-    # flat sprite that the item's own json stands up in the fist - there is
-    # no mesh anywhere to read. So each one goes in as a single upright quad
-    # reading the whole of that sprite, hung off the arm the game hangs it
-    # off and turned the way the display transform turns it.
-    held = fix.get('hold')
-    if held:
-        wide, tall = held.get('size', (16, 16))
-        sheet_w, sheet_h = held.get('sheet', (16, 16))
-        face = [0, 0, sheet_w, sheet_h]
-        for name, parent, at, turn in held['in']:
-            found['bones'].append({
-                'name': name, 'parent': parent,
-                'pivot': [round(v, 3) for v in at],
-                'rot': [round(v * math.pi / 180, 4) for v in turn],
-                'skin': 1,
-                'cubes': [{
-                    'c': [0, round(-tall / 2, 3), 0],
-                    's': [wide, tall, 0.4],
-                    # the back of a sprite is its front seen through it
-                    'f': {'front': face, 'back': face + ['x']},
-                }],
-            })
-        # the sprite is its own sheet and nothing like the size of the mob's:
-        # measured against that one, a blade reads a corner of itself
-        found['segment'] = {'tw': sheet_w, 'th': sheet_h}
-        found['bones'] = in_order(found['bones'])
     # A mob may wear one sheet over part of itself and another over the rest:
     # the Shelterer's inner head is drawn from its own skin and the shell it
     # sits in from a second, which is why the shell's corner of the first is
@@ -1166,6 +1138,13 @@ def build(boss, jars, listing, write=True):
         for bone in found['bones']:
             if bone['name'] == name:
                 bone['skin'] = 1
+    # The second sheet need not be measured the way the first is. A layer may
+    # build the part it draws from a mesh of its own declared against a
+    # smaller sheet, and the file shipped for it can still be a finer copy:
+    # what matters is the size the boxes were laid out against, not the pixels.
+    if (fix.get('skin') or {}).get('size'):
+        wide, tall = fix['skin']['size']
+        found['segment'] = {'tw': wide, 'th': tall}
 
     key = f'{ns}__{entity}'
     if write:
@@ -1176,8 +1155,8 @@ def build(boss, jars, listing, write=True):
         worn = fix.get('coat')
         if worn and not worn.startswith('assets/'):
             worn = f'assets/{ns}/{worn}'
-        second = (fix.get('train') or fix.get('skin') or fix.get('graft')
-                  or fix.get('hold') or {}).get('texture')
+        second = (fix.get('train') or fix.get('skin')
+                  or fix.get('graft') or {}).get('texture')
         if second and not second.startswith('assets/'):
             second = f'assets/{ns}/{second}'
         with zipfile.ZipFile(jar) as zf:

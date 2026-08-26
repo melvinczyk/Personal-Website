@@ -61,6 +61,7 @@ SUPER = re.compile(r'^\w[\w .<>,?]*class [\w.$]+(?:<[^>]*>)? extends ([\w.$]+)',
 # setRotationAngle(box, x, y, z), the usual Blockbench export - is written by
 # javap with no class in front of the name, and reading only qualified calls
 # drops every rotation such a model sets.
+DEFORM = re.compile(r'CubeDeformation$')
 DESC = re.compile(r'//\s*\w+\s+(?:([\w$/]+)\.)?("?[\w$<>]+"?):(\([^)]*\))([\w$/;\[]+)')
 
 
@@ -134,6 +135,7 @@ class Mesh:
         self.cubes = []          # cubes of the builder under construction
         self.texoff = (0, 0)
         self.mirror = False      # the builder's own mirror flag
+        self.grow = None         # a CubeDeformation waiting for its box
         self.pose = None
         self.locals = {}         # local slot -> bone name
         self.parent = None       # bone the call under construction hangs off
@@ -148,7 +150,14 @@ class Mesh:
     def add_box(self, nums):
         x, y, z, w, h, d = nums[:6]
         u, v = self.texoff
+        # the sheet is unwrapped for the box as it was measured; a deformation
+        # only swells or shrinks the solid afterwards, and the same patch of
+        # texture is stretched over whatever comes out
         faces = box_uv(u, v, w, h, d)
+        gx, gy, gz = self.grow or (0.0, 0.0, 0.0)
+        self.grow = None
+        x, y, z = x - gx, y - gy, z - gz
+        w, h, d = w + gx * 2, h + gy * 2, d + gz * 2
         self.cubes.append({
             'c': [round(x + w / 2, 3), round(y + h / 2, 3), round(-(z + d / 2), 3)],
             's': [round(w, 3), round(h, 3), round(d, 3)],
@@ -251,6 +260,17 @@ def parse(text, method_hint='fek'):
             d = DESC.search(rest)
             if d:
                 eaten = sum(d.group(3).count(kind) for kind in 'FIDJZBS')
+                # CubeDeformation is the one constructor whose arguments the
+                # box that follows genuinely needs: one number swells the
+                # solid on every side, three swell it per axis. It is how a
+                # model puts a shell a shade wider over the part beneath -
+                # a snow golem's head under its pumpkin, a hat over a head -
+                # and dropping it leaves two boxes the same size fighting for
+                # the same surface.
+                if DEFORM.search(d.group(1) or '') and eaten in (1, 3):
+                    took = mesh.stack[-eaten:] if len(mesh.stack) >= eaten else []
+                    if len(took) == eaten:
+                        mesh.grow = ((took * 3) if eaten == 1 else took)[:3]
                 if eaten:
                     del mesh.stack[-eaten:]
             continue
@@ -269,8 +289,12 @@ def parse(text, method_hint='fek'):
         args, ret = d.group(3), d.group(4)
 
         if op == 'getstatic':
-            # PartPose.ZERO, the only static of its own type worth knowing
-            if ret.strip('L;') == d.group(1):
+            # CubeDeformation.NONE reads the same shape as PartPose.ZERO - a
+            # constant of its own type - and means the opposite thing
+            if DEFORM.search(d.group(1) or ''):
+                mesh.grow = None
+            elif ret.strip('L;') == d.group(1):
+                # PartPose.ZERO, the only static of its own type worth knowing
                 mesh.pose = None
             continue
 
@@ -278,6 +302,7 @@ def parse(text, method_hint='fek'):
             mesh.cubes = []                      # a fresh CubeListBuilder
             mesh.texoff = (0, 0)
             mesh.mirror = False
+            mesh.grow = None
             mesh.stack.clear()
             continue
 
@@ -341,6 +366,11 @@ def parse(text, method_hint='fek'):
         # same as invokespecial's own extra constructor args above.
         if op == 'invokevirtual' and ret.strip('L;') == d.group(1):
             eaten = sum(args.count(kind) for kind in 'FIDJZBS')
+            # extend() hands back a deformation grown by that much again
+            if DEFORM.search(d.group(1) or '') and eaten == 1 and mesh.stack:
+                by = mesh.stack[-1]
+                held = mesh.grow or (0.0, 0.0, 0.0)
+                mesh.grow = [held[0] + by, held[1] + by, held[2] + by]
             if eaten:
                 del mesh.stack[-eaten:]
             continue

@@ -465,20 +465,6 @@ MINIBOSS_OVERRIDES = {
     'mutantmore:mutant_jungle_zombie': {'lean': MUTANT_JUNGLE_ZOMBIE_IDLE},
     'mutantmore:mutant_wither_skeleton': {
         'lean': MUTANT_WITHER_SKELETON_IDLE,
-        # it fights with a withered scimitar in each hand, and a sword in
-        # this game is not a model: it is a thirty-two pixel sprite the
-        # item's own json stands upright in the fist. There is no mesh to
-        # find, so each blade goes in as the quad the game draws.
-        'hold': {
-            'texture': 'textures/item/withered_scimitar.png',
-            # the item json draws it at twice size in third person. Each one
-            # hangs off the hand itself rather than the forearm that carries
-            # it, and is turned half round: a sprite stands hilt-down, and
-            # what a hand holds is the hilt, with the blade below it.
-            'sheet': (32, 32), 'size': (36, 36),
-            'in': (('right_scimitar', 'rightHand', (0, 0, 0), (0, 0, 180)),
-                   ('left_scimitar', 'leftHand', (0, 0, 0), (0, 0, 180))),
-        },
     },
 
     # MutantSnowGolemModel.setAngles(): hunched, arms swung forward, knees
@@ -488,8 +474,17 @@ MINIBOSS_OVERRIDES = {
     'mutantmonsters:mutant_snow_golem': {
         'model': 'fuzs/mutantmonsters/client/model/MutantSnowGolemModel.class',
         'texture': 'textures/entity/mutant_snow_golem/mutant_snow_golem.png',
+        # The pumpkin is not a part of the golem's own mesh: a layer builds a
+        # second copy of the whole model, switches every bone off but the
+        # head and its inner_head, and draws that one box from the lantern
+        # sheet. inner_head is a shell half a pixel proud of the snow head
+        # inside it, so the pumpkin sits over the head rather than through it,
+        # and head_core keeps the golem's own sheet - it is buried anyway.
+        # That second mesh is laid out against a 64x32 sheet even though the
+        # file shipped is a 128x64 copy of it, so it needs measuring its own
+        # way or the face reads off a quarter of the pumpkin.
         'skin': {'texture': 'textures/entity/mutant_snow_golem/jack_o_lantern.png',
-                 'bones': ('inner_head', 'head_core')},
+                 'bones': ('inner_head',), 'size': (64, 32)},
         'rest': {
             'abdomen': (0.1308997, 0.0, 0.0),
             'chest':   (0.1308997, 0.0, 0.0),
