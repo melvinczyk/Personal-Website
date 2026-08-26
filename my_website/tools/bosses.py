@@ -91,6 +91,18 @@ ROUTES = ('geckolib', 'vanilla', 'advanced')
 #   keep     the only bones to draw, for a rig carrying more than one mob
 #   drop     bones to leave undrawn, along with everything under them
 #   hide     single boxes to drop, as (bone, place in that bone's list)
+#   reparent bones whose real parent the reader could not see, name -> parent
+#   rest     the pose a mob is drawn in where its model builds it flat and
+#            bends it every frame: bone -> the three turns setupAnim assigns,
+#            in the game's own axes and radians, put in place of the bone's
+#   lean     the same where the mob's idle adds its turns rather than
+#            assigning them: bone -> three turns in degrees, added to the
+#            bone's own
+#   graft    a second model the mob is holding, drawn by a layer of its own:
+#            its class, its sheet, the bone it hangs off, and any rest pose
+#            of its own. It keeps its sheet as a second skin.
+#   hold     an item in a hand, which has no mesh at all: a sprite, the size
+#            to draw it, and where each copy hangs and how it is turned
 OVERRIDES = {
     # Twilight Forest keeps its skins in textures/model and ships an older
     # model beside the one it draws, so both ends are named here.
@@ -911,6 +923,48 @@ def train_bones(found, jar, names, ns, entity, spec):
                         'source': seg['source']}}
 
 
+def graft_bones(found, jar, names, ns, entity, spec):
+    """Hang a second model off one of this mob's own bones.
+
+    A mob is not always one model. The Mutant Skeleton carries a crossbow
+    that is a model of its own with a sheet of its own, drawn by a layer that
+    walks down the arm and draws it at the hand; read alone the skeleton
+    stands there empty-handed. This reads that second model, poses it, and
+    parents it where the layer leaves it. It keeps its own sheet, named as a
+    second skin the same way a serpent's segments are.
+    """
+    held = read_model(jar, names, ns, entity, spec['model'],
+                      spec.get('mirror'), spec.get('spin'))
+    if not held:
+        return found
+
+    for name, turn in (spec.get('rest') or {}).items():
+        for bone in held['bones']:
+            if bone['name'] == name:
+                bone['rot'] = [round(-turn[0], 4), round(-turn[1], 4),
+                               round(turn[2], 4)]
+
+    tag = spec.get('prefix', 'held')
+    at = spec.get('at') or (0, 0, 0)
+    grown = list(found['bones'])
+    for bone in held['bones']:
+        place = dict(bone)
+        place['name'] = f'{tag}_{bone["name"]}'
+        if bone['parent']:
+            place['parent'] = f'{tag}_{bone["parent"]}'
+        else:
+            # the layer draws it at the end of a bone, not at its root
+            place['parent'] = spec['parent']
+            place['pivot'] = [round(place['pivot'][i] + at[i], 3)
+                              for i in range(3)]
+        place['skin'] = 1
+        grown.append(place)
+
+    return {**found, 'bones': grown,
+            'segment': {'tw': held['tw'], 'th': held['th'],
+                        'source': held['source']}}
+
+
 def build(boss, jars, listing, write=True):
     ns, entity = boss.split(':')
     if ns == 'minecraft':
@@ -996,19 +1050,73 @@ def build(boss, jars, listing, write=True):
 
     # A part built in a loop leaves the reader nothing to follow: no names, no
     # measurements, just a counter and a call. What that loop makes is written
-    # down here instead, worked out from the code once.
-    for name, parent, pivot, box, uv in fix.get('parts') or ():
-        x, y, z, w, h, d = box
-        found['bones'].append({
-            'name': name, 'parent': parent, 'rot': [0, 0, 0],
-            'pivot': [pivot[0], pivot[1], -pivot[2]],
-            'cubes': [{
+    # down here instead, worked out from the code once. The sixth, optional
+    # element mirrors the box, for a part on a rig's other side drawn from the
+    # same corner of the sheet. A box of None is a bare pivot - a joint the
+    # loop parents its own next part to rather than draws anything of its own.
+    for part in fix.get('parts') or ():
+        name, parent, pivot, box, uv = part[:5]
+        mirror = part[5] if len(part) > 5 else False
+        cubes = []
+        if box is not None:
+            x, y, z, w, h, d = box
+            faces = em.box_uv(uv[0], uv[1], w, h, d)
+            cubes.append({
                 'c': [round(x + w / 2, 3), round(y + h / 2, 3),
                       round(-(z + d / 2), 3)],
                 's': [w, h, d],
-                'f': em.box_uv(uv[0], uv[1], w, h, d),
-            }],
+                'f': em.mirrored(faces) if mirror else faces,
+            })
+        found['bones'].append({
+            'name': name, 'parent': parent, 'rot': [0, 0, 0],
+            'pivot': [pivot[0], pivot[1], -pivot[2]],
+            'cubes': cubes,
         })
+
+    # The pose a mob is actually seen in.
+    #
+    # createBodyLayer builds the mesh, and for a good many mobs what it builds
+    # is not the creature: it is a rack of parts all square to each other,
+    # which setupAnim then bends into an animal every single frame before the
+    # first one is ever drawn. The Mutant Enderman's arms hang flat at its
+    # sides there, its legs run straight down, and read as built it is a
+    # black post. So the rest pose those methods assign is written down here
+    # and baked in, in the game's own axes - x and y turn round on the way
+    # into the portal's, the same way a PartPose's own rotation does.
+    for name, turn in (fix.get('rest') or {}).items():
+        for bone in found['bones']:
+            if bone['name'] == name:
+                bone['rot'] = [round(-turn[0], 4), round(-turn[1], 4),
+                               round(turn[2], 4)]
+
+    # The same thing said as a lean rather than a pose.
+    #
+    # Where a vanilla model assigns its idle angles outright, mutantmore's
+    # rigs add theirs: every frame an idle animation sways each bone about a
+    # fixed offset, and that offset - not the mesh - is the stance the mob is
+    # seen in. Degrees, in the game's axes, added to whatever the bone was
+    # built with rather than put in its place.
+    for name, turn in (fix.get('lean') or {}).items():
+        for bone in found['bones']:
+            if bone['name'] == name:
+                held = bone.get('rot') or [0, 0, 0]
+                bone['rot'] = [round(held[0] - turn[0] * math.pi / 180, 4),
+                               round(held[1] - turn[1] * math.pi / 180, 4),
+                               round(held[2] + turn[2] * math.pi / 180, 4)]
+
+    # A part the reader did find, but hung off the wrong thing: a loop built
+    # bone the reader has no name for stands between it and its real parent,
+    # so it lands on the root instead. Said here rather than guessed at.
+    if fix.get('reparent'):
+        for bone in found['bones']:
+            if bone['name'] in fix['reparent']:
+                bone['parent'] = fix['reparent'][bone['name']]
+
+    # the renderer hangs each bone off whatever it has built already, so
+    # parts and a reparent both have to leave every parent still ahead of
+    # its children
+    if fix.get('parts') or fix.get('reparent'):
+        found['bones'] = in_order(found['bones'])
 
     # where the model said nothing, the sheet it is pinned to is the answer
     if found.get('guessed') and pin_texture:
@@ -1016,6 +1124,40 @@ def build(boss, jars, listing, write=True):
 
     if fix.get('train'):
         found = train_bones(found, jar, names, ns, entity, fix['train'])
+    # and a mob may simply be holding something the renderer draws from a
+    # model of its own
+    if fix.get('graft'):
+        found = graft_bones(found, jar, names, ns, entity, fix['graft'])
+        found['bones'] = in_order(found['bones'])
+
+    # What a mob holds is not always a model at all. The Mutant Wither
+    # Skeleton carries a scimitar in each hand, and a sword in Minecraft is a
+    # flat sprite that the item's own json stands up in the fist - there is
+    # no mesh anywhere to read. So each one goes in as a single upright quad
+    # reading the whole of that sprite, hung off the arm the game hangs it
+    # off and turned the way the display transform turns it.
+    held = fix.get('hold')
+    if held:
+        wide, tall = held.get('size', (16, 16))
+        sheet_w, sheet_h = held.get('sheet', (16, 16))
+        face = [0, 0, sheet_w, sheet_h]
+        for name, parent, at, turn in held['in']:
+            found['bones'].append({
+                'name': name, 'parent': parent,
+                'pivot': [round(v, 3) for v in at],
+                'rot': [round(v * math.pi / 180, 4) for v in turn],
+                'skin': 1,
+                'cubes': [{
+                    'c': [0, round(-tall / 2, 3), 0],
+                    's': [wide, tall, 0.4],
+                    # the back of a sprite is its front seen through it
+                    'f': {'front': face, 'back': face + ['x']},
+                }],
+            })
+        # the sprite is its own sheet and nothing like the size of the mob's:
+        # measured against that one, a blade reads a corner of itself
+        found['segment'] = {'tw': sheet_w, 'th': sheet_h}
+        found['bones'] = in_order(found['bones'])
     # A mob may wear one sheet over part of itself and another over the rest:
     # the Shelterer's inner head is drawn from its own skin and the shell it
     # sits in from a second, which is why the shell's corner of the first is
@@ -1034,7 +1176,8 @@ def build(boss, jars, listing, write=True):
         worn = fix.get('coat')
         if worn and not worn.startswith('assets/'):
             worn = f'assets/{ns}/{worn}'
-        second = (fix.get('train') or fix.get('skin') or {}).get('texture')
+        second = (fix.get('train') or fix.get('skin') or fix.get('graft')
+                  or fix.get('hold') or {}).get('texture')
         if second and not second.startswith('assets/'):
             second = f'assets/{ns}/{second}'
         with zipfile.ZipFile(jar) as zf:

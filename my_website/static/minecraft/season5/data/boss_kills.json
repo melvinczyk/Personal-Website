@@ -7,12 +7,12 @@
       "illagerinvasion:invoker": {
         "name": "Invoker",
         "tier": 2.0,
+        "category": "miniboss",
         "first": "2026-08-25T17:09:20.220Z",
         "kills": 1.0,
         "last": "2026-08-25T17:09:20.220Z",
         "lastDamage": 348.0,
-        "lastShare": 0.87,
-        "category": "miniboss"
+        "lastShare": 0.87
       }
     }
   }

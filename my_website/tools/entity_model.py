@@ -327,6 +327,24 @@ def parse(text, method_hint='fek'):
         # LayerDefinition.create(mesh, width, height)
         if args.count('I') == 2 and len(mesh.stack) >= 2:
             mesh.size = (int(mesh.stack[-2]), int(mesh.stack[-1]))
+            mesh.stack.clear()
+            continue
+
+        # A modifier chained onto one of a box's own arguments -
+        # CubeDeformation.extend(n), almost always, for a hat or a robe a size
+        # wider than the body it sits over - hands itself back the same way a
+        # builder does, mid-call, before the box measurements it belongs to
+        # have been read. Falling through to the clear below would wipe those
+        # six numbers out from under the addBox still waiting for them one
+        # call up, and the box that call was building never gets added at
+        # all. Eat only what this call itself put on the stack instead, the
+        # same as invokespecial's own extra constructor args above.
+        if op == 'invokevirtual' and ret.strip('L;') == d.group(1):
+            eaten = sum(args.count(kind) for kind in 'FIDJZBS')
+            if eaten:
+                del mesh.stack[-eaten:]
+            continue
+
         mesh.stack.clear()
 
     return mesh

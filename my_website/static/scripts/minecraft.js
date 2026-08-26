@@ -762,7 +762,7 @@ function buildLive(board) {
       <div class="bc-stage"><div class="bc-model" id="bm-${b.key}" data-boss="${b.key}"></div></div>
       <div class="bc-foot">
         <div class="bc-name">${b.felled || REVEAL ? b.name : '???'}</div>
-        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.category === 'miniboss' ? ' \u00b7 miniboss' : (b.tier ? ` \u00b7 tier ${b.tier}` : '')}</div>
+        <div class="bc-mod">${b.mod.replace(/_/g, ' ')}${b.category === 'miniboss' ? '' : (b.tier ? ` \u00b7 tier ${b.tier}` : '')}</div>
         ${b.felled ? `
           <div class="bc-kills">${b.kills} kill${b.kills === 1 ? '' : 's'}</div>
           <div class="bc-killers">${b.killers.map(k => `
