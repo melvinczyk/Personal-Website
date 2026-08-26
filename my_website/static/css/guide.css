@@ -173,11 +173,16 @@ html:has(body.guide-body), body.guide-body { height: auto; overflow: auto; }
 }
 .guide-flow-step {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  font-size: 14px; color: var(--mc-dim, #9b9ba4);
+  font-size: 14px; color: var(--mc-dim, #9b9ba4); max-width: 100%;
 }
 .guide-arrow { font-size: 24px; color: var(--mc-gold, #ffd24a); }
+/* a row of 6-8 icons is wider than a phone screen on its own - .guide-flow
+   wrapping the flow-steps onto their own lines doesn't help a single step
+   whose own icon row is the wide part, so the row itself has to be allowed
+   to wrap and centre rather than force the page wide */
 .guide-tree-icons {
-  display: flex; gap: 6px; padding: 8px; background: var(--mc-panel, #16161a);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  max-width: 100%; padding: 8px; background: var(--mc-panel, #16161a);
   border: 2px solid var(--mc-shade, #08080a);
   border-right-color: var(--mc-lit, #3d3d46);
   border-bottom-color: var(--mc-lit, #3d3d46);
@@ -477,12 +482,24 @@ html:has(body.guide-body), body.guide-body { height: auto; overflow: auto; }
 .gxc-note b { color: var(--sec-accent, var(--mc-gold, #ffd24a)); font-weight: normal; }
 
 @media (max-width: 700px) {
-  .guide-grid { grid-template-columns: 1fr; }
+  /* bare 1fr defaults its own minimum width to its content's min-content
+     size, not 0 - the exact overflow bug the desktop 2-column rule already
+     works around, just reintroduced here since this rule redeclares the
+     column instead of inheriting it */
+  .guide-grid { grid-template-columns: minmax(0, 1fr); }
   .guide-nav { position: static; }
   /* the two comparison cards stack instead of sitting side by side, so the
      arrow between them turns to point down rather than floating sideways */
   .guide-compare { flex-direction: column; align-items: stretch; }
   .guide-compare .guide-arrow { align-self: center; transform: rotate(90deg); }
+  /* the desktop padding was tuned for 1600px of shell, not a phone - left as
+     is, a 375px screen loses more than a quarter of its width to margin
+     before a single word of the guide shows up */
+  .guide-shell { padding: 14px 12px 40px; }
+  .guide-content { padding: 22px 16px 28px; }
+  .guide-banner { gap: 14px; padding: 14px 16px; }
+  .guide-banner .gb-icon { width: 44px; height: 44px; }
+  .guide-section h1 { font-size: 24px; }
 }
 
 /* ── the rainbow button ─────────────────────────────────────────────────
