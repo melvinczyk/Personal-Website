@@ -118,6 +118,10 @@
       "required": false
     },
     {
+      "id": "minecraft:evoker",
+      "required": false
+    },
+    {
       "id": "minecraft:ravager",
       "required": false
     },

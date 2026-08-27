@@ -7,6 +7,13 @@
   "model": "elder_guardian.model.json"
  },
  {
+  "key": "evoker",
+  "id": "minecraft:evoker",
+  "name": "Evoker",
+  "mod": "minecraft",
+  "model": "evoker.model.json"
+ },
+ {
   "key": "ravager",
   "id": "minecraft:ravager",
   "name": "Ravager",

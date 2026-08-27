@@ -21,6 +21,13 @@ from datetime import datetime, timezone
 DATA_DIR = 'data'
 PLAYERS  = 'players.json'
 BOSSES   = 'boss_kills.json'
+FIGHTS   = 'boss_fights.json'
+FIELDGUIDE = 'fieldguide_counts.json'
+
+# The four categories worth a card on the roster - "intro" is the guide's own
+# welcome entries, the same handful for everyone and no more a discovery than
+# the title screen is.
+FIELDGUIDE_CATEGORIES = ('monster', 'animal', 'plant', 'boss')
 
 # The bosses we hold a model for, and where the portal serves them from. Only
 # these can appear on the board: a boss nobody can draw is not a boss anyone
@@ -96,23 +103,99 @@ def _when(text):
 ONLINE_WINDOW = 180
 
 
-def _bosses(raw):
+def _kill_entries(record):
+    """One player's boss_kills.json row, bosses and minibosses together.
+
+    The export keeps them in two separate dicts under the player rather than
+    one flat one with a category field the way it used to - which sub-dict an
+    id came from is now the only place that category lives.
+    """
+    return {**(record.get('bosses') or {}), **(record.get('minibosses') or {})}
+
+
+def _bosses(record):
     """boss_kills.json is keyed by name, one entry per boss type beaten."""
+    mini = set((record.get('minibosses') or {}).keys())
     out = []
-    for entry in (raw.get('bosses') or {}).values():
+    for boss_id, entry in _kill_entries(record).items():
         out.append({
+            'id':       boss_id,
             'name':     entry.get('name') or 'UNKNOWN',
             'tier':     _int(entry.get('tier')),
-            # records written before the boss/miniboss split default to 'boss'
-            'category': entry.get('category') or 'boss',
+            'category': 'miniboss' if boss_id in mini else 'boss',
             'kills':    _int(entry.get('kills')),
-            # damage stats are kept in tenths of a heart-point, the same way
-            # the game's own statistics screen divides before showing them
-            'damage':   _float(_int(entry.get('lastDamage')) / 10),
             'last':     (entry.get('last') or '')[:10],
         })
     out.sort(key=lambda b: (-b['tier'], -b['kills'], b['name']))
     return out
+
+
+def _fieldguide(raw):
+    """One player's fieldguide_counts.json entry, in the units the card wants.
+
+    Categories arrive as doubles the same way every other KubeJS export does,
+    and "intro" is dropped: it is the guide's own handful of welcome entries,
+    the same for everyone, and not a discovery.
+    """
+    cats = raw.get('categories') or {}
+    return {
+        'total': _int(raw.get('total')),
+        'categories': {cat: _int(cats.get(cat)) for cat in FIELDGUIDE_CATEGORIES},
+    }
+
+
+def _label(item_id):
+    """'simplyswords:diamond_halberd' -> 'Diamond Halberd'."""
+    if not item_id:
+        return ''
+    name = item_id.split(':')[-1]
+    return ' '.join(word.capitalize() for word in name.split('_'))
+
+
+# A card is a portrait, not a combat log: the ten most recent fights are
+# worth reading, and a boss put down two hundred times would otherwise hand
+# it two hundred rows.
+FIGHT_LIMIT = 10
+
+
+def _fight_history(entries):
+    """One boss's own list in boss_fights.json, newest first.
+
+    Each fight names whoever landed the kill and how the damage split across
+    everyone who took part, which boss_kills.json's per-player rows never
+    carried even before the schema changed - a kill counts once for whoever
+    is credited with it, but the fight itself is the whole party's.
+    """
+    out = []
+    for entry in entries or []:
+        max_health = _int(entry.get('maxHealth'))
+        participants = sorted(
+            ({'name': name, 'damage': _float(p.get('damage')),
+              'share': round((p.get('share') or 0) * 100)}
+             for name, p in (entry.get('participants') or {}).items()),
+            key=lambda p: -p['share'])
+        # a share is already a fraction of the boss's own max health, not of
+        # what the tracked participants dealt between them, so whatever they
+        # do not add up to is damage from something the fight never credited
+        # to a player - discardedDamage names that leftover directly instead
+        # of leaving it to be inferred, but the same share-of-max-health
+        # units mean it slots into the bar the participants' own shares fill
+        discarded = _float(entry.get('discardedDamage'))
+        out.append({
+            'time':       (entry.get('time') or '')[:16].replace('T', ' '),
+            'sort':       entry.get('time') or '',
+            'max_health': max_health,
+            'duration':   _span(_int(entry.get('durationSeconds'))),
+            'finisher':   entry.get('finisher') or '',
+            'weapon':     _label(entry.get('finisherWeapon')),
+            'participants': participants,
+            'discarded':  discarded,
+            'discarded_share': round(discarded / max_health * 100) if max_health else 0,
+        })
+    out.sort(key=lambda f: f['sort'], reverse=True)
+    for fight in out:
+        del fight['sort']
+    return out[:FIGHT_LIMIT]
 
 
 def load(season_path):
@@ -120,6 +203,7 @@ def load(season_path):
     data_dir = os.path.join(season_path, DATA_DIR)
     players  = _load(os.path.join(data_dir, PLAYERS))
     kills    = _load(os.path.join(data_dir, BOSSES))
+    scans    = _load(os.path.join(data_dir, FIELDGUIDE))
     if not players:
         return {}
 
@@ -130,6 +214,7 @@ def load(season_path):
     for name, raw in (players.get('players') or {}).items():
         uuid = raw.get('uuid') or name
         boss = kills.get(name) or kills.get(uuid) or {}
+        field = scans.get(name) or scans.get(uuid) or {}
 
         ticks   = _int(raw.get('playTimeTicks'))
         seconds = _int(raw.get('playTimeSeconds') or ticks / 20)
@@ -177,6 +262,7 @@ def load(season_path):
             'bosses':      _bosses(boss),
             'boss_kills':  _int(boss.get('totalKills')),
             'boss_types':  _int(boss.get('bossesDefeated')),
+            'fieldguide':  _fieldguide(field),
             'recorded':    (raw.get('recorded') or updated)[:16].replace('T', ' '),
         }
 
@@ -217,10 +303,11 @@ def bosses(season_path, faces=None):
         return []
 
     raw = _load(os.path.join(season_path, DATA_DIR, BOSSES))
+    fights_raw = _load(os.path.join(season_path, DATA_DIR, FIGHTS))
     scored = {}
     for player, record in raw.items():
         uuid = record.get('uuid') or player
-        for boss_id, entry in (record.get('bosses') or {}).items():
+        for boss_id, entry in _kill_entries(record).items():
             kills = _int(entry.get('kills'))
             if kills <= 0:
                 continue
@@ -232,7 +319,6 @@ def bosses(season_path, faces=None):
                 'name':   record.get('name') or player,
                 'uuid':   uuid,
                 'kills':  kills,
-                'damage': _float(_int(entry.get('lastDamage')) / 10),
                 'last':   (entry.get('last') or '')[:10],
             })
             for key, when in (('first', entry.get('first')), ('last', entry.get('last'))):
@@ -269,6 +355,10 @@ def bosses(season_path, faces=None):
             'killers': killers,
             'first':   hit['first'] if hit else '',
             'last':    hit['last'] if hit else '',
+            # only a felled boss has fights worth reading, but an unfelled
+            # one costs nothing to look up and finding none is itself a
+            # cheap confirmation that the two files agree
+            'fights':  _fight_history(fights_raw.get(boss['id'])),
         })
     # bosses lead the roster, minibosses stand behind them in a section of
     # their own; within each, weakest tier first and strongest last, so the
@@ -341,7 +431,7 @@ def stamp(season_path):
     """When the export last changed, so a cached roster knows to rebuild."""
     data_dir = os.path.join(season_path, DATA_DIR)
     marks = []
-    for name in (PLAYERS, BOSSES):
+    for name in (PLAYERS, BOSSES, FIGHTS, FIELDGUIDE):
         try:
             marks.append(os.path.getmtime(os.path.join(data_dir, name)))
         except OSError:

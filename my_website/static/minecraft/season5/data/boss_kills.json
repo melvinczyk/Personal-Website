@@ -3,16 +3,13 @@
     "uuid": "6694d52c-0985-4a24-9789-05df23c45059",
     "bossesDefeated": 1.0,
     "totalKills": 1.0,
-    "bosses": {
+    "minibosses": {
       "illagerinvasion:invoker": {
         "name": "Invoker",
-        "tier": 2.0,
-        "category": "miniboss",
+        "tier": 0.0,
         "first": "2026-08-25T17:09:20.220Z",
         "kills": 1.0,
-        "last": "2026-08-25T17:09:20.220Z",
-        "lastDamage": 348.0,
-        "lastShare": 0.87
+        "last": "2026-08-25T17:09:20.220Z"
       }
     }
   }

@@ -42,6 +42,8 @@ STAMP = ".checked"
 DEFAULT_FILES = [
     "kubejs/exported/players.json",
     "kubejs/exported/boss_kills.json",
+    "kubejs/exported/boss_fights.json",
+    "kubejs/exported/fieldguide_counts.json",
 ]
 
 

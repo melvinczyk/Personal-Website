@@ -455,17 +455,30 @@ function livePanel(p) {
           <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
           <span class="lb-main">
             <span class="lb-top"><b>${b.name}</b><em>x${b.kills}</em></span>
-            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${compact(b.damage)} DMG · ${b.last}</u></span>
+            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${b.last}</u></span>
           </span>
         </span>`;
       }).join('')}
     </div>` : '<div class="live-boss empty">no boss has gone down yet</div>';
+
+  const F = L.fieldguide;
+  const fieldguide = F && F.total ? `
+    <div class="live-fieldguide">
+      <div class="lb-head"><span>FIELD GUIDE</span><b>${F.total} SCANNED</b></div>
+      <div class="fg-grid">
+        <span class="fg-cell"><i class="fg-icon monster"></i><b>${F.categories.monster}</b><u>MONSTER</u></span>
+        <span class="fg-cell"><i class="fg-icon animal"></i><b>${F.categories.animal}</b><u>ANIMAL</u></span>
+        <span class="fg-cell"><i class="fg-icon plant"></i><b>${F.categories.plant}</b><u>PLANT</u></span>
+        <span class="fg-cell"><i class="fg-icon boss"></i><b>${F.categories.boss}</b><u>BOSS</u></span>
+      </div>
+    </div>` : '';
 
   return `<div class="live-wrap">
     ${vitals}
     ${section('ACTIVITY', L.dimension, activity)}
     ${section('COMBAT', null, combat)}
     ${bosses}
+    ${fieldguide}
     <div class="live-when">SERVER READ ${L.recorded}</div>
   </div>`;
 }
@@ -687,6 +700,7 @@ const LIVE_EVERY = 60;          // seconds between polls
 let liveBoard = typeof LIVE_BOARD !== 'undefined' ? LIVE_BOARD : null;
 let liveAt    = Date.now();     // when the board we are showing was read
 let liveOpen  = null;           // uuid of the row expanded, if any
+let bossOpen  = null;           // key of the boss card expanded, if any
 let liveDue   = LIVE_EVERY;
 let livePolling = false;
 
@@ -705,6 +719,15 @@ function compact(n) {
     if (size >= step) return `${sign}${Math.floor(size / step * 10) / 10}${mark}`;
   }
   return `${n}`;
+}
+
+// a fight's own damage-share colour: green for whoever carried it, yellow
+// for a real but lesser part, red for barely tipping in - a scale of how
+// much of the boss that share actually was, not a decoration.
+function shareTier(pct) {
+  if (pct >= 50) return 'hi';
+  if (pct >= 20) return 'mid';
+  return 'lo';
 }
 
 // what a compacted number wants hanging off it, and nothing at all otherwise
@@ -742,6 +765,13 @@ const REVEAL = new URLSearchParams(location.search).has('reveal');
 
 const LIVE_MODEL = { width: 148, height: 168 };
 const BOSS_MODEL = { width: 124, height: 124 };
+// bigger canvas, not a bigger zoom: the auto-fit already shows the whole
+// model at any canvas size (its own math is independent of it), so a real
+// render at 240px is what actually makes the mob bigger. A zoom multiplier
+// on top of that scales the model past its own camera frame instead and
+// crops it top and bottom - the fight history's own layout, not a smaller
+// model, is what got a felled player's name from being cut off.
+const BOSS_MODEL_OPEN = { width: 240, height: 240 };
 
 function renderLive(board) {
   const stage = document.getElementById('live-stage');
@@ -788,11 +818,14 @@ function buildLive(board) {
     const tierCls = b.category === 'miniboss' ? 'mini' : (b.tier ? `t${b.tier}` : '');
     return `
     <div class="bcard${b.felled ? ' beaten' : ' locked'} ${b.category} ${tierCls}" id="bc-${b.key}"
-         data-beaten="${b.felled ? 1 : 0}"
+         data-beaten="${b.felled ? 1 : 0}" onclick="toggleBoss('${b.key}')"
          onmouseenter="spin('bm-${b.key}', true)" onmouseleave="spin('bm-${b.key}', false)">
       <div class="bc-stage"><div class="bc-model" id="bm-${b.key}" data-boss="${b.key}"></div></div>
       <div class="bc-foot">
-        <div class="bc-name">${b.felled || REVEAL ? b.name : '???'}</div>
+        <div class="bc-name">
+          ${tierCls ? `<span class="bc-star ${tierCls}">${PIXEL_STAR_SVG}</span>` : ''}
+          <span class="bc-name-text">${b.felled || REVEAL ? b.name : '???'}</span>
+        </div>
         <div class="bc-mod">${b.mod.replace(/_/g, ' ')}</div>
         ${b.felled ? `
           <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}</div>
@@ -800,6 +833,30 @@ function buildLive(board) {
             <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
               <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
             </span>`).join('')}</div>
+          <div class="bc-fights">
+            <div class="bcf-title">FIGHT HISTORY</div>
+            <div class="bcf-list">${b.fights.length ? b.fights.map(f => `
+              <div class="bcf-card">
+                <div class="bcf-top"><b class="bcf-finisher">${f.finisher}</b><span class="bcf-date">${f.time}</span></div>
+                <div class="bcf-tiles">
+                  <div class="bcf-tile"><i>DURATION</i><b>${f.duration}</b></div>
+                  <div class="bcf-tile"><i>BOSS HEALTH</i><b>${compact(f.max_health)}</b></div>
+                  ${f.weapon ? `<div class="bcf-tile wide"><i>FINISHING BLOW</i><b>${f.weapon}</b></div>` : ''}
+                </div>
+                <div class="bcf-parts">${f.participants.map(p => `
+                  <div class="bcf-part">
+                    <span class="bcf-pname">${p.name}</span>
+                    <span class="bcf-bar"><span class="bcf-fill ${shareTier(p.share)}" style="width:${Math.max(p.share, 6)}%"></span></span>
+                    <span class="bcf-pct">${p.share}%</span>
+                  </div>`).join('')}
+                ${f.discarded_share ? `
+                  <div class="bcf-part untracked">
+                    <span class="bcf-pname">Untracked</span>
+                    <span class="bcf-bar"><span class="bcf-fill discard" style="width:${Math.max(f.discarded_share, 6)}%"></span></span>
+                    <span class="bcf-pct">${f.discarded_share}%</span>
+                  </div>` : ''}</div>
+              </div>`).join('') : '<div class="bcf-empty">no fight on record</div>'}</div>
+          </div>
         ` : ''}
       </div>
     </div>`;
@@ -987,6 +1044,30 @@ function drawDrawer(board) {
       </button>
     </div>
     ${livePanel(player)}`;
+}
+
+// A locked card has no fight history to show, so clicking one is a no-op
+// rather than opening an empty section. Only one boss card holds itself
+// open at a time, the same as the player drawer, so the grid never carries
+// more than one stretched-out row at once.
+function toggleBoss(key) {
+  const card = document.getElementById(`bc-${key}`);
+  if (!card || card.dataset.beaten !== '1') return;
+  const previous = bossOpen;
+  bossOpen = bossOpen === key ? null : key;
+  for (const c of document.querySelectorAll('.bcard')) {
+    c.classList.toggle('open', c.id === `bc-${bossOpen}`);
+  }
+  // the model is rebuilt at each state's own canvas size rather than just
+  // resized in CSS, so the open card's bigger stage gets a model actually
+  // rendered for it instead of a small canvas stretched blurry over it
+  const rebuild = (k, opts) => {
+    const boss = (liveBoard.bosses || []).find(b => b.key === k);
+    const el = document.getElementById(`bm-${k}`);
+    if (boss && el) buildMobModel(el, { model: boss.model, locked: false, ...opts });
+  };
+  if (previous && previous !== bossOpen) rebuild(previous, BOSS_MODEL);
+  if (bossOpen) rebuild(bossOpen, BOSS_MODEL_OPEN);
 }
 
 function toggleLive(uuid) {

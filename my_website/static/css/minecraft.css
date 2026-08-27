@@ -864,6 +864,7 @@ body::after { display: none; }
   --mc-xp:     #7bc518;
   --mc-heart:  #d94a3d;
   --mc-gold:   #ffd24a;
+  --mc-sky:    #6fe0ee;
 }
 
 .live-stage {
@@ -969,7 +970,8 @@ body::after { display: none; }
    a boss, not a second copy of one */
 .ls-bosses.mini { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); opacity: .9; }
 .ls-bosses.mini .bc-stage { min-height: 96px; }
-.ls-bosses.mini .bc-name { font-size: 12.5px; height: 2.1em; }
+.ls-bosses.mini .bc-name { font-size: 16px; height: 2.1em; }
+.ls-bosses.mini .bc-star .badge-star { width: 16px; height: 15px; }
 .ls-bosses.mini .bc-mod  { font-size: 11px; }
 
 /* every card is a slot: sunken, flat, and the same size as its neighbours */
@@ -1047,21 +1049,21 @@ body::after { display: none; }
 .px-s { fill: var(--px-s); }
 .px-h { fill: var(--px-h); }
 
-/* Shared by the card-corner badges (.pc-badge) and the server-record boss
-   list (.lb-star) — one palette per tier, defined once so the two views
-   never drift out of sync. */
+/* Shared by the card-corner badges (.pc-badge), the server-record boss
+   list (.lb-star), and the roster card's own name star (.bc-star) — one
+   palette per tier, defined once so none of the three views drift apart. */
 /* tier 1, Lesser Boss — gold (the exact colors sampled from the source star) */
-.pc-badge.t1, .lb-star.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
+.pc-badge.t1, .lb-star.t1, .bc-star.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
 /* tier 2, Greater Boss — diamond */
-.pc-badge.t2, .lb-star.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
+.pc-badge.t2, .lb-star.t2, .bc-star.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
 /* tier 3, Apex Boss — red, glowing */
-.pc-badge.t3, .lb-star.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
-.pc-badge.t3 .badge-star, .lb-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
+.pc-badge.t3, .lb-star.t3, .bc-star.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
+.pc-badge.t3 .badge-star, .lb-star.t3 .badge-star, .bc-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
 /* tier 4 — reserved for the next boss above apex: rainbow, animated */
-.pc-badge.t4, .lb-star.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
-.pc-badge.t4 .badge-star, .lb-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
+.pc-badge.t4, .lb-star.t4, .bc-star.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
+.pc-badge.t4 .badge-star, .lb-star.t4 .badge-star, .bc-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
 /* miniboss — grey, regardless of the tier it's tagged with */
-.pc-badge.mini, .lb-star.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
+.pc-badge.mini, .lb-star.mini, .bc-star.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
 
 @keyframes pc-glow-red {
   0%, 100% { filter: drop-shadow(0 0 2px rgba(229,56,59,0.55)); }
@@ -1094,20 +1096,47 @@ body::after { display: none; }
   from { filter: hue-rotate(0deg); }
   to   { filter: hue-rotate(360deg); }
 }
+/* a felled boss's own name reads in its tier's colour too, not just the
+   star and the border - gated on .beaten rather than plain .t1 etc so a
+   card that knows its tier but hasn't been felled yet stays the faint
+   "???" grey the locked rule already gives it, instead of a race between
+   two equally specific selectors. --tier itself is tuned for a small
+   pixel-art star against its own dark outline and reads washed-out blown up
+   as body text, so the name gets its own bolder, more saturated pick per
+   tier instead of sharing that variable. */
+.bcard.beaten.t1 .bc-name-text   { color: #ffd24a; }             /* gold */
+.bcard.beaten.t2 .bc-name-text   { color: #3da5ff; }             /* blue */
+.bcard.beaten.t3 .bc-name-text   { color: #ff3b3b; }             /* dark red */
+.bcard.beaten.t4 .bc-name-text   { color: #c469ff; }             /* purple */
+.bcard.beaten.mini .bc-name-text { color: #b7c1cf; }             /* steel grey */
 /* a beaten boss reads green, the game's own colour for something felled and
-   done with; a beaten miniboss stays the warmer brown it always was, so the
-   two ranks read apart at a glance even before the name is read. The tier
-   border above stays put underneath either way - only the fill changes. */
-.bcard.beaten { background: #262019; box-shadow: inset 0 0 0 1px rgba(190,140,80,0.22); }
+   done with; a beaten miniboss reads the same steel-blue its own tier star
+   already is, so the two ranks read apart at a glance even before the name
+   is read, without the muddy brown that colour used to be. The tier border
+   above stays put underneath either way - only the fill changes. */
+.bcard.beaten { background: #1b2128; box-shadow: inset 0 0 0 1px rgba(138,151,168,0.3); }
 .bcard.beaten.boss { background: #172218; box-shadow: inset 0 0 0 1px rgba(123,197,24,0.28); }
 .bcard.hidden { display: none; }
 /* a boss name is often two words long and the card is narrow, so it gets two
    lines rather than an ellipsis: every card the same height, nothing clipped */
 .bc-name {
-  display: block; color: var(--mc-text);
-  white-space: normal; line-height: 1.15; height: 2.3em; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 6px; color: var(--mc-text);
+  font-size: 18px; line-height: 1.15; height: 2.3em; overflow: hidden;
 }
+.bc-name-text { white-space: normal; }
 .bcard.locked .bc-name { color: var(--mc-faint); }
+/* the star's own tier colours are the same ones .pc-badge/.lb-star already
+   use, so a name reads the same rank at a glance the card's own border and
+   the player drawer's boss list already give it, in the exact same colour.
+   Sized to one line-height and centred inside that, not against the whole
+   name: a two-word boss name wraps to a second line, and centring the star
+   on the full two-line block leaves it floating at the seam between them
+   rather than level with the line it actually sits beside. */
+.bc-star {
+  flex: none; display: flex; align-items: center; justify-content: center;
+  height: 1.15em;
+}
+.bc-star .badge-star { width: 18px; height: 16px; }
 .bc-mod {
   margin-top: 1px; font-size: 12px; color: var(--mc-faint);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1132,6 +1161,108 @@ body::after { display: none; }
   text-overflow: ellipsis; white-space: nowrap;
 }
 .bc-killer em { font-style: normal; color: var(--mc-faint); flex: none; }
+
+/* a felled boss is worth clicking - its own card stretches across the grid
+   and turns its narrow model+kills column and a fight-history list side by
+   side, the same "pull it open where it stands" move the star badges' card
+   corner never needed but a combat log genuinely does. A locked one has
+   nothing to show, so it keeps the plain, unclickable slot. */
+.bcard.beaten { cursor: pointer; }
+/* the open card claims the whole row, model rebuilt bigger to fill the
+   room that opens up beside it rather than sitting small in a wide box. */
+.bcard.open {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 18px; padding: 10px 18px 14px;
+}
+.bcard.open .bc-stage { flex: 0 0 240px; min-height: 240px; align-self: center; }
+.bcard.open .bc-foot { flex: 1; min-width: 0; padding: 0; background: none; border: none; }
+/* the narrow-card truncation on the boss's own name, mod, and killer names
+   all exist to fit a hundred-and-twenty-four-pixel card - open, the card is
+   the whole row wide, and none of them need to give up a letter to it */
+.bcard.open .bc-name { height: auto; font-size: 24px; gap: 8px; }
+.bcard.open .bc-star .badge-star { width: 24px; height: 22px; }
+.bcard.open .bc-mod { overflow: visible; white-space: normal; text-overflow: clip; }
+.bcard.open .bc-killer b { max-width: none; overflow: visible; text-overflow: clip; }
+.bc-fights { display: none; }
+.bcard.open .bc-fights { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.bcf-title {
+  font-size: 13px; font-weight: bold; letter-spacing: 1.5px; color: var(--mc-sky);
+  text-shadow: 1px 1px #000;
+  padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
+}
+.bcf-empty { font-size: 14px; color: var(--mc-dim); padding: 6px 0; }
+/* fight cards wrap into as many columns as the now-full-width row has room
+   for, rather than a single column stretched thin or capped narrow while
+   the rest of the row sits empty */
+.bcf-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px; align-items: start;
+}
+.bcf-card {
+  background: var(--mc-slot); padding: 10px 12px 12px;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.bcf-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.bcf-finisher { font-weight: normal; font-size: 18px; color: var(--mc-xp); }
+.bcf-date { margin-left: auto; font-size: 12px; color: var(--mc-dim); }
+
+/* the same inventory-slot stat tile the top-of-page totals use, just sized
+   to sit inside a fight card instead of spanning the whole page */
+.bcf-tiles {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+  gap: 4px; margin-bottom: 10px;
+}
+.bcf-tile {
+  display: flex; flex-direction: column; gap: 2px; padding: 5px 8px;
+  background: #17171c; border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  overflow: hidden;
+}
+.bcf-tile.wide { grid-column: span 2; }
+.bcf-tile i {
+  font-style: normal; font-size: 10px; letter-spacing: .5px; color: var(--mc-faint);
+}
+.bcf-tile b {
+  font-weight: normal; font-size: 15px; color: var(--mc-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.bcf-parts { display: flex; flex-direction: column; gap: 6px; }
+.bcf-part { display: flex; align-items: center; gap: 10px; }
+.bcf-part.untracked { opacity: .75; }
+/* the name gets whatever room it needs and the bar gives up width for it,
+   not the other way round - a name cut short is unreadable, a bar three
+   times a card's width is only shorter to look at */
+.bcf-pname {
+  flex: 0 1 auto; white-space: nowrap;
+  font-size: 14px; color: var(--mc-text);
+}
+.bcf-part.untracked .bcf-pname { font-style: italic; color: var(--mc-dim); }
+.bcf-bar {
+  flex: 1 1 60px; min-width: 60px; display: block; height: 14px;
+  background: #0d0d10; border: 1px solid var(--mc-shade);
+}
+.bcf-fill { display: block; height: 100%; }
+/* how much of the boss that share actually was, not a decoration: green for
+   whoever carried the fight, amber for a real but lesser part, red for
+   barely tipping in. Untracked damage - discardedDamage, whatever the fight
+   never credited to a player - gets neither: a hazard-striped black bar so
+   it never reads as a fourth participant. */
+.bcf-fill.hi  { background: linear-gradient(#a4e86a, var(--mc-xp)); }
+.bcf-fill.mid { background: linear-gradient(#ffcf6b, #d99a2b); }
+.bcf-fill.lo  { background: linear-gradient(#ff8f8f, var(--mc-heart)); }
+.bcf-fill.discard {
+  background-color: #17171a;
+  background-image: repeating-linear-gradient(
+    -45deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 9px);
+}
+.bcf-fill.c0 { background: linear-gradient(#ffe27a, #d9a52e); }
+.bcf-fill.c1 { background: linear-gradient(#8ff0ff, #3a99a6); }
+.bcf-fill.c2 { background: linear-gradient(#b6f07a, #5a9c2e); }
+.bcf-fill.c3 { background: linear-gradient(#ff9d9d, #c23a3a); }
+.bcf-pct { flex: 0 0 38px; text-align: right; font-size: 14px; color: var(--mc-dim); }
 
 /* the record of whichever player is open, under the grid it came from */
 .ls-drawer { display: none; margin: 0 10px 10px; }
@@ -1262,6 +1393,42 @@ body::after { display: none; }
 .live-when {
   margin-top: auto; padding-top: 4px;
   font-size: 9px; letter-spacing: 1px; color: #4d5b6d; text-align: right;
+}
+
+/* four category counts from fieldguide_counts.json, one icon apiece rather
+   than a label: a face reads faster than the word "monster" does at 9px */
+.live-fieldguide { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
+.fg-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  background: rgba(255,255,255,0.05);
+}
+.fg-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px; background: #10141c;
+}
+.fg-cell b { font-weight: normal; font-size: 15px; color: #e8eef7; }
+.fg-cell u {
+  text-decoration: none; font-size: 8px; letter-spacing: 1px; color: #5f6f83;
+}
+.fg-icon {
+  display: block; width: 18px; height: 18px; image-rendering: pixelated;
+  border: 1px solid var(--mc-shade, #08080a);
+}
+.fg-icon.monster {
+  background-image: url('/static/minecraft/icons/zombie.png');
+  background-size: 144px 144px; background-position: -18px -18px;
+}
+.fg-icon.boss {
+  background-image: url('/static/minecraft/icons/wither.png');
+  background-size: 144px 144px; background-position: -18px -18px;
+}
+.fg-icon.animal {
+  background-image: url('/static/minecraft/icons/pig.png');
+  background-size: 144px 72px; background-position: -18px -18px;
+}
+.fg-icon.plant {
+  background-image: url('/static/minecraft/icons/poppy.png');
+  background-size: 18px 18px; background-position: 0 0;
 }
 
 /* deaths stand in for armor on a card with no save behind it */

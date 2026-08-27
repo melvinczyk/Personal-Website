@@ -1,0 +1,19 @@
+{
+  "illagerinvasion:invoker": [
+    {
+      "time": "2026-08-25T17:09:20.220Z",
+      "maxHealth": 400.0,
+      "threshold": 20.0,
+      "durationSeconds": 187.0,
+      "discardedDamage": 52,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplyswords:diamond_halberd",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 348.0,
+          "share": 0.87
+        }
+      }
+    }
+  ]
+}

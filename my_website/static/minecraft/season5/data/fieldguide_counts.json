@@ -1,0 +1,72 @@
+{
+  "melvin0czyk": {
+    "total": 89.0,
+    "categories": {
+      "monster": 30.0,
+      "animal": 21.0,
+      "plant": 36.0,
+      "boss": 2.0,
+      "intro": 0.0
+    }
+  },
+  "DonMonk141414": {
+    "total": 48.0,
+    "categories": {
+      "monster": 10.0,
+      "animal": 11.0,
+      "plant": 27.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  },
+  "Zerobarbecue117": {
+    "total": 107.0,
+    "categories": {
+      "monster": 19.0,
+      "animal": 31.0,
+      "plant": 57.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  },
+  "mysteriousmex21": {
+    "total": 36.0,
+    "categories": {
+      "monster": 10.0,
+      "animal": 6.0,
+      "plant": 20.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  },
+  "blindhustler": {
+    "total": 38.0,
+    "categories": {
+      "monster": 16.0,
+      "animal": 5.0,
+      "plant": 17.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  },
+  "FastboiOG": {
+    "total": 23.0,
+    "categories": {
+      "monster": 8.0,
+      "animal": 1.0,
+      "plant": 14.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  },
+  "Hey_Zeus77": {
+    "total": 25.0,
+    "categories": {
+      "monster": 4.0,
+      "animal": 4.0,
+      "plant": 17.0,
+      "boss": 0.0,
+      "intro": 0.0
+    }
+  }
+}

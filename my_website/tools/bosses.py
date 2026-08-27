@@ -177,6 +177,9 @@ OVERRIDES = {
                        'fairkeeper_ouros_body.png',
             'body': ('body', 'cannon'), 'tail': ('tail',)},
         'focus': 'ouros', 'zoom': 3.0},
+    # Fifty-eight pixels wide against thirty-five tall: the auto-fit spends
+    # most of its scale on the width and the spawner reads small in the card.
+    'dungeonnowloading:chaos_spawner': {'zoom': 1.6},
 
     # Block Factory's bosses are all geckolib, and every one of them draws a
     # side of itself from the other side's texture.
@@ -252,7 +255,8 @@ OVERRIDES = {
     'netherman:azazel': {'mirror': True, 'focus': 'body', 'zoom': 1.6},
     # The human form's spear and shield reach out just as far as the wings
     # do above, for the same reason.
-    'netherman:azazel_human': {'mirror': True, 'focus': 'body', 'zoom': 1.6},
+    'netherman:azazel_human': {'mirror': True, 'focus': 'body', 'zoom': 1.6,
+                               'name': 'The True Azazel'},
     # Both of these read their cube rotations the other way round; taken the
     # usual way they come out as a heap of loose boxes.
     'graveyard:lich': {'model': 'geo/lich.geo.json',
@@ -264,9 +268,23 @@ OVERRIDES = {
     'arkane_domains:cursed_pharaoh': {
         'model': 'geo/faraong.geo.json',
         'texture': 'textures/entities/faraoonon.png', 'mirror': True},
+    # bone11 carries a flat 100x100 plate - a ground rune, going by its size
+    # and the way it sits under the character rather than on it - hung off
+    # its own root next to "bone", the character's own, rather than under it.
+    # Framed whole that plate is most of the picture and the warlock himself
+    # a speck in the middle of it; the sword he holds reaches far enough past
+    # him on its own to still be worth zooming past.
     'arkane_domains:warlock': {
         'model': 'geo/warlock_gggeo.geo.json',
-        'texture': 'textures/entities/texture333333w.png', 'mirror': True},
+        'texture': 'textures/entities/texture333333w.png', 'mirror': True,
+        'drop': ('bone11',), 'focus': 'pecho', 'zoom': 1.15},
+    # halo is a flat, zero-thickness disc parked 37 units off its own anchor -
+    # a ground circle for a cast animation, not something worn - and framed
+    # in it drags the auto-fit out until the druid himself is a sliver.
+    # Dropping it alone already leaves the auto-fit filling the card on its
+    # own; focus stays in case a future cast animation reintroduces overflow,
+    # but no zoom on top of that fit is needed.
+    'arkane_domains:savage_druid': {'drop': ('halo',), 'focus': 'body'},
 
     # four hundred pixels of neck and tail: framed to fit it is a thin ribbon,
     # so it is allowed to run past the sides of its card
@@ -1276,7 +1294,7 @@ def build(boss, jars, listing, write=True):
                 with open(os.path.join(OUT, f'{key}_skin.png'), 'wb') as fh:
                     fh.write(veiled(raw, veil) if veil else raw)
         model = {
-            'id': boss, 'name': pretty(entity), 'mod': ns,
+            'id': boss, 'name': fix.get('name') or pretty(entity), 'mod': ns,
             **({'zoom': fix['zoom']} if fix.get('zoom') else {}),
             **({'pose': fix['pose']} if fix.get('pose') else {}),
             **({'focus': fix['focus']} if fix.get('focus') else {}),
@@ -1303,7 +1321,7 @@ def build(boss, jars, listing, write=True):
             json.dump(model, fh, separators=(',', ':'))
 
     return {'id': boss, 'key': key, 'route': found['route'], 'ok': True,
-            'name': pretty(entity), 'mod': ns,
+            'name': fix.get('name') or pretty(entity), 'mod': ns,
             'cubes': sum(len(b['cubes']) for b in found['bones']),
             'bones': len(found['bones']), 'source': found['source'],
             'texture': texture}

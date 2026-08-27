@@ -307,6 +307,15 @@ MINIBOSS_OVERRIDES = {
         'model': 'com/majruszsdifficulty/entity/GiantModel.class',
         'texture': 'textures/entity/giant.png'},
 
+    # Walking Crops ships two geo files sharing the same bone names -
+    # king.geo.json (the boss: a body on four stubby legs) and
+    # king_raider.geo.json (a second, unrelated rig with a small humanoid
+    # nested 44 units inside the body) - and the ranking heuristic picks the
+    # raider file since it scores higher on bone/cube count. Pinned to the
+    # one KingModel.class actually draws.
+    'wkcr:king': {'model': 'geo/king.geo.json',
+                 'texture': 'textures/entities/king.png', 'zoom': 0.8},
+
     # Every illageandspillage mob wears the same tiny party hat and candle -
     # "birthday" and the "thingy" hanging off it - year round, the way its
     # boss-roster cousins do. It reads as a fruit stuck to the head rather

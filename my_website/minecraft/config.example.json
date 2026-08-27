@@ -17,7 +17,9 @@
   "files": [
     "kubejs/exported/players.json",
     "kubejs/exported/boss_kills.json",
-    "kubejs/exported/boss_kills.tsv"
+    "kubejs/exported/boss_kills.tsv",
+    "kubejs/exported/boss_fights.json",
+    "kubejs/exported/fieldguide_counts.json"
   ],
 
   "_season": "Which static/minecraft/<season>/data folder these land in.",

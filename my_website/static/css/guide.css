@@ -25,6 +25,9 @@ html:has(body.guide-body), body.guide-body { height: auto; overflow: auto; }
 }
 .guide-head .dt-back { flex: none; }
 .guide-head .dt-back .icon { transform: scale(.32); margin: -17px -18px; }
+.guide-season-icon {
+  width: 32px; height: 32px; image-rendering: pixelated; flex: none;
+}
 .guide-title {
   font-size: 25px; color: var(--mc-text, #e6e6e8); text-shadow: 2px 2px #000;
 }

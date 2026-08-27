@@ -70,6 +70,25 @@ MOBS = {
         'name':    'Ravager',
         'id':      'minecraft:ravager',
     },
+    # IllagerModel: the shared body every illager (vindicator, pillager,
+    # illusioner, evoker) is built from, distinguished only by texture. Its
+    # own marker string, "hat_rim", is shared with the plain villager's
+    # model too - the villager's own copy has no "nose" or "arms" bone,
+    # which IllagerModel does, but pinning the resolved class is simpler
+    # than teaching find_classes a second marker to require.
+    'evoker': {
+        'tier':    0,
+        'order':   5,
+        'marker':  'hat_rim',
+        'class':   'fdq.class',
+        'reject':  None,
+        'texture': 'textures/entity/illager/evoker.png',
+        'name':    'Evoker',
+        'id':      'minecraft:evoker',
+        # the vindicator and pillager wear this, the evoker never does - its
+        # own renderer just skips the part
+        'drop':    ('hat',),
+    },
 }
 
 PUSH_INT = {
@@ -88,7 +107,14 @@ CLASSNAME = re.compile(r'^\w[\w .<>,?]*\bclass ([\w.$]+)', re.M)
 # setRotationAngle(box, x, y, z), the usual Blockbench export - is written by
 # javap with no class in front of the name, and reading only qualified calls
 # drops every rotation such a model sets.
-DEFORM = re.compile(r'CubeDeformation$')
+#
+# A mod's own class file keeps CubeDeformation's real, dotted name - Forge
+# ships mod code built against Mojang's own mappings - but the vanilla client
+# jar is obfuscated, and there the same class is a bare two-to-four-letter
+# alias with no path in front of it at all ("fei", here). The two patterns
+# can never collide - a mod's owner always carries a package path - so either
+# one is safe to accept as the same class.
+DEFORM = re.compile(r'CubeDeformation$|^[a-z]{2,4}$')
 DESC = re.compile(r'//\s*\w+\s+(?:([\w$/]+)\.)?("?[\w$<>]+"?):(\([^)]*\))([\w$/;\[]+)')
 
 
@@ -153,6 +179,94 @@ def mirrored(faces):
     return out
 
 
+def read_float_arrays(text):
+    """The static float[] fields a class's own <clinit> fills in, keyed by
+    field name. Elder Guardian's 12 spikes are laid out by six of these -
+    rotation and position multipliers indexed by spike number - baked in at
+    class-load time rather than addBox'd by name, so the loop that poses
+    them needs the arrays themselves, not just the numbers parse() sees."""
+    arrays = {}
+    cur, nums = None, []
+    for raw in text.splitlines():
+        m = LINE.match(raw)
+        if not m:
+            continue
+        op, rest = m.group(1), m.group(2)
+        if op == 'newarray' and 'float' in rest:
+            cur, nums = [], []
+            continue
+        if cur is None:
+            continue
+        if op in PUSH_INT:
+            nums.append(PUSH_INT[op])
+            continue
+        if op in ('bipush', 'sipush'):
+            nums.append(int(rest.split()[0]))
+            continue
+        if op.startswith('ldc'):
+            num = LDC_NUM.search(rest)
+            if num:
+                nums.append(float(num.group(1)))
+            continue
+        if op == 'fastore':
+            if len(nums) >= 2 and isinstance(nums[-2], int) and isinstance(nums[-1], float):
+                idx, val = nums[-2], nums[-1]
+                while len(cur) <= idx:
+                    cur.append(0.0)
+                cur[idx] = val
+            nums = []
+            continue
+        if op == 'putstatic':
+            f = FIELD.search(rest)
+            if f and cur:
+                arrays[f.group(1)] = cur
+            cur, nums = None, []
+            continue
+    return arrays
+
+
+# fbm.class's own <clinit>: the 2x9x2 spike every spike in the pose loop
+# below reuses, from texOffs(0, 0).addBox(-1, -4.5, -1, 2, 9, 2) - the one
+# addBox call in `b()` between the head bone and the loop, read once by hand
+# since the loop's own name and pose never touch a literal parse() can see.
+GUARDIAN_SPIKE_CUBE = [{
+    'c': [0.0, 0.0, 0.0], 's': [2.0, 9.0, 2.0], 'f': box_uv(0, 0, 2.0, 9.0, 2.0),
+}]
+
+
+def parse_guardian_spikes(text, bones):
+    """Elder Guardian is drawn with the plain Guardian's own model class.
+    Its 12 spikes are hung off a shared cube builder in a for-loop, posed
+    from six static float[12] arrays baked into the class's own <clinit> -
+    each spike's name arrives as a string concat (not a literal) and its
+    pose as a run of local-variable loads (not a constant push), so parse()
+    walks straight past all twelve without adding anything. This rebuilds
+    them from the arrays and the loop's own arithmetic instead."""
+    arrays = read_float_arrays(text)
+    need = ('a', 'b', 'f', 'g', 'h', 'i')
+    if not all(k in arrays and len(arrays[k]) >= 12 for k in need):
+        return bones
+    rot_x, rot_y, rot_z = arrays['a'], arrays['b'], arrays['f']
+    pos_x, pos_y, pos_z = arrays['g'], arrays['h'], arrays['i']
+    spikes = []
+    for idx in range(12):
+        # a(i, 0, 0) = 1 + cos(i)*0.01 - a near-1 per-spike wobble on the
+        # spike's own reach, baked in the same way the vanilla model is
+        wobble = 1.0 + math.cos(idx) * 0.01
+        x = pos_x[idx] * wobble
+        y = 16.0 + pos_y[idx] * wobble
+        z = pos_z[idx] * wobble
+        spikes.append({
+            'name': f'spike{idx}', 'parent': 'head',
+            'pivot': [round(x, 3), round(y, 3), round(-z, 3)],
+            'rot': [round(-rot_x[idx] * math.pi, 4),
+                   round(-rot_y[idx] * math.pi, 4),
+                   round(rot_z[idx] * math.pi, 4)],
+            'cubes': GUARDIAN_SPIKE_CUBE,
+        })
+    return bones + spikes
+
+
 class Mesh:
     """One pass over the bytecode of a createBodyLayer-shaped method."""
 
@@ -174,7 +288,7 @@ class Mesh:
 
     # the portal draws with y down like the game, but with the front of a box
     # toward the viewer, which is the way the game's z runs backwards
-    def add_box(self, nums):
+    def add_box(self, nums, mirror=None):
         x, y, z, w, h, d = nums[:6]
         u, v = self.texoff
         # the sheet is unwrapped for the box as it was measured; a deformation
@@ -185,10 +299,15 @@ class Mesh:
         self.grow = None
         x, y, z = x - gx, y - gy, z - gz
         w, h, d = w + gx * 2, h + gy * 2, d + gz * 2
+        # a call's own mirror argument (addBox(..., true)) overrides the
+        # builder's standing mirror() state - it is how a model flips just
+        # one box of a set drawn off the same texOffs, a left/right pair
+        # sharing one patch of sheet without the builder itself ever turning
+        flip = self.mirror if mirror is None else mirror
         self.cubes.append({
             'c': [round(x + w / 2, 3), round(y + h / 2, 3), round(-(z + d / 2), 3)],
             's': [round(w, 3), round(h, 3), round(d, 3)],
-            'f': mirrored(faces) if self.mirror else faces,
+            'f': mirrored(faces) if flip else faces,
         })
 
     def commit(self, name, at):
@@ -351,17 +470,40 @@ def parse(text, method_hint='fek'):
         floats = args.count('F')
         # a cube may be named too: addBox("scale", x, y, z, w, h, d) is a box,
         # not a new part, and telling them apart is what the floats are for
-        if op == 'invokevirtual' and floats >= 6 and len(mesh.stack) >= 6:
-            mesh.add_box(mesh.stack[-6:])
-            mesh.stack.clear()
-            if args.startswith('(Ljava/lang/String;') and mesh.strings:
-                mesh.strings.pop()
-            continue
+        if op == 'invokevirtual' and floats >= 6:
+            # a trailing Z is addBox(..., mirror): a per-call flip, the
+            # boolean pushed last and sitting on top of the six floats. Left
+            # in the stack it reads as a seventh number, and mesh.stack[-6:]
+            # picks up that boolean in place of the box's own x and shifts
+            # every other argument down a slot - a corrupt box, not a missing
+            # one, which is what made it hard to spot.
+            mirror_z = args.endswith('Z)')
+            need = 7 if mirror_z else 6
+            if len(mesh.stack) >= need:
+                call_mirror = bool(mesh.stack.pop()) if mirror_z else None
+                mesh.add_box(mesh.stack[-6:], mirror=call_mirror)
+                mesh.stack.clear()
+                if args.startswith('(Ljava/lang/String;') and mesh.strings:
+                    mesh.strings.pop()
+                continue
 
         if op == 'invokestatic' and floats in (3, 6) and args.count('L') == 0:
             nums = mesh.stack[-floats:] if len(mesh.stack) >= floats else [0] * floats
             if floats == 3:
-                mesh.pose = ([nums[0], nums[1], -nums[2]], [0, 0, 0])
+                # PartPose ("feg" in this build) has two static three-float
+                # methods sharing the one descriptor - offset(x, y, z) and
+                # rotation(xRot, yRot, zRot) - and only the method's own name
+                # tells them apart: offset is "a" everywhere, including its
+                # six-float offsetAndRotation overload below, so any other
+                # name on the same class is the rotation-only one. A hat
+                # brim turned flat with no offset of its own is built this
+                # way; read as offset() its turn lands in the pivot instead
+                # and the bone never rotates at all.
+                owner = (d.group(1) or '').rsplit('/', 1)[-1]
+                if owner == 'feg' and d.group(2) != 'a':
+                    mesh.pose = ([0, 0, 0], [-nums[0], -nums[1], nums[2]])
+                else:
+                    mesh.pose = ([nums[0], nums[1], -nums[2]], [0, 0, 0])
             else:
                 # the portal reads z backwards, and reflecting an axis reverses
                 # every rotation but the one about that axis
@@ -725,9 +867,87 @@ def parse_dragon(text):
              'rot': [0, 0, 0], 'cubes': p['cubes']} for p in parts]
 
 
+def dragon_extend(bones):
+    """The Ender Dragon has no jointed neck or tail in its own model - "neck"
+    is one small 10-unit cube sitting at the origin, and "body" is the only
+    tail geometry there is, one long box. The game draws both by re-rendering
+    those same two pieces several times over along a curve computed at
+    runtime from the dragon's actual recent flight path - there is no fixed
+    shape in the class file for a card to read, only whatever the dragon
+    happened to be doing the moment it was drawn. Read as-is, the result is a
+    head sitting inside the body's own silhouette with nothing behind it.
+
+    This lays real copies of the same two pieces out in a straight line
+    instead: not what any particular flight looks like, but recognizably a
+    dragon rather than a stub. The neck repeats itself forward from the
+    body's own front edge until the head - unmoved, still its own shape -
+    picks up where the last copy ends; the tail repeats the body's own
+    largest box backward from its rear edge, a little smaller each time,
+    since a straight run of the same size would just read as a longer body.
+    """
+    by_name = {b['name']: b for b in bones}
+    neck, body, head = by_name['neck'], by_name['body'], by_name['head']
+
+    # the spine's own height, and the body box's front and back edges, read
+    # off its cubes rather than assumed, so this keeps working if the box
+    # the game ships there ever changes
+    spine_y = body['pivot'][1] + body['cubes'][0]['c'][1]
+    front = body['pivot'][2] + max(c['c'][2] + c['s'][2] / 2 for c in body['cubes'])
+    back = body['pivot'][2] + min(c['c'][2] - c['s'][2] / 2 for c in body['cubes'])
+    step = (max(c['c'][2] + c['s'][2] / 2 for c in neck['cubes'])
+            - min(c['c'][2] - c['s'][2] / 2 for c in neck['cubes']))
+    neck_count = 3
+
+    extra = []
+    for i in range(1, neck_count):
+        z = front + step * (i + 0.5)
+        extra.append({'name': f'neck{i + 1}', 'parent': None,
+                      'pivot': [neck['pivot'][0], spine_y, round(z, 3)],
+                      'rot': [0, 0, 0], 'cubes': neck['cubes']})
+
+    # body's own main box is already 64 deep; four more that size, even
+    # tapered, would run the tail out to twice the dragon's own length. A
+    # shorter, fixed-depth repeat narrowing toward a point reads as a tail
+    # tapering off rather than the body just running on and on.
+    main = max(body['cubes'], key=lambda c: c['s'][0] * c['s'][1] * c['s'][2])
+    tail_count, tail_depth = 4, 14.0
+    cursor = back
+    for i in range(tail_count):
+        frac = 1 - (i + 1) / (tail_count + 1)
+        size = [round(main['s'][0] * frac, 3), round(main['s'][1] * frac, 3), tail_depth]
+        cursor -= tail_depth
+        extra.append({'name': f'tail{i + 1}', 'parent': None,
+                      'pivot': [0, spine_y, round(cursor + tail_depth / 2, 3)],
+                      'rot': [0, 0, 0],
+                      'cubes': [{'c': [0, 0, 0], 's': size, 'f': main['f']}]})
+
+    # Every leg's own pivot sits barely past the body box's side, so only
+    # about half its own width is actually inside that box - the rest reads
+    # as open air between leg and body from the card's fixed 3/4 angle, even
+    # though a straight-on view would show them touching. Pulling each one a
+    # few units further in fixes that regardless of viewing angle.
+    NUDGE = 3.0
+    LEGS = ('left_front_leg', 'right_front_leg', 'left_hind_leg', 'right_hind_leg')
+
+    out = []
+    for b in bones:
+        if b['name'] == 'neck':
+            b = {**b, 'pivot': [neck['pivot'][0], spine_y, round(front + step * 0.5, 3)]}
+        elif b['name'] == 'head':
+            b = {**b, 'pivot': [head['pivot'][0], spine_y,
+                                round(front + step * neck_count, 3)]}
+        elif b['name'] in LEGS:
+            x = b['pivot'][0]
+            x += NUDGE if x < 0 else -NUDGE
+            b = {**b, 'pivot': [round(x, 3), b['pivot'][1], b['pivot'][2]]}
+        out.append(b)
+    out += extra
+    return out
+
+
 def build_dragon():
     text = disassemble(JAR, 'fot.class')
-    bones = parse_dragon(text)
+    bones = dragon_extend(parse_dragon(text))
     if not bones:
         raise SystemExit('ender_dragon: createBodyLayer did not parse')
     os.makedirs(OUT, exist_ok=True)
@@ -737,11 +957,13 @@ def build_dragon():
         fh.write(png)
     model = {
         'id': 'minecraft:ender_dragon', 'name': 'Ender Dragon', 'class': 'fot.class',
-        # a 136-unit wingspan next to a head barely a tenth that wide means the
+        # a 248-unit wingspan next to a head barely a tenth that wide means the
         # auto-fit's whole-model framing is spent almost entirely on empty air
         # between the wingtips - the same trade spiritcaller and azazel make,
-        # focus on the head/neck and lean on zoom rather than show it all small
-        'focus': 'neck', 'zoom': 3.0,
+        # focus on the head and lean on zoom rather than show it all small.
+        # "neck" is now the first of three segments dragon_extend lays down
+        # ahead of the body, not the head end of that chain - head is.
+        'focus': 'head', 'zoom': 3.0,
         'tw': 256, 'th': 256, 'texture': 'ender_dragon.png', 'bones': bones,
     }
     with open(os.path.join(OUT, 'ender_dragon.model.json'), 'w') as fh:
@@ -762,15 +984,31 @@ def build(key, spec):
     if not candidates:
         raise SystemExit(f'{key}: no class holds "{spec["marker"]}"')
 
-    entry, mesh = None, None
+    entry, mesh, text = None, None, None
     for name in candidates:
-        read = parse(disassemble(JAR, name))
+        text = disassemble(JAR, name)
+        read = parse(text)
         if read.bones and sum(len(b['cubes']) for b in read.bones):
             entry, mesh = name, read
             break
     if mesh is None:
         raise SystemExit(f'{key}: no mesh in {", ".join(candidates)}')
     bones = mesh.bones
+    if key == 'elder_guardian':
+        bones = parse_guardian_spikes(text, bones)
+    if spec.get('drop'):
+        # IllagerModel is shared by every illager - vindicator, pillager,
+        # evoker, illusioner - and the hat is the one part not all of them
+        # wear: the renderer itself skips it per mob rather than the model
+        # leaving it out, which this bytecode reader has no way to see.
+        # Emptying a bone's cubes is enough; nothing here builds a mesh for
+        # one with none.
+        gone = set(spec['drop'])
+        for bone in bones:
+            if bone['parent'] in gone:
+                gone.add(bone['name'])
+            if bone['name'] in gone:
+                bone['cubes'] = []
 
     tw, th = mesh.size or (64, 64)
     os.makedirs(OUT, exist_ok=True)

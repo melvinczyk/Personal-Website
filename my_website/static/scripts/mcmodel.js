@@ -540,7 +540,7 @@ function buildMobModel(el, opts) {
       visible * 0.92 / (size.y || 1),
       visible * (w / h) * 0.92 / (size.x || 1),
       // and never so close that the near half of it is behind the camera
-      DISTANCE * 0.55 / ((size.z / 2) || 1)) * (model.zoom || 1);
+      DISTANCE * 0.55 / ((size.z / 2) || 1)) * (model.zoom || 1) * (opts.zoom || 1);
 
     // Something far longer than a card can hold reads as a rope at any size the
     // whole of it will fit in. Those name a bone to put in the middle instead,

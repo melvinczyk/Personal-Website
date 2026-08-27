@@ -72,7 +72,7 @@
           <div class="ls-bar boss">
             <span class="lb-t">Bosses</span>
             <button class="ls-btn sm" data-sec="sec-bosses" onclick="toggleSection('sec-bosses')">Hide</button>
-            <label class="ls-only"><input type="checkbox" id="ls-beaten"
+            <label class="ls-only"><input type="checkbox" id="ls-beaten" checked
                    onchange="filterBosses()"> beaten only</label>
             <span class="lb-r" id="ls-boss-count">—</span>
           </div>
@@ -82,12 +82,12 @@
 
           <div class="ls-bar mini">
             <span class="lb-t">Minibosses</span>
-            <button class="ls-btn sm" data-sec="sec-minibosses" onclick="toggleSection('sec-minibosses')">Show</button>
-            <label class="ls-only"><input type="checkbox" id="ls-mini-beaten"
+            <button class="ls-btn sm" data-sec="sec-minibosses" onclick="toggleSection('sec-minibosses')">Hide</button>
+            <label class="ls-only"><input type="checkbox" id="ls-mini-beaten" checked
                    onchange="filterBosses()"> beaten only</label>
             <span class="lb-r" id="ls-mini-count">—</span>
           </div>
-          <div class="ls-sec shut" id="sec-minibosses">
+          <div class="ls-sec" id="sec-minibosses">
             <div class="ls-bosses mini" id="ls-minibosses"></div>
           </div>
 
