@@ -534,3 +534,61 @@ html:has(body.guide-body), body.guide-body { height: auto; overflow: auto; }
   0%, 100% { box-shadow: 0 0 6px 1px rgba(255,255,255,0.25); }
   50%      { box-shadow: 0 0 14px 4px rgba(255,255,255,0.55); }
 }
+
+/* ---- transformations: collapsible source -> result routes -----------------
+   These weapons have no recipe and never appear in chest loot, so there is
+   nothing for JEI to show and nothing to put in a crafting grid. Each one is
+   an in-world action instead, which is a lot of prose for a section that is
+   otherwise scannable - hence <details>, closed by default, so the section
+   still reads as a list of ten routes rather than ten paragraphs. */
+.guide-tf { margin: 8px 0; }
+.guide-tf summary {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; cursor: pointer; list-style: none;
+  background: var(--mc-slot, #232329);
+  border: 2px solid var(--mc-shade, #08080a);
+  border-left: 5px solid var(--sec-accent, #ffb52e);
+}
+.guide-tf summary::-webkit-details-marker { display: none; }
+.guide-tf summary:hover { background: color-mix(in srgb, var(--sec-accent, #ffb52e) 10%, var(--mc-slot, #232329)); }
+.guide-tf summary:focus-visible { outline: 2px solid var(--sec-accent, #ffb52e); outline-offset: 2px; }
+/* the little chevron is the only thing telling you the row opens */
+.guide-tf summary .gtf-caret {
+  margin-left: auto; flex: none; color: var(--sec-accent, #ffb52e);
+  font-size: 13px; transition: transform .12s ease;
+}
+.guide-tf[open] summary .gtf-caret { transform: rotate(90deg); }
+.guide-tf .gtf-pair { display: flex; align-items: center; gap: 7px; flex: none; }
+.guide-tf .gtf-pair .guide-arrow { font-size: 15px; }
+.guide-tf .gtf-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.guide-tf .gtf-name b { font-size: 16px; font-weight: normal; color: var(--sec-accent, #ffb52e); }
+.guide-tf .gtf-name span { font-size: 13.5px; line-height: 1.45; color: var(--mc-dim, #9b9ba4); }
+.guide-tf .gtf-body {
+  padding: 13px 16px 15px;
+  background: var(--mc-panel, #16161a);
+  border: 2px solid var(--mc-shade, #08080a); border-top: 0;
+}
+.guide-tf .gtf-body p { margin: 0 0 9px; font-size: 14.5px; line-height: 1.6; color: var(--mc-dim, #9b9ba4); }
+.guide-tf .gtf-body p:last-child { margin-bottom: 0; }
+.guide-tf .gtf-body b { color: var(--sec-accent, #ffb52e); font-weight: normal; }
+/* numbered steps, so a multi-stage route reads as an order of operations */
+.guide-tf .gtf-steps { margin: 0; padding: 0 0 0 22px; }
+.guide-tf .gtf-steps li {
+  margin: 0 0 7px; font-size: 14.5px; line-height: 1.6; color: var(--mc-dim, #9b9ba4);
+}
+.guide-tf .gtf-steps li:last-child { margin-bottom: 0; }
+.guide-tf .gtf-steps li::marker { color: var(--sec-accent, #ffb52e); }
+/* a branch: one source, several outcomes depending on what you do */
+.guide-tf .gtf-branch { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 0; }
+.guide-tf .gtf-branch-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 11px; background: var(--mc-slot, #232329);
+  border-left: 3px solid var(--sec-accent, #ffb52e);
+}
+.guide-tf .gtf-branch-row img { flex: none; }
+.guide-tf .gtf-branch-row span { font-size: 13.5px; line-height: 1.5; color: var(--mc-dim, #9b9ba4); }
+.guide-tf .gtf-branch-row b { color: var(--sec-accent, #ffb52e); font-weight: normal; }
+@media (max-width: 620px) {
+  .guide-tf summary { flex-wrap: wrap; gap: 9px; }
+  .guide-tf .gtf-name span { font-size: 13px; }
+}

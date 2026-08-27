@@ -3,6 +3,12 @@
   "configurations": [
     {
       "name": "django",
+      "runtimeExecutable": "venv/bin/python",
+      "runtimeArgs": ["my_website/manage.py", "runserver", "8011"],
+      "port": 8011
+    },
+    {
+      "name": "django-windows",
       "runtimeExecutable": "venv/Scripts/python.exe",
       "runtimeArgs": ["my_website/manage.py", "runserver", "8011"],
       "port": 8011
