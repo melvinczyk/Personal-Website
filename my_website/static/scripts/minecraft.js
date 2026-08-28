@@ -1253,6 +1253,15 @@ function bossBadges(p) {
 function updateLive(board) {
   const T = board.totals;
   if (!T) return;
+
+  // up, down, or not yet known: an unsynced checkout has nothing to go on and
+  // should say so rather than accuse a server that is very likely running
+  const status = document.getElementById('ls-status');
+  if (status) {
+    const up = board.server ? board.server.online : null;
+    status.textContent = up === null ? '' : up ? 'ONLINE' : 'OFFLINE';
+    status.className = `ls-status${up === null ? '' : up ? ' on' : ' off'}`;
+  }
   const tile = (label, value, hot) =>
     `<span class="ls-tile${hot ? ' hot' : ''}"><i>${label}</i><b>${value}</b></span>`;
 

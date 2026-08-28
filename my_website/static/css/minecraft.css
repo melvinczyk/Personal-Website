@@ -888,6 +888,26 @@ body::after { display: none; }
   font-size: 20px; color: var(--mc-text); text-shadow: 2px 2px #000;
 }
 .ls-sub  { font-size: 13px; color: var(--mc-faint); }
+/* Whether the world is up, in the same green a player's own ONLINE uses, and
+   in the heart red when it is not: the two states people already read on this
+   page as good and bad. */
+.ls-status {
+  flex: none; padding: 4px 12px;
+  font-size: 16px; letter-spacing: .1em;
+  color: var(--mc-faint);
+  text-shadow: 1px 1px #000;
+  /* the box takes its colour from the text, so each state carries its own
+     frame without a rule apiece. Two pixels and square, like every other
+     bordered thing on this screen; the fill is what makes it carry across
+     the header rather than reading as one more label. Deliberately not lit
+     or pulsing: a status that moves is the thing this page was stripped of. */
+  border: 2px solid currentColor;
+}
+/* nothing known yet is not a state worth framing */
+.ls-status:empty { display: none; }
+.ls-status.on  { color: var(--mc-xp);    background: rgba(123, 197, 24, 0.16); }
+.ls-status.off { color: var(--mc-heart); background: rgba(217, 74, 61, 0.20); }
+
 .ls-read {
   margin-left: auto; display: flex; align-items: baseline; gap: 8px;
   font-size: 13px; color: var(--mc-dim); text-align: right;

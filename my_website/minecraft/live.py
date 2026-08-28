@@ -187,6 +187,14 @@ def _moment(when):
 # in the world right now. That is the whole of the presence check.
 ONLINE_WINDOW = 180
 
+# Whether the game server itself is up. The export is rewritten while it runs,
+# so the question is not how old the file is now but how old it was the last
+# time we went and looked: measured against now, a healthy server would read
+# offline for the whole hour between one scheduled pull and the next. A file
+# that was current when we checked means the server was writing when we
+# checked, which is as fresh an answer as anything here can give.
+SERVER_WINDOW = 300
+
 
 def _kill_entries(record):
     """One player's boss_kills.json row, bosses and minibosses together.
@@ -810,6 +818,20 @@ def fish(season_path, faces=None):
     return out
 
 
+def _server_up(age, checked):
+    """Was the game server writing, as of our last look at it?
+
+    `age` counts from the export's own timestamp and `checked` from the moment
+    we last fetched, both to now, so the difference is how stale the export
+    already was when it reached us. A small skew the wrong way is normal and
+    still counts as up: the two numbers come off two different clocks.
+    """
+    if age is None or checked is None:
+        return {'online': None, 'lag': None}
+    lag = age - checked
+    return {'online': lag < SERVER_WINDOW, 'lag': lag}
+
+
 def board(season_path):
     """The whole live picture: who is on, what the server has seen, how fresh.
 
@@ -855,6 +877,7 @@ def board(season_path):
         'read':    stamped.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z') if stamped else '',
         'age':     age,
         'age_txt': _span(age) if age is not None else '',
+        'server':      _server_up(age, checked),
         'checked':     checked,
         'checked_txt': _span(checked) if checked is not None else '',
         'totals': {
