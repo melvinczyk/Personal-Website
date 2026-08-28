@@ -44,6 +44,7 @@ DEFAULT_FILES = [
     "kubejs/exported/boss_kills.json",
     "kubejs/exported/boss_fights.json",
     "kubejs/exported/fieldguide_counts.json",
+    "kubejs/exported/fish_caught.json",
 ]
 
 
@@ -72,7 +73,15 @@ def load_config(path):
 
     cfg.setdefault("port", 22)
     cfg.setdefault("remote_root", ".")
-    cfg.setdefault("files", DEFAULT_FILES)
+    # DEFAULT_FILES is not a fallback, it is the floor. A config is written
+    # once and kept for months while the exporter grows: mc_sync.json listed
+    # the three files that existed the day it was written, so boss_fights.json
+    # was never fetched after the server started writing it, and the board
+    # showed a fight log frozen at whatever happened to be checked in. A file
+    # the site reads and the sync never brings down is invisible - no error,
+    # no missing file, just numbers that quietly stop moving - so the list a
+    # config gives is what to fetch *as well as* these, never instead of them.
+    cfg["files"] = list(dict.fromkeys(list(cfg.get("files") or []) + DEFAULT_FILES))
     cfg.setdefault("max_bytes", 8 * 1024 * 1024)
     cfg["_config_dir"] = os.path.dirname(os.path.abspath(path))
     return cfg

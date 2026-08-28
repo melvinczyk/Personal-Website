@@ -1170,9 +1170,51 @@ body::after { display: none; }
 .bcard.beaten { cursor: pointer; }
 /* the open card claims the whole row, model rebuilt bigger to fill the
    room that opens up beside it rather than sitting small in a wide box. */
+/* An open card used to swell in place, which shoved every card after it down
+   the page and left the thing being read wherever in the grid it happened to
+   sit - halfway down a nine-row block, with its own row torn in two around
+   it. It goes to the head of its section instead: grid places items in
+   order-modified document order, so a negative order lifts it out of the
+   run without touching the markup or rebuilding a single model. */
 .bcard.open {
-  grid-column: 1 / -1;
-  display: flex; align-items: center; gap: 18px; padding: 10px 18px 14px;
+  grid-column: 1 / -1; order: -1;
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 18px; padding: 12px 18px 14px;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--lit) 14%, var(--mc-slot)) 0%,
+    var(--mc-slot) 130px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lit) 60%, transparent),
+              0 6px 28px -8px color-mix(in srgb, var(--lit) 75%, transparent);
+}
+/* The open card lights up in its own rank's colour, which for a miniboss is
+   the grey its star and border already wear - lit grey being no lighting at
+   all, that one borrows the sky the fight-history heading uses instead. */
+.bcard.open        { --lit: var(--tier, var(--mc-xp)); }
+.bcard.open.mini   { --lit: var(--mc-sky); }
+/* A lit strip along the top edge, sweeping in the card's own rank colour, so
+   the one card being read is plainly the one being read - the rest of the
+   section is flat and still by design, and this is the only thing on the
+   page that moves of its own accord. */
+.bcard.open::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--lit) 22%, transparent) 0%,
+    var(--lit) 34%,
+    color-mix(in srgb, var(--lit) 55%, #fff) 50%,
+    var(--lit) 66%,
+    color-mix(in srgb, var(--lit) 22%, transparent) 100%);
+  background-size: 220% 100%;
+  animation: bcard-sweep 2.8s linear infinite;
+}
+@keyframes bcard-sweep {
+  from { background-position: 220% 0; }
+  to   { background-position: -220% 0; }
+}
+/* the sweep is decoration; a reader who has asked for less movement keeps
+   the lit edge and loses the travelling part of it */
+@media (prefers-reduced-motion: reduce) {
+  .bcard.open::before { animation: none; background-size: 100% 100%; }
+  .bcard.t4 { animation: none; }
 }
 .bcard.open .bc-stage { flex: 0 0 240px; min-height: 240px; align-self: center; }
 .bcard.open .bc-foot { flex: 1; min-width: 0; padding: 0; background: none; border: none; }
@@ -1187,82 +1229,289 @@ body::after { display: none; }
 .bcard.open .bc-fights { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
 .bcf-title {
+  display: flex; align-items: baseline; gap: 10px;
   font-size: 13px; font-weight: bold; letter-spacing: 1.5px; color: var(--mc-sky);
   text-shadow: 1px 1px #000;
   padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
 }
-.bcf-empty { font-size: 14px; color: var(--mc-dim); padding: 6px 0; }
-/* fight cards wrap into as many columns as the now-full-width row has room
-   for, rather than a single column stretched thin or capped narrow while
-   the rest of the row sits empty */
-.bcf-list {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 10px; align-items: start;
+.bcf-title em {
+  margin-left: auto; font-style: normal; font-weight: normal;
+  letter-spacing: 0; font-size: 12px; color: var(--mc-dim);
 }
-.bcf-card {
-  background: var(--mc-slot); padding: 10px 12px 12px;
+.bcf-empty { font-size: 14px; color: var(--mc-dim); padding: 6px 0; }
+
+/* ── one block per player ──────────────────────────────────────────────────
+   A boss beaten four times used to be four cards of the same shape with the
+   same name at the top of each. The fights sit under whoever finished them
+   now, a line apiece, and the block folds shut on its header. */
+.bcf-groups { display: flex; flex-direction: column; gap: 6px; }
+.bcf-group {
+  background: var(--mc-slot);
   border: 2px solid var(--mc-shade);
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
 }
-.bcf-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
-.bcf-finisher { font-weight: normal; font-size: 18px; color: var(--mc-xp); }
-.bcf-date { margin-left: auto; font-size: 12px; color: var(--mc-dim); }
+.bcf-head {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  padding: 6px 9px; font: inherit; text-align: left; cursor: pointer;
+  background: rgba(0,0,0,0.28); border: 0;
+  border-bottom: 2px solid var(--mc-shade);
+}
+.bcf-head:hover { background: rgba(255,255,255,0.05); }
+/* the same head crop the killer chips use, a size up: this one is the block's
+   name plate rather than a mark beside a name. The sheet is 64 wide and the
+   head 8 of it, so the scale and the offset move together or the crop slides
+   off the face. */
+.bcf-head .bc-face {
+  width: 18px; height: 18px;
+  background-size: 144px 144px; background-position: -18px -18px;
+}
+.bcf-head b { font-weight: normal; font-size: 15px; color: var(--mc-xp); }
+.bcf-head em {
+  margin-left: auto; font-style: normal; font-size: 12px; color: var(--mc-dim);
+  white-space: nowrap;
+}
+/* points down at an open block and right at a shut one, the way the section
+   bars above already read */
+.bcf-caret {
+  flex: none; width: 0; height: 0; margin-left: 2px;
+  border: 5px solid transparent; border-top-color: var(--mc-dim);
+  transform: translateY(2px);
+}
+.bcf-group.shut .bcf-caret {
+  border-top-color: transparent; border-left-color: var(--mc-dim);
+  transform: translateX(2px);
+}
+.bcf-group.shut .bcf-head { border-bottom: 0; }
+.bcf-group.shut .bcf-rows { display: none; }
 
-/* the same inventory-slot stat tile the top-of-page totals use, just sized
-   to sit inside a fight card instead of spanning the whole page */
-.bcf-tiles {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-  gap: 4px; margin-bottom: 10px;
+/* ── one line per fight ────────────────────────────────────────────────────
+   when it happened, how long it took, how much boss there was, what finished
+   it, and how the damage split - the same five things the card carried, on a
+   single row. The bar takes whatever is left over, so the row stays honest at
+   any width rather than clipping the reading. */
+.bcf-rows { display: flex; flex-direction: column; }
+/* The row wraps rather than squeezing. How much room it has depends on the
+   card, not the window - an open card spends 240 of its width on the model,
+   so the same viewport can leave this row anywhere from four hundred pixels
+   to a thousand - and a column allowed to shrink to nothing spelled a
+   Tempest "T". Each reading keeps a floor and the line breaks under it
+   instead, which needs no breakpoint to know the width it is actually in. */
+.bcf-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+  padding: 5px 9px; font-size: 13px; color: var(--mc-text);
 }
-.bcf-tile {
-  display: flex; flex-direction: column; gap: 2px; padding: 5px 8px;
-  background: #17171c; border: 2px solid var(--mc-shade);
-  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
-  overflow: hidden;
+.bcf-row + .bcf-row { border-top: 1px solid rgba(255,255,255,0.05); }
+/* the stamp reads 'Aug 25, 2026 17:09' now that every date on the page reads
+   the one way, which is a good deal wider than the day-and-month it used to */
+.bcf-when { flex: none; width: 142px; color: var(--mc-dim); }
+.bcf-dur  { flex: none; width: 44px; text-align: right; }
+.bcf-hp   { flex: none; width: 62px; text-align: right; color: var(--mc-dim); }
+.bcf-wep {
+  flex: 1 1 96px; min-width: 90px; color: var(--mc-gold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.bcf-tile.wide { grid-column: span 2; }
-.bcf-tile i {
-  font-style: normal; font-size: 10px; letter-spacing: .5px; color: var(--mc-faint);
+/* the shares are already fractions of one boss's health, so they tile end to
+   end on a single strip instead of needing a bar apiece */
+.bcf-bar {
+  flex: 1 1 150px; min-width: 96px; display: flex; height: 13px;
+  background: #0d0d10; border: 1px solid var(--mc-shade);
 }
-.bcf-tile b {
-  font-weight: normal; font-size: 15px; color: var(--mc-text);
+.bcf-seg { display: block; height: 100%; }
+.bcf-seg + .bcf-seg { border-left: 1px solid rgba(0,0,0,0.5); }
+.bcf-pct { flex: none; width: 38px; text-align: right; color: var(--mc-dim); }
+
+/* who else was in it, named only when there was somebody else: a solo kill
+   says so with a full bar and needs no line under it. Once the fight is
+   opened the panel below names everyone properly, so this line stands down
+   rather than saying the same thing twice. */
+.bcf-with {
+  /* lined up under the row's first flexible column: the stamp's width, its
+     own left padding, and the gap after it */
+  padding: 0 9px 5px 161px; font-size: 12px; color: var(--mc-faint);
+}
+.bcf-with b { font-weight: normal; color: var(--mc-dim); }
+.bcf-fight.open .bcf-with { display: none; }
+
+/* ── one fight, opened ─────────────────────────────────────────────────────
+   A row is a fight at a glance and a glance is usually enough. What will not
+   fit on it - the moment in full, and what each player actually dealt rather
+   than only their share of it - waits underneath until the row is asked.
+   One at a time: see toggleFight(). */
+.bcf-fight + .bcf-fight { border-top: 1px solid rgba(255,255,255,0.05); }
+.bcf-fight .bcf-row { cursor: pointer; }
+.bcf-fight .bcf-row:hover { background: rgba(255,255,255,0.05); }
+.bcf-fight .bcf-row:focus-visible {
+  outline: 2px solid var(--mc-xp); outline-offset: -2px;
+}
+/* the row already had its own top rule; the wrapper carries it now, or a
+   fight and the one under it would be ruled off twice */
+.bcf-row + .bcf-row { border-top: 0; }
+/* the same caret the group headers use, turned the same way */
+.bcf-fight .bcf-caret { flex: none; }
+.bcf-fight.open .bcf-caret { transform: rotate(90deg); }
+
+.bcf-detail { display: none; padding: 2px 9px 9px 9px; }
+.bcf-fight.open .bcf-detail { display: block; }
+
+.bcf-meta {
+  display: flex; flex-wrap: wrap; gap: 1px;
+  background: rgba(255,255,255,0.05); margin-bottom: 7px;
+}
+.bcf-cell {
+  flex: 1 1 96px; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  padding: 6px 8px; background: #10141c;
+}
+/* the timestamp is the one reading here with a fixed length, and clipping it
+   loses the half that says which day; the weapon is the one with no length at
+   all, so it takes whatever the other three do not need */
+.bcf-cell:first-child { flex-basis: 138px; }
+/* a weapon name has no length to plan for - "Bare Hands" or "Withered
+   Scimitar of the Older Angler" - so it takes the slack and wraps rather
+   than being cut off, which is the one reading here worth two lines */
+.bcf-cell:last-child { flex-grow: 1.8; }
+.bcf-cell:last-child b { white-space: normal; line-height: 1.15; }
+.bcf-cell i {
+  font-style: normal; font-size: 9px; letter-spacing: 1px; color: #5f6f83;
+}
+.bcf-cell b {
+  font-weight: normal; font-size: 13px; color: #e8eef7;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-.bcf-parts { display: flex; flex-direction: column; gap: 6px; }
-.bcf-part { display: flex; align-items: center; gap: 10px; }
-.bcf-part.untracked { opacity: .75; }
-/* the name gets whatever room it needs and the bar gives up width for it,
-   not the other way round - a name cut short is unreadable, a bar three
-   times a card's width is only shorter to look at */
+/* one strip per player rather than the row's single tiled one: the row asks
+   how the boss was split, this asks what each of them did to it */
+.bcf-split { display: flex; flex-direction: column; gap: 4px; }
+.bcf-part {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 12px; color: var(--mc-text);
+}
 .bcf-pname {
-  flex: 0 1 auto; white-space: nowrap;
-  font-size: 14px; color: var(--mc-text);
+  flex: 1 1 88px; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.bcf-part.untracked .bcf-pname { font-style: italic; color: var(--mc-dim); }
-.bcf-bar {
-  flex: 1 1 60px; min-width: 60px; display: block; height: 14px;
-  background: #0d0d10; border: 1px solid var(--mc-shade);
-}
-.bcf-fill { display: block; height: 100%; }
+/* the one figure the export carries that nothing on the row had room for */
+.bcf-dmg { flex: none; width: 74px; text-align: right; color: var(--mc-gold); }
+.bcf-part .bcf-bar { flex: 2 1 80px; height: 10px; }
+.bcf-part .bcf-pct { color: var(--mc-text); }
+/* the world's own share of the kill is not a player and does not read as one */
+.bcf-part.untracked .bcf-pname,
+.bcf-part.untracked .bcf-dmg,
+.bcf-part.untracked .bcf-pct { color: var(--mc-faint); }
+.bcf-part.untracked .bcf-dmg { font-style: italic; }
+
 /* how much of the boss that share actually was, not a decoration: green for
    whoever carried the fight, amber for a real but lesser part, red for
-   barely tipping in. Untracked damage - discardedDamage, whatever the fight
-   never credited to a player - gets neither: a hazard-striped black bar so
-   it never reads as a fourth participant. */
-.bcf-fill.hi  { background: linear-gradient(#a4e86a, var(--mc-xp)); }
-.bcf-fill.mid { background: linear-gradient(#ffcf6b, #d99a2b); }
-.bcf-fill.lo  { background: linear-gradient(#ff8f8f, var(--mc-heart)); }
-.bcf-fill.discard {
+   barely tipping in. Whatever the fight credited to nobody - the world's own
+   share of the kill - gets neither: hazard stripes on black, so it never
+   reads as one more participant. */
+.bcf-seg.hi  { background: linear-gradient(#a4e86a, var(--mc-xp)); }
+.bcf-seg.mid { background: linear-gradient(#ffcf6b, #d99a2b); }
+.bcf-seg.lo  { background: linear-gradient(#ff8f8f, var(--mc-heart)); }
+.bcf-seg.discard {
   background-color: #17171a;
   background-image: repeating-linear-gradient(
     -45deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 9px);
 }
-.bcf-fill.c0 { background: linear-gradient(#ffe27a, #d9a52e); }
-.bcf-fill.c1 { background: linear-gradient(#8ff0ff, #3a99a6); }
-.bcf-fill.c2 { background: linear-gradient(#b6f07a, #5a9c2e); }
-.bcf-fill.c3 { background: linear-gradient(#ff9d9d, #c23a3a); }
-.bcf-pct { flex: 0 0 38px; text-align: right; font-size: 14px; color: var(--mc-dim); }
+
+/* ── the legendary fish shelf ──────────────────────────────────────────────
+   Thirteen slots, one per legendary Starcatcher can produce in this pack.
+   A slot nobody has filled shows the mod's own unknown_fish silhouette, sunk
+   and grey; one somebody has landed shows the fish's real icon and is lit
+   gold, with a shine drawn across it on a slow loop the way a trophy case
+   catches the light. */
+.ls-fish {
+  display: grid; gap: 4px; padding: 0 10px 10px;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+}
+.ls-bar.fish .lb-t { color: #f0d08a; text-shadow: 0 0 6px rgba(255,190,60,0.3); }
+
+/* a row of tiles is as tall as the fullest one in it, and a slot with only a
+   name in its foot would otherwise leave that name stranded at the top of the
+   gap. The stage takes the slack instead, so the silhouette sits in the
+   middle of whatever room the row turned out to have */
+.fcard {
+  position: relative; overflow: hidden; background: var(--mc-slot);
+  display: flex; flex-direction: column;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.fcard.hidden { display: none; }
+.fc-stage {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  flex: 1; min-height: 74px; padding: 8px 0;
+}
+/* an item texture is sixteen pixels square: it wants scaling by whole pixels
+   and no smoothing, the same as every other sprite on this page */
+.fc-icon {
+  display: block; width: 64px; height: 64px; image-rendering: pixelated;
+}
+.fc-foot {
+  padding: 5px 7px 6px; background: rgba(0,0,0,0.32);
+  border-top: 2px solid var(--mc-shade);
+}
+.fc-name {
+  font-size: 13px; line-height: 1.15; color: var(--mc-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fc-best {
+  margin-top: 2px; font-size: 11px; color: var(--mc-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fc-tally { margin-top: 2px; font-size: 12px; color: var(--mc-gold); }
+.fc-marks {
+  margin-top: 2px; font-size: 9px; letter-spacing: .5px; color: #f0c060;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fc-anglers { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+
+/* nothing landed: the shape is there and the fish is not, which is the whole
+   point of the slot */
+.fcard.locked .fc-icon { opacity: .38; filter: grayscale(1) brightness(1.4); }
+.fcard.locked .fc-name { color: var(--mc-faint); }
+
+/* landed: the game's own gold, on the card, on the icon, and swept across */
+.fcard.caught {
+  background: #221b10;
+  border-color: #6b5322; border-right-color: #3a2c11; border-bottom-color: #3a2c11;
+  box-shadow: inset 0 0 0 1px rgba(255,199,92,0.28), 0 0 13px rgba(255,178,40,0.22);
+  animation: fish-glow 3.2s ease-in-out infinite;
+}
+.fcard.caught .fc-icon {
+  filter: drop-shadow(0 0 5px rgba(255,196,70,0.85))
+          drop-shadow(0 0 12px rgba(255,150,20,0.45));
+}
+@keyframes fish-glow {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,199,92,0.22), 0 0 9px rgba(255,178,40,0.16); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(255,214,130,0.45), 0 0 20px rgba(255,178,40,0.36); }
+}
+
+/* The shine is a band of light leaned over and walked across the slot. It
+   lives on the stage rather than the card so it passes over the fish and not
+   over its name, and it is behind nothing - pointer-events off - so it can
+   never eat a click. */
+.fcard.caught .fc-stage::after {
+  content: ''; position: absolute; inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(105deg,
+    transparent 42%, rgba(255,244,214,0.55) 50%, transparent 58%);
+  transform: translateX(-120%);
+  animation: fish-shine 4.4s ease-in-out infinite;
+}
+@keyframes fish-shine {
+  0%        { transform: translateX(-120%); }
+  /* the sweep is a fifth of the loop; the rest is the wait between passes,
+     which is what keeps a shelf of them from reading as a strobe */
+  22%, 100% { transform: translateX(120%); }
+}
+/* and they do not all catch the light at once */
+.ls-fish .fcard:nth-child(3n+2) .fc-stage::after { animation-delay: 1.1s; }
+.ls-fish .fcard:nth-child(3n+3) .fc-stage::after { animation-delay: 2.3s; }
+
+/* a reader who would rather the page held still gets a page that holds still */
+@media (prefers-reduced-motion: reduce) {
+  .fcard.caught { animation: none; }
+  .fcard.caught .fc-stage::after { display: none; }
+}
 
 /* the record of whichever player is open, under the grid it came from */
 .ls-drawer { display: none; margin: 0 10px 10px; }
@@ -1310,6 +1559,125 @@ body::after { display: none; }
   .ls-head { flex-wrap: wrap; }
   .ls-read { width: 100%; margin-left: 0; order: 3; }
   .ls-bar  { flex-wrap: wrap; }
+}
+
+/* An open card puts the mob beside its record, and the mob's stage is a fixed
+   two hundred and forty pixels because a model cannot be reflowed. On a phone
+   that is wider than the card, so the record beside it was being squeezed to
+   nothing - a fight history rendered into no width at all. Narrow enough, the
+   two stack instead. */
+@media (max-width: 700px) {
+  .bcard.open { flex-direction: column; align-items: stretch; gap: 10px; }
+  .bcard.open .bc-stage { flex: none; min-height: 200px; }
+  .bcard.open .bc-name { font-size: 20px; }
+}
+
+/* On a phone the row is down to two or three readings a line whatever it
+   does, so the fixed date column stops earning its width and the note about
+   who else was in the fight stops needing to line up under anything. */
+@media (max-width: 520px) {
+  .bcf-when { width: auto; }
+  .bcf-with { padding-left: 9px; }
+}
+
+/* ── on a phone ────────────────────────────────────────────────────────────
+   The page is a console standing on a desk: a bezel, a screen inset in it,
+   and the content inset in that. Every one of those is padding, and on a
+   three-hundred-and-seventy-five pixel screen the three together were eating
+   a fifth of the width before a single card was drawn - which is what pushed
+   the player grid down to one card a row and every card to the size of a
+   poster. The frame is what gives on a phone; the thing inside it is what
+   somebody came to read. */
+@media (max-width: 560px) {
+  #stage { padding: 8px 6px 24px; }
+  .console-screen { padding: 10px 7px 12px; }
+  .disc-titlebar { gap: 8px; padding: 8px 10px; }
+  /* the tab already says which page this is, and it was the half of the
+     title getting clipped */
+  .disc-titlebar .dt-sub { display: none; }
+  .disc-titlebar .dt-name { font-size: 17px; }
+  .disc-titlebar .icon.psone { display: none; }
+
+  .ls-head { padding: 8px 10px; }
+  .ls-name { font-size: 17px; }
+  .ls-tiles { gap: 3px; padding: 0 7px 7px; }
+  .ls-tile { padding: 5px 7px; }
+  .ls-tile i { font-size: 12px; }
+  .ls-tile b { font-size: 15px; }
+  .ls-bar { padding: 6px 7px; gap: 6px; }
+
+  /* two cards a row rather than one, matched to the smaller canvases the
+     script now renders on a narrow screen - see LIVE_MODEL/BOSS_MODEL */
+  .ls-grid, .ls-bosses, .ls-fish { padding: 0 7px 8px; gap: 3px; }
+  .ls-grid   { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+  .ls-bosses { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .ls-bosses.mini { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+  .pc-stage { min-height: 124px; }
+  .bc-stage { min-height: 96px; }
+  .ls-bosses.mini .bc-stage { min-height: 84px; }
+  .bcard.open .bc-stage { min-height: 176px; }
+  .pc-name, .bc-name { font-size: 13px; }
+  .bc-mod, .pc-seen, .pc-nums { font-size: 11px; }
+  /* playtime and deaths sat on one line pushed to opposite ends, which on a
+     card a third of its old width either tore each of them in half or ran
+     the two together with no gap between. One above the other, left aligned,
+     costs a line and reads. */
+  .pc-nums {
+    flex-direction: column; align-items: flex-start; gap: 1px;
+    white-space: nowrap;
+  }
+
+  .ls-drawer.open, .ls-spot { margin: 0 7px 8px; }
+  .disc-head .dh-t { font-size: 17px; }
+  .disc-head .dh-r { font-size: 13px; }
+}
+
+/* ── reachable with a thumb ────────────────────────────────────────────────
+   A pointer that is a finger cannot land on a twenty-three-pixel button the
+   way a mouse can, and this page was full of them: the section toggles, the
+   thirteen-pixel "beaten only" checkboxes, the rail's own arrows. Gated on
+   the pointer rather than the width, because the thing that decides how big
+   a target has to be is what is doing the pointing, not how wide the screen
+   is - a touchscreen laptop needs this and a narrow window on a desktop does
+   not. Where a control cannot grow without pushing the layout about, it
+   keeps its size and grows its hit area instead. */
+@media (pointer: coarse) {
+  .ls-btn.sm {
+    min-height: 44px; display: inline-flex; align-items: center;
+    padding: 2px 14px;
+  }
+  .dt-back { min-height: 44px; }
+  .ls-only {
+    min-height: 44px; gap: 9px; padding-right: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ls-only input { width: 20px; height: 20px; }
+  /* the arrows sit over the rail's own artwork, so they take their room from
+     the transparent space around the glyph rather than from the layout */
+  .rail-arrow {
+    width: 44px; height: 60px; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .media-tab, .disc-entry, .guide-cta { min-height: 44px; }
+  .guide-cta { display: inline-flex; align-items: center; }
+  /* the deck's shoulder buttons are drawn as the shape of a real one, so the
+     height goes on the hit area under the glyph rather than on the glyph */
+  .icon.l1, .icon.l2, .icon.r1, .icon.r2 { min-height: 44px; }
+  /* a fight row and a player block are read as much as they are pressed, so
+     they get the height rather than the padding */
+  .bcf-head { min-height: 44px; }
+  .bcf-row { min-height: 40px; }
+}
+
+/* Something has to say where the keyboard is. The page draws its own focus
+   ring rather than leaning on the browser's, which the dark panels swallow. */
+.live-stage :is(a, button, input, [role="button"]):focus-visible,
+.disc-titlebar a:focus-visible,
+.disc-entry:focus-visible,
+.media-tab:focus-visible,
+.rail-arrow:focus-visible {
+  outline: 2px solid var(--mc-sky);
+  outline-offset: 2px;
 }
 
 /* the server record: hours, deaths, damage, ground covered. A save holds none
@@ -1429,6 +1797,37 @@ body::after { display: none; }
 .fg-icon.plant {
   background-image: url('/static/minecraft/icons/poppy.png');
   background-size: 18px 18px; background-position: 0 0;
+}
+
+/* ── fishing ───────────────────────────────────────────────────────────────
+   The same two-line row the boss list uses, since it is the same kind of
+   record: a name and a count on top, what it was and how big underneath.
+   A tier star leads a boss; a rarity pip leads a fish, in the colour the mod
+   gives that rung of its own ladder. */
+.live-fish { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
+.live-fish .fg-grid.fish { grid-template-columns: repeat(3, 1fr); }
+/* the count worth looking at twice, when there is one to look at */
+.fg-cell.lit b { color: #ffd479; }
+
+.fish-row { align-items: center; }
+.fish-pip {
+  flex-shrink: 0; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--pip, #8a97a8);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.55), 0 0 7px var(--pip, #8a97a8);
+}
+/* Starcatcher's own colours for its own ladder, read out of
+   FishProperties.Rarity: white up to common, green, blue, light purple,
+   then gold for the top two. A datapack fish the tracker could not find a
+   rarity for is exported as UNKNOWN and keeps the plain grey. */
+.fish-pip.none, .fish-pip.trash, .fish-pip.common { --pip: #d9e2ee; }
+.fish-pip.uncommon { --pip: #55d16a; }
+.fish-pip.rare     { --pip: #5b8cff; }
+.fish-pip.epic     { --pip: #d264ff; }
+.fish-pip.legendary, .fish-pip.golden { --pip: #ffb623; }
+
+.fish-note {
+  padding: 5px 9px; font-size: 9px; letter-spacing: .5px; color: #5f6f83;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
 /* deaths stand in for armor on a card with no save behind it */

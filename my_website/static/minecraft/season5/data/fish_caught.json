@@ -1,0 +1,29 @@
+{
+  "players": {
+    "mysteriousmex21": {
+      "uuid": "1c7c89c8-3d83-456a-a3fe-6933ab1d2cd0",
+      "caught": 0.0,
+      "totalCaught": 0.0,
+      "legendaryCaught": 0.0,
+      "fish": {}
+    },
+    "Zerobarbecue117": {
+      "uuid": "6694d52c-0985-4a24-9789-05df23c45059",
+      "caught": 0.0,
+      "totalCaught": 0.0,
+      "legendaryCaught": 0.0,
+      "fish": {}
+    },
+    "blindhustler": {
+      "uuid": "8c3c2ce5-c48e-40e3-99fd-a6d83fba4d40",
+      "caught": 0.0,
+      "totalCaught": 0.0,
+      "legendaryCaught": 0.0,
+      "fish": {}
+    }
+  },
+  "rarities": [
+    "LEGENDARY"
+  ],
+  "updated": "2026-08-28T02:15:33.833Z"
+}

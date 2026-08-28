@@ -179,6 +179,10 @@ def _board(key):
     for boss in board.get('bosses', []):
         for killer in boss['killers']:
             killer.update(known.get(killer['uuid'], {'skin': None}))
+    # and so is whoever landed each legendary fish
+    for catch in board.get('fish', []):
+        for angler in catch['anglers']:
+            angler.update(known.get(angler['uuid'], {'skin': None}))
     return board
 
 

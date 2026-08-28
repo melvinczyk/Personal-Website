@@ -473,12 +473,44 @@ function livePanel(p) {
       </div>
     </div>` : '';
 
+  // Three counts that are easy to run together, so they are kept apart: what
+  // has been landed all told, how many kinds of it, and how many of those
+  // kinds are legendary. The rows under them are the trophies - rarest
+  // first - and each carries the best specimen of its kind rather than the
+  // last one, which is what the mod itself keeps.
+  const R = L.fishing;
+  const fishing = R && (R.total || R.species || R.fish.length) ? `
+    <div class="live-fish">
+      <div class="lb-head"><span>FISHING</span><b>${compact(R.total)} LANDED</b></div>
+      <div class="fg-grid fish">
+        <span class="fg-cell"><b>${compact(R.total)}</b><u>LANDED</u></span>
+        <span class="fg-cell"><b>${compact(R.species)}</b><u>SPECIES</u></span>
+        <span class="fg-cell${R.legendary ? ' lit' : ''}"><b>${compact(R.legendary)}</b><u>LEGENDARY</u></span>
+      </div>
+      ${R.fish.map(f => `
+        <span class="lb-row fish-row">
+          <i class="fish-pip ${f.rarity.toLowerCase()}"></i>
+          <span class="lb-main">
+            <span class="lb-top"><b>${f.name}</b><em>x${compact(f.count)}</em></span>
+            <span class="lb-sub">
+              <i>${[f.rarity, f.golden ? 'GOLDEN' : '', f.perfect ? 'PERFECT' : '']
+                   .filter(Boolean).join(' \u00b7 ')}</i>
+              <u>${f.size} cm \u00b7 ${f.weight}${f.top ? ` \u00b7 top ${f.top}%` : ''}</u>
+            </span>
+          </span>
+        </span>`).join('')}
+      ${R.more ? `<div class="fish-note">${R.more} more not shown</div>` : ''}
+      ${R.covers && R.covers !== 'ALL'
+        ? `<div class="fish-note">only ${R.covers} catches are recorded per fish</div>` : ''}
+    </div>` : '';
+
   return `<div class="live-wrap">
     ${vitals}
     ${section('ACTIVITY', L.dimension, activity)}
     ${section('COMBAT', null, combat)}
     ${bosses}
     ${fieldguide}
+    ${fishing}
     <div class="live-when">SERVER READ ${L.recorded}</div>
   </div>`;
 }
@@ -724,6 +756,156 @@ function compact(n) {
 // a fight's own damage-share colour: green for whoever carried it, yellow
 // for a real but lesser part, red for barely tipping in - a scale of how
 // much of the boss that share actually was, not a decoration.
+// ── the fight history ──────────────────────────────────────────────────────
+// A boss beaten four times was four full-width cards, each repeating the same
+// three stat tiles and the same participant bar under the same name: four
+// hundred pixels to say "mysteriousmex21 again, a little faster". The record
+// is grouped under whoever landed the last blow now, one line per fight, and
+// each player's run of them folds away on its own.
+
+// Fights in the order they arrive - newest first - collected under their
+// finisher, so a player's own run stays in one block and the blocks
+// themselves stay in most-recent-first order.
+function byFinisher(fights) {
+  const groups = [], held = {};
+  for (const fight of fights) {
+    const who = fight.finisher || 'unknown';
+    if (!held[who]) groups.push(held[who] = { name: who, fights: [] });
+    held[who].fights.push(fight);
+  }
+  return groups;
+}
+
+// One bar per fight rather than one per participant: the shares are already
+// fractions of the same boss's health, so they tile end to end and the split
+// reads off a single strip. Whatever the players do not account for is health
+// the boss lost to the world - see _fight_history - and it takes the rest of
+// the strip in hazard stripes, so a bar is always a whole boss.
+function shareBar(fight) {
+  const seg = (name, pct, cls) =>
+    `<span class="bcf-seg ${cls}" style="width:${pct}%" title="${name} ${pct}%"></span>`;
+  const parts = fight.participants.map(p => seg(p.name, p.share, shareTier(p.share)));
+  if (fight.untracked_share) {
+    parts.push(seg('Untracked', fight.untracked_share, 'discard'));
+  }
+  return `<span class="bcf-bar">${parts.join('')}</span>`;
+}
+
+// A row is one fight at a glance. What it cannot hold - the moment in full,
+// and what each player actually dealt rather than only their share of it -
+// waits underneath until the row is asked for it.
+function fightDetail(fight) {
+  const cell = (label, value) =>
+    `<span class="bcf-cell"><i>${label}</i><b>${value}</b></span>`;
+  const part = (name, pct, dmg, cls) => `
+    <div class="bcf-part${cls === 'discard' ? ' untracked' : ''}">
+      <span class="bcf-pname">${name}</span>
+      <span class="bcf-dmg">${dmg}</span>
+      <span class="bcf-bar"><span class="bcf-seg ${cls}" style="width:${pct}%"></span></span>
+      <span class="bcf-pct">${pct}%</span>
+    </div>`;
+
+  return `
+    <div class="bcf-detail">
+      <div class="bcf-meta">
+        ${cell('WHEN', fight.time)}
+        ${cell('DURATION', fight.duration)}
+        ${cell('BOSS HEALTH', compact(fight.max_health))}
+        ${cell('FINISHING BLOW', fight.weapon || '\u2014')}
+      </div>
+      <div class="bcf-split">
+        ${fight.participants.map(p => part(
+            p.name, p.share, `${compact(Math.round(p.damage))} dmg`,
+            shareTier(p.share))).join('')}
+        ${fight.untracked_share ? part(
+            'Untracked', fight.untracked_share, 'the world', 'discard') : ''}
+      </div>
+    </div>`;
+}
+
+function fightRow(fight, owner, id) {
+  const mine = fight.participants.find(p => p.name === owner);
+  const others = fight.participants.filter(p => p.name !== owner);
+  return `
+    <div class="bcf-fight" id="ff-${id}">
+      <div class="bcf-row" role="button" tabindex="0"
+           aria-label="Fight on ${fight.time}"
+           onclick="event.stopPropagation();toggleFight('${id}')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();toggleFight('${id}');}">
+        <span class="bcf-when">${fight.time}</span>
+        <span class="bcf-dur">${fight.duration}</span>
+        <span class="bcf-hp">${compact(fight.max_health)} HP</span>
+        <span class="bcf-wep" title="${fight.weapon}">${fight.weapon || '\u2014'}</span>
+        ${shareBar(fight)}
+        <span class="bcf-pct">${mine ? mine.share : 0}%</span>
+        <span class="bcf-caret"></span>
+      </div>
+      ${others.length ? `<div class="bcf-with">with ${others.map(p =>
+        `<b>${p.name}</b> ${p.share}%`).join(' \u00b7 ')}</div>` : ''}
+      ${fightDetail(fight)}
+    </div>`;
+}
+
+// One fight open at a time, the same rule the boss cards and the player
+// drawer already keep: a page with six of them stretched out at once is a
+// page you scroll rather than read.
+let fightOpen = null;
+
+function toggleFight(id) {
+  fightOpen = fightOpen === id ? null : id;
+  for (const el of document.querySelectorAll('.bcf-fight')) {
+    el.classList.toggle('open', el.id === `ff-${fightOpen}`);
+  }
+}
+
+// The card itself opens and shuts on a click anywhere in it, so a control
+// inside it has to keep its own click to itself or folding a player's run
+// would shut the whole card on the way.
+function toggleFightGroup(header) {
+  const group = header.parentElement;
+  if (group) group.classList.toggle('shut');
+}
+
+function fightHistory(boss) {
+  const fights = boss.fights || [];
+  if (!fights.length) {
+    return `<div class="bc-fights">
+      <div class="bcf-title"><span>FIGHT HISTORY</span></div>
+      <div class="bcf-empty">no fight on record</div>
+    </div>`;
+  }
+  // the killer chips above already carry each player's face; the same skin
+  // serves the group header rather than being looked up a second way
+  const faces = {};
+  for (const killer of boss.killers || []) faces[killer.name] = killer.skin || '';
+  const groups = byFinisher(fights);
+  // an id a click can name, unique across the page: the grouping reorders the
+  // fights, so a counter that runs over the groups as they are drawn is what
+  // keeps one row's id from being another row's
+  let seen = 0;
+
+  return `
+    <div class="bc-fights">
+      <div class="bcf-title">
+        <span>FIGHT HISTORY</span>
+        <em>${fights.length} fight${fights.length === 1 ? '' : 's'}${
+          groups.length > 1 ? ` \u00b7 ${groups.length} players` : ''}</em>
+      </div>
+      <div class="bcf-groups">${groups.map(group => `
+        <div class="bcf-group">
+          <button type="button" class="bcf-head"
+                  onclick="event.stopPropagation();toggleFightGroup(this)">
+            <i class="bc-face"${faces[group.name] ? ` style="--skin:url('${faces[group.name]}')"` : ''}></i>
+            <b>${group.name}</b>
+            <em>${group.fights.length} fight${group.fights.length === 1 ? '' : 's'}</em>
+            <span class="bcf-caret"></span>
+          </button>
+          <div class="bcf-rows">${group.fights.map(f =>
+            fightRow(f, group.name, `${boss.key}-${seen++}`)).join('')}</div>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
 function shareTier(pct) {
   if (pct >= 50) return 'hi';
   if (pct >= 20) return 'mid';
@@ -763,22 +945,33 @@ let liveMounted = [];
 // name the roster is still holding back.
 const REVEAL = new URLSearchParams(location.search).has('reveal');
 
-const LIVE_MODEL = { width: 148, height: 168 };
-const BOSS_MODEL = { width: 124, height: 124 };
+// A model is a canvas rendered at a fixed pixel size, so a phone cannot be
+// served the desktop one and told to shrink it: a WebGL canvas scaled down in
+// CSS resamples pixel art into mush. It gets a smaller render instead, which
+// is sharp at the size it is actually drawn. The width is read once per build
+// rather than watched, since the only thing that changes it mid-visit is a
+// device being turned on its side, and the next poll rebuilds anyway.
+const NARROW = 560;
+const narrow = () => window.innerWidth <= NARROW;
+const pick = (wide, small) => () => (narrow() ? small : wide);
+
+const LIVE_MODEL = pick({ width: 148, height: 168 }, { width: 104, height: 124 });
+const BOSS_MODEL = pick({ width: 124, height: 124 }, { width: 96, height: 96 });
 // bigger canvas, not a bigger zoom: the auto-fit already shows the whole
 // model at any canvas size (its own math is independent of it), so a real
 // render at 240px is what actually makes the mob bigger. A zoom multiplier
 // on top of that scales the model past its own camera frame instead and
 // crops it top and bottom - the fight history's own layout, not a smaller
 // model, is what got a felled player's name from being cut off.
-const BOSS_MODEL_OPEN = { width: 240, height: 240 };
+const BOSS_MODEL_OPEN = pick({ width: 240, height: 240 }, { width: 176, height: 176 });
 
 function renderLive(board) {
   const stage = document.getElementById('live-stage');
   if (!stage || !board) return;
 
   const shape = (board.players || []).map(p => p.uuid).join(',') + '|' +
-                (board.bosses || []).map(b => `${b.key}${b.felled}${b.kills}`).join(',');
+                (board.bosses || []).map(b => `${b.key}${b.felled}${b.kills}`).join(',') + '|' +
+                (board.fish || []).map(f => `${f.key}${f.count}`).join(',');
   if (shape !== liveShape) {
     liveShape = shape;
     buildLive(board);
@@ -788,6 +981,7 @@ function renderLive(board) {
 }
 
 function buildLive(board) {
+  fightOpen = null;                    // the rows this named are about to go
   for (const el of liveMounted) if (window.disposeModel) disposeModel(el);
   liveMounted = [];
 
@@ -833,30 +1027,48 @@ function buildLive(board) {
             <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
               <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
             </span>`).join('')}</div>
-          <div class="bc-fights">
-            <div class="bcf-title">FIGHT HISTORY</div>
-            <div class="bcf-list">${b.fights.length ? b.fights.map(f => `
-              <div class="bcf-card">
-                <div class="bcf-top"><b class="bcf-finisher">${f.finisher}</b><span class="bcf-date">${f.time}</span></div>
-                <div class="bcf-tiles">
-                  <div class="bcf-tile"><i>DURATION</i><b>${f.duration}</b></div>
-                  <div class="bcf-tile"><i>BOSS HEALTH</i><b>${compact(f.max_health)}</b></div>
-                  ${f.weapon ? `<div class="bcf-tile wide"><i>FINISHING BLOW</i><b>${f.weapon}</b></div>` : ''}
-                </div>
-                <div class="bcf-parts">${f.participants.map(p => `
-                  <div class="bcf-part">
-                    <span class="bcf-pname">${p.name}</span>
-                    <span class="bcf-bar"><span class="bcf-fill ${shareTier(p.share)}" style="width:${Math.max(p.share, 6)}%"></span></span>
-                    <span class="bcf-pct">${p.share}%</span>
-                  </div>`).join('')}
-                ${f.discarded_share ? `
-                  <div class="bcf-part untracked">
-                    <span class="bcf-pname">Untracked</span>
-                    <span class="bcf-bar"><span class="bcf-fill discard" style="width:${Math.max(f.discarded_share, 6)}%"></span></span>
-                    <span class="bcf-pct">${f.discarded_share}%</span>
-                  </div>` : ''}</div>
-              </div>`).join('') : '<div class="bcf-empty">no fight on record</div>'}</div>
-          </div>
+          ${fightHistory(b)}
+        ` : ''}
+      </div>
+    </div>`;
+  };
+
+  // The legendary fish are a collection rather than a fight, so the board is
+  // a shelf of them: every one Starcatcher can produce in this pack has a
+  // slot from the start, drawn as the mod's own unknown_fish silhouette until
+  // somebody lands it and it lights up gold. The name is left showing on a
+  // slot nobody has filled - a boss keeps its name back because finding out
+  // what it is IS the reward, where a fish you have not caught yet is
+  // something to go looking for, and a shelf of thirteen identical ??? would
+  // tell nobody where to cast.
+  const unknown = board.fish_unknown || '';
+  const fishCard = f => {
+    const best = f.best;
+    return `
+    <div class="fcard${f.caught ? ' caught' : ' locked'}" id="fc-${f.key}"
+         data-caught="${f.caught ? 1 : 0}">
+      <div class="fc-stage">
+        <img class="fc-icon" src="${f.caught ? f.icon : unknown}" alt=""
+             loading="lazy" width="64" height="64">
+      </div>
+      <div class="fc-foot">
+        <div class="fc-name">${f.name}</div>
+        ${f.caught ? `
+          <div class="fc-tally">${compact(f.count)} landed</div>
+          <div class="fc-anglers">${f.anglers.map(a => `
+            <span class="bc-killer"${a.skin ? ` style="--skin:url('${a.skin}')"` : ''}>
+              <i class="bc-face"></i><b>${a.name}</b><em>${a.count}\u00d7</em>
+            </span>`).join('')}</div>
+          ${best ? `<div class="fc-best">${best.size} cm \u00b7 ${best.weight}</div>
+            ${(() => {
+              // a tile is a hundred and twenty pixels wide, so the placing and
+              // the two flags share the one line rather than each running off
+              // the end of its own
+              const marks = [best.top ? `TOP ${best.top}%` : '',
+                             best.golden ? 'GOLDEN' : '',
+                             best.perfect ? 'PERFECT' : ''].filter(Boolean);
+              return marks.length ? `<div class="fc-marks">${marks.join(' \u00b7 ')}</div>` : '';
+            })()}` : ''}
         ` : ''}
       </div>
     </div>`;
@@ -867,7 +1079,13 @@ function buildLive(board) {
     all.filter(b => b.category !== 'miniboss').map(bossCard).join('');
   document.getElementById('ls-minibosses').innerHTML =
     all.filter(b => b.category === 'miniboss').map(bossCard).join('');
+  const shelf = document.getElementById('ls-fish');
+  if (shelf) {
+    shelf.innerHTML = (board.fish || []).map(fishCard).join('')
+      || '<p class="rp-none">no legendary fish are catchable in this pack</p>';
+  }
   filterBosses();
+  filterFish();
 }
 
 // The list can be cut down to the ones already felled. A card that is filtered
@@ -899,6 +1117,27 @@ function filterBosses() {
   filterSection('ls-minibosses', 'ls-mini-beaten', 'ls-mini-count');
 }
 
+// The same cut-down as the boss grids, over the tiles the fish shelf holds.
+function filterFish() {
+  const shelf = document.getElementById('ls-fish');
+  if (!shelf) return;
+  const only = (document.getElementById('ls-fish-caught') || {}).checked;
+  let shown = 0, caught = 0, total = 0;
+  for (const tile of shelf.querySelectorAll('.fcard')) {
+    total += 1;
+    const landed = tile.dataset.caught === '1';
+    if (landed) caught += 1;
+    const hide = only && !landed;
+    tile.classList.toggle('hidden', hide);
+    if (!hide) shown += 1;
+  }
+  const count = document.getElementById('ls-fish-count');
+  if (count) {
+    count.textContent = only ? `${shown} shown of ${total}`
+                             : `${caught} caught of ${total}`;
+  }
+}
+
 // a model turns while the pointer is on it and stands still otherwise: ten
 // scenes all spinning at once is a lot of painting for no one's benefit
 function spin(id, on) {
@@ -911,7 +1150,7 @@ function mountLive(board) {
     const box = document.getElementById(`pm-${p.uuid}`);
     if (!box) continue;
     if (p.skin) {
-      buildPlayerModel(box, { skin: p.skin, slim: p.slim, ...LIVE_MODEL });
+      buildPlayerModel(box, { skin: p.skin, slim: p.slim, ...LIVE_MODEL() });
       liveMounted.push(box);
     } else {
       box.classList.add('rc-noskin');
@@ -934,7 +1173,7 @@ function watchBosses(board) {
     if (!boss || box.dataset.built) return;
     box.dataset.built = '1';
     buildMobModel(box, { model: boss.model,
-                         locked: !boss.felled && !REVEAL, ...BOSS_MODEL });
+                         locked: !boss.felled && !REVEAL, ...BOSS_MODEL() });
     liveMounted.push(box);
   };
 
@@ -992,11 +1231,13 @@ function updateLive(board) {
     tile('played', T.played) +
     tile('deaths', compact(T.deaths)) +
     tile('mob kills', compact(T.kills)) +
-    tile('bosses', `${T.bosses}/${T.boss_all}`, T.bosses > 0);
+    tile('bosses', `${T.bosses}/${T.boss_all}`, T.bosses > 0) +
+    tile('legendary fish', `${T.fish}/${T.fish_all}`, T.fish > 0);
 
   document.getElementById('ls-count').textContent =
     `${T.online} of ${T.tracked} online`;
   filterBosses();
+  filterFish();
 
   const worst = Math.max(1, ...(board.players || []).map(p => p.deaths));
   for (const p of board.players || []) {
@@ -1055,6 +1296,9 @@ function toggleBoss(key) {
   if (!card || card.dataset.beaten !== '1') return;
   const previous = bossOpen;
   bossOpen = bossOpen === key ? null : key;
+  // a fight left stretched out inside a card nobody can see is a row that
+  // opens on its own the next time that card does
+  if (previous !== bossOpen && fightOpen) toggleFight(fightOpen);
   for (const c of document.querySelectorAll('.bcard')) {
     c.classList.toggle('open', c.id === `bc-${bossOpen}`);
   }
@@ -1066,8 +1310,16 @@ function toggleBoss(key) {
     const el = document.getElementById(`bm-${k}`);
     if (boss && el) buildMobModel(el, { model: boss.model, locked: false, ...opts });
   };
-  if (previous && previous !== bossOpen) rebuild(previous, BOSS_MODEL);
-  if (bossOpen) rebuild(bossOpen, BOSS_MODEL_OPEN);
+  if (previous && previous !== bossOpen) rebuild(previous, BOSS_MODEL());
+  if (bossOpen) rebuild(bossOpen, BOSS_MODEL_OPEN());
+  // The card leaves its place in the grid for the head of the section, which
+  // on a nine-row block is a long way above where it was clicked. Bringing it
+  // into view is the other half of moving it there - after a frame, so the
+  // grid has settled on where "there" is.
+  if (bossOpen) {
+    requestAnimationFrame(() =>
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  }
 }
 
 function toggleLive(uuid) {

@@ -23,11 +23,23 @@ PLAYERS  = 'players.json'
 BOSSES   = 'boss_kills.json'
 FIGHTS   = 'boss_fights.json'
 FIELDGUIDE = 'fieldguide_counts.json'
+FISH       = 'fish_caught.json'
 
 # The four categories worth a card on the roster - "intro" is the guide's own
 # welcome entries, the same handful for everyone and no more a discovery than
 # the title screen is.
 FIELDGUIDE_CATEGORIES = ('monster', 'animal', 'plant', 'boss')
+
+# Starcatcher's own ladder, in its own order, with the colour the mod gives
+# each rung. A datapack fish with no registry entry is exported as UNKNOWN
+# rather than dropped, so it needs a rung of its own at the bottom.
+FISH_RARITIES = ('UNKNOWN', 'NONE', 'TRASH', 'COMMON', 'UNCOMMON',
+                 'RARE', 'EPIC', 'LEGENDARY', 'GOLDEN')
+
+# A panel is a portrait, not a ledger. Somebody who has landed all four
+# hundred and fifty-six species would otherwise be handed four hundred and
+# fifty-six rows; the best dozen is what anybody reads.
+FISH_LIMIT = 12
 
 # The bosses we hold a model for, and where the portal serves them from. Only
 # these can appear on the board: a boss nobody can draw is not a boss anyone
@@ -42,6 +54,13 @@ BOSS_INDEX = os.path.join(BOSS_DIR, 'index.json')
 MINIBOSS_DIR   = os.path.join(_STATIC, 'minibosses')
 MINIBOSS_URL   = '/static/minecraft/minibosses'
 MINIBOSS_INDEX = os.path.join(MINIBOSS_DIR, 'index.json')
+
+# Starcatcher's legendary fish, and the icons tools/fish.py lifted out of the
+# mod for them. The board is the same idea as the boss roster: every one of
+# them has a place from the start, and an empty slot is the point of the line.
+FISH_DIR   = os.path.join(_STATIC, 'fish')
+FISH_URL   = '/static/minecraft/fish'
+FISH_INDEX = os.path.join(FISH_DIR, 'index.json')
 
 # The exporter runs through KubeJS, where every number arrives as a double, so
 # counts come back as 3.0 rather than 3 and have to be pushed back into shape.
@@ -95,6 +114,27 @@ def _when(text):
         return datetime.fromisoformat(text.replace('Z', '+00:00'))
     except ValueError:
         return None
+
+
+def _date(when):
+    """'2026-08-25T17:09:20.220Z' -> 'Aug 25, 2026'.
+
+    Every date the portal shows reads the one way: the month by name, then
+    the day, then the year. The exports carry ISO, which sorts and compares
+    correctly by being a string in the right order and reads like a serial
+    number, so it is kept in that shape for the reckoning and turned into
+    this only on the way out.
+
+    Built by hand rather than with %-d, which is not a format Windows knows.
+    """
+    stamp = _when(when) if isinstance(when, str) else when
+    return f'{stamp:%b} {stamp.day}, {stamp.year}' if stamp else ''
+
+
+def _moment(when):
+    """The same, for a reading that wants the clock too: 'Aug 25, 2026 17:09'."""
+    stamp = _when(when) if isinstance(when, str) else when
+    return f'{_date(stamp)} {stamp:%H:%M}' if stamp else ''
 
 
 # The exporter only rewrites a player's row while they are on the server, so a
@@ -153,6 +193,10 @@ def _bosses(record, credited=None, catalogue=None):
             'kills':    tally['kills'],
             'last':     tally['last'],
         })
+    # the merge above leans on ISO comparing correctly, so the reading is only
+    # made readable once there is nothing left to compare
+    for boss in out:
+        boss['last'] = _date(boss['last'])
     out.sort(key=lambda b: (-b['tier'], -b['kills'], b['name']))
     return out
 
@@ -171,6 +215,89 @@ def _fieldguide(raw):
     }
 
 
+def _weight(grams):
+    """4180 -> '4.18 kg', 640 -> '640 g'.
+
+    A fish is weighed in grams because the small ones want them, and the big
+    ones then read as five figures on a panel three columns wide.
+    """
+    grams = _int(grams)
+    if grams >= 1000:
+        return f'{round(grams / 1000, 2):g} kg'
+    return f'{grams} g'
+
+
+def _caught_on(seconds):
+    """A unix timestamp in seconds -> '2026-08-28', or '' if it is not one."""
+    try:
+        return datetime.fromtimestamp(int(seconds), timezone.utc).strftime('%Y-%m-%d')
+    except (TypeError, ValueError, OSError, OverflowError):
+        return ''
+
+
+def _fish(raw, covers):
+    """One player's fish_caught.json row, in the units the panel wants.
+
+    The export keeps three counts that are easy to confuse, so they are named
+    apart here: `total` is every individual fish landed, `species` the number
+    of distinct ones, and `legendary` how many of those species are legendary.
+
+    `fish` holds only the rarities the tracker is set to export - LEGENDARY
+    alone at the moment - which is why the row count and `species` need not
+    agree, and why `covers` rides along: a panel showing four rows out of a
+    hundred and twenty caught should say which four it is showing.
+
+    Starcatcher's percentile runs the way a placing does rather than the way a
+    score does: CaughtFishInfo.getScale() interpolates from the largest fish
+    at 0 to the smallest at 100, so 3.1 is a top-3% specimen, not a poor one.
+    """
+    rows = []
+    for fish_id, entry in (raw.get('fish') or {}).items():
+        if not isinstance(entry, dict):
+            continue
+        rarity = str(entry.get('rarity') or 'UNKNOWN').upper()
+        rows.append({
+            'id':      fish_id,
+            'name':    _label(fish_id),
+            'mod':     fish_id.split(':')[0].replace('_', ' ') if ':' in fish_id else '',
+            'rarity':  rarity,
+            'rank':    FISH_RARITIES.index(rarity) if rarity in FISH_RARITIES else 0,
+            'count':   _int(entry.get('count')),
+            'size':    _int(entry.get('bestSizeCm')),
+            'weight':  _weight(entry.get('bestWeightG')),
+            # the mod records this to a tenth and a tenth is what it is worth
+            'top':     _float(entry.get('bestPercentile')),
+            'golden':  bool(entry.get('golden')),
+            'perfect': bool(entry.get('perfect')),
+            'first':   _date(_caught_on(entry.get('firstCatch'))),
+        })
+    # rarest first, then whoever has landed the most of it: the point of the
+    # list is the trophy at the top of it, not the tally at the bottom
+    rows.sort(key=lambda f: (-f['rank'], -f['count'], f['name']))
+    return {
+        'total':     _int(raw.get('totalCaught')),
+        'species':   _int(raw.get('caught')),
+        'legendary': _int(raw.get('legendaryCaught')),
+        'covers':    covers,
+        'fish':      rows[:FISH_LIMIT],
+        # what the cap left out, so a long list can say so rather than just
+        # stopping
+        'more':      max(0, len(rows) - FISH_LIMIT),
+    }
+
+
+def _covers(fish_raw):
+    """Which rarities the tracker is exporting, as something readable.
+
+    It writes the list it was configured with, or the string "all" when it is
+    set to export everything.
+    """
+    rarities = (fish_raw or {}).get('rarities')
+    if isinstance(rarities, list):
+        return ', '.join(str(r).upper() for r in rarities if r)
+    return str(rarities).upper() if rarities else ''
+
+
 def _label(item_id):
     """'simplyswords:diamond_halberd' -> 'Diamond Halberd'.
 
@@ -183,7 +310,10 @@ def _label(item_id):
         return ''
     if item_id in ('minecraft:air', 'air'):
         return 'Bare Hands'
-    name = item_id.split(':')[-1]
+    # a few mods hang a model variant off the id with a slash -
+    # simplybows:echo_bow/echo_bow - and only the last segment is the item,
+    # so keeping the whole path spelled it "Echo Bow/echo Bow"
+    name = item_id.split(':')[-1].rstrip('/').split('/')[-1]
     return ' '.join(word.capitalize() for word in name.split('_'))
 
 
@@ -209,23 +339,26 @@ def _fight_history(entries):
               'share': round((p.get('share') or 0) * 100)}
              for name, p in (entry.get('participants') or {}).items()),
             key=lambda p: -p['share'])
-        # a share is already a fraction of the boss's own max health, not of
-        # what the tracked participants dealt between them, so whatever they
-        # do not add up to is damage from something the fight never credited
-        # to a player - discardedDamage names that leftover directly instead
-        # of leaving it to be inferred, but the same share-of-max-health
-        # units mean it slots into the bar the participants' own shares fill
-        discarded = _float(entry.get('discardedDamage'))
+        # A share is a fraction of the boss's own max health, not of what the
+        # tracked players dealt between them, so whatever the participants do
+        # not add up to is health the fight took off the boss and credited to
+        # nobody: lava, a fall, a wandering mob, or damage discarded when a
+        # long-abandoned engagement was reset. discardedDamage names only that
+        # last kind, and only sometimes - the Absorber went down with a
+        # finisher on 76% and a null there, the missing 24% being the world
+        # rather than a stale ledger. Taking the remainder instead names every
+        # kind of it at once and, being in the same units, always fills the
+        # bar the participants' own shares are drawn on.
+        untracked = max(0, 100 - sum(p['share'] for p in participants))
         out.append({
-            'time':       (entry.get('time') or '')[:16].replace('T', ' '),
+            'time':       _moment(entry.get('time')),
             'sort':       entry.get('time') or '',
             'max_health': max_health,
             'duration':   _span(_int(entry.get('durationSeconds'))),
             'finisher':   entry.get('finisher') or '',
             'weapon':     _label(entry.get('finisherWeapon')),
             'participants': participants,
-            'discarded':  discarded,
-            'discarded_share': round(discarded / max_health * 100) if max_health else 0,
+            'untracked_share': untracked,
         })
     out.sort(key=lambda f: f['sort'], reverse=True)
     for fight in out:
@@ -327,6 +460,11 @@ def load(season_path):
     players  = _load(os.path.join(data_dir, PLAYERS))
     kills    = _load(os.path.join(data_dir, BOSSES))
     scans    = _load(os.path.join(data_dir, FIELDGUIDE))
+    # fish_caught.json nests its rows under "players" and carries a header of
+    # its own, where every other export is a bare map keyed by player name
+    hooked   = _load(os.path.join(data_dir, FISH))
+    reeled   = hooked.get('players') if isinstance(hooked, dict) else {}
+    covers   = _covers(hooked)
     if not players:
         return {}
 
@@ -343,6 +481,7 @@ def load(season_path):
         uuid = raw.get('uuid') or name
         boss = kills.get(name) or kills.get(uuid) or {}
         field = scans.get(name) or scans.get(uuid) or {}
+        rod = (reeled or {}).get(name) or (reeled or {}).get(uuid) or {}
 
         ticks   = _int(raw.get('playTimeTicks'))
         seconds = _int(raw.get('playTimeSeconds') or ticks / 20)
@@ -397,7 +536,8 @@ def load(season_path):
                                sum(b['kills'] for b in beaten)),
             'boss_types':  max(_int(boss.get('bossesDefeated')), len(beaten)),
             'fieldguide':  _fieldguide(field),
-            'recorded':    (raw.get('recorded') or updated)[:16].replace('T', ' '),
+            'fishing':     _fish(rod, covers),
+            'recorded':    _moment(raw.get('recorded') or updated),
         }
 
     return out
@@ -455,6 +595,8 @@ def bosses(season_path, faces=None):
                 'name':   record.get('name') or player,
                 'uuid':   uuid,
                 'kills':  kills,
+                # kept ISO here: the fight log's own tallies are merged onto
+                # these below by comparing them, and made readable after
                 'last':   (entry.get('last') or '')[:10],
             })
             for key, when in (('first', entry.get('first')), ('last', entry.get('last'))):
@@ -501,6 +643,9 @@ def bosses(season_path, faces=None):
         killers = sorted(hit['killers'], key=lambda k: -k['kills']) if hit else []
         for killer in killers:
             killer.update((faces or {}).get(killer['uuid'], {}))
+            # the two files have finished being weighed against each other by
+            # here, so the ISO the weighing needed can become the reading
+            killer['last'] = _date(killer['last'])
         out.append({
             'key':     boss['key'],
             'id':      boss['id'],
@@ -520,8 +665,8 @@ def bosses(season_path, faces=None):
             'felled':  bool(hit),
             'kills':   hit['kills'] if hit else 0,
             'killers': killers,
-            'first':   hit['first'] if hit else '',
-            'last':    hit['last'] if hit else '',
+            'first':   _date(hit['first']) if hit else '',
+            'last':    _date(hit['last']) if hit else '',
             # only a felled boss has fights worth reading, but an unfelled
             # one costs nothing to look up and finding none is itself a
             # cheap confirmation that the two files agree
@@ -534,6 +679,89 @@ def bosses(season_path, faces=None):
     out.sort(key=lambda b: (b['category'] == 'miniboss', b['tier'] or 99,
                             not b['felled'], b['mod'] != 'minecraft',
                             b['mod'], b['name']))
+    return out
+
+
+def fish(season_path, faces=None):
+    """The legendary fish board: one entry per catchable fish, landed or not.
+
+    tools/fish.py has already worked out which of Starcatcher's legendaries
+    this pack can actually produce - a fish gated on a mod nobody has
+    installed is a slot that could never be filled - so the index is the whole
+    board. What the export adds is who has landed each one and the best
+    specimen anybody has pulled out of the water.
+
+    The mod records the best catch per species per player rather than every
+    individual one, so "best" here is the best of those bests: the biggest
+    fish on the server, and whose it is.
+    """
+    known = _known(FISH_INDEX)
+    if not known:
+        return []
+
+    hooked = _load(os.path.join(season_path, DATA_DIR, FISH))
+    reeled = hooked.get('players') if isinstance(hooked, dict) else {}
+
+    landed = {}
+    for name, record in (reeled or {}).items():
+        if not isinstance(record, dict):
+            continue
+        who = record.get('name') or name
+        for fish_id, entry in (record.get('fish') or {}).items():
+            if not isinstance(entry, dict):
+                continue
+            count = _int(entry.get('count'))
+            if count <= 0:
+                continue
+            hit = landed.setdefault(fish_id, {'count': 0, 'anglers': [],
+                                              'best': None, 'first': ''})
+            hit['count'] += count
+            hit['anglers'].append({
+                'name':  who,
+                'uuid':  record.get('uuid') or who,
+                'count': count,
+            })
+            when = _caught_on(entry.get('firstCatch'))
+            if when and (not hit['first'] or when < hit['first']):
+                hit['first'] = when
+            # a lower percentile is a bigger fish - see _fish() - so the
+            # record holder is whoever has the smallest one
+            top = _float(entry.get('bestPercentile'))
+            best = hit['best']
+            if best is None or top < best['top']:
+                hit['best'] = {
+                    'by':      who,
+                    'size':    _int(entry.get('bestSizeCm')),
+                    'weight':  _weight(entry.get('bestWeightG')),
+                    'top':     top,
+                    'golden':  bool(entry.get('golden')),
+                    'perfect': bool(entry.get('perfect')),
+                }
+
+    out = []
+    for entry in known:
+        hit = landed.get(entry.get('id'))
+        anglers = sorted(hit['anglers'], key=lambda a: -a['count']) if hit else []
+        for angler in anglers:
+            angler.update((faces or {}).get(angler['uuid'], {}))
+        out.append({
+            'key':    entry.get('key'),
+            'id':     entry.get('id'),
+            'name':   entry.get('name') or 'UNKNOWN',
+            'mod':    entry.get('mod', ''),
+            'rarity': entry.get('rarity') or 'LEGENDARY',
+            # the mtime rides along so a re-extracted icon is never served
+            # from a browser cache still holding the old one
+            'icon':   f'{FISH_URL}/{entry["icon"]}?v={_stamp(FISH_DIR, entry["icon"])}',
+            'caught':  bool(hit),
+            'count':   hit['count'] if hit else 0,
+            'anglers': anglers,
+            'best':    hit['best'] if hit else None,
+            'first':   _date(hit['first']) if hit else '',
+        })
+    # what has been landed leads, so a board that is mostly silhouettes still
+    # opens on the ones somebody has actually pulled out
+    out.sort(key=lambda f: (not f['caught'], -f['count'], f['name']))
     return out
 
 
@@ -570,9 +798,14 @@ def board(season_path):
 
     seconds = sum(p['playtime_hours'] * 3600 for p in order)
     line = bosses(season_path)
+    school = fish(season_path)
     return {
         'players': order,
         'bosses':  line,
+        'fish':    school,
+        # the silhouette a fish nobody has landed is drawn as, sent once
+        # rather than repeated on every tile that needs it
+        'fish_unknown': f'{FISH_URL}/unknown.png?v={_stamp(FISH_DIR, "unknown.png")}',
         'updated': raw.get('updated', ''),
         'read':    (raw.get('updated') or '')[11:16],
         'age':     age,
@@ -589,6 +822,8 @@ def board(season_path):
             'bosses':  sum(1 for b in line if b['felled']),
             'boss_all': len(line),
             'boss_kills': sum(b['kills'] for b in line),
+            'fish':     sum(1 for f in school if f['caught']),
+            'fish_all': len(school),
             'blocks':  int(sum(p['travelled'] for p in order)),
         },
     }
@@ -598,7 +833,7 @@ def stamp(season_path):
     """When the export last changed, so a cached roster knows to rebuild."""
     data_dir = os.path.join(season_path, DATA_DIR)
     marks = []
-    for name in (PLAYERS, BOSSES, FIGHTS, FIELDGUIDE):
+    for name in (PLAYERS, BOSSES, FIGHTS, FIELDGUIDE, FISH):
         try:
             marks.append(os.path.getmtime(os.path.join(data_dir, name)))
         except OSError:
