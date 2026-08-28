@@ -113,8 +113,16 @@ def _kill_entries(record):
     return {**(record.get('bosses') or {}), **(record.get('minibosses') or {})}
 
 
-def _bosses(record):
-    """boss_kills.json is keyed by name, one entry per boss type beaten."""
+def _bosses(record, credited=None, catalogue=None):
+    """boss_kills.json is keyed by name, one entry per boss type beaten.
+
+    `credited` is the other half of the same record: what boss_fights.json
+    says this player struck the last blow on. The two files are written by
+    different halves of the server's script and either can miss a fight the
+    other caught, so a boss that appears in only one of them still counts.
+    Where both hold the same boss the larger count wins - they are counting
+    the same kills, and adding them would double every one they both saw.
+    """
     mini = set((record.get('minibosses') or {}).keys())
     out = []
     for boss_id, entry in _kill_entries(record).items():
@@ -125,6 +133,25 @@ def _bosses(record):
             'category': 'miniboss' if boss_id in mini else 'boss',
             'kills':    _int(entry.get('kills')),
             'last':     (entry.get('last') or '')[:10],
+        })
+    held = {b['id']: b for b in out}
+    for boss_id, tally in (credited or {}).items():
+        boss = held.get(boss_id)
+        if boss:
+            boss['kills'] = max(boss['kills'], tally['kills'])
+            boss['last'] = max(boss['last'], tally['last'])
+            continue
+        # a fight the kill counter never recorded: the log names the boss and
+        # the moment but nothing else, so the rest comes from the roster's own
+        # index, which is where an unfelled boss's name and grade come from too
+        seen = (catalogue or {}).get(boss_id) or {}
+        out.append({
+            'id':       boss_id,
+            'name':     seen.get('name') or 'UNKNOWN',
+            'tier':     _int(seen.get('tier')),
+            'category': seen.get('category') or 'boss',
+            'kills':    tally['kills'],
+            'last':     tally['last'],
         })
     out.sort(key=lambda b: (-b['tier'], -b['kills'], b['name']))
     return out
@@ -145,9 +172,17 @@ def _fieldguide(raw):
 
 
 def _label(item_id):
-    """'simplyswords:diamond_halberd' -> 'Diamond Halberd'."""
+    """'simplyswords:diamond_halberd' -> 'Diamond Halberd'.
+
+    An empty main hand is not a missing reading, it is a real one: the game
+    calls an empty slot minecraft:air, and a boss finished off by somebody
+    holding nothing was finished off by hand. Saying "Air" made that look
+    like a broken lookup.
+    """
     if not item_id:
         return ''
+    if item_id in ('minecraft:air', 'air'):
+        return 'Bare Hands'
     name = item_id.split(':')[-1]
     return ' '.join(word.capitalize() for word in name.split('_'))
 
@@ -198,6 +233,94 @@ def _fight_history(entries):
     return out[:FIGHT_LIMIT]
 
 
+def _fight_credits(fights_raw):
+    """What boss_fights.json alone knows about who has put what down.
+
+    A fight is a kill by any reading: it names the boss, the moment, and
+    whoever struck last. boss_kills.json is the only place the roster used to
+    look, so a fight the kill counter missed left the boss standing on the
+    board with its own fight sitting unread in the file next to it. This
+    turns the log into the same shape the kill counter is read in, so the two
+    can be weighed against each other.
+
+    A kill is credited to the finisher, the same way boss_kills.json credits
+    it - the fight itself belongs to everyone in the participants list, and
+    that is what the fight history under the card is for.
+
+    Returns boss id -> {kills, killers {name -> {kills, last}}, first, last}.
+    """
+    # the file is server-fed and read straight off disk, so a run that finds
+    # something other than the log where the log should be reports no fights
+    # rather than taking the board down with it
+    if not isinstance(fights_raw, dict):
+        return {}
+    out = {}
+    for boss_id, entries in fights_raw.items():
+        if not isinstance(entries, list):
+            continue
+        seen = out.setdefault(boss_id, {'kills': 0, 'killers': {},
+                                        'first': '', 'last': ''})
+        for entry in entries:
+            when = (entry.get('time') or '')[:10]
+            seen['kills'] += 1
+            finisher = entry.get('finisher') or ''
+            if finisher:
+                who = seen['killers'].setdefault(finisher,
+                                                 {'kills': 0, 'last': ''})
+                who['kills'] += 1
+                who['last'] = max(who['last'], when)
+            if when:
+                seen['first'] = min(seen['first'] or when, when)
+                seen['last'] = max(seen['last'], when)
+    return out
+
+
+def _by_finisher(credits):
+    """The same credits the other way up: player name -> boss id -> tally."""
+    out = {}
+    for boss_id, seen in credits.items():
+        for name, tally in seen['killers'].items():
+            out.setdefault(name, {})[boss_id] = tally
+    return out
+
+
+def _uuids(players, kills):
+    """name -> uuid, for the one export that names a player and nothing else.
+
+    boss_fights.json writes its finisher and participants by display name
+    where everything else carries the uuid alongside, and a killer with no
+    uuid has no face to put beside their name on a card.
+    """
+    out = {}
+    for name, raw in ((players or {}).get('players') or {}).items():
+        uuid = (raw or {}).get('uuid')
+        if uuid:
+            out[(raw or {}).get('name') or name] = uuid
+    for name, record in (kills or {}).items():
+        uuid = (record or {}).get('uuid')
+        if uuid:
+            out.setdefault((record or {}).get('name') or name, uuid)
+    return out
+
+
+def _catalogue():
+    """id -> the name, grade and rank the roster holds for that mob.
+
+    What a record carrying only an id needs to be shown as anything but the
+    id itself. It is the same index the board's own line is built from.
+    """
+    out = {}
+    for entries, category in ((_known(MINIBOSS_INDEX), 'miniboss'),
+                              (_known(BOSS_INDEX), 'boss')):
+        for entry in entries:
+            out[entry.get('id')] = {
+                'name': entry.get('name') or 'UNKNOWN',
+                'tier': _int(entry.get('tier')),
+                'category': category,
+            }
+    return out
+
+
 def load(season_path):
     """Every player the server has exported, keyed by uuid."""
     data_dir = os.path.join(season_path, DATA_DIR)
@@ -206,6 +329,11 @@ def load(season_path):
     scans    = _load(os.path.join(data_dir, FIELDGUIDE))
     if not players:
         return {}
+
+    # what the fight log credits each player with, for the fights the kill
+    # counter did not record - see _fight_credits
+    finished  = _by_finisher(_fight_credits(_load(os.path.join(data_dir, FIGHTS))))
+    catalogue = _catalogue()
 
     updated = players.get('updated', '')
     stamped = _when(updated)
@@ -228,6 +356,8 @@ def load(season_path):
         recorded = _when(raw.get('recorded'))
         behind   = int((stamped - recorded).total_seconds()) \
                    if stamped and recorded else None
+
+        beaten = _bosses(boss, finished.get(raw.get('name') or name), catalogue)
 
         out[uuid] = {
             'uuid':        uuid,
@@ -259,9 +389,13 @@ def load(season_path):
             'online':      behind is not None and behind <= ONLINE_WINDOW,
             'seen':        _span(behind) if behind else 'NOW',
             'behind':      behind,
-            'bosses':      _bosses(boss),
-            'boss_kills':  _int(boss.get('totalKills')),
-            'boss_types':  _int(boss.get('bossesDefeated')),
+            'bosses':      beaten,
+            # the export's own totals count only what boss_kills.json holds,
+            # so a fight it missed would leave the header under the list
+            # disagreeing with the list itself
+            'boss_kills':  max(_int(boss.get('totalKills')),
+                               sum(b['kills'] for b in beaten)),
+            'boss_types':  max(_int(boss.get('bossesDefeated')), len(beaten)),
             'fieldguide':  _fieldguide(field),
             'recorded':    (raw.get('recorded') or updated)[:16].replace('T', ' '),
         }
@@ -304,6 +438,8 @@ def bosses(season_path, faces=None):
 
     raw = _load(os.path.join(season_path, DATA_DIR, BOSSES))
     fights_raw = _load(os.path.join(season_path, DATA_DIR, FIGHTS))
+    if not isinstance(fights_raw, dict):
+        fights_raw = {}
     scored = {}
     for player, record in raw.items():
         uuid = record.get('uuid') or player
@@ -327,6 +463,37 @@ def bosses(season_path, faces=None):
                     continue
                 if not hit[key] or (when < hit[key] if key == 'first' else when > hit[key]):
                     hit[key] = when
+
+    # boss_fights.json is the second half of the same record, and either half
+    # can miss a fight the other caught: the Nehemoth went down with a fight
+    # written for it and no kill counted, which left it on the board as a mob
+    # nobody had touched with its own kill sitting in the file beside it. Both
+    # are read, and where they hold the same boss the fuller one is believed -
+    # they are counting the same fights, so adding them would double each one
+    # they both saw.
+    who = _uuids(_load(os.path.join(season_path, DATA_DIR, PLAYERS)), raw)
+    for boss_id, seen in _fight_credits(fights_raw).items():
+        hit = scored.setdefault(boss_id, {'killers': [], 'kills': 0,
+                                          'first': '', 'last': '', 'tier': 0})
+        hit['kills'] = max(hit['kills'], seen['kills'])
+        held = {killer['name']: killer for killer in hit['killers']}
+        for name, tally in seen['killers'].items():
+            killer = held.get(name)
+            if killer:
+                killer['kills'] = max(killer['kills'], tally['kills'])
+                killer['last'] = max(killer['last'], tally['last'])
+                continue
+            hit['killers'].append({'name': name,
+                                   # a name is all the log carries, and a
+                                   # killer with no uuid has no face
+                                   'uuid': who.get(name) or name,
+                                   'kills': tally['kills'],
+                                   'last': tally['last']})
+        for key in ('first', 'last'):
+            when = seen[key]
+            if when and (not hit[key] or
+                         (when < hit[key] if key == 'first' else when > hit[key])):
+                hit[key] = when
 
     out = []
     for boss in known:
