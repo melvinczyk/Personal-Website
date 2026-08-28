@@ -16,6 +16,10 @@ import os
 import time
 
 from . import sync
+from functools import lru_cache
+from zoneinfo import ZoneInfo
+
+from django.conf import settings
 from datetime import datetime, timezone
 
 DATA_DIR = 'data'
@@ -127,14 +131,55 @@ def _date(when):
 
     Built by hand rather than with %-d, which is not a format Windows knows.
     """
-    stamp = _when(when) if isinstance(when, str) else when
+    stamp = _local(_when(when) if isinstance(when, str) else when)
     return f'{stamp:%b} {stamp.day}, {stamp.year}' if stamp else ''
 
 
+@lru_cache(maxsize=1)
+def _here():
+    """The clock the people reading this are on."""
+    try:
+        return ZoneInfo(settings.TIME_ZONE)
+    except Exception:                        # a bad or missing zone name
+        return timezone.utc
+
+
+def _local(stamp):
+    """A reading moved off UTC and onto that clock.
+
+    The exporter writes real UTC and says so: a file stamped 03:01Z was three
+    minutes old at 22:04 Central. The game server's console log is on a third
+    clock again, an hour ahead of Central, but nothing here reads the log.
+
+    The conversion has to happen before the date is taken as well as the time.
+    03:01 UTC is the previous evening in Chicago, so a date left in UTC would
+    put an evening's play under tomorrow's heading.
+    """
+    return stamp.astimezone(_here()) if stamp else stamp
+
+
+def _clock(stamp):
+    """17:09 -> '5:09pm'. Nobody reads a scoreboard in twenty-four hour time.
+
+    Built by hand for the same reason _date is: %-I is not a format Windows
+    knows, and %I pads the hour to two digits, which reads as a stopwatch.
+    """
+    return f'{stamp.hour % 12 or 12}:{stamp.minute:02d}{"am" if stamp.hour < 12 else "pm"}'
+
+
 def _moment(when):
-    """The same, for a reading that wants the clock too: 'Aug 25, 2026 17:09'."""
+    """The instant itself, in UTC, for the page to render.
+
+    Which clock a reading should be shown on is not something this end can
+    answer: the answer is wherever the person looking happens to be. So the
+    server settles the one thing it does know, the instant, and hands it over
+    in a form with no ambiguity in it. minecraft.js turns it into words.
+
+    _clock and _local stay for anything rendered server-side, and for the
+    fallback the page uses when a browser cannot parse the stamp.
+    """
     stamp = _when(when) if isinstance(when, str) else when
-    return f'{_date(stamp)} {stamp:%H:%M}' if stamp else ''
+    return stamp.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z') if stamp else ''
 
 
 # The exporter only rewrites a player's row while they are on the server, so a
@@ -230,7 +275,7 @@ def _weight(grams):
 def _caught_on(seconds):
     """A unix timestamp in seconds -> '2026-08-28', or '' if it is not one."""
     try:
-        return datetime.fromtimestamp(int(seconds), timezone.utc).strftime('%Y-%m-%d')
+        return _local(datetime.fromtimestamp(int(seconds), timezone.utc)).strftime('%Y-%m-%d')
     except (TypeError, ValueError, OSError, OverflowError):
         return ''
 
@@ -807,7 +852,7 @@ def board(season_path):
         # rather than repeated on every tile that needs it
         'fish_unknown': f'{FISH_URL}/unknown.png?v={_stamp(FISH_DIR, "unknown.png")}',
         'updated': raw.get('updated', ''),
-        'read':    (raw.get('updated') or '')[11:16],
+        'read':    stamped.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z') if stamped else '',
         'age':     age,
         'age_txt': _span(age) if age is not None else '',
         'checked':     checked,

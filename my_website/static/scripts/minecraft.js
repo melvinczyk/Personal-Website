@@ -511,7 +511,7 @@ function livePanel(p) {
     ${bosses}
     ${fieldguide}
     ${fishing}
-    <div class="live-when">SERVER READ ${L.recorded}</div>
+    <div class="live-when">SERVER READ ${localMoment(L.recorded)}</div>
   </div>`;
 }
 
@@ -808,7 +808,7 @@ function fightDetail(fight) {
   return `
     <div class="bcf-detail">
       <div class="bcf-meta">
-        ${cell('WHEN', fight.time)}
+        ${cell('WHEN', localMoment(fight.time))}
         ${cell('DURATION', fight.duration)}
         ${cell('BOSS HEALTH', compact(fight.max_health))}
         ${cell('FINISHING BLOW', fight.weapon || '\u2014')}
@@ -829,10 +829,10 @@ function fightRow(fight, owner, id) {
   return `
     <div class="bcf-fight" id="ff-${id}">
       <div class="bcf-row" role="button" tabindex="0"
-           aria-label="Fight on ${fight.time}"
+           aria-label="Fight on ${localMoment(fight.time)}"
            onclick="event.stopPropagation();toggleFight('${id}')"
            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();toggleFight('${id}');}">
-        <span class="bcf-when">${fight.time}</span>
+        <span class="bcf-when">${localMoment(fight.time)}</span>
         <span class="bcf-dur">${fight.duration}</span>
         <span class="bcf-hp">${compact(fight.max_health)} HP</span>
         <span class="bcf-wep" title="${fight.weapon}">${fight.weapon || '\u2014'}</span>
@@ -916,6 +916,36 @@ function shareTier(pct) {
 function exact(n) {
   return typeof n === 'number' && isFinite(n) && Math.abs(n) >= 1e4
     ? ` title="${n}"` : '';
+}
+
+// The server sends instants, not words: which clock a time should be read on
+// is a question only the browser can answer. These put a UTC stamp onto
+// whatever clock the reader is actually sitting at, so a fight logged at
+// 03:03Z reads as 10:03pm in Chicago and 4:03am in Berlin, both correct.
+//
+// Deliberately not toLocaleString: that would hand back a different shape in
+// every locale, and these sit in a fixed-width Minecraft face where the column
+// has to stay put.
+function localClock(d) {
+  const h = d.getHours();
+  return `${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`;
+}
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// 'Aug 27, 2026 10:03pm'. An unparseable stamp comes back as it arrived rather
+// than as the word Invalid, so a bad reading is still a reading.
+function localMoment(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${localClock(d)}`;
+}
+
+function localTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso : localClock(d);
 }
 
 // matches _span() on the server, so the age counter reads the same whether it
