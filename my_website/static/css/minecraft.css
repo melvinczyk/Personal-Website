@@ -865,6 +865,16 @@ body::after { display: none; }
   --mc-heart:  #d94a3d;
   --mc-gold:   #ffd24a;
   --mc-sky:    #6fe0ee;
+  /* An assist needed a colour of its own and the page had few left: green is
+     spoken for four times over (online, felled, the biggest share, a fight's
+     own names), gold counts kills, red counts deaths, cyan heads the fight
+     history and stars the diamond tier, and purple is held for tier four.
+     Periwinkle is the one clear gap - cool, so it parts cleanly from the gold
+     kill count it sits beside, and far enough from cyan that the two never
+     read as the same mark. It is the badge's weight that says an assist is
+     the least of them, not its brightness: no glow, a fainter ground, and a
+     hand smaller than the stars' points. */
+  --mc-assist: #7c9dff;
 }
 
 .live-stage {
@@ -942,6 +952,247 @@ body::after { display: none; }
 .ls-tile b { margin-left: auto; font-weight: 600; font-size: 17px; color: var(--mc-text); }
 .ls-tile.hot b { color: var(--mc-gold); }
 
+/* ── the world panel ────────────────────────────────────────────────────────
+   The tiles under this say what the players have done. This says what the
+   world itself is doing, so it gets the size and the sky: the panel is tinted
+   by the hour and the weather, and the sun, moon and calendar in it are the
+   game's own textures rather than glyphs standing in for them. */
+.ls-world {
+  position: relative; overflow: hidden;
+  margin: 8px 10px 0; padding: 10px;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  /* the sky, until a mood below says otherwise */
+  background: linear-gradient(180deg, #191c28, #101219);
+  --season: var(--mc-xp);
+  --glow: rgba(255, 210, 74, 0.5);
+  /* How dark the slots inside sit against that sky. It has to be a variable
+     because the day sky is bright: the readings are light text on these
+     slots, and a scrim that suits a navy midnight would let noon straight
+     through and take the words with it. */
+  --scrim: rgba(0, 0, 0, 0.34);
+  --edge: rgba(255, 255, 255, 0.07);
+  /* The two quiet tones inside. Both are greys picked to sit on a dark panel,
+     and on the day sky they wash out, so a bright mood swaps them for warm
+     ones that hold against the amber coming through the scrim. */
+  --label: var(--mc-faint);
+  --sub:   var(--mc-dim);
+}
+.ls-world[hidden] { display: none; }
+
+/* Four skies. Each one is a low pool of its own light over a dark ground,
+   rather than the real daytime blue: the text on this page is light, and a
+   panel bright enough to be honest about noon would take the words with it. */
+/* Noon: the sun burning down out of the top left, where the sun icon itself
+   sits, over a sky that warms to amber at the horizon. */
+.ls-world[data-mood="day"] {
+  background:
+    radial-gradient(85% 115% at 16% -22%, #fff3b0, rgba(255, 226, 120, 0) 60%),
+    radial-gradient(120% 130% at 85% 125%, rgba(255, 158, 46, 0.6), transparent 58%),
+    linear-gradient(180deg, #ffd23f 0%, #f5aa2c 55%, #d9822b 100%);
+  --glow: rgba(255, 246, 190, 0.85);
+  /* deep enough that light text still reads, which on a sky this bright takes
+     considerably more than the night needs */
+  --scrim: rgba(26, 13, 0, 0.74);
+  --edge: rgba(255, 244, 200, 0.24);
+  --label: #d9c391;
+  --sub:   #f4e7c6;
+}
+/* Midnight: proper navy rather than the near-black it was, so the stars and
+   the moon have something to sit in. */
+.ls-world[data-mood="night"] {
+  background:
+    radial-gradient(1px 1px at 12% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 34% 62%, #cfd8ff, transparent),
+    radial-gradient(1px 1px at 58% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 76% 48%, #b9c6ff, transparent),
+    radial-gradient(1px 1px at 91% 27%, #fff, transparent),
+    radial-gradient(1px 1px at 47% 82%, #cfd8ff, transparent),
+    radial-gradient(105% 135% at 24% -18%, rgba(108, 132, 232, 0.32), transparent 62%),
+    linear-gradient(180deg, #1c2660 0%, #131a42 55%, #0b1029 100%);
+  --glow: rgba(190, 210, 255, 0.6);
+  --scrim: rgba(0, 0, 6, 0.42);
+  --edge: rgba(180, 200, 255, 0.12);
+}
+/* ── weather, over whichever sky is behind it ───────────────────────────────
+   Rain used to replace the sky, which drew a wet afternoon as midnight. It is
+   its own sheet now: the hour still shows through it. */
+.ls-world::before,
+.ls-world::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  /* Above the panes, not behind them. The slots inside are positioned and
+     between them they cover nearly the whole panel, so an overlay underneath
+     showed only in the few pixels of gutter. Rain falls in front of what it is
+     raining on, and the same goes for the leaves. */
+  z-index: 4;
+}
+.ls-world[data-weather="rain"]::before,
+.ls-world[data-weather="storm"]::before {
+  opacity: .34;
+  background-image: repeating-linear-gradient(
+    74deg, rgba(190, 215, 240, 0.55) 0 1px, transparent 1px 9px);
+  animation: lw-rain 0.7s linear infinite;
+}
+/* a storm is the same rain under a sky that keeps catching light */
+.ls-world[data-weather="storm"]::before {
+  opacity: .42;
+  animation: lw-rain 0.45s linear infinite, lw-flash 7s steps(1, end) infinite;
+}
+/* and it darkens what it is falling on */
+.ls-world[data-weather="rain"]  { --scrim: rgba(0, 0, 0, 0.5); }
+.ls-world[data-weather="storm"] { --scrim: rgba(0, 0, 0, 0.58); }
+.ls-world[data-weather="storm"] .lw-orb { filter: drop-shadow(0 0 7px var(--glow)) saturate(.7); }
+
+/* ── the season, over the weather ───────────────────────────────────────────
+   Four drifts, each in its own colours and at its own pace: snow falls
+   straight and slow, leaves and petals slant, and summer only shimmers. */
+.ls-world[data-season="winter"]::after {
+  opacity: .85;
+  background-image:
+    radial-gradient(2.6px 2.6px at 12% 8%,  #fff, transparent),
+    radial-gradient(2px 2px     at 38% 22%, #e8f4ff, transparent),
+    radial-gradient(3px 3px     at 63% 6%,  #fff, transparent),
+    radial-gradient(2.2px 2.2px at 84% 30%, #dbeaff, transparent),
+    radial-gradient(2.6px 2.6px at 26% 54%, #fff, transparent),
+    radial-gradient(2px 2px     at 72% 66%, #e8f4ff, transparent),
+    radial-gradient(2.4px 2.4px at 50% 38%, #fff, transparent),
+    radial-gradient(1.8px 1.8px at 6% 78%,  #dbeaff, transparent),
+    radial-gradient(2.8px 2.8px at 92% 84%, #fff, transparent);
+  background-size: 130px 110px;
+  animation: lw-fall 7s linear infinite;
+}
+.ls-world[data-season="autumn"]::after {
+  opacity: .9;
+  background-image:
+    radial-gradient(4px 2.4px at 16% 10%, #ff9436, transparent),
+    radial-gradient(3.4px 2px at 44% 26%, #e2621f, transparent),
+    radial-gradient(4.4px 2.6px at 69% 12%, #ffb85c, transparent),
+    radial-gradient(3px 1.9px at 88% 38%, #d1481a, transparent),
+    radial-gradient(4px 2.4px at 31% 62%, #ff9436, transparent),
+    radial-gradient(3.6px 2.2px at 58% 78%, #e2621f, transparent),
+    radial-gradient(3.2px 2px at 8% 44%,  #ffb85c, transparent),
+    radial-gradient(4.2px 2.5px at 78% 58%, #c95a12, transparent);
+  background-size: 150px 120px;
+  animation: lw-drift 8s linear infinite;
+}
+.ls-world[data-season="spring"]::after {
+  opacity: .85;
+  background-image:
+    radial-gradient(3.6px 2.4px at 18% 14%, #ffb3d9, transparent),
+    radial-gradient(3px 2px at 47% 30%,     #9dee7e, transparent),
+    radial-gradient(4px 2.6px at 71% 9%,    #ffd0ea, transparent),
+    radial-gradient(2.8px 1.9px at 90% 44%, #7fd45c, transparent),
+    radial-gradient(3.6px 2.4px at 34% 68%, #ffb3d9, transparent),
+    radial-gradient(3.2px 2.1px at 62% 82%, #9dee7e, transparent),
+    radial-gradient(3px 2px at 5% 52%,      #ffd0ea, transparent);
+  background-size: 160px 125px;
+  animation: lw-drift 10s linear infinite;
+}
+/* summer brings nothing down; it just sits heavy and bright, with the air
+   over it shimmering */
+.ls-world[data-season="summer"]::after {
+  opacity: .6;
+  background-image:
+    radial-gradient(2.4px 2.4px at 22% 26%, rgba(255, 244, 170, 0.9), transparent),
+    radial-gradient(2px 2px at 58% 48%,     rgba(255, 232, 140, 0.8), transparent),
+    radial-gradient(2.6px 2.6px at 84% 20%, rgba(255, 248, 190, 0.9), transparent),
+    radial-gradient(2.2px 2.2px at 40% 74%, rgba(255, 236, 150, 0.8), transparent),
+    radial-gradient(70% 90% at 22% -10%, rgba(255, 232, 150, 0.34), transparent 62%),
+    radial-gradient(60% 80% at 82% 108%, rgba(255, 190, 90, 0.22), transparent 60%);
+  background-size: 180px 140px, 180px 140px, 180px 140px, 180px 140px, auto, auto;
+  animation: lw-motes 14s ease-in-out infinite alternate;
+}
+
+@keyframes lw-fall  { to { background-position: 0 110px; } }
+@keyframes lw-drift { to { background-position: 55px 120px; } }
+@keyframes lw-motes {
+  from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
+  to   { background-position: 22px -14px, -18px 10px, 14px 12px, -12px -10px, 0 0, 0 0; }
+}
+@keyframes lw-flash {
+  0%, 96%  { box-shadow: none; }
+  97%      { box-shadow: inset 0 0 90px 20px rgba(226, 234, 255, 0.42); }
+  98%      { box-shadow: none; }
+  99%      { box-shadow: inset 0 0 70px 14px rgba(226, 234, 255, 0.3); }
+}
+@keyframes lw-rain { to { transform: translate(-9px, 32px); } }
+
+/* the two things worth looking at: the sky, and what season it is */
+.lw-heroes {
+  position: relative;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
+  gap: 8px;
+}
+.lw-hero {
+  display: flex; align-items: center; gap: 12px; min-width: 0;
+  padding: 10px 12px;
+  background: var(--scrim);
+  border: 2px solid var(--edge);
+}
+/* the season pane carries its season's colour down one edge, which is the
+   only place on this panel the four of them differ */
+.lw-hero.season { border-left: 2px solid var(--season); }
+
+.lw-orb {
+  flex: none; width: 54px; height: 54px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 9px var(--glow));
+}
+/* a calendar is a held object, not a light source */
+.lw-orb.leaf { filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6)); }
+
+.lw-say { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lw-say b {
+  font-size: 21px; line-height: 1.15; color: var(--mc-text);
+  text-shadow: 2px 2px #000;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lw-say span { font-size: 13px; color: var(--sub); }
+.lw-say em    { font-style: normal; font-size: 12px; color: var(--label); }
+.lw-say em:empty { display: none; }
+
+/* how far through the year the pack is: the one number here that only means
+   anything as a length */
+.lw-year {
+  height: 6px; margin-top: 5px; padding: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.7);
+}
+.lw-year i { display: block; height: 100%; background: var(--season); }
+
+/* the four seasons, in the colours their own calendar faces are drawn in */
+.ls-world[data-season="spring"] { --season: #8fdc6a; }
+.ls-world[data-season="summer"] { --season: #ffd24a; }
+.ls-world[data-season="autumn"] { --season: #e2803a; }
+.ls-world[data-season="winter"] { --season: #7fd4ff; }
+
+/* the smaller readings, in slots like the tiles but stacked, because these
+   are labels people read once rather than numbers they compare */
+.lw-facts {
+  position: relative;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr));
+  gap: 4px; margin-top: 8px;
+}
+.lw-fact {
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 5px 8px; min-width: 0; white-space: nowrap; overflow: hidden;
+  background: var(--scrim);
+  border: 2px solid rgba(0, 0, 0, 0.45);
+  border-right-color: var(--edge);
+  border-bottom-color: var(--edge);
+}
+.lw-fact i { font-style: normal; font-size: 11px; color: var(--label);
+             letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; }
+.lw-fact b { font-size: 16px; font-weight: 600; color: var(--mc-text); }
+.lw-fact.lit  b { color: var(--mc-xp); }
+.lw-fact.good b { color: var(--mc-xp); }
+.lw-fact.fair b { color: var(--mc-gold); }
+.lw-fact.poor b { color: var(--mc-heart); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-world::before, .ls-world::after { animation: none; }
+}
+
 .ls-bar {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px; font-size: 14px; color: var(--mc-dim);
@@ -1001,8 +1252,124 @@ body::after { display: none; }
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
 }
 .pcard:hover, .bcard:hover { background: #2f2f37; }
-.pcard.open { border-color: var(--mc-xp); }
 .pcard.on   { background: #1f2a1c; }
+
+/* Lifted out of the run to the head of its own section - grid places items in
+   order-modified document order, so a negative order does it without touching
+   the markup. It lights in whatever the player's state already means on this
+   page: the experience green for somebody standing in the world, heart red
+   for somebody on the respawn screen, and the plain steel of the roster for
+   somebody who has logged off. */
+.pcard.open {
+  grid-column: 1 / -1; order: -1;
+  position: relative; z-index: 1;
+  /* Two columns, and the left one is a character sheet: the model at the top
+     of it and everything that names the player underneath, in the space a
+     two-hundred-and-sixty-pixel figure was leaving empty down the side of a
+     six-hundred-pixel record. .pc-foot dissolves into the grid so its own
+     children can be placed in either column without the markup changing. */
+  display: grid; gap: 10px 20px;
+  grid-template-columns: 232px minmax(0, 1fr);
+  /* the model's row is sized by the model, so the sheet under it sits where
+     its feet are rather than being pushed to the bottom of whichever column
+     happens to be taller */
+  grid-template-rows: auto 1fr;
+  padding: 14px 18px 18px; cursor: default;
+  --lit: #7f8ea8;
+  /* Two lights, not one, and neither of them grey.
+     --world is the place they are standing in and does the colouring: the
+     card is lit by the overworld's green, the nether's fire, the end's void,
+     the Aether's gold or the Twilight's dusk, which is five different cards
+     rather than one card in two states. --lit stays what their state means
+     and keeps the ring and the travelling edge, so a card still says at a
+     glance whether somebody is standing, hurt or on the respawn screen.
+     Three pools of it, thrown from different corners, so the wash has some
+     depth in it rather than being one flat sheet of tint. */
+  --world: #6d7b96;
+  background:
+    radial-gradient(90% 80% at 14% -6%,
+      color-mix(in srgb, var(--world) 55%, transparent) 0%, transparent 60%),
+    radial-gradient(75% 70% at 96% 8%,
+      color-mix(in srgb, var(--world) 26%, transparent) 0%, transparent 58%),
+    radial-gradient(120% 60% at 40% 108%,
+      color-mix(in srgb, var(--lit) 22%, transparent) 0%, transparent 62%),
+    linear-gradient(158deg,
+      color-mix(in srgb, var(--world) 20%, #191b22) 0%,
+      #15161c 58%,
+      #101116 100%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lit) 60%, transparent),
+              0 8px 34px -10px color-mix(in srgb, var(--world) 70%, transparent);
+}
+/* the same five worlds the ACTIVITY heading names, painting the whole card */
+.pcard.open[data-realm="overworld"] { --world: #5fbf3a; }
+.pcard.open[data-realm="nether"]    { --world: #d0452c; }
+.pcard.open[data-realm="end"]       { --world: #9b5cff; }
+.pcard.open[data-realm="aether"]    { --world: #ffc247; }
+.pcard.open[data-realm="twilight"]  { --world: #8f63e0; }
+.pcard.open[data-realm="other"]     { --world: #3aa0bf; }
+/* the model stands in the light of wherever it is */
+.pcard.open .pc-stage {
+  background:
+    radial-gradient(58% 12% at 50% 96%, rgba(0,0,0,0.6) 0%, transparent 70%),
+    radial-gradient(74% 60% at 50% 70%,
+      color-mix(in srgb, var(--world) 38%, transparent) 0%, transparent 74%);
+}
+.pcard.open.on   { --lit: var(--mc-xp); }
+.pcard.open.down { --lit: var(--mc-heart); }
+.pcard.open.hurt:not(.down) { --lit: #e8913c; }
+/* the same travelling edge the open boss card wears, so the two read as one
+   gesture rather than two different ideas of "this is the one you opened" */
+.pcard.open::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--lit) 22%, transparent) 0%,
+    var(--lit) 34%,
+    color-mix(in srgb, var(--lit) 55%, #fff) 50%,
+    var(--lit) 66%,
+    color-mix(in srgb, var(--lit) 22%, transparent) 100%);
+  background-size: 220% 100%;
+  animation: bcard-sweep 2.8s linear infinite;
+}
+/* the model gets a pool of light of its own to stand in, so it reads as lit
+   from the front rather than pasted onto the card */
+.pcard.open .pc-stage { grid-area: 1 / 1; min-height: 268px; align-self: start; }
+/* opened, the card is the whole row wide and nothing in it needs to give up
+   a letter to a hundred-and-fifty-pixel column any more */
+.pcard.open .pc-foot {
+  grid-area: 2 / 1; align-self: start;
+  padding: 0; background: none; border: none;
+}
+.pcard.open .pc-name {
+  font-size: 23px; margin-top: 2px;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--lit) 60%, transparent),
+               2px 2px 0 #000;
+}
+.pcard.open .pc-seen { font-size: 13px; }
+/* the record takes the whole of the second column, whatever the sheet beside
+   it comes to */
+.pcard.open .pc-panel { grid-area: 1 / 2 / 3 / 3; }
+/* .live-wrap asks for the full height of whatever holds it, which inside a
+   grid cell it is also helping to size ends up measuring against a box that
+   does not yet know how tall it is - and the last line of the record fell
+   out through the bottom of the card. It is a column of sections; it can be
+   as tall as they come to. */
+.pcard.open .live-wrap { min-height: 0; }
+/* the record below carries a labelled HEALTH meter with the numbers on it,
+   so the compact bar would be the same reading twice, six inches apart */
+.pcard.open .pc-hp { display: none; }
+.pcard.open .pc-nums { flex-direction: row; gap: 14px; font-size: 13px; }
+/* Pinned to the card's own corner on a closed card, where it is the only
+   place they fit. Opened, the model has grown under them and they read as
+   graffiti across its chest - so they come back into the flow and line up as
+   a row of their own under the health bar, which is where a reader looking
+   for what somebody has beaten would go next anyway. */
+.pcard.open .pc-badges {
+  position: static; flex-direction: row; flex-wrap: wrap;
+  gap: 5px; margin: 9px 0 2px;
+}
+/* a model already tells you they are not there; greying it as well makes an
+   opened card look switched off */
+.pcard.open:not(.on) .pc-stage { filter: none; }
 
 .pc-stage, .bc-stage {
   display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
@@ -1029,13 +1396,38 @@ body::after { display: none; }
 .pc-seen.on   { color: var(--mc-xp); }
 .pc-seen.dead { color: var(--mc-heart); }
 
-/* health reads as hearts do: red, on a sunken strip */
+/* The black bar under every player, which for a long time meant nothing at
+   all: this is a health meter, and it had none. .ps-prog, which the markup
+   also carries, sets three pixels of padding on every side - against a six
+   pixel bar that leaves the content box no height whatever, so the fill was
+   laid out at zero and every player got an empty trough. The padding goes,
+   the bar gets a real height, and the fill reads as hearts do.
+   A hurt player is the point of the thing, so what is missing is drawn as
+   plainly as what is left. */
 .pc-hp {
-  display: block; height: 6px; margin: 4px 0 3px;
-  background-color: #0d0d10;
+  display: block; height: 9px; padding: 0; margin: 5px 0 4px;
+  background-color: #17090a;
   border: 1px solid var(--mc-shade);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
-.pc-hp .ps-fill { display: block; height: 100%; background: var(--mc-heart); }
+.pc-hp .ps-fill {
+  display: block; height: 100%; min-width: 2px;
+  background-image: linear-gradient(#ff8a80, #c1352b);
+  box-shadow: 0 0 7px -1px rgba(217,74,61,0.75);
+  transition: width .35s ease;
+}
+/* on the last quarter it stops being a reading and starts being a warning */
+.pcard.hurt .pc-hp .ps-fill {
+  background-image: linear-gradient(#ffb36b, #d9622b);
+  box-shadow: 0 0 8px -1px rgba(217,120,43,0.8);
+}
+.pcard.dying .pc-hp .ps-fill {
+  animation: pc-hp-pulse 1.1s ease-in-out infinite;
+}
+@keyframes pc-hp-pulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.5); }
+}
 .pc-nums {
   display: flex; justify-content: space-between;
   font-size: 12px; color: var(--mc-dim);
@@ -1053,12 +1445,46 @@ body::after { display: none; }
   margin: 0;
 }
 .pc-badges:empty { display: none; }
+/* Each badge is edged in its own star's colour rather than the same grey as
+   its neighbours - the tier is already in the star, and a chip that carries
+   it round the outside too reads as one object instead of a coloured mark on
+   a generic slab. Kept faint on purpose: it is the star that should be doing
+   the talking, and four of these sit in a row on a card an inch wide.
+   --px-b is the star's own base tone, set by the tier class below. */
 .pc-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  background: rgba(8,8,12,0.72); border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(8,8,12,0.72);
+  border: 1px solid color-mix(in srgb, var(--px-b, #fff) 32%, transparent);
+  box-shadow: inset 0 0 8px -4px color-mix(in srgb, var(--px-b, #fff) 55%, transparent);
   border-radius: 4px; padding: 2px 6px 2px 3px;
   font-size: 12px; line-height: 1; color: #fff;
 }
+/* No star on this one, because no star was earned - it counts the bosses this
+   player turned up for without carrying. It takes the same tone the "+N"
+   readings take everywhere else on the page, and it wears a hand instead so
+   the row of badges says what it is rather than leaving a bare number to be
+   guessed at. */
+/* Still the lowest badge, but a blue cannot carry itself on brightness the
+   way the gold and the cyan stars do - luminance is mostly green, and there
+   is none in it. What makes those two pop is the lit edge and the glow
+   behind them, so this one gets its own, turned up further than theirs to
+   make up the difference. It stays the least of the badges by weight: the
+   hand is smaller than their points and there is no star on it. */
+.pc-badge.assist {
+  color: var(--mc-assist);
+  background: rgba(14,18,34,0.78);
+  border-color: rgba(124,157,255,0.55);
+  box-shadow: inset 0 0 10px -3px rgba(124,157,255,0.5),
+              0 0 6px -2px rgba(124,157,255,0.45);
+  text-shadow: 0 0 6px rgba(124,157,255,0.45);
+}
+.badge-hand {
+  width: 14px; height: 13px; flex-shrink: 0;
+  image-rendering: pixelated; shape-rendering: crispEdges;
+}
+.badge-hand .px-b { fill: var(--mc-assist); }
+.badge-hand .px-h { fill: #d3dcff; }
+.badge-hand .px-s { fill: #4d63c4; }
 .badge-star {
   width: 22px; height: 20px; flex-shrink: 0;   /* 11:10, matching the source art */
   image-rendering: pixelated; shape-rendering: crispEdges;
@@ -1073,17 +1499,17 @@ body::after { display: none; }
    list (.lb-star), and the roster card's own name star (.bc-star) — one
    palette per tier, defined once so none of the three views drift apart. */
 /* tier 1, Lesser Boss — gold (the exact colors sampled from the source star) */
-.pc-badge.t1, .lb-star.t1, .bc-star.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
+.pc-badge.t1, .lb-star.t1, .bc-star.t1, .lb-row.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
 /* tier 2, Greater Boss — diamond */
-.pc-badge.t2, .lb-star.t2, .bc-star.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
+.pc-badge.t2, .lb-star.t2, .bc-star.t2, .lb-row.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
 /* tier 3, Apex Boss — red, glowing */
-.pc-badge.t3, .lb-star.t3, .bc-star.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
+.pc-badge.t3, .lb-star.t3, .bc-star.t3, .lb-row.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
 .pc-badge.t3 .badge-star, .lb-star.t3 .badge-star, .bc-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
 /* tier 4 — reserved for the next boss above apex: rainbow, animated */
-.pc-badge.t4, .lb-star.t4, .bc-star.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
+.pc-badge.t4, .lb-star.t4, .bc-star.t4, .lb-row.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
 .pc-badge.t4 .badge-star, .lb-star.t4 .badge-star, .bc-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
 /* miniboss — grey, regardless of the tier it's tagged with */
-.pc-badge.mini, .lb-star.mini, .bc-star.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
+.pc-badge.mini, .lb-star.mini, .bc-star.mini, .lb-row.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
 
 @keyframes pc-glow-red {
   0%, 100% { filter: drop-shadow(0 0 2px rgba(229,56,59,0.55)); }
@@ -1129,13 +1555,23 @@ body::after { display: none; }
 .bcard.beaten.t3 .bc-name-text   { color: #ff3b3b; }             /* dark red */
 .bcard.beaten.t4 .bc-name-text   { color: #c469ff; }             /* purple */
 .bcard.beaten.mini .bc-name-text { color: #b7c1cf; }             /* steel grey */
-/* a beaten boss reads green, the game's own colour for something felled and
-   done with; a beaten miniboss reads the same steel-blue its own tier star
-   already is, so the two ranks read apart at a glance even before the name
-   is read, without the muddy brown that colour used to be. The tier border
-   above stays put underneath either way - only the fill changes. */
-.bcard.beaten { background: #1b2128; box-shadow: inset 0 0 0 1px rgba(138,151,168,0.3); }
-.bcard.beaten.boss { background: #172218; box-shadow: inset 0 0 0 1px rgba(123,197,24,0.28); }
+/* A beaten boss is filled in its own rank's colour rather than one green for
+   all of them. Green was the game's colour for something felled and done
+   with, but it said the same thing about a Naga as about a Netherite
+   Monstrosity - and the card already knows the difference, since --tier is
+   what its border and its star are drawn from. So the fill comes off the
+   same variable: gold for tier one, diamond for two, red for three, purple
+   for four, steel for a miniboss. Mixed most of the way into the panel
+   ground so it reads as a tint behind the mob rather than as a colour the
+   mob is standing on, and the border it sits inside stays exactly as it was. */
+.bcard.beaten {
+  background: color-mix(in srgb, var(--tier, #8a97a8) 14%, #15151a);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tier, #8a97a8) 34%, transparent);
+}
+/* An open card paints its own lit ground - and being two classes deep, this
+   rule would otherwise win over it and blank the lot. Leaving the background
+   out entirely is what lets .bcard.open's own wash through. */
+.bcard.beaten.open { box-shadow: none; }
 .bcard.hidden { display: none; }
 /* a boss name is often two words long and the card is narrow, so it gets two
    lines rather than an ellipsis: every card the same height, nothing clipped */
@@ -1162,6 +1598,10 @@ body::after { display: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .bc-kills { margin-top: 2px; font-size: 13px; color: var(--mc-gold); }
+/* hands lent, beside the times it went down. The same slate the "+N" chips
+   use, so the two readings of an assist on this card are plainly the same
+   reading twice rather than two different numbers. */
+.bc-kills-assist { font-style: normal; margin-left: 5px; color: var(--mc-assist); }
 
 .bc-killers { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
 .bc-killer {
@@ -1192,7 +1632,7 @@ body::after { display: none; }
 .bc-killer.helper b { font-style: italic; }
 /* written to out-weigh .bc-killer em, which is the same reading in the same
    place and would otherwise grey this one out with the rest */
-.bc-killer em.bc-assist { color: var(--mc-sky); }
+.bc-killer em.bc-assist { color: var(--mc-assist); }
 
 /* a felled boss is worth clicking - its own card stretches across the grid
    and turns its narrow model+kills column and a fight-history list side by
@@ -1211,18 +1651,60 @@ body::after { display: none; }
 .bcard.open {
   grid-column: 1 / -1; order: -1;
   position: relative; z-index: 1;
-  display: flex; align-items: center; gap: 18px; padding: 12px 18px 14px;
-  background: linear-gradient(180deg,
-    color-mix(in srgb, var(--lit) 14%, var(--mc-slot)) 0%,
-    var(--mc-slot) 130px);
+  /* The same two columns an open player card uses, and for the same reason:
+     a mob two hundred and thirty pixels wide was leaving the whole side of a
+     six-hundred-pixel record empty. Model at the top of the left column, what
+     names it underneath, and the fight history taking the right column whole.
+     The two cards are the same gesture now rather than two ideas of it. */
+  display: grid; gap: 10px 20px;
+  grid-template-columns: 232px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  padding: 14px 18px 18px; cursor: default;
+  /* A boss is lit by its own rank, the way a player is lit by the world they
+     are standing in - and it is the same wash, three pools thrown from
+     different corners so the tint has depth in it rather than being one flat
+     sheet. Gold for tier one, diamond for two, red for three, purple for
+     four, steel for a miniboss: the card says what it is before the name is
+     read, and says it the whole size of the card rather than in a strip. */
+  background:
+    radial-gradient(90% 80% at 14% -6%,
+      color-mix(in srgb, var(--tier) 46%, transparent) 0%, transparent 60%),
+    radial-gradient(75% 70% at 96% 8%,
+      color-mix(in srgb, var(--tier) 22%, transparent) 0%, transparent 58%),
+    radial-gradient(120% 60% at 40% 108%,
+      color-mix(in srgb, var(--lit) 20%, transparent) 0%, transparent 62%),
+    linear-gradient(158deg,
+      color-mix(in srgb, var(--tier) 18%, #191b22) 0%,
+      #15161c 58%,
+      #101116 100%);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--lit) 60%, transparent),
-              0 6px 28px -8px color-mix(in srgb, var(--lit) 75%, transparent);
+              0 8px 34px -10px color-mix(in srgb, var(--tier) 70%, transparent);
 }
 /* The open card lights up in its own rank's colour, which for a miniboss is
    the grey its star and border already wear - lit grey being no lighting at
    all, that one borrows the sky the fight-history heading uses instead. */
 .bcard.open        { --lit: var(--tier, var(--mc-xp)); }
 .bcard.open.mini   { --lit: var(--mc-sky); }
+/* the mob gets a pool of its rank's light to stand in, so it reads as lit
+   from the front rather than pasted onto the card */
+.bcard.open .bc-stage {
+  grid-area: 1 / 1; min-height: 250px; align-self: start;
+  background:
+    radial-gradient(58% 12% at 50% 96%, rgba(0,0,0,0.6) 0%, transparent 70%),
+    radial-gradient(74% 60% at 50% 70%,
+      color-mix(in srgb, var(--tier) 34%, transparent) 0%, transparent 74%);
+}
+.bcard.open .bc-foot {
+  grid-area: 2 / 1; align-self: start;
+  padding: 0; background: none; border: none;
+}
+/* the history takes the whole of the second column, whatever the sheet
+   beside it comes to */
+.bcard.open .bc-fights { grid-area: 1 / 2 / 3 / 3; margin-top: 0; }
+.bcard.open .bc-name {
+  text-shadow: 0 0 14px color-mix(in srgb, var(--lit) 55%, transparent),
+               2px 2px 0 #000;
+}
 /* A lit strip along the top edge, sweeping in the card's own rank colour, so
    the one card being read is plainly the one being read - the rest of the
    section is flat and still by design, and this is the only thing on the
@@ -1248,34 +1730,131 @@ body::after { display: none; }
   .bcard.open::before { animation: none; background-size: 100% 100%; }
   .bcard.t4 { animation: none; }
 }
-.bcard.open .bc-stage { flex: 0 0 240px; min-height: 240px; align-self: center; }
-.bcard.open .bc-foot { flex: 1; min-width: 0; padding: 0; background: none; border: none; }
 /* the narrow-card truncation on the boss's own name, mod, and killer names
    all exist to fit a hundred-and-twenty-four-pixel card - open, the card is
    the whole row wide, and none of them need to give up a letter to it */
-.bcard.open .bc-name { height: auto; font-size: 24px; gap: 8px; }
+.bcard.open .bc-name { height: auto; font-size: 23px; gap: 8px; margin-top: 2px; }
 .bcard.open .bc-star .badge-star { width: 24px; height: 22px; }
 .bcard.open .bc-mod { overflow: visible; white-space: normal; text-overflow: clip; }
 .bcard.open .bc-killer b { max-width: none; overflow: visible; text-overflow: clip; }
 .bc-fights { display: none; }
-.bcard.open .bc-fights { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.bcard.open .bc-fights { display: flex; flex-direction: column; gap: 8px; }
 
 .bcf-title {
   display: flex; align-items: baseline; gap: 10px;
-  font-size: 13px; font-weight: bold; letter-spacing: 1.5px; color: var(--mc-sky);
-  text-shadow: 1px 1px #000;
-  padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
+  font-size: 19px; font-weight: bold; letter-spacing: 1.5px;
+  /* its own colour rather than the sky blue every other heading here wears,
+     because this is where a card stops summarising and starts telling the
+     story of the fights */
+  color: var(--mc-gold);
+  text-shadow: 2px 2px #000;
+  padding-bottom: 7px; margin-top: 4px;
+  border-bottom: 2px solid rgba(255, 210, 74, 0.35);
 }
 .bcf-title em {
   margin-left: auto; font-style: normal; font-weight: normal;
   letter-spacing: 0; font-size: 12px; color: var(--mc-dim);
 }
+/* the same cyan every other assist reading on the page wears */
+.bcf-assists { font-weight: normal; color: var(--mc-assist); }
 .bcf-empty { font-size: 14px; color: var(--mc-dim); padding: 6px 0; }
 
 /* ── one block per player ──────────────────────────────────────────────────
    A boss beaten four times used to be four cards of the same shape with the
    same name at the top of each. The fights sit under whoever finished them
    now, a line apiece, and the block folds shut on its header. */
+/* ── the kills, plotted ────────────────────────────────────────────────────
+   Built to the guide's own XP chart, because that is the chart this page
+   already has and two different ideas of what a graph looks like on one site
+   is one too many: a sunken black panel, faint rungs, a filled curve fading
+   out beneath it, and a hollow point per reading. It is the only picture on
+   the card, so it is drawn at a size worth looking at rather than squeezed
+   into a strip - height: auto keeps the aspect the viewBox asks for. */
+.bkc {
+  margin-bottom: 8px; padding: 12px 14px 10px;
+  background: #0c0c10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.bkc-svg { display: block; width: 100%; height: auto; }
+.bkc-axis { stroke: rgba(255,255,255,0.22); stroke-width: 1; }
+.bkc-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.bkc-gridlabel { fill: var(--mc-faint); font-size: 11px; }
+.bkc-tick { fill: var(--mc-faint); font-size: 12px; }
+.bkc-tick.mid { fill: var(--mc-dim); }
+/* the curve takes the boss's own rank colour, the same one lighting the card
+   it is drawn on */
+.bkc-stop-top { stop-color: var(--tier, var(--mc-xp)); stop-opacity: 0.34; }
+.bkc-stop-bot { stop-color: var(--tier, var(--mc-xp)); stop-opacity: 0; }
+.bkc-line {
+  fill: none; stroke: var(--tier, var(--mc-xp)); stroke-width: 2.5;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+/* hollow, so the curve reads through them and a run of kills does not become
+   a solid bar of dots */
+.bkc-dot { fill: #0c0c10; stroke-width: 2.5; }
+.bkc-key { display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 8px; }
+
+/* the total, and how far back the line is allowed to look */
+.bkc-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+}
+.bkc-total { font-size: 13px; color: var(--mc-dim); }
+.bkc-total b { font-size: 15px; color: var(--mc-text); font-weight: 600; }
+.bkc-range {
+  margin-left: auto; padding: 2px 6px; font: inherit; font-size: 12px;
+  color: var(--mc-text); background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.bkc-range:focus { outline: none; border-color: var(--mc-xp); }
+
+/* the probe: a rule down the chart at the kill nearest the pointer, and a line
+   under it naming who took that one and what the count stood at */
+.bkc-cursor { stroke: rgba(255, 255, 255, 0.3); stroke-width: 1; stroke-dasharray: 3 3; }
+.bkc-cursor-dot { fill: #0c0c10; stroke: var(--tier, var(--mc-xp)); stroke-width: 3; }
+
+/* A player is their own face on this chart rather than a colour, which is the
+   same thing their card upstairs is wearing and needs no key to read. One per
+   unbroken run, sat above the step it ends on. */
+.bkc-headart { image-rendering: pixelated; }
+.bkc-headedge {
+  fill: none; stroke: rgba(255, 255, 255, 0.55); stroke-width: 2;
+}
+.bkc-headnone { fill: #23232b; }
+.bkc-headn {
+  fill: var(--mc-text); font-size: 13px; font-weight: 600;
+  text-anchor: start; dominant-baseline: alphabetic;
+  paint-order: stroke; stroke: #000; stroke-width: 3px; stroke-linejoin: round;
+}
+.bkc-probe {
+  display: none; align-items: baseline; gap: 8px;
+  margin-top: 6px; padding: 5px 9px; font-size: 13px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.bkc-probe.on { display: flex; }
+.bkc-probe i {
+  width: 18px; height: 18px; flex: none; align-self: center;
+  background-image: var(--skin); background-size: 144px 144px;
+  background-position: -18px -18px; image-rendering: pixelated;
+  border: 1px solid var(--mc-shade);
+}
+.bkc-probe i.none { background: #23232b; }
+
+
+.bkc-probe b { font-weight: 600; color: var(--mc-text); }
+.bkc-probe span { color: var(--mc-dim); }
+.bkc-probe em { font-style: normal; margin-left: auto; color: var(--mc-faint); }
+/* who each colour on the curve belongs to, and how many of the points are
+   theirs - the same reading the killer chips give, said again against the
+   colours so the graph can be read without looking away from it */
+.bcf-keyed { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.bcf-keyed i { width: 9px; height: 9px; flex: none; }
+.bcf-keyed b { font-weight: normal; color: var(--mc-dim); }
+.bcf-keyed em { font-style: normal; color: var(--mc-text); }
+
 .bcf-groups { display: flex; flex-direction: column; gap: 6px; }
 .bcf-group {
   background: var(--mc-slot);
@@ -1555,37 +2134,81 @@ body::after { display: none; }
   .fcard.caught .fc-stage::after { display: none; }
 }
 
-/* the record of whichever player is open, under the grid it came from */
-.ls-drawer { display: none; margin: 0 10px 10px; }
-.ls-drawer.open {
-  display: block; padding: 9px 10px 10px;
-  background: var(--mc-slot);
-  border: 2px solid var(--mc-shade);
-  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+/* ── a player, opened ──────────────────────────────────────────────────────
+   The record used to slide out under the whole grid, so the card you had
+   just clicked stayed its old size somewhere above while its numbers turned
+   up somewhere else - and with nine cards between them, often off screen.
+   It opens the way a boss card does now: the card takes the whole row, goes
+   to the head of the section, and the player stands full size beside their
+   own numbers. */
+.pc-panel { display: none; }
+.pcard.open .pc-panel { display: block; }
+.pp-head {
+  display: flex; align-items: center; gap: 9px; margin-bottom: 9px;
 }
-.lsd-head {
-  display: flex; align-items: center; gap: 9px; margin-bottom: 8px;
-  padding-bottom: 6px; border-bottom: 2px solid var(--mc-shade);
+.pp-title {
+  font-size: 12px; letter-spacing: 1.5px; color: var(--mc-sky);
+  text-shadow: 1px 1px #000;
 }
-/* the face crop is the same trick .bc-face uses on a killer's name, just
-   scaled up. The head is 8x8 pixels on a 64x64 sheet, so a 32px box wants the
-   sheet at exactly 4x -- any other multiple crops the face instead of framing
-   it. The hat layer rides at (40,8) and paints over the face, the way the
-   card's own model wears it. */
-.lsd-face {
-  width: 32px; height: 32px; flex: none;
-  background-image: var(--skin), var(--skin);
-  background-size: 256px 256px, 256px 256px;
-  background-position: -160px -32px, -32px -32px;
-  image-rendering: pixelated; border: 2px solid var(--mc-shade);
-  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+/* ── a record's three best fights ─────────────────────────────────────────
+   Everything they have put down, with the three that say the most standing
+   in front of it. The rest is a click away rather than a scroll.
+
+   Each row is a plate rather than a line of text: it carries its own tier's
+   colour, it is filled to the share the player took off that boss - which is
+   what the ranking turns on, so the ordering explains itself - and the first
+   three wear the place they came in. All of it inside the height the row
+   already had. */
+.live-boss .lb-row {
+  position: relative; overflow: hidden;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--px-b, #fff) 7%, transparent), transparent 62%);
+  border-left: 3px solid color-mix(in srgb, var(--px-b, #fff) 55%, transparent);
 }
-.lsd-id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.lsd-who { font-size: 17px; color: var(--mc-text); }
-.lsd-sub {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--mc-faint);
+/* how much of that boss was theirs, drawn behind the words */
+.live-boss .lb-row::before {
+  content: ''; position: absolute; inset: 0 auto 0 0; width: var(--fill, 0);
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--px-b, #fff) 26%, transparent) 0%,
+    color-mix(in srgb, var(--px-b, #fff) 7%, transparent) 100%);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--px-b, #fff) 45%, transparent);
 }
+.live-boss .lb-row > * { position: relative; }
+.live-boss .lb-row:hover { background: color-mix(in srgb, var(--px-b, #fff) 13%, transparent); }
+/* the placing, in the metals they are usually cast in */
+.lb-rank {
+  flex: none; width: 15px; margin-right: -3px;
+  font-style: normal; font-size: 11px; font-weight: bold; text-align: center;
+  color: #6f7683; text-shadow: 1px 1px 0 #000;
+}
+.lb-rank.r1 { color: #ffd24a; text-shadow: 0 0 7px rgba(255,210,74,0.75), 1px 1px 0 #000; }
+.lb-rank.r2 { color: #d6dde6; text-shadow: 0 0 6px rgba(214,221,230,0.5), 1px 1px 0 #000; }
+.lb-rank.r3 { color: #d9924e; text-shadow: 0 0 6px rgba(217,146,78,0.5), 1px 1px 0 #000; }
+/* the first plate is the one worth looking at twice */
+.live-boss .lb-row:first-of-type .lb-top b { color: #fff; }
+.live-boss .lb-row:first-of-type .lb-star .badge-star {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--px-b, #fff) 85%, transparent));
+}
+/* the share itself, said once in words for anyone who does not read a bar */
+.lb-best { font-weight: normal; color: color-mix(in srgb, var(--px-b, #fff) 78%, #fff); }
+
+.live-boss .lb-row.rest { display: none; }
+.live-boss.more .lb-row.rest { display: flex; }
+.lb-more {
+  display: block; width: 100%; padding: 6px 9px; font: inherit; font-size: 11px;
+  letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  color: var(--key, var(--mc-dim));
+  background: color-mix(in srgb, var(--key, #fff) 8%, rgba(255,255,255,0.03));
+  border: 0; border-top: 1px solid rgba(255,255,255,0.07);
+  border-left: 3px solid color-mix(in srgb, var(--key, #fff) 32%, transparent);
+}
+.lb-more:hover { background: color-mix(in srgb, var(--key, #fff) 16%, transparent); }
+.lb-more-out, .live-boss.more .lb-more-in { display: none; }
+.live-boss.more .lb-more-out { display: inline; }
+/* the card the record sits in opens and shuts on a click, and this is inside
+   it - see the same guard on a fight row */
+@media (pointer: coarse) { .lb-more { min-height: 44px; } }
 .lsd-pill {
   font-style: normal; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
   padding: 1px 6px; border: 1px solid currentColor; border-radius: 2px;
@@ -1593,7 +2216,6 @@ body::after { display: none; }
 }
 .lsd-pill.online { color: var(--mc-xp); }
 .lsd-pill.respawning { color: var(--mc-heart); }
-.lsd-head .rp-close { margin-left: auto; }
 
 .ls-btn[disabled] { opacity: .45; cursor: default; }
 
@@ -1609,9 +2231,26 @@ body::after { display: none; }
    nothing - a fight history rendered into no width at all. Narrow enough, the
    two stack instead. */
 @media (max-width: 700px) {
-  .bcard.open { flex-direction: column; align-items: stretch; gap: 10px; }
-  .bcard.open .bc-stage { flex: none; min-height: 200px; }
+  .bcard.open { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .bcard.open .bc-stage  { grid-area: 1 / 1; }
+  .bcard.open .bc-foot   { grid-area: 2 / 1; }
+  .bcard.open .bc-fights { grid-area: 3 / 1 / 4 / 2; }
+  /* one column on a phone: the sheet reads down the page under the model
+     rather than beside it */
+  .pcard.open {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr; gap: 8px;
+  }
+  .pcard.open .pc-stage { grid-area: 1 / 1; }
+  .pcard.open .pc-foot  { grid-area: 2 / 1; }
+  .pcard.open .pc-panel { grid-area: 3 / 1 / 4 / 2; }
+  .bcard.open .bc-stage { min-height: 200px; }
   .bcard.open .bc-name { font-size: 20px; }
+  .pcard.open .pc-stage { flex: none; min-height: 200px; }
+  .pcard.open .pc-name { font-size: 20px; }
+  /* playtime and deaths go back to their own lines: side by side they were
+     tearing in half on a card this narrow, open or shut */
+  .pcard.open .pc-nums { flex-direction: column; gap: 1px; }
 }
 
 /* On a phone the row is down to two or three readings a line whatever it
@@ -1682,7 +2321,6 @@ body::after { display: none; }
     white-space: nowrap;
   }
 
-  .ls-drawer.open, .ls-spot { margin: 0 7px 8px; }
   .disc-head .dh-t { font-size: 17px; }
   .disc-head .dh-r { font-size: 13px; }
 }
@@ -1778,9 +2416,153 @@ body::after { display: none; }
 .live-section { display: flex; flex-direction: column; gap: 1px; }
 .live-section .live-grid { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
 
+/* ── one key per section ───────────────────────────────────────────────────
+   Five sections of the same grey bar over the same dark cells read as one
+   undifferentiated sheet, and a reader hunting for how far somebody has
+   walked had to read every heading to find it. Each takes a colour that
+   already means that thing elsewhere on this page - cyan for the world and
+   the moving about in it, heart red for what fights back, gold for bosses,
+   experience green for the field guide, and the sky for the water. It is
+   carried on the heading's own bar and a rule down the left of the cells,
+   not on the numbers, so the record still reads as one record. */
+[data-key] { --key: var(--mc-dim); }
+[data-key="activity"] { --key: #6fe0ee; }
+[data-key="combat"]   { --key: var(--mc-heart); }
+[data-key="boss"]     { --key: var(--mc-gold); }
+/* not green and not red, though the section is full of both: the heading
+   names the pair, and taking either half's colour would say the whole thing
+   was about that half */
+[data-key="mobs"]     { --key: #ff9042; }
+[data-key="guide"]    { --key: var(--mc-xp); }
+[data-key="fish"]     { --key: #4f9dff; }
+
+[data-key] > .lb-head {
+  color: color-mix(in srgb, var(--key) 72%, #fff);
+  background: color-mix(in srgb, var(--key) 15%, rgba(255,255,255,0.05));
+  border-left: 3px solid var(--key);
+}
+[data-key] > .lb-head b { color: var(--key); }
+
+/* ── where in the worlds they are ──────────────────────────────────────────
+   The dimension is the one reading on this card that names somewhere rather
+   than counts something, so it gets that place's own light: the overworld
+   green, the nether's banked red, the end's void purple, and the two that
+   glow - the Aether's gold and the Twilight Forest's dusk, which is the same
+   purple as the end seen through a canopy. */
+.realm {
+  font-weight: normal; letter-spacing: .06em;
+  color: var(--realm, var(--mc-dim));
+}
+.realm[data-realm="overworld"] { --realm: #7bc518; }
+.realm[data-realm="nether"]    { --realm: #c0392b; text-shadow: 0 0 7px rgba(192,57,43,0.55); }
+.realm[data-realm="end"]       { --realm: #b06bff; }
+.realm[data-realm="aether"] {
+  --realm: #ffd76b;
+  text-shadow: 0 0 6px rgba(255,215,107,0.85), 0 0 14px rgba(255,196,60,0.5);
+  animation: realm-glow 2.6s ease-in-out infinite;
+}
+.realm[data-realm="twilight"] {
+  --realm: #c9a6ff;
+  text-shadow: 0 0 7px rgba(163,110,255,0.55), 0 0 16px rgba(120,70,200,0.35);
+  animation: realm-glow 3.8s ease-in-out infinite;
+}
+@keyframes realm-glow {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.35); }
+}
+@media (prefers-reduced-motion: reduce) { .realm { animation: none; } }
+[data-key] > .live-grid,
+[data-key] > .fg-grid,
+[data-key] > .mob-cols,
+[data-key] > .lb-row {
+  border-left: 3px solid color-mix(in srgb, var(--key) 32%, transparent);
+}
+/* the note under a figure takes its own section's colour rather than the one
+   gold every section was using for it */
+[data-key] .live-cell u { color: var(--key); }
+
 .live-boss { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
 .live-boss.empty {
   padding: 9px; font-size: 11px; color: #5f6f83; text-align: center;
+}
+
+/* ── kills and deaths, by what they were against ──────────────────────────
+   Two columns of the same shape so the eye can run across them, and only the
+   colour tells the halves apart: green is theirs, red is the world's. The
+   bars are drawn against the top row of their own column rather than against
+   the column's total - see mobColumn() for why - so each podium is a
+   comparison of three rather than three slivers of a season. */
+.live-mobs { box-shadow: 0 0 0 1px rgba(255,255,255,0.07); }
+.mob-cols {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: rgba(255,255,255,0.07);
+}
+.mob-col { background: var(--mc-panel, #16161a); padding: 7px 8px 8px; }
+.mob-col.prey { --mob: #7bc518; --mob-dim: rgba(123,197,24,0.22); }
+.mob-col.bane { --mob: #d94a3d; --mob-dim: rgba(217,74,61,0.22); }
+
+.mob-cap {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-bottom: 5px; margin-bottom: 5px;
+  border-bottom: 1px solid var(--mob-dim);
+  font-size: 10px; letter-spacing: 1px;
+}
+.mob-cap b { font-weight: normal; color: var(--mob); }
+.mob-cap u { text-decoration: none; color: #6d7d90; }
+
+.mob-row {
+  display: grid; grid-template-columns: 14px 1fr auto;
+  align-items: center; gap: 7px; padding: 4px 0;
+}
+/* the podium reads top to bottom without needing three different colours:
+   the first row is simply louder than the two under it */
+.mob-row.r2 { opacity: 0.82; }
+.mob-row.r3 { opacity: 0.66; }
+
+.mob-rank {
+  width: 14px; height: 14px; line-height: 14px; text-align: center;
+  font-size: 9px; font-style: normal; color: #05070a;
+  background: var(--mob);
+}
+.mob-row.r2 .mob-rank, .mob-row.r3 .mob-rank {
+  color: var(--mob); background: none;
+  box-shadow: inset 0 0 0 1px var(--mob-dim);
+}
+
+.mob-main { min-width: 0; }
+.mob-top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 6px; font-size: 11px;
+}
+/* a mod's mob name can run long, and a name that pushes its own count off
+   the row is worse than a name with an ellipsis on it */
+.mob-top b {
+  font-weight: normal; color: var(--mc-text, #e6e6e8);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mob-top em { font-style: normal; color: var(--mob); }
+
+.mob-bar {
+  display: block; height: 4px; margin-top: 3px;
+  background: rgba(255,255,255,0.06);
+}
+.mob-bar u {
+  display: block; height: 100%; width: var(--fill, 0%);
+  background: var(--mob); text-decoration: none;
+}
+.mob-cut { font-size: 9px; color: #6d7d90; min-width: 22px; text-align: right; }
+
+.mob-tail {
+  margin-top: 6px; padding-top: 5px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 9px; color: #5f6f83;
+}
+.mob-none { padding: 10px 0; font-size: 10px; color: #5f6f83; text-align: center; }
+
+/* two columns of long mod names inside a phone's width is one column of
+   ellipses, so below that they stack and each gets the whole row */
+@media (max-width: 460px) {
+  .mob-cols { grid-template-columns: 1fr; }
 }
 .lb-head {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -1807,11 +2589,12 @@ body::after { display: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .lb-top em { font-style: normal; font-size: 12px; color: var(--rc, #ffd479); flex-shrink: 0; }
-/* a boss on the record that this player helped with rather than led: the
-   star is spent, so the row itself is what has to say so */
-.lb-row.assisted .lb-star { opacity: .4; filter: grayscale(1); }
+/* A boss on the record that this player helped with rather than led. The
+   star stays lit - they helped beat it, and that is what a star is for -
+   so the "+1" and the HELPED beside the tier are what carry the difference
+   between having led the fight and having been in it. */
 .lb-row.assisted .lb-top b { color: #b9c4d2; }
-.lb-top em.lb-assist { color: var(--mgs-cyan, #6fe0ee); }
+.lb-top em.lb-assist { color: var(--mc-assist); }
 .lb-sub i { font-style: normal; font-size: 9px; letter-spacing: .5px; color: #5f6f83; }
 .lb-sub u {
   text-decoration: none; font-size: 9px; color: #5f6f83; text-align: right;

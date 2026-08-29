@@ -19,8 +19,13 @@ import sys
 import tempfile
 import zipfile
 
-JAR = os.path.expanduser(
-    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar')
+# the client jar moves with the install, which is not in the same place on
+# every machine this is run from - see bosses._instance
+JAR = next((os.path.expanduser(p) for p in (
+    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar',
+    '~/Documents/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar',
+) if os.path.exists(os.path.expanduser(p))), os.path.expanduser(
+    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar'))
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
 

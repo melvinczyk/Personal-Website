@@ -432,6 +432,14 @@
   "tier": 4
  },
  {
+  "key": "roaring__roaring_knight",
+  "id": "roaring:roaring_knight",
+  "name": "Roaring Knight",
+  "mod": "roaring",
+  "model": "roaring__roaring_knight.model.json",
+  "tier": 4
+ },
+ {
   "key": "stalwart_dungeons__awful_ghast",
   "id": "stalwart_dungeons:awful_ghast",
   "name": "Awful Ghast",

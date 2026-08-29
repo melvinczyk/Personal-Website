@@ -28,8 +28,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import entity_model as em
 import geo as geolib
 
-MODS = os.path.expanduser(
-    '~/curseforge/minecraft/Instances/Groid Pack OG/mods')
+# The instance lives in a different place on each machine this is run from,
+# so both are tried and the first that exists wins - the same arrangement
+# fish.py already uses. Hard-coding one of them meant a build could only ever
+# be run from one desk.
+def _instance(*rest):
+    for home in ('~/curseforge/minecraft/Instances/Groid Pack OG',
+                 '~/Documents/curseforge/minecraft/Instances/Groid Pack OG'):
+        where = os.path.expanduser(os.path.join(home, *rest))
+        if os.path.exists(where):
+            return where
+    return os.path.expanduser(os.path.join(
+        '~/curseforge/minecraft/Instances/Groid Pack OG', *rest))
+
+
+MODS = _instance('mods')
 # The datapack itself now ships inside the instance's own global_packs, zipped
 # rather than laid out loose on the Desktop the way the old copy was. Rather
 # than unzip it on every run, a copy of the tag lives beside this file - the
@@ -45,9 +58,7 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 # boss at all - it is graded there, once, by hand. Reading it here lets an
 # unfelled boss's card carry the right tier colour from the start, instead of
 # only after the server has recorded a first kill for it.
-TIER_SCRIPT = os.path.expanduser(
-    '~/curseforge/minecraft/Instances/Groid Pack OG/kubejs/server_scripts/'
-    'boss_rewards.js')
+TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'boss_rewards.js')
 
 VANILLA_JAR = em.JAR
 PNG = re.compile(rb'([a-z][a-z0-9_/]*\.png)')
@@ -107,6 +118,11 @@ ROUTES = ('geckolib', 'vanilla', 'advanced')
 #   drop     bones to leave undrawn, along with everything under them
 #   hide     single boxes to drop, as (bone, place in that bone's list)
 #   reparent bones whose real parent the reader could not see, name -> parent
+#   stance   the same for a geckolib rig, whose geo file is a bind pose and
+#            whose stance lives in an animation: bone -> the three turns its
+#            idle holds at rest, in the bedrock degrees the .animation.json
+#            itself is written in. Read through the same SPINS reading the
+#            bone's own rotation is, so the two compose rather than fight.
 #   rest     the pose a mob is drawn in where its model builds it flat and
 #            bends it every frame: bone -> the three turns setupAnim assigns,
 #            in the game's own axes and radians, put in place of the bone's
@@ -252,6 +268,30 @@ OVERRIDES = {
     # Framed whole, its own six-segment wings on each side reach far enough
     # out that the auto-fit shrinks the whole card to hold them - the same
     # trade spiritcaller makes, focus body and lean on zoom to bring it in.
+    # The Roaring Knight is a geckolib rig, so its geo file is a bind pose and
+    # nothing more: arms straight down, legs together, blades hanging at its
+    # sides. Its stance is the first frame of animation.roaring_knight.idle -
+    # head bowed, one leg forward and bent under it, the near arm swept out and
+    # its blade raised across the body - which is how it is seen every moment
+    # it is not mid-swing. Copied out of the animation as written.
+    'roaring:roaring_knight': {
+        # Its lit parts are an emissive pass of their own: a mask that is pure
+        # white where the knight glows and empty everywhere else, laid over
+        # the same bones a shade proud of them. The base sheet is black with
+        # white linework, so without this the glow is simply missing.
+        'coat': 'textures/entities/roaring_knight_glow.png',
+        'stance': {
+            'head':       (12.5, 0, 0),
+            'right_arm':  (-17.5, 0, 17.5),
+            'right_arm2': (-17.5, 0, 0),
+            'left_arm':   (44.57228, -0.94822, -25.14757),
+            'left_arm2':  (-85, 0, 0),
+            'right_leg':  (-50, 0, 0),
+            'right_leg2': (122.5, 0, 0),
+            'Weapom':     (37.5, 0, 0),
+        },
+    },
+
     'netherman:azazel': {'mirror': True, 'focus': 'body', 'zoom': 1.6},
     # The human form's spear and shield reach out just as far as the wings
     # do above, for the same reason.
@@ -1203,6 +1243,20 @@ def build(boss, jars, listing, write=True):
     # black post. So the rest pose those methods assign is written down here
     # and baked in, in the game's own axes - x and y turn round on the way
     # into the portal's, the same way a PartPose's own rotation does.
+    # A geckolib rig ships a bind pose and nothing else: every bone in the geo
+    # file sits at zero and the mob's actual stance is the first frame of its
+    # idle animation. The Roaring Knight built that way is a figure standing
+    # to attention with its arms straight down, which is not a pose it is ever
+    # seen in. These are that animation's own numbers, in its own units, put
+    # through the same reading the geo file's rotations get.
+    if fix.get('stance'):
+        turn_of = SPINS.get(fix.get('spin'), SPINS[None])
+        for name, turn in fix['stance'].items():
+            for bone in found['bones']:
+                if bone['name'] == name:
+                    bone['rot'] = [round(turn_of[i] * turn[i] * math.pi / 180, 4)
+                                   for i in range(3)]
+
     for name, turn in (fix.get('rest') or {}).items():
         for bone in found['bones']:
             if bone['name'] == name:

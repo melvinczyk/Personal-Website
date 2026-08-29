@@ -15,7 +15,7 @@
 
   "_files": "Which files to fetch, relative to remote_root.",
   "files": [
-    "kubejs/exported/players.json",
+    "kubejs/exported/world_data.json",
     "kubejs/exported/boss_kills.json",
     "kubejs/exported/boss_kills.tsv",
     "kubejs/exported/boss_fights.json",

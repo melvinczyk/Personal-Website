@@ -218,6 +218,10 @@
       "required": false
     },
     {
+      "id": "roaring:roaring_knight",
+      "required": false
+    },
+    {
       "id": "stalwart_dungeons:awful_ghast",
       "required": false
     },

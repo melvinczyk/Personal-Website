@@ -23,6 +23,12 @@ from django.conf import settings
 from datetime import datetime, timezone
 
 DATA_DIR = 'data'
+# The server's own export of the world: the same per-player rows players.json
+# always carried, with the world's own numbers folded in above them. The old
+# name is still read where the new one has not landed yet, so a checkout that
+# has not synced since the change - or a season whose data was pulled before
+# it - keeps working rather than showing an empty board.
+WORLD    = 'world_data.json'
 PLAYERS  = 'players.json'
 BOSSES   = 'boss_kills.json'
 FIGHTS   = 'boss_fights.json'
@@ -80,6 +86,93 @@ def _float(value, default=0.0):
         return round(float(value), 1)
     except (TypeError, ValueError):
         return default
+
+
+def _pretty(word):
+    """'MID_AUTUMN' -> 'Mid Autumn', which is how a person writes a season."""
+    return ' '.join(part.capitalize() for part in str(word or '').split('_')) or ''
+
+
+# Serene Seasons' own order, which is also the order of its calendar faces:
+# the icon for a sub-season is the one at its place in this list.
+SUB_SEASONS = ('EARLY_SPRING', 'MID_SPRING', 'LATE_SPRING',
+               'EARLY_SUMMER', 'MID_SUMMER', 'LATE_SUMMER',
+               'EARLY_AUTUMN', 'MID_AUTUMN', 'LATE_AUTUMN',
+               'EARLY_WINTER', 'MID_WINTER', 'LATE_WINTER')
+
+# what the game means by a moon phase number, counting from the full moon
+MOONS = ('Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent',
+         'New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous')
+
+
+def _world_state(raw):
+    """The world's own readings, out of the export and into shape.
+
+    Everything here is the server describing itself rather than the people on
+    it: what day it is in there, what the weather is doing, how hard it is
+    set, which season the pack thinks it is, and how well the tick is
+    holding up. Read defensively - the script that writes it is still
+    growing, and a reading that is not there yet should leave a gap rather
+    than take the board down.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    time_ = raw.get('time') or {}
+    weather = raw.get('weather') or {}
+    season = raw.get('season') or {}
+    online = raw.get('online') or {}
+    speed = raw.get('performance') or {}
+    spawn = raw.get('spawn') or {}
+    # where in the twelve the pack currently sits, and what comes after it
+    sub = str(season.get('subSeason') or '').upper()
+    place = SUB_SEASONS.index(sub) if sub in SUB_SEASONS else -1
+    # a year is however many days the pack's own cycle divides into
+    a_day = _int(season.get('dayDurationTicks'))
+    return {
+        'day':      _int(time_.get('day')),
+        'clock':    time_.get('clock') or '',
+        'phase':    _pretty(time_.get('phase')),
+        'daylight': bool(time_.get('isDay')),
+        'moon':      _int(time_.get('moonPhase')) % len(MOONS),
+        'moon_name': MOONS[_int(time_.get('moonPhase')) % len(MOONS)],
+        # thunder is weather too, and the one worth saying out loud
+        'weather':  ('Thunder' if weather.get('thundering')
+                     else 'Rain' if weather.get('raining')
+                     else _pretty(weather.get('state')) or 'Clear'),
+        'difficulty': _pretty(raw.get('difficulty')),
+        'season':     _pretty(season.get('season')),
+        'sub_season': _pretty(season.get('subSeason')),
+        # -1 when the pack names a sub-season this build has never heard of,
+        # which the board reads as 'draw no calendar' rather than the wrong one
+        'sub_index':  place,
+        'next_season': _pretty(SUB_SEASONS[(place + 1) % len(SUB_SEASONS)])
+                       if place >= 0 else '',
+        'year_days':  _int(_int(season.get('cycleDurationTicks')) / a_day)
+                      if a_day else 0,
+        'tropical':   _pretty(season.get('tropicalSeason')),
+        'season_day': _int(season.get('day')),
+        'season_left': _int(season.get('subSeasonDaysLeft')),
+        'year_pct':   round(_float(season.get('yearProgress')) * 100),
+        'online':     _int(online.get('count')),
+        'slots':      _int(online.get('max')),
+        'tps':        _float(speed.get('tps')),
+        'mspt':       _float(speed.get('mspt')),
+        'uptime':     _span(_int(raw.get('uptimeSeconds'))),
+        'dimensions': len(raw.get('dimensions') or []),
+        'realms':     [_pretty(str(name).split(':')[-1])
+                       for name in (raw.get('dimensions') or [])],
+        'spawn':      f"{_int(spawn.get('x'))}, {_int(spawn.get('y'))}, "
+                      f"{_int(spawn.get('z'))}" if spawn else '',
+    }
+
+
+def _world_file(data_dir):
+    """Whichever of the two names is actually on disk, newest first."""
+    for name in (WORLD, PLAYERS):
+        path = os.path.join(data_dir, name)
+        if os.path.isfile(path):
+            return path
+    return os.path.join(data_dir, WORLD)
 
 
 def _load(path):
@@ -227,6 +320,9 @@ def _bosses(record, credited=None, catalogue=None):
             'kills':    _int(entry.get('kills')),
             'assists':  0,
             'last':     (entry.get('last') or '')[:10],
+            # filled in from the fight log below where there is one; a kill
+            # the counter recorded and the log never saw has none of this
+            'share':    0, 'health': 0, 'at': '',
         })
     held = {b['id']: b for b in out}
     for boss_id, tally in (credited or {}).items():
@@ -239,6 +335,8 @@ def _bosses(record, credited=None, catalogue=None):
             boss['kills'] = tally['kills']
             boss['assists'] = tally['assists']
             boss['last'] = max(boss['last'], tally['last'])
+            boss.update({k: tally[k] for k in ('share', 'health', 'at')
+                         if k in tally})
             continue
         # a fight the kill counter never recorded: the log names the boss and
         # the moment but nothing else, so the rest comes from the roster's own
@@ -252,6 +350,9 @@ def _bosses(record, credited=None, catalogue=None):
             'kills':    tally['kills'],
             'assists':  tally['assists'],
             'last':     tally['last'],
+            'share':    tally.get('share', 0),
+            'health':   tally.get('health', 0),
+            'at':       tally.get('at', ''),
         })
     # the merge above leans on ISO comparing correctly, so the reading is only
     # made readable once there is nothing left to compare
@@ -260,6 +361,29 @@ def _bosses(record, credited=None, catalogue=None):
     # what they led leads, and what they only lent a hand to follows
     out.sort(key=lambda b: (not b['kills'], -b['tier'], -b['kills'], b['name']))
     return out
+
+
+# Which world a player is standing in, reduced to a word a stylesheet can use.
+# Matched on the whole id, so twilightforest:twilight_forest and any other
+# mod's own spelling of the same place both land in the right one.
+REALMS = (
+    ('nether',    ('the_nether', 'minecraft:nether')),
+    ('end',       ('the_end', 'minecraft:end')),
+    ('aether',    ('aether',)),
+    ('twilight',  ('twilight',)),
+    ('overworld', ('overworld',)),
+)
+
+
+def _realm(dimension):
+    """'twilightforest:twilight_forest' -> 'twilight', for the page to paint."""
+    where = (dimension or '').lower()
+    if not where:
+        return ''
+    for realm, marks in REALMS:
+        if any(mark in where for mark in marks):
+            return realm
+    return 'other'
 
 
 def _fieldguide(raw):
@@ -378,10 +502,88 @@ def _label(item_id):
     return ' '.join(word.capitalize() for word in name.split('_'))
 
 
-# A card is a portrait, not a combat log: the ten most recent fights are
-# worth reading, and a boss put down two hundred times would otherwise hand
-# it two hundred rows.
-FIGHT_LIMIT = 10
+# How many of a player's hunting grounds a card shows. Three is what fits
+# beside three of the other kind without the pair of them running longer than
+# the boss list above them, and the first three of these are where the story
+# is: a tail of one-offs says only that the player has been outside.
+MOB_TOP = 3
+
+
+def _mob_tally(raw, key):
+    """stats.killed / stats.killedBy, reduced to the three that matter.
+
+    The export writes these as floats keyed by mob id, unsorted and with the
+    whole long tail in them - a season's worth is a couple of hundred kinds,
+    nearly all of them a single kill. What a card wants is the podium and the
+    two numbers that give it scale, so the tail is counted rather than listed.
+
+    `share` is against the top row rather than against the total, because it
+    is drawn as a bar: measured against the total, a player spread evenly
+    across forty mobs would draw three bars all but empty, which says less
+    about them than the same three drawn against each other.
+    """
+    rows = (((raw.get('stats') or {}).get(key)) or {})
+    if not isinstance(rows, dict):
+        return None
+    tally = [(mob, _int(count)) for mob, count in rows.items() if _int(count) > 0]
+    if not tally:
+        return None
+    # count, then the id itself, so two mobs on the same number keep a settled
+    # order between one read of the file and the next rather than whichever
+    # way the export happened to write them
+    tally.sort(key=lambda row: (-row[1], row[0]))
+    total = sum(count for _mob, count in tally)
+    most = tally[0][1] or 1
+    return {
+        'total': total,
+        'kinds': len(tally),
+        'rest': sum(count for _mob, count in tally[MOB_TOP:]),
+        'top': [{
+            'id':    mob,
+            'name':  _label(mob),
+            'mod':   mob.split(':')[0] if ':' in mob else '',
+            'count': count,
+            'share': round(count * 100 / most),
+            # of everything of this kind they did, how much was this one mob
+            'cut':   round(count * 100 / total),
+        } for mob, count in tally[:MOB_TOP]],
+    }
+
+
+# A card is a portrait, not a combat log: a boss put down two hundred times
+# would otherwise hand the card two hundred rows.
+#
+# It used to stop at ten, which is where the card's own numbers stopped
+# agreeing with each other. A kill is one entry in boss_fights.json, so the
+# Naga's eleven entries are eleven kills - but the history, the chart drawn
+# from it and the per-player groups under it were all reading the truncated
+# list, and said ten. The cap now sits well clear of a season's worth, and
+# where it does bite, `logged` below carries the real total so the page can
+# say it is showing a subset rather than quietly miscounting.
+FIGHT_LIMIT = 60
+
+# What separates having killed a boss from having helped somebody else do it.
+#
+# Not a flat percentage: five players who split a boss evenly have twenty
+# percent each, and calling all five of them assists says nobody killed a
+# thing that plainly died. What a share is worth depends on how many were
+# swinging at it, so the line is drawn against an even split - a hundred
+# percent shared out between however many were there - rather than against
+# the boss. Carry this much of your own share of the work and the kill is
+# yours too; fall below it and you lent somebody else a hand.
+#
+# Half of an even share. At two players that is twenty-five percent, which is
+# the line this server's own pairs actually fall either side of - a quarter of
+# the boss is the difference between having fought it and having been there.
+# At five it is ten, and twenty percent each is five kills.
+#
+# Whoever dealt the most is credited whatever their share: the boss did go
+# down, and it was theirs.
+ASSIST_EVEN = 0.5
+
+def _assist_line(players):
+    """The share a fight of this many players has to beat to be a kill."""
+    return ASSIST_EVEN * 100 / max(1, players)
 
 
 def _fight_history(entries):
@@ -404,7 +606,12 @@ def _fight_history(entries):
              for name, p in (entry.get('participants') or {}).items()),
             key=lambda p: (-p['share'], -p['damage'], p['name']))
         for place, player in enumerate(participants):
+            # who the fight is grouped under, and who it counts a kill for -
+            # the same player whenever only one of them did any real damage,
+            # and different ones whenever two of them did. See ASSIST_SHARE.
             player['lead'] = place == 0
+            player['credited'] = (place == 0 or
+                                  player['share'] >= _assist_line(len(participants)))
         # A share is a fraction of the boss's own max health, not of what the
         # tracked players dealt between them, so whatever the participants do
         # not add up to is health the fight took off the boss and credited to
@@ -463,7 +670,8 @@ def _fight_credits(fights_raw):
     for boss_id, entries in fights_raw.items():
         if not isinstance(entries, list):
             continue
-        seen = out.setdefault(boss_id, {'kills': 0, 'leads': {}, 'helped': {},
+        seen = out.setdefault(boss_id, {'kills': 0, 'credited': {},
+                                        'assisted': {}, 'best': {},
                                         'first': '', 'last': ''})
         for entry in entries:
             when = (entry.get('time') or '')[:10]
@@ -479,12 +687,26 @@ def _fight_credits(fights_raw):
             # a fight with nobody named in it still had somebody swing last
             if not ranked and entry.get('finisher'):
                 ranked = [(entry['finisher'], 0.0, 0.0)]
-            for place, (name, _share, _dealt) in enumerate(ranked):
-                bucket, field = (('leads', 'kills') if place == 0
-                                 else ('helped', 'fights'))
+            line = _assist_line(len(ranked))
+            for place, (name, share, _dealt) in enumerate(ranked):
+                # rounded the way the history rounds it for display, so a
+                # player is judged on the number the page actually shows them
+                # rather than on a hidden fraction behind it
+                took = round(share * 100)
+                killed = place == 0 or took >= line
+                bucket, field = (('credited', 'kills') if killed
+                                 else ('assisted', 'fights'))
                 tally = seen[bucket].setdefault(name, {field: 0, 'last': ''})
                 tally[field] += 1
                 tally['last'] = max(tally['last'], when)
+                # the best they ever did against it, by the share itself
+                took = round(share * 100)
+                best = seen['best'].setdefault(name, {'share': -1, 'health': 0,
+                                                      'at': ''})
+                if took > best['share']:
+                    best.update({'share': took,
+                                 'health': _int(entry.get('maxHealth')),
+                                 'at': entry.get('time') or ''})
             if when:
                 seen['first'] = min(seen['first'] or when, when)
                 seen['last'] = max(seen['last'], when)
@@ -502,14 +724,21 @@ def _by_player(credits):
     """
     out = {}
     for boss_id, seen in credits.items():
-        for name, tally in seen['leads'].items():
+        for name, tally in seen['credited'].items():
             out.setdefault(name, {})[boss_id] = {
                 'kills': tally['kills'], 'assists': 0, 'last': tally['last']}
-        for name, tally in seen['helped'].items():
+        for name, tally in seen['assisted'].items():
             row = out.setdefault(name, {}).setdefault(
                 boss_id, {'kills': 0, 'assists': 0, 'last': ''})
             row['assists'] = tally['fights']
             row['last'] = max(row['last'], tally['last'])
+        # what their best go at it looked like, for ranking one against another
+        for name, best in seen['best'].items():
+            row = out.setdefault(name, {}).setdefault(
+                boss_id, {'kills': 0, 'assists': 0, 'last': ''})
+            row['share'] = max(best['share'], 0)
+            row['health'] = best['health']
+            row['at'] = best['at']
     return out
 
 
@@ -553,7 +782,7 @@ def _catalogue():
 def load(season_path):
     """Every player the server has exported, keyed by uuid."""
     data_dir = os.path.join(season_path, DATA_DIR)
-    players  = _load(os.path.join(data_dir, PLAYERS))
+    players  = _load(_world_file(data_dir))
     kills    = _load(os.path.join(data_dir, BOSSES))
     scans    = _load(os.path.join(data_dir, FIELDGUIDE))
     # fish_caught.json nests its rows under "players" and carries a header of
@@ -606,6 +835,11 @@ def load(season_path):
             'level':       _int(raw.get('xpLevel')),
             'dimension':   (raw.get('dimension') or '').split(':')[-1]
                            .replace('_', ' ').upper(),
+            # the world itself, as something the page can colour by. The id
+            # rather than the label: every mod spells its own dimension a
+            # little differently and half of them prefix "the", but the
+            # namespace and the last word between them always give it away.
+            'realm':       _realm(raw.get('dimension')),
             'playtime':      _span(seconds),
             'playtime_hours': _float(raw.get('playTimeHours') or seconds / 3600),
             'deaths':      deaths,
@@ -632,8 +866,14 @@ def load(season_path):
             # Otherwise the header over the list disagrees with the list.
             'boss_kills':  sum(b['kills'] for b in beaten) if beaten
                            else _int(boss.get('totalKills')),
-            'boss_types':  sum(1 for b in beaten if b['kills']) if beaten
-                           else _int(boss.get('bossesDefeated')),
+            # how many different bosses they have helped put down, which
+            # counts the ones they helped with - see bossBadges()
+            'boss_types':  sum(1 for b in beaten if b['kills'] or b['assists'])
+                           if beaten else _int(boss.get('bossesDefeated')),
+            # what they hunt, and what hunts them. The pair is the point:
+            # either alone is a list, and together they are a playstyle.
+            'hunted':      _mob_tally(raw, 'killed'),
+            'nemeses':     _mob_tally(raw, 'killedBy'),
             'fieldguide':  _fieldguide(field),
             'fishing':     _fish(rod, covers),
             'recorded':    _moment(raw.get('recorded') or updated),
@@ -716,7 +956,7 @@ def bosses(season_path, faces=None):
     # moved out of the killers, and one it does not know at all keeps
     # whatever the counter gave them, so a log that only started recording
     # halfway through a season does not erase what came before it.
-    who = _uuids(_load(os.path.join(season_path, DATA_DIR, PLAYERS)), raw)
+    who = _uuids(_load(_world_file(os.path.join(season_path, DATA_DIR))), raw)
     for boss_id, seen in _fight_credits(fights_raw).items():
         hit = scored.setdefault(boss_id, {'killers': [], 'helpers': [],
                                           'kills': 0, 'first': '',
@@ -729,10 +969,10 @@ def bosses(season_path, faces=None):
         # began recording halfway through a season erases nothing.
         hit['kills'] = max(hit['kills'], seen['kills']) \
             if not seen['kills'] else seen['kills']
-        logged = set(seen['leads']) | set(seen['helped'])
+        logged = set(seen['credited']) | set(seen['assisted'])
         hit['killers'] = [k for k in hit['killers'] if k['name'] not in logged]
 
-        for name, tally in seen['leads'].items():
+        for name, tally in seen['credited'].items():
             hit['killers'].append({
                 'name': name,
                 # a name is all the log carries, and a killer with no uuid
@@ -740,8 +980,8 @@ def bosses(season_path, faces=None):
                 'uuid': who.get(name) or name,
                 'kills': tally['kills'], 'last': tally['last']})
 
-        for name, tally in seen['helped'].items():
-            if name in seen['leads']:
+        for name, tally in seen['assisted'].items():
+            if name in seen['credited']:
                 continue                     # led one fight, helped another
             hit['helpers'].append({
                 'name': name, 'uuid': who.get(name) or name,
@@ -786,12 +1026,20 @@ def bosses(season_path, faces=None):
             'kills':   hit['kills'] if hit else 0,
             'killers': killers,
             'helpers': helpers,
+            # every hand lent, not every player who lent one: a boss put down
+            # three times with somebody helping each time was helped with
+            # three times
+            'assists': sum(h['fights'] for h in helpers),
             'first':   _date(hit['first']) if hit else '',
             'last':    _date(hit['last']) if hit else '',
             # only a felled boss has fights worth reading, but an unfelled
             # one costs nothing to look up and finding none is itself a
             # cheap confirmation that the two files agree
             'fights':  _fight_history(fights_raw.get(boss['id'])),
+            # every fight on record, which is every kill: one entry, one kill.
+            # `fights` above is capped for the page's sake, so this is the
+            # number anything totalling has to count, not that list's length.
+            'logged':  len(fights_raw.get(boss['id']) or []),
         })
     # bosses lead the roster, minibosses stand behind them in a section of
     # their own; within each, weakest tier first and strongest last, so the
@@ -912,7 +1160,7 @@ def board(season_path):
         return None
 
     data_dir = os.path.join(season_path, DATA_DIR)
-    raw      = _load(os.path.join(data_dir, PLAYERS))
+    raw      = _load(_world_file(data_dir))
     stamped  = _when(raw.get('updated'))
     age      = int((datetime.now(timezone.utc) - stamped).total_seconds()) \
                if stamped else None
@@ -938,6 +1186,9 @@ def board(season_path):
         'players': order,
         'bosses':  line,
         'fish':    school,
+        # what the export says about the world itself rather than the people
+        # standing in it
+        'world':   _world_state(raw.get('world')),
         # the silhouette a fish nobody has landed is drawn as, sent once
         # rather than repeated on every tile that needs it
         'fish_unknown': f'{FISH_URL}/unknown.png?v={_stamp(FISH_DIR, "unknown.png")}',
@@ -969,7 +1220,7 @@ def stamp(season_path):
     """When the export last changed, so a cached roster knows to rebuild."""
     data_dir = os.path.join(season_path, DATA_DIR)
     marks = []
-    for name in (PLAYERS, BOSSES, FIGHTS, FIELDGUIDE, FISH):
+    for name in (WORLD, PLAYERS, BOSSES, FIGHTS, FIELDGUIDE, FISH):
         try:
             marks.append(os.path.getmtime(os.path.join(data_dir, name)))
         except OSError:

@@ -40,7 +40,9 @@ class ConfigError(SyncError):
 STAMP = ".checked"
 
 DEFAULT_FILES = [
-    "kubejs/exported/players.json",
+    # players.json until the server started folding the world's own numbers in
+    # beside the players' - same rows, one more thing in the file above them
+    "kubejs/exported/world_data.json",
     "kubejs/exported/boss_kills.json",
     "kubejs/exported/boss_fights.json",
     "kubejs/exported/fieldguide_counts.json",

@@ -76,6 +76,36 @@
           "share": 1.0
         }
       }
+    },
+    {
+      "time": "2026-08-29T06:14:34.339Z",
+      "maxHealth": 348.0,
+      "threshold": 17.0,
+      "durationSeconds": 24.2,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 426.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:15:57.188Z",
+      "maxHealth": 372.0,
+      "threshold": 19.0,
+      "durationSeconds": 17.3,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 424.0,
+          "share": 1.0
+        }
+      }
     }
   ],
   "fromtheshadows:bulldrogioth": [
@@ -108,6 +138,336 @@
         "Zerobarbecue117": {
           "damage": 113.0,
           "share": 0.76
+        }
+      }
+    }
+  ],
+  "wkcr:king": [
+    {
+      "time": "2026-08-28T03:03:16.143Z",
+      "maxHealth": 106.0,
+      "threshold": 5.0,
+      "durationSeconds": 3.7,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 74.0,
+          "share": 0.7
+        }
+      }
+    },
+    {
+      "time": "2026-08-28T03:03:21.807Z",
+      "maxHealth": 90.0,
+      "threshold": 4.0,
+      "durationSeconds": 11.5,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 57.0,
+          "share": 0.64
+        }
+      }
+    }
+  ],
+  "majruszsdifficulty:tank": [
+    {
+      "time": "2026-08-28T03:07:35.497Z",
+      "maxHealth": 262.0,
+      "threshold": 13.0,
+      "durationSeconds": 5.2,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 138.0,
+          "share": 0.53
+        }
+      }
+    }
+  ],
+  "mutantmore:mutant_husk": [
+    {
+      "time": "2026-08-28T03:15:24.845Z",
+      "maxHealth": 527.0,
+      "threshold": 26.0,
+      "durationSeconds": 106.6,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 584.0,
+          "share": 1.0
+        }
+      }
+    }
+  ],
+  "minecraft:ravager": [
+    {
+      "time": "2026-08-28T05:39:56.145Z",
+      "maxHealth": 163.0,
+      "threshold": 8.0,
+      "durationSeconds": 12.2,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "minecraft:netherite_sword",
+      "participants": {
+        "melvin0czyk": {
+          "damage": 40.0,
+          "share": 0.24
+        },
+        "Zerobarbecue117": {
+          "damage": 79.0,
+          "share": 0.48
+        }
+      }
+    }
+  ],
+  "twilightforest:naga": [
+    {
+      "time": "2026-08-28T07:05:49.249Z",
+      "maxHealth": 670.0,
+      "threshold": 34.0,
+      "durationSeconds": 1112.2,
+      "discardedDamage": null,
+      "finisher": "melvin0czyk",
+      "finisherWeapon": "withersweapons:spooky_stone_blade",
+      "participants": {
+        "melvin0czyk": {
+          "damage": 1423.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:27:33.746Z",
+      "maxHealth": 350.0,
+      "threshold": 18.0,
+      "durationSeconds": 113.8,
+      "discardedDamage": null,
+      "finisher": "blindhustler",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "blindhustler": {
+          "damage": 289.0,
+          "share": 0.73
+        },
+        "melvin0czyk": {
+          "damage": 105.0,
+          "share": 0.27
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:30:18.733Z",
+      "maxHealth": 955.0,
+      "threshold": 48.0,
+      "durationSeconds": 39.1,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 1009.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:44:33.227Z",
+      "maxHealth": 398.0,
+      "threshold": 20.0,
+      "durationSeconds": 563.9,
+      "discardedDamage": null,
+      "finisher": "melvin0czyk",
+      "finisherWeapon": "simplybows:bubble_bow/bubble_bow",
+      "participants": {
+        "blindhustler": {
+          "damage": 310.0,
+          "share": 0.47
+        },
+        "melvin0czyk": {
+          "damage": 347.0,
+          "share": 0.53
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:45:48.994Z",
+      "maxHealth": 955.0,
+      "threshold": 48.0,
+      "durationSeconds": 13.2,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 1015.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T06:47:53.221Z",
+      "maxHealth": 398.0,
+      "threshold": 20.0,
+      "durationSeconds": 41.7,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "melvin0czyk": {
+          "damage": 95.0,
+          "share": 0.24
+        },
+        "mysteriousmex21": {
+          "damage": 312.0,
+          "share": 0.76
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T07:07:56.160Z",
+      "maxHealth": 416.0,
+      "totalDamage": 507.0,
+      "threshold": 21.0,
+      "durationSeconds": 6.9,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 507.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T07:08:09.908Z",
+      "maxHealth": 416.0,
+      "totalDamage": 476.0,
+      "threshold": 21.0,
+      "durationSeconds": 4.9,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 476.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T07:13:47.367Z",
+      "maxHealth": 760.0,
+      "totalDamage": 841.0,
+      "threshold": 38.0,
+      "durationSeconds": 11.5,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 841.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T07:35:32.854Z",
+      "maxHealth": 478.0,
+      "totalDamage": 543.0,
+      "threshold": 24.0,
+      "durationSeconds": 9.0,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 543.0,
+          "share": 1.0
+        }
+      }
+    },
+    {
+      "time": "2026-08-29T07:36:06.448Z",
+      "maxHealth": 478.0,
+      "totalDamage": 556.0,
+      "threshold": 24.0,
+      "durationSeconds": 7.0,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "simplyswords:tempest",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 556.0,
+          "share": 1.0
+        }
+      }
+    }
+  ],
+  "legendary_monsters:ancient_guardian": [
+    {
+      "time": "2026-08-29T03:54:53.550Z",
+      "maxHealth": 1304.0,
+      "threshold": 65.0,
+      "durationSeconds": 429.2,
+      "discardedDamage": null,
+      "finisher": "mysteriousmex21",
+      "finisherWeapon": "minecraft:bread",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 897.0,
+          "share": 0.45
+        },
+        "Zerobarbecue117": {
+          "damage": 1094.0,
+          "share": 0.55
+        }
+      }
+    }
+  ],
+  "minecraft:evoker": [
+    {
+      "time": "2026-08-29T04:27:15.759Z",
+      "maxHealth": 711.0,
+      "threshold": 36.0,
+      "durationSeconds": 568.2,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "mysteriousmex21": {
+          "damage": 413.0,
+          "share": 0.47
+        },
+        "Zerobarbecue117": {
+          "damage": 457.0,
+          "share": 0.53
+        }
+      }
+    }
+  ],
+  "mutantmonsters:mutant_skeleton": [
+    {
+      "time": "2026-08-29T04:31:40.505Z",
+      "maxHealth": 255.0,
+      "threshold": 13.0,
+      "durationSeconds": 9.6,
+      "discardedDamage": null,
+      "finisher": "Zerobarbecue117",
+      "finisherWeapon": "simplybows:echo_bow/echo_bow",
+      "participants": {
+        "Zerobarbecue117": {
+          "damage": 120.0,
+          "share": 0.47
         }
       }
     }

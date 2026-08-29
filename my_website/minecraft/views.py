@@ -180,7 +180,7 @@ def _board(key):
     # other and was showing up as an empty square for being left out here
     for boss in board.get('bosses', []):
         for who in boss['killers'] + boss.get('helpers', []):
-            who.update(known.get(who['uuid'], {'skin': None}))
+            who.update(known.get(who['uuid'], {'skin': None, 'tone': None}))
     # and so is whoever landed each legendary fish
     for catch in board.get('fish', []):
         for angler in catch['anglers']:

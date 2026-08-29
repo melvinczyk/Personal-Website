@@ -413,8 +413,12 @@ function livePanel(p) {
 
   const cell = (label, value, note) => value === null || value === undefined ? '' :
     `<span class="live-cell"><i>${label}</i><b${exact(value)}>${compact(value)}</b>${note ? `<u>${note}</u>` : ''}</span>`;
-  const section = (label, right, body) => `
-    <div class="live-section">
+  // Every section used to be the same grey bar over the same dark cells, so
+  // five of them stacked read as one undifferentiated sheet of numbers. Each
+  // gets a key of its own now - where it sits on the page is the same, but
+  // what it is about is legible before a word of it is read.
+  const section = (label, right, body, key) => `
+    <div class="live-section" data-key="${key}">
       <div class="lb-head"><span>${label}</span>${right ? `<b>${right}</b>` : ''}</div>
       <div class="live-grid">${body}</div>
     </div>`;
@@ -446,29 +450,114 @@ function livePanel(p) {
     cell('DAMAGE TAKEN', L.taken),
   ].join('');
 
+  // Somebody with a dozen bosses on their record had a dozen rows of it, in
+  // no order a reader could use. The three that say the most come first and
+  // the rest fold away behind them: hardest grade, then the biggest thing
+  // they took on at that grade, then how much of it was theirs, and the
+  // moment of that best fight to settle the last of it.
+  const ranked = [...L.bosses].sort((a, b) =>
+    (b.tier || 0) - (a.tier || 0) ||
+    (b.health || 0) - (a.health || 0) ||
+    (b.share || 0) - (a.share || 0) ||
+    String(b.at || '').localeCompare(String(a.at || '')));
+  const TOP = 3;
+
   const bosses = L.bosses.length ? `
-    <div class="live-boss">
-      <div class="lb-head"><span>BOSSES</span><b>${L.boss_kills} KILL${L.boss_kills === 1 ? '' : 'S'}</b></div>
-      ${L.bosses.map(b => {
+    <div class="live-boss" data-key="boss">
+      <div class="lb-head"><span>BOSSES</span><b>${L.boss_kills} KILL${
+        L.boss_kills === 1 ? '' : 'S'}${(() => {
+          const lent = L.bosses.reduce((n, b) => n + (b.assists || 0), 0);
+          return lent ? ` \u00b7 ${lent} ASSIST${lent === 1 ? '' : 'S'}` : '';
+        })()}</b></div>
+      ${ranked.map((b, place) => {
         const cls = b.category === 'miniboss' ? 'mini' : `t${b.tier}`;
         // a row with no kills on it is one they only ever helped with: the
         // count would read "x0", which is not what happened
         const helped = b.assists ? `<em class="lb-assist">+${b.assists}</em>` : '';
-        return `<span class="lb-row${b.kills ? '' : ' assisted'}">
+        // the row is filled to the share they took off it, in its own tier's
+        // colour: what it is ranked on, drawn rather than spelled out, and
+        // costing the row no extra height to say
+        const grade = b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`;
+        const facts = [grade, b.health ? `${compact(b.health)} HP` : '',
+                       b.kills ? '' : 'HELPED'].filter(Boolean).join(' \u00b7 ');
+        return `<span class="lb-row ${cls}${b.kills ? '' : ' assisted'}${
+          place >= TOP ? ' rest' : ''}" style="--fill:${b.share || 0}%">
+          ${place < TOP ? `<i class="lb-rank r${place + 1}">${place + 1}</i>` : ''}
           <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
           <span class="lb-main">
             <span class="lb-top"><b>${b.name}</b>${
               b.kills ? `<em>x${b.kills}</em>` : ''}${helped}</span>
-            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}${
-              b.kills ? '' : ' \u00b7 HELPED'}</i><u>${b.last}</u></span>
+            <span class="lb-sub"><i>${facts}</i><u>${
+              b.share ? `<b class="lb-best">${b.share}%</b> \u00b7 ` : ''}${b.last}</u></span>
           </span>
         </span>`;
       }).join('')}
-    </div>` : '<div class="live-boss empty">no boss has gone down yet</div>';
+      ${ranked.length > TOP ? `<button type="button" class="lb-more"
+          onclick="event.stopPropagation();this.parentElement.classList.toggle('more')">
+          <span class="lb-more-in">show all ${ranked.length}</span>
+          <span class="lb-more-out">show the top ${TOP}</span>
+        </button>` : ''}
+    </div>` : '<div class="live-boss empty" data-key="boss">no boss has gone down yet</div>';
+
+  // The two counts the COMBAT grid above gives as bare totals, broken out by
+  // what they were against: which mobs a player's kills came from, and which
+  // mobs their deaths came from. Side by side because the pair is the point -
+  // the Twilight Forest regular whose deaths all come from one mod's sky
+  // bosses reads differently from the fisherman whose worst enemy has killed
+  // him three times.
+  //
+  // The bars run against the top row of their own column rather than against
+  // the column's total, so the podium is drawn against itself. Against the
+  // total, a player spread across forty kinds of mob would draw three near
+  // empty bars and the comparison worth making would be invisible.
+  const mobColumn = (tally, key, title, note) => {
+    if (!tally || !tally.top.length) {
+      return `<div class="mob-col ${key}">
+        <div class="mob-cap"><b>${title}</b></div>
+        <div class="mob-none">${note}</div>
+      </div>`;
+    }
+    return `<div class="mob-col ${key}">
+      <div class="mob-cap"><b>${title}</b></div>
+      ${tally.top.map((m, i) => `
+        <span class="mob-row r${i + 1}" style="--fill:${m.share}%"
+              title="${m.name} \u00b7 ${m.id}">
+          <i class="mob-rank">${i + 1}</i>
+          <span class="mob-main">
+            <span class="mob-top"><b>${m.name}</b><em>${compact(m.count)}</em></span>
+            <span class="mob-bar"><u></u></span>
+          </span>
+          <span class="mob-cut">${m.cut}%</span>
+        </span>`).join('')}
+      ${(() => {
+        // the tail with its weight on it, rather than a bare count of kinds:
+        // three rows out of forty means one thing when the other thirty-seven
+        // are half the total and quite another when they are a handful of
+        // one-offs, and that is the whole reason the podium is only three
+        const kinds = tally.kinds - tally.top.length;
+        if (!kinds) return '<div class="mob-tail">nothing else</div>';
+        return `<div class="mob-tail">${kinds} more kind${kinds === 1 ? '' : 's'}${
+          tally.rest ? ` \u00b7 ${compact(tally.rest)} between them` : ''}</div>`;
+      })()}
+    </div>`;
+  };
+
+  const H = L.hunted, N = L.nemeses;
+  const hunting = (H || N) ? `
+    <div class="live-mobs" data-key="mobs">
+      <div class="lb-head"><span>KILLS &amp; DEATHS</span><b>${
+        H ? `${compact(H.total)} KILL${H.total === 1 ? '' : 'S'}` : ''}${
+        H && N ? ' \u00b7 ' : ''}${
+        N ? `${compact(N.total)} DEATH${N.total === 1 ? '' : 'S'}` : ''}</b></div>
+      <div class="mob-cols">
+        ${mobColumn(H, 'prey', 'MOST KILLED', 'nothing has gone down yet')}
+        ${mobColumn(N, 'bane', 'DIED TO', 'never been killed')}
+      </div>
+    </div>` : '';
 
   const F = L.fieldguide;
   const fieldguide = F && F.total ? `
-    <div class="live-fieldguide">
+    <div class="live-fieldguide" data-key="guide">
       <div class="lb-head"><span>FIELD GUIDE</span><b>${F.total} SCANNED</b></div>
       <div class="fg-grid">
         <span class="fg-cell"><i class="fg-icon monster"></i><b>${F.categories.monster}</b><u>MONSTER</u></span>
@@ -485,7 +574,7 @@ function livePanel(p) {
   // last one, which is what the mod itself keeps.
   const R = L.fishing;
   const fishing = R && (R.total || R.species || R.fish.length) ? `
-    <div class="live-fish">
+    <div class="live-fish" data-key="fish">
       <div class="lb-head"><span>FISHING</span><b>${compact(R.total)} LANDED</b></div>
       <div class="fg-grid fish">
         <span class="fg-cell"><b>${compact(R.total)}</b><u>LANDED</u></span>
@@ -511,9 +600,12 @@ function livePanel(p) {
 
   return `<div class="live-wrap">
     ${vitals}
-    ${section('ACTIVITY', L.dimension, activity)}
-    ${section('COMBAT', null, combat)}
+    ${section('ACTIVITY', L.dimension
+        ? `<span class="realm" data-realm="${L.realm || ''}">${L.dimension}</span>`
+        : null, activity, 'activity')}
+    ${section('COMBAT', null, combat, 'combat')}
     ${bosses}
+    ${hunting}
     ${fieldguide}
     ${fishing}
     <div class="live-when">SERVER READ ${localMoment(L.recorded)}</div>
@@ -860,8 +952,18 @@ function fightRow(fight, owner, id, faces) {
         <span class="bcf-pct">${mine ? mine.share : 0}%</span>
         <span class="bcf-caret"></span>
       </div>
-      ${others.length ? `<div class="bcf-with">helped by ${others.map(p =>
-        `<b>${p.name}</b> ${p.share}%`).join(' \u00b7 ')}</div>` : ''}
+      ${others.length ? `<div class="bcf-with">${(() => {
+        // a quarter of a boss is the line between the two - see ASSIST_SHARE.
+        // Whoever cleared it was in on the kill; whoever did not lent a hand,
+        // and the row should not call the first of those "helping"
+        const said = [];
+        const named = who => who.map(p => `<b>${p.name}</b> ${p.share}%`).join(' \u00b7 ');
+        const with_ = others.filter(p => p.credited);
+        const from = others.filter(p => !p.credited);
+        if (with_.length) said.push(`with ${named(with_)}`);
+        if (from.length) said.push(`helped by ${named(from)}`);
+        return said.join(' \u00b7 ');
+      })()}</div>` : ''}
       ${fightDetail(fight, faces)}
     </div>`;
 }
@@ -886,6 +988,245 @@ function toggleFightGroup(header) {
   if (group) group.classList.toggle('shut');
 }
 
+// What a player is drawn in when the page has to tell them apart. Their own
+// skin's colour wherever we have the skin - see roster._tone, which reads the
+// one colour it is most obviously wearing - so mysteriousmex21 is the brown
+// he walks around in and blindhustler the teal of his armour, rather than
+// whichever slot in a list they happened to land in. The fallbacks are only
+// for a player with no skin on file, and are picked to sit apart from each
+// other rather than to mean anything.
+
+// ── the kills, plotted ─────────────────────────────────────────────────────
+// A list says who and a list says when, but neither says whether a boss went
+// down once a week for a month or five times in one evening - and the fights
+// are grouped by player, so the order they actually happened in is the one
+// thing the list below cannot show. One pip per fight along a real time axis,
+// coloured by whoever it counted for, stacked where several land on the same
+// day. Small enough to sit above the list rather than instead of it.
+// How far back a chart may look. Max is the whole record, which is what a card
+// opens on: the point of the line is the total it climbs to.
+const CHART_RANGES = [
+  ['12h',  432e5],       ['1 day',    864e5],
+  ['1 week', 6048e5],    ['2 weeks', 12096e5],
+  ['1 month', 2592e6],   ['3 months', 7776e6],
+  ['1 year', 31536e6],   ['max', Infinity],
+];
+
+// Points per chart, kept so the probe can find the nearest kill without
+// redoing the arithmetic on every mouse move.
+const CHART_POINTS = {};
+const CHART_RANGE = {};
+
+function chartRange(key) { return CHART_RANGE[key] ?? Infinity; }
+
+// Re-draw one card's chart when its range changes. Only that chart: the boss
+// list is sixty cards of WebGL and rebuilding it to change a dropdown would be
+// an absurd way to spend a frame.
+function setChartRange(key, ms) {
+  CHART_RANGE[key] = ms === 'Infinity' ? Infinity : Number(ms);
+  const boss = (liveBoard.bosses || []).find(b => b.key === key);
+  const host = document.querySelector(`.bkc[data-boss="${key}"]`);
+  if (!boss || !host) return;
+  host.outerHTML = killChart(boss, null);
+}
+
+// The readout under the line. Finds the kill nearest the pointer along the
+// time axis rather than by straight distance, because the line is flat between
+// kills and a diagonal measure would keep snapping to whichever end was higher.
+function probeChart(event, key) {
+  const pts = CHART_POINTS[key];
+  const svg = event.currentTarget;
+  const box = document.querySelector(`.bkc[data-boss="${key}"] .bkc-probe`);
+  if (!pts || !pts.length || !box) return;
+
+  const rect = svg.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * svg.viewBox.baseVal.width;
+  let near = pts[0];
+  for (const pt of pts) if (Math.abs(pt.x - x) < Math.abs(near.x - x)) near = pt;
+
+  box.innerHTML = `${near.skin ? `<i style="--skin:url('${near.skin}')"></i>`
+                              : '<i class="none"></i>'}
+    <b>${near.who}</b><span>${localMoment(near.time)}</span>
+    <em>${near.total} total</em>`;
+  box.classList.add('on');
+
+  const line = svg.querySelector('.bkc-cursor');
+  const dot  = svg.querySelector('.bkc-cursor-dot');
+  if (line) { line.setAttribute('x1', near.x); line.setAttribute('x2', near.x); line.style.opacity = 1; }
+  if (dot)  { dot.setAttribute('cx', near.x); dot.setAttribute('cy', near.y);
+              dot.style.opacity = 1; }
+}
+
+function unprobeChart(key) {
+  const box = document.querySelector(`.bkc[data-boss="${key}"] .bkc-probe`);
+  const svg = document.querySelector(`.bkc[data-boss="${key}"] .bkc-svg`);
+  if (box) box.classList.remove('on');
+  if (svg) {
+    const line = svg.querySelector('.bkc-cursor'), dot = svg.querySelector('.bkc-cursor-dot');
+    if (line) line.style.opacity = 0;
+    if (dot) dot.style.opacity = 0;
+  }
+}
+
+function killChart(boss, faces) {
+  const all = (boss.fights || []).filter(f => f.time && !isNaN(Date.parse(f.time)));
+  if (!all.length) return '';
+
+  const at = f => Date.parse(f.time);
+  const inOrder = all.slice().sort((a, b) => at(a) - at(b));
+  const whoOf = f => f.lead || f.finisher || 'unknown';
+
+  // A player is their face here, the same one their card upstairs wears, so
+  // the chart needs no palette at all. Colouring the lines was the wrong idea
+  // twice over: skins cluster in the browns, so the colours were never far
+  // apart, and a reader still had to hold a key in their head to use them.
+  const skinOf = {};
+  for (const p of [...(boss.killers || []), ...(boss.helpers || [])]) {
+    if (p.name && p.skin) skinOf[p.name] = p.skin;
+  }
+
+  // Cumulative: every kill adds one and nothing takes it away, so the line
+  // only climbs and finishes at the total in the top right corner.
+  //
+  // It starts at whatever the server logged but did not send. One fight is
+  // one kill, and the card's kill count is the whole log's length, while the
+  // history it is drawn from is capped - so a boss felled more times than the
+  // cap allows would otherwise climb to the cap and contradict its own card.
+  // Banking the difference up front makes the line finish on the real total.
+  let running = Math.max(0, (boss.logged || all.length) - all.length);
+  const steps = inOrder.map(f => ({
+    t: at(f), who: whoOf(f), time: f.time, total: ++running,
+  }));
+  const total = running;
+
+  const span = CHART_RANGE[boss.key] ?? Infinity;
+  const last = steps[steps.length - 1].t;
+  const now  = Math.max(last, Date.now());
+  const from = span === Infinity ? steps[0].t : now - span;
+  const to   = span === Infinity ? last : now;
+  const shown = steps.filter(st => st.t >= from && st.t <= to);
+  const entering = steps.filter(st => st.t < from).length;
+
+  const W = 892, H = 250, L = 46, R = 10, T = 26, B = 34;
+  const plotW = W - L - R, plotH = H - T - B;
+  const width = Math.max(1, to - from);
+  const px = t => L + ((Math.min(Math.max(t, from), to) - from) / width) * plotW;
+  const topV = Math.max(1, span === Infinity ? total
+    : (shown.length ? shown[shown.length - 1].total : entering));
+  const py = v => T + plotH - (v / topV) * plotH;
+
+  // a staircase, because a kill is a step and not a slope
+  const pts = [`${L},${py(entering)}`];
+  let prev = entering;
+  for (const st of shown) {
+    pts.push(`${px(st.t)},${py(prev)}`, `${px(st.t)},${py(st.total)}`);
+    prev = st.total;
+  }
+  pts.push(`${W - R},${py(prev)}`);
+  const curve = pts.join(' ');
+
+  CHART_POINTS[boss.key] = shown.map(st => ({
+    x: +px(st.t).toFixed(1), y: +py(st.total).toFixed(1),
+    who: st.who, skin: skinOf[st.who] || '', time: st.time, total: st.total,
+  }));
+
+  const rungs = [];
+  const every = Math.ceil(topV / 5) || 1;
+  for (let n = every; n <= Math.round(topV); n += every) {
+    rungs.push(`<line class="bkc-grid" x1="${L}" y1="${py(n).toFixed(1)}"
+      x2="${W - R}" y2="${py(n).toFixed(1)}"/>
+      <text class="bkc-gridlabel" x="${L - 8}" y="${(py(n) + 3.5).toFixed(1)}"
+        text-anchor="end">${n}</text>`);
+  }
+
+  const dots = shown.map(st => `<circle class="bkc-dot" cx="${px(st.t).toFixed(1)}"
+      cy="${py(st.total).toFixed(1)}" r="4"
+      ><title>${st.who} \u2014 ${localMoment(st.time)} \u2014 ${st.total} total</title></circle>`).join('');
+
+  // A face over the line for each unbroken run by one player, sat at the end of
+  // that run and carrying the count when the run is longer than one. Runs
+  // rather than kills, because an evening of the same person farming a boss is
+  // eight kills and one fact; and any face that would land on top of the last
+  // one drawn is dropped, the probe being there to name what it covered.
+  const FACE = 26, GAP = 30;
+  const runs = [];
+  for (const st of shown) {
+    const back = runs[runs.length - 1];
+    if (back && back.who === st.who) { back.n += 1; back.end = st; }
+    else runs.push({ who: st.who, n: 1, end: st });
+  }
+  let lastX = -Infinity;
+  const heads = runs.map(run => {
+    const x = px(run.end.t), y = py(run.end.total);
+    if (x - lastX < GAP) return '';
+    lastX = x;
+    const skin = skinOf[run.who];
+    const left = Math.min(Math.max(x - FACE / 2, L), W - R - FACE);
+    const top = Math.max(y - FACE - 8, 2);
+    return `<g class="bkc-head"><title>${run.who} \u2014 ${run.n} kill${
+      run.n === 1 ? '' : 's'} in a row</title>
+      ${skin ? `<svg class="bkc-headart" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
+           width="${FACE}" height="${FACE}" viewBox="8 8 8 8">
+           <image href="${skin}" x="0" y="0" width="64" height="64"/></svg>`
+        : `<rect class="bkc-headnone" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
+             width="${FACE}" height="${FACE}"/>`}
+      <rect class="bkc-headedge" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
+            width="${FACE}" height="${FACE}"/>
+      ${run.n > 1 ? `<text class="bkc-headn" x="${(left + FACE).toFixed(1)}"
+        y="${(top + FACE).toFixed(1)}">${run.n}</text>` : ''}
+    </g>`;
+  }).join('');
+
+  const DAY = 86400000;
+  const label = ms => new Date(ms).toLocaleString(undefined, (to - from) > DAY
+    ? { month: 'short', day: 'numeric' }
+    : { hour: 'numeric', minute: '2-digit' });
+  const fade = `bkc-fade-${boss.key}`;
+
+  const picker = `<select class="bkc-range" aria-label="How far back to look"
+      onchange="setChartRange('${boss.key}', this.value)">
+      ${CHART_RANGES.map(([name, ms]) => `<option value="${ms}"${
+        ms === span ? ' selected' : ''}>${name}</option>`).join('')}
+    </select>`;
+
+  // No key under the chart. The group headers immediately below it already
+  // name every player with their count and their face, and did before this
+  // chart existed; a second copy of that list is the thing that made one boss
+  // card carry the same three names three times over.
+
+  return `
+    <div class="bkc" data-boss="${boss.key}">
+      <div class="bkc-top">
+        <span class="bkc-total"><b>${total}</b> kill${total === 1 ? '' : 's'} all told</span>
+        ${picker}
+      </div>
+      <svg class="bkc-svg" viewBox="0 0 ${W} ${H}" role="img"
+           onmousemove="probeChart(event, '${boss.key}')"
+           onmouseleave="unprobeChart('${boss.key}')"
+           aria-label="Running total of ${total} kill${total === 1 ? '' : 's'}, ${
+             label(from)} to ${label(to)}">
+        <defs>
+          <linearGradient id="${fade}" x1="0" y1="0" x2="0" y2="1">
+            <stop class="bkc-stop-top" offset="0%"/>
+            <stop class="bkc-stop-bot" offset="100%"/>
+          </linearGradient>
+        </defs>
+        <line class="bkc-axis" x1="${L}" y1="${T + plotH}" x2="${W - R}" y2="${T + plotH}"/>
+        ${rungs.join('')}
+        <polygon class="bkc-area" style="fill:url(#${fade})"
+          points="${curve} ${W - R},${T + plotH} ${L},${T + plotH}"/>
+        <polyline class="bkc-line" points="${curve}"/>
+        <line class="bkc-cursor" y1="${T}" y2="${T + plotH}" style="opacity:0"/>
+        ${dots}
+        ${heads}
+        <circle class="bkc-cursor-dot" r="6.5" style="opacity:0"/>
+        <text class="bkc-tick" x="${L}" y="${H - 10}">${label(from)}</text>
+        <text class="bkc-tick" x="${W - R}" y="${H - 10}" text-anchor="end">${label(to)}</text>
+      </svg>
+      <div class="bkc-probe"></div>
+    </div>`;
+}
+
 function fightHistory(boss) {
   const fights = boss.fights || [];
   if (!fights.length) {
@@ -903,6 +1244,9 @@ function fightHistory(boss) {
     faces[who.name] = who.skin || '';
   }
   const groups = byLead(fights);
+  // One entry in the fight log is one kill, so the count the heading gives is
+  // the log's own length rather than the length of the capped list below it.
+  const logged = Math.max(boss.logged || 0, fights.length);
   // an id a click can name, unique across the page: the grouping reorders the
   // fights, so a counter that runs over the groups as they are drawn is what
   // keeps one row's id from being another row's
@@ -912,16 +1256,20 @@ function fightHistory(boss) {
     <div class="bc-fights">
       <div class="bcf-title">
         <span>FIGHT HISTORY</span>
-        <em>${fights.length} fight${fights.length === 1 ? '' : 's'}${
-          groups.length > 1 ? ` \u00b7 ${groups.length} players` : ''}</em>
+        <em>${logged} fight${logged === 1 ? '' : 's'}${
+          logged > fights.length ? ` \u00b7 last ${fights.length} shown` : ''}${
+          groups.length > 1 ? ` \u00b7 ${groups.length} players` : ''}${
+          boss.assists ? ` \u00b7 <b class="bcf-assists">${boss.assists} assist${
+            boss.assists === 1 ? '' : 's'}</b>` : ''}</em>
       </div>
+      ${killChart(boss, faces)}
       <div class="bcf-groups">${groups.map(group => `
         <div class="bcf-group shut">
           <button type="button" class="bcf-head"
                   onclick="event.stopPropagation();toggleFightGroup(this)">
             <i class="bc-face"${faces[group.name] ? ` style="--skin:url('${faces[group.name]}')"` : ''}></i>
             <b>${group.name}</b>
-            <em>${group.fights.length} fight${group.fights.length === 1 ? '' : 's'}</em>
+            <em>led ${group.fights.length}</em>
             <span class="bcf-caret"></span>
           </button>
           <div class="bcf-rows">${group.fights.map(f =>
@@ -1010,6 +1358,9 @@ const narrow = () => window.innerWidth <= NARROW;
 const pick = (wide, small) => () => (narrow() ? small : wide);
 
 const LIVE_MODEL = pick({ width: 148, height: 168 }, { width: 104, height: 124 });
+// the same trick the boss cards play when they open: a real render at the
+// bigger size rather than a small canvas stretched over a bigger box
+const LIVE_MODEL_OPEN = pick({ width: 232, height: 264 }, { width: 168, height: 192 });
 const BOSS_MODEL = pick({ width: 124, height: 124 }, { width: 96, height: 96 });
 // bigger canvas, not a bigger zoom: the auto-fit already shows the whole
 // model at any canvas size (its own math is independent of it), so a real
@@ -1042,6 +1393,7 @@ function buildLive(board) {
   const players = board.players || [];
   document.getElementById('ls-list').innerHTML = players.length ? players.map(p => `
     <div class="pcard${p.online ? ' on' : ''}${p.dead ? ' down' : ''}" id="pc-${p.uuid}"
+         data-realm="${p.realm || ''}"
          onclick="toggleLive('${p.uuid}')"
          onmouseenter="spin('pm-${p.uuid}', true)" onmouseleave="spin('pm-${p.uuid}', false)">
       <div class="pc-stage"><div class="pc-model" id="pm-${p.uuid}"></div></div>
@@ -1054,6 +1406,8 @@ function buildLive(board) {
           <span id="pct-${p.uuid}"></span><span id="pcd-${p.uuid}"></span>
         </div>
       </div>
+      <div class="pc-panel" id="pp-${p.uuid}"
+           onclick="event.stopPropagation()"></div>
     </div>`).join('') : '<p class="rp-none">the server has not reported anybody yet</p>';
 
   const bossCard = b => {
@@ -1076,7 +1430,9 @@ function buildLive(board) {
         </div>
         <div class="bc-mod">${b.mod.replace(/_/g, ' ')}</div>
         ${b.felled ? `
-          <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}</div>
+          <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}${
+            b.assists ? `<em class="bc-kills-assist">\u00b7 ${compact(b.assists)} assist${
+              b.assists === 1 ? '' : 's'}</em>` : ''}</div>
           <div class="bc-killers">${b.killers.map(k => `
             <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
               <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
@@ -1085,9 +1441,9 @@ function buildLive(board) {
                   title="${h.name} helped with ${h.fights} of these fights without leading one">
               <i class="bc-face"></i><b>${h.name}</b><em class="bc-assist">+${h.fights}</em>
             </span>`).join('')}</div>
-          ${fightHistory(b)}
         ` : ''}
       </div>
+      ${b.felled ? fightHistory(b) : ''}
     </div>`;
   };
 
@@ -1262,6 +1618,22 @@ const PIXEL_STAR_SVG = `<svg class="badge-star" viewBox="0 0 11 10" shape-render
 <rect x="7" y="7" width="1" height="1" class="px-b"/><rect x="8" y="7" width="1" height="1" class="px-o"/><rect x="1" y="8" width="1" height="1" class="px-o"/><rect x="2" y="8" width="1" height="1" class="px-b"/><rect x="3" y="8" width="1" height="1" class="px-s"/><rect x="4" y="8" width="1" height="1" class="px-o"/><rect x="6" y="8" width="1" height="1" class="px-o"/><rect x="7" y="8" width="1" height="1" class="px-s"/><rect x="8" y="8" width="1" height="1" class="px-b"/><rect x="9" y="8" width="1" height="1" class="px-o"/><rect x="1" y="9" width="1" height="1" class="px-o"/><rect x="2" y="9" width="1" height="1" class="px-o"/><rect x="3" y="9" width="1" height="1" class="px-o"/><rect x="7" y="9" width="1" height="1" class="px-o"/><rect x="8" y="9" width="1" height="1" class="px-o"/><rect x="9" y="9" width="1" height="1" class="px-o"/>
 </svg>`;
 
+// A hand, drawn the same way the star is: whole pixels on a grid the same
+// shape, so it sits in the row of badges as one of them rather than as a
+// glyph borrowed from somewhere else. It marks the kills a player turned up
+// for without carrying, which is a thing a star cannot say - a star is for
+// what you beat, and this is for what you helped beat.
+const PIXEL_HAND_SVG = `<svg class="badge-hand" viewBox="0 0 11 10" shape-rendering="crispEdges">
+<rect x="3" y="0" width="1" height="3" class="px-h"/><rect x="5" y="0" width="1" height="3" class="px-h"/><rect x="7" y="0" width="1" height="3" class="px-h"/>
+<rect x="3" y="3" width="5" height="1" class="px-b"/>
+<rect x="1" y="4" width="1" height="3" class="px-h"/>
+<rect x="2" y="4" width="6" height="1" class="px-b"/>
+<rect x="2" y="5" width="6" height="1" class="px-b"/>
+<rect x="2" y="6" width="6" height="1" class="px-b"/>
+<rect x="3" y="7" width="4" height="1" class="px-b"/>
+<rect x="4" y="8" width="2" height="1" class="px-s"/>
+</svg>`;
+
 // One star per tier beaten, plus a grey star for minibosses. p.bosses already
 // holds one entry per boss ID beaten, so counting entries (not summing kills)
 // is what makes a boss killed three times still worth one star. Tier 4 has no
@@ -1269,16 +1641,125 @@ const PIXEL_STAR_SVG = `<svg class="badge-star" viewBox="0 0 11 10" shape-render
 function bossBadges(p) {
   const counts = { 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
   for (const b of p.bosses || []) {
-    // a boss this player only ever helped somebody else put down is on their
-    // record, but it is not one of their own and earns no star
-    if (!b.kills) continue;
+    // A star is for having beaten the thing, and helping to bring a boss
+    // down is beating it - the Ancient Guardian took two of them the better
+    // part of seven minutes and neither was a spectator. Which of them the
+    // kill is counted against is a separate question, answered on the
+    // boss's own card and in the row below this badge; the star is not the
+    // place to relitigate it.
     if (b.category === 'miniboss') counts.mini++;
     else if (counts[b.tier] !== undefined) counts[b.tier]++;
   }
   const chip = (cls, n) => n
     ? `<span class="pc-badge ${cls}">${PIXEL_STAR_SVG}x${n}</span>` : '';
-  return [chip('t4', counts[4]), chip('t3', counts[3]), chip('t2', counts[2]), chip('t1', counts[1]), chip('mini', counts.mini)]
-    .join('');
+  // Hands lent to somebody else's kill. Last in the row and quietest in it:
+  // a star says what they have beaten, and this says only what they turned
+  // up for without carrying, which is the least of the two.
+  const lent = (p.bosses || []).reduce((n, b) => n + (b.assists || 0), 0);
+  const helped = lent
+    ? `<span class="pc-badge assist" title="Assists: helped bring down ${lent} boss${
+        lent === 1 ? '' : 'es'} without dealing the biggest share">${
+        PIXEL_HAND_SVG}x${lent}</span>`
+    : '';
+  return [chip('t4', counts[4]), chip('t3', counts[3]), chip('t2', counts[2]),
+          chip('t1', counts[1]), chip('mini', counts.mini), helped].join('');
+}
+
+// ── the world panel ────────────────────────────────────────────────────────
+// The board's numbers are all about the people on the server. This is the
+// server itself: the day it is on, the sky over it, the season the pack is
+// running, and how well the tick is holding. It sits above the player totals
+// because it is the ground all of them stand on.
+//
+// The sun, the moon and the calendar are the game's own textures rather than
+// anything drawn here - see tools/extract_world_icons.py - so what the panel
+// shows for a phase is the face a player sees in the sky for it.
+const WORLD_ICONS = '/static/minecraft/icons';
+
+// which sky the panel wears. Rain and thunder outrank the hour, because a
+// storm is what you would notice first looking out of a window.
+// The hour decides the sky and nothing else does. Weather used to replace it,
+// which meant a rainy noon was drawn as night; it is its own layer now, and so
+// is the season, so the three stack the way they do in the world.
+function skyMood(w) {
+  return w.daylight ? 'day' : 'night';
+}
+
+function skyWeather(w) {
+  if (w.weather === 'Thunder') return 'storm';
+  if (w.weather === 'Rain') return 'rain';
+  return 'clear';
+}
+
+// one reading: a small label over a value, in a slot of its own
+function worldFact(label, value, tone, hint) {
+  if (value === '' || value === null || value === undefined) return '';
+  return `<span class="lw-fact${tone ? ` ${tone}` : ''}"${
+    hint ? ` title="${hint}"` : ''}><i>${label}</i><b>${value}</b></span>`;
+}
+
+function worldPanel(w) {
+  const host = document.getElementById('ls-world');
+  if (!host) return;
+  // an export from before the world section existed, or one that could not be
+  // read: say nothing rather than a panel full of zeroes
+  if (!w || !Object.keys(w).length) {
+    host.innerHTML = '';
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+
+  const sky = w.daylight
+    ? { src: `${WORLD_ICONS}/sun.png`, alt: 'Sun', name: w.phase || 'Day' }
+    : { src: `${WORLD_ICONS}/moon_${w.moon || 0}.png`, alt: 'Moon',
+        name: w.moon_name || w.phase || 'Night' };
+
+  // the calendar face for this sub-season, when the pack names one this build
+  // knows. An unknown season gets the words and no picture, which is honest.
+  const leaf = w.sub_index >= 0
+    ? `<img class="lw-orb leaf" src="${WORLD_ICONS}/season_${
+        String(w.sub_index).padStart(2, '0')}.png" alt="${w.sub_season}">`
+    : '';
+  const soon = w.season_left
+    ? `${w.season_left} day${w.season_left === 1 ? '' : 's'}${
+        w.next_season ? ` to ${w.next_season}` : ' left'}`
+    : '';
+  const year = w.year_days
+    ? `day ${w.season_day} of ${w.year_days}`
+    : (w.season_day ? `day ${w.season_day}` : '');
+
+  host.dataset.mood = skyMood(w);
+  host.dataset.weather = skyWeather(w);
+  host.dataset.season = (w.season || '').toLowerCase();
+
+  host.innerHTML = `
+    <div class="lw-heroes">
+      <div class="lw-hero sky">
+        <img class="lw-orb" src="${sky.src}" alt="${sky.alt}">
+        <div class="lw-say">
+          <b>Day ${w.day}</b>
+          <span>${w.clock}${w.clock && sky.name ? ' · ' : ''}${sky.name}</span>
+          <em>${w.weather}</em>
+        </div>
+      </div>
+      <div class="lw-hero season">
+        ${leaf}
+        <div class="lw-say">
+          <b>${w.sub_season || w.season || '—'}</b>
+          <span>${w.season}${w.season && year ? ' · ' : ''}${year}</span>
+          <em>${soon}</em>
+          ${w.year_pct ? `<span class="lw-year" title="${
+            w.year_pct}% through the year"><i style="width:${w.year_pct}%"></i></span>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="lw-facts">
+      ${worldFact('uptime', w.uptime)}
+      ${worldFact('weather', w.weather)}
+      ${worldFact('year', w.year_pct ? `${w.year_pct}%` : '', '',
+                  w.year_days ? `day ${w.season_day} of ${w.year_days}` : '')}
+    </div>`;
 }
 
 function updateLive(board) {
@@ -1293,6 +1774,8 @@ function updateLive(board) {
     status.textContent = up === null ? '' : up ? 'ONLINE' : 'OFFLINE';
     status.className = `ls-status${up === null ? '' : up ? ' on' : ' off'}`;
   }
+  worldPanel(board.world);
+
   const tile = (label, value, hot) =>
     `<span class="ls-tile${hot ? ' hot' : ''}"><i>${label}</i><b>${value}</b></span>`;
 
@@ -1323,11 +1806,22 @@ function updateLive(board) {
     set(`pcd-${p.uuid}`, `${compact(p.deaths)} deaths`);
     const badges = document.getElementById(`pcb-${p.uuid}`);
     if (badges) badges.innerHTML = bossBadges(p);
+    // the health meter under every card: how much of them is left, and said
+    // in words as well for anyone who does not read a red bar as hearts
+    const left = p.max_health ? p.health / p.max_health : 0;
     const bar = document.getElementById(`pch-${p.uuid}`);
-    if (bar) bar.style.width =
-      `${p.max_health ? Math.round(p.health / p.max_health * 100) : 0}%`;
+    if (bar) bar.style.width = `${Math.round(left * 100)}%`;
+    const track = bar && bar.parentElement;
+    if (track) {
+      track.title = p.dead ? `${p.name} is on the respawn screen`
+        : `Health ${Math.round(p.health * 10) / 10} of ${p.max_health}`;
+    }
     const card = document.getElementById(`pc-${p.uuid}`);
-    if (card) card.classList.toggle('worst', p.deaths === worst && worst > 1);
+    if (card) {
+      card.classList.toggle('worst', p.deaths === worst && worst > 1);
+      card.classList.toggle('hurt', !p.dead && left > 0 && left <= 0.5);
+      card.classList.toggle('dying', !p.dead && left > 0 && left <= 0.25);
+    }
   }
 
   if (liveOpen) drawDrawer(board);
@@ -1336,23 +1830,26 @@ function updateLive(board) {
 
 // The full record opens under the grid rather than inside a card: a card is
 // mostly model, and there is nowhere in it to put twelve numbers.
+// The record used to open in a drawer beneath the whole grid, which meant
+// the card you clicked stayed its old size somewhere above while its numbers
+// appeared somewhere else - and with nine cards in the way, often off screen.
+// It goes in the card now, the same move a boss card makes: the card takes
+// the row, goes to the head of the section, and the player stands full size
+// beside their own numbers. No face crop in the heading any more either; the
+// model is right there, and at that size it is a better likeness than a
+// fourteen-pixel square of their scalp.
 function drawDrawer(board) {
-  const drawer = document.getElementById('ls-drawer');
-  if (!drawer) return;
+  for (const box of document.querySelectorAll('.pc-panel')) {
+    if (box.id !== `pp-${liveOpen}`) box.innerHTML = '';
+  }
   const player = (board.players || []).find(p => p.uuid === liveOpen);
-  if (!player) { drawer.className = 'ls-drawer'; drawer.innerHTML = ''; return; }
-  drawer.className = 'ls-drawer open';
+  const panel = player && document.getElementById(`pp-${player.uuid}`);
+  if (!panel) return;
   const state = player.dead ? 'respawning' : player.online ? 'online' : 'offline';
-  drawer.innerHTML = `
-    <div class="lsd-head">
-      <span class="lsd-face"${player.skin ? ` style="--skin:url('${player.skin}')"` : ''}></span>
-      <span class="lsd-id">
-        <span class="lsd-who">${player.name}</span>
-        <span class="lsd-sub">SERVER RECORD <i class="lsd-pill ${state}">${state}</i></span>
-      </span>
-      <button class="rp-close" onclick="toggleLive('${player.uuid}')" aria-label="Close">
-        <span class="icon circle"></span><span class="lbl">CLOSE</span>
-      </button>
+  panel.innerHTML = `
+    <div class="pp-head">
+      <span class="pp-title">SERVER RECORD</span>
+      <i class="lsd-pill ${state}">${state}</i>
     </div>
     ${livePanel(player)}`;
 }
@@ -1393,15 +1890,30 @@ function toggleBoss(key) {
 }
 
 function toggleLive(uuid) {
+  const previous = liveOpen;
   liveOpen = liveOpen === uuid ? null : uuid;
   for (const card of document.querySelectorAll('.pcard')) {
     card.classList.toggle('open', card.id === `pc-${liveOpen}`);
   }
   drawDrawer(liveBoard);
+
+  // a model is rendered at a fixed canvas size, so each state gets its own
+  // render rather than one bitmap stretched or shrunk over the other's box
+  const redraw = (id, opts) => {
+    const player = (liveBoard.players || []).find(p => p.uuid === id);
+    const box = document.getElementById(`pm-${id}`);
+    if (player && player.skin && box && typeof buildPlayerModel === 'function') {
+      buildPlayerModel(box, { skin: player.skin, slim: player.slim, ...opts });
+    }
+  };
+  if (previous && previous !== liveOpen) redraw(previous, LIVE_MODEL());
   if (liveOpen) {
-    const drawer = document.getElementById('ls-drawer');
-    if (drawer) requestAnimationFrame(() =>
-      drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    redraw(liveOpen, LIVE_MODEL_OPEN());
+    // the card has left its place in the grid for the head of the section,
+    // which on nine players is a long way from where it was clicked
+    const card = document.getElementById(`pc-${liveOpen}`);
+    if (card) requestAnimationFrame(() =>
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
   }
 }
 

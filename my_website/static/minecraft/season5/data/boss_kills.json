@@ -1,8 +1,8 @@
 {
   "Zerobarbecue117": {
     "uuid": "6694d52c-0985-4a24-9789-05df23c45059",
-    "bossesDefeated": 2.0,
-    "totalKills": 2.0,
+    "bossesDefeated": 9.0,
+    "totalKills": 10.0,
     "minibosses": {
       "illagerinvasion:invoker": {
         "name": "Invoker",
@@ -17,22 +17,87 @@
         "first": "2026-08-28T02:00:24.985Z",
         "kills": 1.0,
         "last": "2026-08-28T02:00:24.985Z"
+      },
+      "wkcr:king": {
+        "name": "King",
+        "tier": 0.0,
+        "first": "2026-08-28T03:03:16.143Z",
+        "kills": 2.0,
+        "last": "2026-08-28T03:03:21.807Z"
+      },
+      "majruszsdifficulty:tank": {
+        "name": "Tank",
+        "tier": 0.0,
+        "first": "2026-08-28T03:07:35.496Z",
+        "kills": 1.0,
+        "last": "2026-08-28T03:07:35.496Z"
+      },
+      "mutantmore:mutant_husk": {
+        "name": "Mutant Husk",
+        "tier": 0.0,
+        "first": "2026-08-28T03:15:24.845Z",
+        "kills": 1.0,
+        "last": "2026-08-28T03:15:24.845Z"
+      },
+      "minecraft:ravager": {
+        "name": "Ravager",
+        "tier": 0.0,
+        "first": "2026-08-28T05:39:56.142Z",
+        "kills": 1.0,
+        "last": "2026-08-28T05:39:56.142Z"
+      },
+      "minecraft:evoker": {
+        "name": "Evoker",
+        "tier": 0.0,
+        "first": "2026-08-29T04:27:15.758Z",
+        "kills": 1.0,
+        "last": "2026-08-29T04:27:15.758Z"
+      },
+      "mutantmonsters:mutant_skeleton": {
+        "name": "Mutant Skeleton",
+        "tier": 0.0,
+        "first": "2026-08-29T04:31:40.504Z",
+        "kills": 1.0,
+        "last": "2026-08-29T04:31:40.504Z"
       }
     },
-    "bosses": {}
+    "bosses": {
+      "legendary_monsters:ancient_guardian": {
+        "name": "Ancient Guardian",
+        "tier": 1.0,
+        "first": "2026-08-29T03:54:53.550Z",
+        "kills": 1.0,
+        "last": "2026-08-29T03:54:53.550Z"
+      }
+    }
   },
   "mysteriousmex21": {
     "uuid": "1c7c89c8-3d83-456a-a3fe-6933ab1d2cd0",
-    "bossesDefeated": 2.0,
-    "totalKills": 7.0,
-    "bosses": {},
+    "bossesDefeated": 5.0,
+    "totalKills": 17.0,
+    "bosses": {
+      "legendary_monsters:ancient_guardian": {
+        "name": "Ancient Guardian",
+        "tier": 1.0,
+        "first": "2026-08-29T03:54:53.549Z",
+        "kills": 1.0,
+        "last": "2026-08-29T03:54:53.549Z"
+      },
+      "twilightforest:naga": {
+        "name": "Naga",
+        "tier": 1.0,
+        "first": "2026-08-29T06:30:18.732Z",
+        "kills": 8.0,
+        "last": "2026-08-29T07:36:06.448Z"
+      }
+    },
     "minibosses": {
       "fromtheshadows:nehemoth": {
         "name": "Nehemoth",
         "tier": 0.0,
         "first": "2026-08-27T23:56:36.741Z",
-        "kills": 4.0,
-        "last": "2026-08-28T02:25:18.145Z"
+        "kills": 6.0,
+        "last": "2026-08-29T06:15:57.187Z"
       },
       "fromtheshadows:bulldrogioth": {
         "name": "Bulldrogioth",
@@ -40,7 +105,52 @@
         "first": "2026-08-28T01:21:19.123Z",
         "kills": 1.0,
         "last": "2026-08-28T01:21:19.123Z"
+      },
+      "minecraft:evoker": {
+        "name": "Evoker",
+        "tier": 0.0,
+        "first": "2026-08-29T04:27:15.758Z",
+        "kills": 1.0,
+        "last": "2026-08-29T04:27:15.758Z"
       }
     }
+  },
+  "melvin0czyk": {
+    "uuid": "02433a22-8588-4003-bae0-9deded0cde52",
+    "bossesDefeated": 2.0,
+    "totalKills": 5.0,
+    "bosses": {
+      "twilightforest:naga": {
+        "name": "Naga",
+        "tier": 1.0,
+        "first": "2026-08-28T07:05:49.248Z",
+        "kills": 4.0,
+        "last": "2026-08-29T06:47:53.220Z"
+      }
+    },
+    "minibosses": {
+      "minecraft:ravager": {
+        "name": "Ravager",
+        "tier": 0.0,
+        "first": "2026-08-28T05:39:56.141Z",
+        "kills": 1.0,
+        "last": "2026-08-28T05:39:56.141Z"
+      }
+    }
+  },
+  "blindhustler": {
+    "uuid": "8c3c2ce5-c48e-40e3-99fd-a6d83fba4d40",
+    "bossesDefeated": 1.0,
+    "totalKills": 2.0,
+    "bosses": {
+      "twilightforest:naga": {
+        "name": "Naga",
+        "tier": 1.0,
+        "first": "2026-08-29T06:27:33.745Z",
+        "kills": 2.0,
+        "last": "2026-08-29T06:44:33.225Z"
+      }
+    },
+    "minibosses": {}
   }
 }

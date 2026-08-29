@@ -20,10 +20,24 @@
       "totalCaught": 0.0,
       "legendaryCaught": 0.0,
       "fish": {}
+    },
+    "melvin0czyk": {
+      "uuid": "02433a22-8588-4003-bae0-9deded0cde52",
+      "caught": 0.0,
+      "totalCaught": 0.0,
+      "legendaryCaught": 0.0,
+      "fish": {}
+    },
+    "Slay_dat_box69": {
+      "uuid": "b57b5d86-23a5-4fbc-9a42-c33be87887ed",
+      "caught": 0.0,
+      "totalCaught": 0.0,
+      "legendaryCaught": 0.0,
+      "fish": {}
     }
   },
   "rarities": [
     "LEGENDARY"
   ],
-  "updated": "2026-08-28T02:15:33.833Z"
+  "updated": "2026-08-29T07:24:09.235Z"
 }

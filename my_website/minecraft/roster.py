@@ -5,6 +5,8 @@ the server. Names and skins come from static/minecraft/skins/players.json,
 which tools/fetch_player_skins.py builds from the Mojang API.
 """
 
+import collections
+import colorsys
 import json
 import os
 
@@ -249,11 +251,86 @@ def read_player(dat_path, uuid, profile, textures, icons=None):
     }
 
 
+# ── a player's own colour ──────────────────────────────────────────────────
+
+TONE_BINS = 24                 # fifteen degrees of hue apiece
+_tones = {}                    # path, mtime -> the colour read off it
+
+
+def _tone(path):
+    """The one colour a skin is most obviously wearing.
+
+    Not the commonest pixel, which is nearly always the black of an outline
+    or the grey between two real colours. Every pixel with a colour worth the
+    name is dropped into a bin by hue and the fullest bin wins, scored with
+    its neighbours alongside it so a gradient - a skin made of fire runs from
+    red through orange to amber - counts as the one colour a reader sees
+    rather than being split three ways and losing to a flat patch of
+    something else.
+
+    Two things this gets wrong if done the obvious way, both learned from the
+    skins on this server: weighting by how vivid a pixel is hands the answer
+    to a few bright buckles over the whole suit of dark armour underneath
+    them, and capping the brightness to keep white out throws away every
+    fully saturated colour there is, since a pure hue is as bright as white.
+    Area decides it, and white is kept out by having no saturation at all.
+    """
+    try:
+        stamp = os.path.getmtime(path)
+    except OSError:
+        return None
+    held = _tones.get(path)
+    if held and held[0] == stamp:
+        return held[1]
+    try:
+        from PIL import Image
+        with Image.open(path) as art:
+            pixels = list(art.convert('RGBA').getdata())
+    except Exception:                                        # noqa: BLE001
+        _tones[path] = (stamp, None)
+        return None
+
+    fill = collections.defaultdict(int)
+    sums = collections.defaultdict(lambda: [0.0, 0.0, 0.0])
+    for red, green, blue, alpha in pixels:
+        if alpha < 200:
+            continue
+        hue, sat, val = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
+        if val < 0.12 or sat < 0.18:      # shadow, outline, and every grey
+            continue
+        seat = int(hue * TONE_BINS) % TONE_BINS
+        fill[seat] += 1
+        for i, channel in enumerate((red, green, blue)):
+            sums[seat][i] += channel
+    if not fill:
+        _tones[path] = (stamp, None)
+        return None
+
+    score = {seat: n + 0.5 * fill.get((seat - 1) % TONE_BINS, 0)
+                     + 0.5 * fill.get((seat + 1) % TONE_BINS, 0)
+             for seat, n in fill.items()}
+    won = max(score, key=score.get)
+    red, green, blue = (c / fill[won] for c in sums[won])
+    hue, sat, val = colorsys.rgb_to_hsv(red / 255, green / 255, blue / 255)
+    # A skin is looked at in daylight and this is going on a black chart, so
+    # whatever it comes to is brought up to somewhere it can be seen. The hue
+    # is what identifies the player; the rest is only legibility.
+    red, green, blue = colorsys.hsv_to_rgb(hue, min(1, max(sat, 0.52)),
+                                           min(1, max(val, 0.80)))
+    found = '#%02x%02x%02x' % (int(red * 255), int(green * 255), int(blue * 255))
+    _tones[path] = (stamp, found)
+    return found
+
+
 def faces():
     """uuid -> the head we have on file, for anything that draws a player."""
-    return {uuid: {'skin': f'{SKIN_DIR}/{p["skin"]}' if p.get('skin') else None,
-                   'slim': p.get('slim', False)}
-            for uuid, p in _load_json(PLAYERS_JSON).items()}
+    out = {}
+    for uuid, p in _load_json(PLAYERS_JSON).items():
+        skin = f'{SKIN_DIR}/{p["skin"]}' if p.get('skin') else None
+        art = os.path.join(_STATIC, 'skins', p['skin']) if p.get('skin') else None
+        out[uuid] = {'skin': skin, 'slim': p.get('slim', False),
+                     'tone': _tone(art) if art else None}
+    return out
 
 
 def _from_live(uuid, info, profile):
