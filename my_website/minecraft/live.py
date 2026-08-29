@@ -225,13 +225,19 @@ def _bosses(record, credited=None, catalogue=None):
             'tier':     _int(entry.get('tier')),
             'category': 'miniboss' if boss_id in mini else 'boss',
             'kills':    _int(entry.get('kills')),
+            'assists':  0,
             'last':     (entry.get('last') or '')[:10],
         })
     held = {b['id']: b for b in out}
     for boss_id, tally in (credited or {}).items():
         boss = held.get(boss_id)
         if boss:
-            boss['kills'] = max(boss['kills'], tally['kills'])
+            # NOT max. The counter gives a player a kill for every fight they
+            # were in, helping included, so its number is the one that needs
+            # correcting: where the log knows this player and this boss, what
+            # the log says they led is what they led.
+            boss['kills'] = tally['kills']
+            boss['assists'] = tally['assists']
             boss['last'] = max(boss['last'], tally['last'])
             continue
         # a fight the kill counter never recorded: the log names the boss and
@@ -244,13 +250,15 @@ def _bosses(record, credited=None, catalogue=None):
             'tier':     _int(seen.get('tier')),
             'category': seen.get('category') or 'boss',
             'kills':    tally['kills'],
+            'assists':  tally['assists'],
             'last':     tally['last'],
         })
     # the merge above leans on ISO comparing correctly, so the reading is only
     # made readable once there is nothing left to compare
     for boss in out:
         boss['last'] = _date(boss['last'])
-    out.sort(key=lambda b: (-b['tier'], -b['kills'], b['name']))
+    # what they led leads, and what they only lent a hand to follows
+    out.sort(key=lambda b: (not b['kills'], -b['tier'], -b['kills'], b['name']))
     return out
 
 
@@ -387,11 +395,16 @@ def _fight_history(entries):
     out = []
     for entry in entries or []:
         max_health = _int(entry.get('maxHealth'))
+        # sorted by what each took off the boss, so the first of them is the
+        # one the kill belongs to - see _fight_credits for why that is the
+        # biggest share rather than the last blow
         participants = sorted(
             ({'name': name, 'damage': _float(p.get('damage')),
               'share': round((p.get('share') or 0) * 100)}
              for name, p in (entry.get('participants') or {}).items()),
-            key=lambda p: -p['share'])
+            key=lambda p: (-p['share'], -p['damage'], p['name']))
+        for place, player in enumerate(participants):
+            player['lead'] = place == 0
         # A share is a fraction of the boss's own max health, not of what the
         # tracked players dealt between them, so whatever the participants do
         # not add up to is health the fight took off the boss and credited to
@@ -410,6 +423,9 @@ def _fight_history(entries):
             'duration':   _span(_int(entry.get('durationSeconds'))),
             'finisher':   entry.get('finisher') or '',
             'weapon':     _label(entry.get('finisherWeapon')),
+            # whose kill this is, which the finisher only sometimes also is
+            'lead':       participants[0]['name'] if participants else
+                          (entry.get('finisher') or ''),
             'participants': participants,
             'untracked_share': untracked,
         })
@@ -420,20 +436,23 @@ def _fight_history(entries):
 
 
 def _fight_credits(fights_raw):
-    """What boss_fights.json alone knows about who has put what down.
+    """Who the fight log says led each kill, and who was there helping.
 
-    A fight is a kill by any reading: it names the boss, the moment, and
-    whoever struck last. boss_kills.json is the only place the roster used to
-    look, so a fight the kill counter missed left the boss standing on the
-    board with its own fight sitting unread in the file next to it. This
-    turns the log into the same shape the kill counter is read in, so the two
-    can be weighed against each other.
+    A boss goes down once, and the kill counter records that against every
+    player who was in on it - so a party of two reads as two kills of the
+    same mob. The Ancient Guardian went down once and the board said twice.
+    The log counts fights rather than players: one entry, one kill.
 
-    A kill is credited to the finisher, the same way boss_kills.json credits
-    it - the fight itself belongs to everyone in the participants list, and
-    that is what the fight history under the card is for.
+    It also holds the thing the counter never did, which is how the damage
+    split. The kill goes to whoever took the most off the boss, not to
+    whoever landed the last blow - often the same player and sometimes not.
+    That same Ancient Guardian was finished off with a loaf of bread by the
+    one who had dealt the smaller half of its health. Everybody else in the
+    fight is recorded as having helped: a real thing to have done and worth
+    saying, but not a kill of their own.
 
-    Returns boss id -> {kills, killers {name -> {kills, last}}, first, last}.
+    Returns boss id -> {kills, leads {name -> {kills, last}},
+                        helped {name -> {fights, last}}, first, last}.
     """
     # the file is server-fed and read straight off disk, so a run that finds
     # something other than the log where the log should be reports no fights
@@ -444,29 +463,53 @@ def _fight_credits(fights_raw):
     for boss_id, entries in fights_raw.items():
         if not isinstance(entries, list):
             continue
-        seen = out.setdefault(boss_id, {'kills': 0, 'killers': {},
+        seen = out.setdefault(boss_id, {'kills': 0, 'leads': {}, 'helped': {},
                                         'first': '', 'last': ''})
         for entry in entries:
             when = (entry.get('time') or '')[:10]
             seen['kills'] += 1
-            finisher = entry.get('finisher') or ''
-            if finisher:
-                who = seen['killers'].setdefault(finisher,
-                                                 {'kills': 0, 'last': ''})
-                who['kills'] += 1
-                who['last'] = max(who['last'], when)
+            # damage and then name after the share itself, so two players who
+            # round to the same percent still land in a settled order rather
+            # than whichever way the file happened to be written
+            ranked = sorted(
+                ((name, _float((p or {}).get('share')),
+                  _float((p or {}).get('damage')))
+                 for name, p in (entry.get('participants') or {}).items()),
+                key=lambda row: (-row[1], -row[2], row[0]))
+            # a fight with nobody named in it still had somebody swing last
+            if not ranked and entry.get('finisher'):
+                ranked = [(entry['finisher'], 0.0, 0.0)]
+            for place, (name, _share, _dealt) in enumerate(ranked):
+                bucket, field = (('leads', 'kills') if place == 0
+                                 else ('helped', 'fights'))
+                tally = seen[bucket].setdefault(name, {field: 0, 'last': ''})
+                tally[field] += 1
+                tally['last'] = max(tally['last'], when)
             if when:
                 seen['first'] = min(seen['first'] or when, when)
                 seen['last'] = max(seen['last'], when)
     return out
 
 
-def _by_finisher(credits):
-    """The same credits the other way up: player name -> boss id -> tally."""
+def _by_player(credits):
+    """The same credits the other way up: name -> boss id -> what they did.
+
+    Both halves of it, kept apart: the fights a player led, which are their
+    kills, and the ones they only helped with, which are not. A record that
+    counted the second as the first is what had a player who never led an
+    Ancient Guardian fight showing one on their own card - see
+    _fight_credits.
+    """
     out = {}
     for boss_id, seen in credits.items():
-        for name, tally in seen['killers'].items():
-            out.setdefault(name, {})[boss_id] = tally
+        for name, tally in seen['leads'].items():
+            out.setdefault(name, {})[boss_id] = {
+                'kills': tally['kills'], 'assists': 0, 'last': tally['last']}
+        for name, tally in seen['helped'].items():
+            row = out.setdefault(name, {}).setdefault(
+                boss_id, {'kills': 0, 'assists': 0, 'last': ''})
+            row['assists'] = tally['fights']
+            row['last'] = max(row['last'], tally['last'])
     return out
 
 
@@ -523,7 +566,7 @@ def load(season_path):
 
     # what the fight log credits each player with, for the fights the kill
     # counter did not record - see _fight_credits
-    finished  = _by_finisher(_fight_credits(_load(os.path.join(data_dir, FIGHTS))))
+    finished  = _by_player(_fight_credits(_load(os.path.join(data_dir, FIGHTS))))
     catalogue = _catalogue()
 
     updated = players.get('updated', '')
@@ -582,12 +625,15 @@ def load(season_path):
             'seen':        _span(behind) if behind else 'NOW',
             'behind':      behind,
             'bosses':      beaten,
-            # the export's own totals count only what boss_kills.json holds,
-            # so a fight it missed would leave the header under the list
-            # disagreeing with the list itself
-            'boss_kills':  max(_int(boss.get('totalKills')),
-                               sum(b['kills'] for b in beaten)),
-            'boss_types':  max(_int(boss.get('bossesDefeated')), len(beaten)),
+            # The export's own totals have the same fault its rows do - a
+            # player is credited for every fight they were in, helping
+            # included - so the corrected rows are added up instead, and the
+            # export is only a floor for a record with no rows at all to sum.
+            # Otherwise the header over the list disagrees with the list.
+            'boss_kills':  sum(b['kills'] for b in beaten) if beaten
+                           else _int(boss.get('totalKills')),
+            'boss_types':  sum(1 for b in beaten if b['kills']) if beaten
+                           else _int(boss.get('bossesDefeated')),
             'fieldguide':  _fieldguide(field),
             'fishing':     _fish(rod, covers),
             'recorded':    _moment(raw.get('recorded') or updated),
@@ -640,9 +686,14 @@ def bosses(season_path, faces=None):
             kills = _int(entry.get('kills'))
             if kills <= 0:
                 continue
-            hit = scored.setdefault(boss_id, {'killers': [], 'kills': 0,
-                                              'first': '', 'last': '', 'tier': 0})
-            hit['kills'] += kills
+            hit = scored.setdefault(boss_id, {'killers': [], 'helpers': [],
+                                              'kills': 0, 'first': '',
+                                              'last': '', 'tier': 0})
+            # NOT a sum. The counter records one kill against every player who
+            # was in on a fight, so adding them up turns a party of two into
+            # two kills of the same mob. Whoever was there for the most of
+            # them is how many times it has actually gone down.
+            hit['kills'] = max(hit['kills'], kills)
             hit['tier'] = max(hit['tier'], _int(entry.get('tier')))
             hit['killers'].append({
                 'name':   record.get('name') or player,
@@ -659,31 +710,43 @@ def bosses(season_path, faces=None):
                 if not hit[key] or (when < hit[key] if key == 'first' else when > hit[key]):
                     hit[key] = when
 
-    # boss_fights.json is the second half of the same record, and either half
-    # can miss a fight the other caught: the Nehemoth went down with a fight
-    # written for it and no kill counted, which left it on the board as a mob
-    # nobody had touched with its own kill sitting in the file beside it. Both
-    # are read, and where they hold the same boss the fuller one is believed -
-    # they are counting the same fights, so adding them would double each one
-    # they both saw.
+    # boss_fights.json is the other half of the record, and the only half
+    # that can tell a kill from a hand in somebody else's. Where it covers a
+    # boss it decides who led: a player the log knows only as a helper is
+    # moved out of the killers, and one it does not know at all keeps
+    # whatever the counter gave them, so a log that only started recording
+    # halfway through a season does not erase what came before it.
     who = _uuids(_load(os.path.join(season_path, DATA_DIR, PLAYERS)), raw)
     for boss_id, seen in _fight_credits(fights_raw).items():
-        hit = scored.setdefault(boss_id, {'killers': [], 'kills': 0,
-                                          'first': '', 'last': '', 'tier': 0})
-        hit['kills'] = max(hit['kills'], seen['kills'])
-        held = {killer['name']: killer for killer in hit['killers']}
-        for name, tally in seen['killers'].items():
-            killer = held.get(name)
-            if killer:
-                killer['kills'] = max(killer['kills'], tally['kills'])
-                killer['last'] = max(killer['last'], tally['last'])
-                continue
-            hit['killers'].append({'name': name,
-                                   # a name is all the log carries, and a
-                                   # killer with no uuid has no face
-                                   'uuid': who.get(name) or name,
-                                   'kills': tally['kills'],
-                                   'last': tally['last']})
+        hit = scored.setdefault(boss_id, {'killers': [], 'helpers': [],
+                                          'kills': 0, 'first': '',
+                                          'last': '', 'tier': 0})
+        # The counter's own numbers include the fights a player only helped
+        # with - the Naga had eleven fights and the counter's three rows added
+        # to fourteen - so where the log knows a player it replaces their
+        # count rather than being weighed against it. A player the log has
+        # never heard of keeps what the counter gave them, so a log that only
+        # began recording halfway through a season erases nothing.
+        hit['kills'] = max(hit['kills'], seen['kills']) \
+            if not seen['kills'] else seen['kills']
+        logged = set(seen['leads']) | set(seen['helped'])
+        hit['killers'] = [k for k in hit['killers'] if k['name'] not in logged]
+
+        for name, tally in seen['leads'].items():
+            hit['killers'].append({
+                'name': name,
+                # a name is all the log carries, and a killer with no uuid
+                # has no face to put beside it
+                'uuid': who.get(name) or name,
+                'kills': tally['kills'], 'last': tally['last']})
+
+        for name, tally in seen['helped'].items():
+            if name in seen['leads']:
+                continue                     # led one fight, helped another
+            hit['helpers'].append({
+                'name': name, 'uuid': who.get(name) or name,
+                'fights': tally['fights'], 'last': tally['last']})
+
         for key in ('first', 'last'):
             when = seen[key]
             if when and (not hit[key] or
@@ -694,11 +757,15 @@ def bosses(season_path, faces=None):
     for boss in known:
         hit = scored.get(boss['id'])
         killers = sorted(hit['killers'], key=lambda k: -k['kills']) if hit else []
-        for killer in killers:
-            killer.update((faces or {}).get(killer['uuid'], {}))
+        # whoever was in on a kill without leading it: not a killer of this
+        # boss, but not nobody either
+        helpers = sorted(hit.get('helpers') or [],
+                         key=lambda h: -h['fights']) if hit else []
+        for who in killers + helpers:
+            who.update((faces or {}).get(who['uuid'], {}))
             # the two files have finished being weighed against each other by
             # here, so the ISO the weighing needed can become the reading
-            killer['last'] = _date(killer['last'])
+            who['last'] = _date(who['last'])
         out.append({
             'key':     boss['key'],
             'id':      boss['id'],
@@ -718,6 +785,7 @@ def bosses(season_path, faces=None):
             'felled':  bool(hit),
             'kills':   hit['kills'] if hit else 0,
             'killers': killers,
+            'helpers': helpers,
             'first':   _date(hit['first']) if hit else '',
             'last':    _date(hit['last']) if hit else '',
             # only a felled boss has fights worth reading, but an unfelled

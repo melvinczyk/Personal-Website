@@ -451,11 +451,16 @@ function livePanel(p) {
       <div class="lb-head"><span>BOSSES</span><b>${L.boss_kills} KILL${L.boss_kills === 1 ? '' : 'S'}</b></div>
       ${L.bosses.map(b => {
         const cls = b.category === 'miniboss' ? 'mini' : `t${b.tier}`;
-        return `<span class="lb-row">
+        // a row with no kills on it is one they only ever helped with: the
+        // count would read "x0", which is not what happened
+        const helped = b.assists ? `<em class="lb-assist">+${b.assists}</em>` : '';
+        return `<span class="lb-row${b.kills ? '' : ' assisted'}">
           <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
           <span class="lb-main">
-            <span class="lb-top"><b>${b.name}</b><em>x${b.kills}</em></span>
-            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}</i><u>${b.last}</u></span>
+            <span class="lb-top"><b>${b.name}</b>${
+              b.kills ? `<em>x${b.kills}</em>` : ''}${helped}</span>
+            <span class="lb-sub"><i>${b.category === 'miniboss' ? 'MINIBOSS' : `TIER ${b.tier}`}${
+              b.kills ? '' : ' \u00b7 HELPED'}</i><u>${b.last}</u></span>
           </span>
         </span>`;
       }).join('')}
@@ -763,13 +768,16 @@ function compact(n) {
 // is grouped under whoever landed the last blow now, one line per fight, and
 // each player's run of them folds away on its own.
 
-// Fights in the order they arrive - newest first - collected under their
-// finisher, so a player's own run stays in one block and the blocks
-// themselves stay in most-recent-first order.
-function byFinisher(fights) {
+// Fights in the order they arrive - newest first - collected under whoever
+// the kill belongs to, so a player's own run stays in one block and the
+// blocks themselves stay in most-recent-first order. That is the player who
+// took the most off the boss rather than the one who landed the last blow:
+// the Ancient Guardian was finished with a loaf of bread by the one who had
+// dealt the smaller half of its health, and the kill is not theirs.
+function byLead(fights) {
   const groups = [], held = {};
   for (const fight of fights) {
-    const who = fight.finisher || 'unknown';
+    const who = fight.lead || fight.finisher || 'unknown';
     if (!held[who]) groups.push(held[who] = { name: who, fights: [] });
     held[who].fights.push(fight);
   }
@@ -794,16 +802,28 @@ function shareBar(fight) {
 // A row is one fight at a glance. What it cannot hold - the moment in full,
 // and what each player actually dealt rather than only their share of it -
 // waits underneath until the row is asked for it.
-function fightDetail(fight) {
+function fightDetail(fight, faces) {
   const cell = (label, value) =>
     `<span class="bcf-cell"><i>${label}</i><b>${value}</b></span>`;
-  const part = (name, pct, dmg, cls) => `
+  // A name is who; a face is which of them. Every other list of players on
+  // this page - the killer chips, the group headers, the record's own
+  // heading - leads with the head off their skin, and this one read as the
+  // odd list out for not doing the same.
+  const part = (name, pct, dmg, cls, skin) => `
     <div class="bcf-part${cls === 'discard' ? ' untracked' : ''}">
+      ${cls === 'discard' ? '<i class="bcf-noface" aria-hidden="true"></i>'
+        : `<i class="bc-face"${skin ? ` style="--skin:url('${skin}')"` : ''}></i>`}
       <span class="bcf-pname">${name}</span>
       <span class="bcf-dmg">${dmg}</span>
       <span class="bcf-bar"><span class="bcf-seg ${cls}" style="width:${pct}%"></span></span>
       <span class="bcf-pct">${pct}%</span>
     </div>`;
+
+  // The rows above are ordered by share, which is what decides whose kill a
+  // fight was. Opened up, the question is a different one - who actually hit
+  // it hardest - so the split is ordered by the damage itself. The two agree
+  // most of the time and the times they do not are the interesting ones.
+  const dealt = [...fight.participants].sort((a, b) => b.damage - a.damage);
 
   return `
     <div class="bcf-detail">
@@ -814,16 +834,16 @@ function fightDetail(fight) {
         ${cell('FINISHING BLOW', fight.weapon || '\u2014')}
       </div>
       <div class="bcf-split">
-        ${fight.participants.map(p => part(
+        ${dealt.map(p => part(
             p.name, p.share, `${compact(Math.round(p.damage))} dmg`,
-            shareTier(p.share))).join('')}
+            shareTier(p.share), (faces || {})[p.name])).join('')}
         ${fight.untracked_share ? part(
             'Untracked', fight.untracked_share, 'the world', 'discard') : ''}
       </div>
     </div>`;
 }
 
-function fightRow(fight, owner, id) {
+function fightRow(fight, owner, id, faces) {
   const mine = fight.participants.find(p => p.name === owner);
   const others = fight.participants.filter(p => p.name !== owner);
   return `
@@ -840,9 +860,9 @@ function fightRow(fight, owner, id) {
         <span class="bcf-pct">${mine ? mine.share : 0}%</span>
         <span class="bcf-caret"></span>
       </div>
-      ${others.length ? `<div class="bcf-with">with ${others.map(p =>
+      ${others.length ? `<div class="bcf-with">helped by ${others.map(p =>
         `<b>${p.name}</b> ${p.share}%`).join(' \u00b7 ')}</div>` : ''}
-      ${fightDetail(fight)}
+      ${fightDetail(fight, faces)}
     </div>`;
 }
 
@@ -874,11 +894,15 @@ function fightHistory(boss) {
       <div class="bcf-empty">no fight on record</div>
     </div>`;
   }
-  // the killer chips above already carry each player's face; the same skin
-  // serves the group header rather than being looked up a second way
+  // The chips above already carry each player's face; the same skins serve
+  // the group headers and the head beside every name in a fight's detail,
+  // rather than being looked up a second way. Helpers are in it too - they
+  // are named in the details as often as the killers are.
   const faces = {};
-  for (const killer of boss.killers || []) faces[killer.name] = killer.skin || '';
-  const groups = byFinisher(fights);
+  for (const who of [...(boss.killers || []), ...(boss.helpers || [])]) {
+    faces[who.name] = who.skin || '';
+  }
+  const groups = byLead(fights);
   // an id a click can name, unique across the page: the grouping reorders the
   // fights, so a counter that runs over the groups as they are drawn is what
   // keeps one row's id from being another row's
@@ -892,7 +916,7 @@ function fightHistory(boss) {
           groups.length > 1 ? ` \u00b7 ${groups.length} players` : ''}</em>
       </div>
       <div class="bcf-groups">${groups.map(group => `
-        <div class="bcf-group">
+        <div class="bcf-group shut">
           <button type="button" class="bcf-head"
                   onclick="event.stopPropagation();toggleFightGroup(this)">
             <i class="bc-face"${faces[group.name] ? ` style="--skin:url('${faces[group.name]}')"` : ''}></i>
@@ -901,7 +925,7 @@ function fightHistory(boss) {
             <span class="bcf-caret"></span>
           </button>
           <div class="bcf-rows">${group.fights.map(f =>
-            fightRow(f, group.name, `${boss.key}-${seen++}`)).join('')}</div>
+            fightRow(f, group.name, `${boss.key}-${seen++}`, faces)).join('')}</div>
         </div>`).join('')}</div>
     </div>`;
 }
@@ -1056,6 +1080,10 @@ function buildLive(board) {
           <div class="bc-killers">${b.killers.map(k => `
             <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
               <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
+            </span>`).join('')}${(b.helpers || []).map(h => `
+            <span class="bc-killer helper"${h.skin ? ` style="--skin:url('${h.skin}')"` : ''}
+                  title="${h.name} helped with ${h.fights} of these fights without leading one">
+              <i class="bc-face"></i><b>${h.name}</b><em class="bc-assist">+${h.fights}</em>
             </span>`).join('')}</div>
           ${fightHistory(b)}
         ` : ''}
@@ -1241,6 +1269,9 @@ const PIXEL_STAR_SVG = `<svg class="badge-star" viewBox="0 0 11 10" shape-render
 function bossBadges(p) {
   const counts = { 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
   for (const b of p.bosses || []) {
+    // a boss this player only ever helped somebody else put down is on their
+    // record, but it is not one of their own and earns no star
+    if (!b.kills) continue;
     if (b.category === 'miniboss') counts.mini++;
     else if (counts[b.tier] !== undefined) counts[b.tier]++;
   }

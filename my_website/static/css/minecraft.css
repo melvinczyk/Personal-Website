@@ -1182,6 +1182,18 @@ body::after { display: none; }
 }
 .bc-killer em { font-style: normal; color: var(--mc-faint); flex: none; }
 
+/* Somebody who was in on a kill without leading it. The kill goes to whoever
+   took the most off the boss, so a card can carry two kinds of name: the one
+   it belongs to and the one who was there. They read apart at a glance -
+   dimmer, and a "+2" where a killer has a "2x" - and the count is a real
+   reading rather than a badge, so it says how much helping was done. */
+.bc-killer.helper { opacity: .72; }
+.bc-killer.helper .bc-face { filter: grayscale(.5); }
+.bc-killer.helper b { font-style: italic; }
+/* written to out-weigh .bc-killer em, which is the same reading in the same
+   place and would otherwise grey this one out with the rest */
+.bc-killer em.bc-assist { color: var(--mc-sky); }
+
 /* a felled boss is worth clicking - its own card stretches across the grid
    and turns its narrow model+kills column and a fight-history list side by
    side, the same "pull it open where it stands" move the star badges' card
@@ -1401,17 +1413,27 @@ body::after { display: none; }
 /* one strip per player rather than the row's single tiled one: the row asks
    how the boss was split, this asks what each of them did to it */
 .bcf-split { display: flex; flex-direction: column; gap: 4px; }
+/* Wraps for the same reason the row above it does: how much room this has
+   is the card's business, not the window's, and a column that may shrink to
+   nothing shrank "melvin0czyk" to "m". Each reading keeps a floor and the
+   line breaks under it. */
 .bcf-part {
-  display: flex; align-items: center; gap: 9px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 3px 7px;
   font-size: 12px; color: var(--mc-text);
 }
+/* the split's own heads, the same crop the killer chips use. The world's
+   share keeps the space without a face in it, so the names below it stay in
+   the same column rather than stepping left for the one row that is not a
+   player. */
+.bcf-part .bc-face { width: 15px; height: 15px; }
+.bcf-noface { width: 15px; height: 15px; flex: none; }
 .bcf-pname {
-  flex: 1 1 88px; min-width: 0;
+  flex: 1 1 88px; min-width: 76px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* the one figure the export carries that nothing on the row had room for */
 .bcf-dmg { flex: none; width: 74px; text-align: right; color: var(--mc-gold); }
-.bcf-part .bcf-bar { flex: 2 1 80px; height: 10px; }
+.bcf-part .bcf-bar { flex: 1 1 110px; min-width: 90px; height: 10px; }
 .bcf-part .bcf-pct { color: var(--mc-text); }
 /* the world's own share of the kill is not a player and does not read as one */
 .bcf-part.untracked .bcf-pname,
@@ -1615,7 +1637,10 @@ body::after { display: none; }
   /* the tab already says which page this is, and it was the half of the
      title getting clipped */
   .disc-titlebar .dt-sub { display: none; }
-  .disc-titlebar .dt-name { font-size: 17px; }
+  /* the hard offset shadow is the page's pixel-art signature, but it is a
+     fixed four pixels: against type this size it stops reading as a shadow
+     and starts reading as the word printed twice */
+  .disc-titlebar .dt-name { font-size: 17px; text-shadow: 2px 2px 0 #000; }
   .disc-titlebar .icon.psone { display: none; }
 
   .ls-head { padding: 8px 10px; }
@@ -1636,7 +1661,17 @@ body::after { display: none; }
   .bc-stage { min-height: 96px; }
   .ls-bosses.mini .bc-stage { min-height: 84px; }
   .bcard.open .bc-stage { min-height: 176px; }
-  .pc-name, .bc-name { font-size: 13px; }
+  /* The name sits beside its tier star on a card a third of its old width,
+     and a mob's name is one long word that cannot be broken - "Nehemoth" at
+     the desktop size simply ran past the edge and was cut to "Nehemot". The
+     type comes down to where the longest of them fits beside the star, and
+     the star with it. Written to match .ls-bosses.mini's own specificity, or
+     that rule wins and nothing changes. */
+  .ls-bosses .bc-name,
+  .ls-bosses.mini .bc-name { font-size: 12.5px; height: 2.4em; gap: 4px; }
+  .ls-bosses .bc-star .badge-star,
+  .ls-bosses.mini .bc-star .badge-star { width: 13px; height: 12px; }
+  .pcard .pc-name { font-size: 13px; }
   .bc-mod, .pc-seen, .pc-nums { font-size: 11px; }
   /* playtime and deaths sat on one line pushed to opposite ends, which on a
      card a third of its old width either tore each of them in half or ran
@@ -1772,6 +1807,11 @@ body::after { display: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .lb-top em { font-style: normal; font-size: 12px; color: var(--rc, #ffd479); flex-shrink: 0; }
+/* a boss on the record that this player helped with rather than led: the
+   star is spent, so the row itself is what has to say so */
+.lb-row.assisted .lb-star { opacity: .4; filter: grayscale(1); }
+.lb-row.assisted .lb-top b { color: #b9c4d2; }
+.lb-top em.lb-assist { color: var(--mgs-cyan, #6fe0ee); }
 .lb-sub i { font-style: normal; font-size: 9px; letter-spacing: .5px; color: #5f6f83; }
 .lb-sub u {
   text-decoration: none; font-size: 9px; color: #5f6f83; text-align: right;
