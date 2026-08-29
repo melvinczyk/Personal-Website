@@ -12,16 +12,40 @@ function getCtx() {
 // half a second of silence in front of it, and playing that from zero puts the
 // click half a second after the press, which reads as lag rather than as a
 // quiet file. Found rather than hard-coded, so swapping the mp3 needs no sums.
+//
+// Found by walking BACK from the loudest moment, not forward from the first
+// audible one. This clip is silent for 530ms, blips once at four percent of
+// peak, goes quiet again for seventy milliseconds, and only then clicks -
+// and forwards, that blip is where the sound "starts", so the press still
+// landed seventy milliseconds before anything could be heard. Backwards, the
+// attack itself is the anchor and the blip is what it is: not the click.
 function soundStart(buffer) {
   const d = buffer.getChannelData(0);
-  let peak = 0;
-  for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > peak) peak = v; }
+  const rate = buffer.sampleRate;
+  // A millisecond at a time. A waveform crosses zero many times inside its
+  // own attack, so anything reading raw samples would call the first of
+  // those crossings the start of the sound; the envelope is what a listener
+  // actually hears rising.
+  const win = Math.max(1, Math.round(rate / 1000));
+  const loud = [];
+  for (let i = 0; i < d.length; i += win) {
+    let pk = 0;
+    for (let j = i, end = Math.min(i + win, d.length); j < end; j++) {
+      const v = Math.abs(d[j]);
+      if (v > pk) pk = v;
+    }
+    loud.push(pk);
+  }
+  let peak = 0, top = 0;
+  for (let i = 0; i < loud.length; i++) {
+    if (loud[i] > peak) { peak = loud[i]; top = i; }
+  }
   if (!peak) return 0;
-  const floor = peak * 0.02;
-  let i = 0;
-  while (i < d.length && Math.abs(d[i]) < floor) i++;
-  // back off a couple of milliseconds so the attack is not clipped off
-  return Math.max(0, (i / buffer.sampleRate) - 0.004);
+  const floor = peak * 0.1;
+  let i = top;
+  while (i > 0 && loud[i - 1] >= floor) i--;
+  // back off a few milliseconds so the attack is not clipped off
+  return Math.max(0, (i * win / rate) - 0.006);
 }
 
 async function loadSound(url) {
@@ -58,6 +82,13 @@ const clickReady = loadSound(PORTAL_URLS.click).then(buf => {
 
 const HOT = 'button, a, .masonry-item, .video-tile, .disc-slot';
 document.addEventListener('pointerdown', e => {
+  // The context starts suspended and only a gesture may wake it, so wake it
+  // on the first press anywhere rather than on the first press that happens
+  // to want a sound. Otherwise somebody who opens a boss card before they
+  // touch a button pays the wake-up on the button, and that one click is
+  // late for a reason that has nothing to do with the button.
+  const ctx = getCtx();
+  if (ctx.state !== 'running') ctx.resume();
   if (!e.target.closest || !e.target.closest(HOT)) return;
   if (clickBuffer) playBuffer(clickBuffer, 0.35, clickFrom);
   else clickReady.then(() => playBuffer(clickBuffer, 0.35, clickFrom));
@@ -468,6 +499,10 @@ function livePanel(p) {
         L.boss_kills === 1 ? '' : 'S'}${(() => {
           const lent = L.bosses.reduce((n, b) => n + (b.assists || 0), 0);
           return lent ? ` \u00b7 ${lent} ASSIST${lent === 1 ? '' : 'S'}` : '';
+        })()}${(() => {
+          const led = L.bosses.filter(b => b.first).length;
+          return led ? ` \u00b7 <em class="lb-head-first">${led} FIRST${
+            led === 1 ? '' : 'S'}</em>` : '';
         })()}</b></div>
       ${ranked.map((b, place) => {
         const cls = b.category === 'miniboss' ? 'mini' : `t${b.tier}`;
@@ -486,6 +521,9 @@ function livePanel(p) {
           <span class="lb-star ${cls}">${PIXEL_STAR_SVG}</span>
           <span class="lb-main">
             <span class="lb-top"><b>${b.name}</b>${
+              b.first ? `<span class="lb-first"
+                title="First blood: nobody on this server had beaten it before them"
+                >${PIXEL_FLAG_SVG}</span>` : ''}${
               b.kills ? `<em>x${b.kills}</em>` : ''}${helped}</span>
             <span class="lb-sub"><i>${facts}</i><u>${
               b.share ? `<b class="lb-best">${b.share}%</b> \u00b7 ` : ''}${b.last}</u></span>
@@ -1016,6 +1054,8 @@ const CHART_RANGES = [
 // redoing the arithmetic on every mouse move.
 const CHART_POINTS = {};
 const CHART_RANGE = {};
+// when each chart was last drawn, and how much time a pixel of it is worth
+const CHART_DRAWN = {};
 
 function chartRange(key) { return CHART_RANGE[key] ?? Infinity; }
 
@@ -1068,6 +1108,30 @@ function unprobeChart(key) {
   }
 }
 
+// Keep the open charts' right edge on the present.
+//
+// Only the time axis moves, so a chart is redrawn whole rather than patched -
+// there is at most one boss card open at a time and the SVG is a few hundred
+// nodes. What stops that being wasteful is the gate: a chart is left alone
+// until a pixel's worth of its own axis has gone by, and left alone entirely
+// while someone is touching it - rebuilding the node under a pointer would
+// drop the probe mid-hover, and under a keyboard would drop the range picker
+// mid-choice.
+function tickCharts() {
+  if (!liveBoard || !liveBoard.bosses) return;
+  for (const host of document.querySelectorAll('.bkc[data-boss]')) {
+    const drawn = CHART_DRAWN[host.dataset.boss];
+    if (!drawn || Date.now() - drawn.at < drawn.perPixel) continue;
+    // :hover covers a pointer, the active element covers a keyboard, and the
+    // showing probe covers a touch, where :hover is whatever the browser feels
+    // like after a tap
+    if (host.matches(':hover') || host.contains(document.activeElement)
+        || host.querySelector('.bkc-probe.on')) continue;
+    const boss = liveBoard.bosses.find(b => b.key === host.dataset.boss);
+    if (boss) host.outerHTML = killChart(boss, null);
+  }
+}
+
 function killChart(boss, faces) {
   const all = (boss.fights || []).filter(f => f.time && !isNaN(Date.parse(f.time)));
   if (!all.length) return '';
@@ -1099,11 +1163,24 @@ function killChart(boss, faces) {
   }));
   const total = running;
 
+  // The axis ends at the present, never at the last kill. A boss nobody has
+  // touched since Tuesday has been un-killed for days, and that gap is a real
+  // reading - a chart that stopped at the last pip drew the flat stretch since
+  // as nothing at all, and made a fortnight-old kill look like this morning's.
+  // The line carries on level from the newest kill to the right edge instead.
   const span = CHART_RANGE[boss.key] ?? Infinity;
   const last = steps[steps.length - 1].t;
+  // a kill stamped ahead of this browser's clock is clock skew, not the
+  // future: let it set the edge rather than fall off the end of the chart
   const now  = Math.max(last, Date.now());
-  const from = span === Infinity ? steps[0].t : now - span;
-  const to   = span === Infinity ? last : now;
+  // Max opens a little before the first kill rather than exactly on it, so
+  // that first step up has somewhere to stand: a riser drawn along the axis
+  // line reads as part of the frame rather than as a kill.
+  const first = steps[0].t;
+  const from = span === Infinity
+    ? first - Math.max(6e5, (now - first) * 0.04)
+    : now - span;
+  const to   = now;
   const shown = steps.filter(st => st.t >= from && st.t <= to);
   const entering = steps.filter(st => st.t < from).length;
 
@@ -1124,6 +1201,13 @@ function killChart(boss, faces) {
   }
   pts.push(`${W - R},${py(prev)}`);
   const curve = pts.join(' ');
+
+  // What one pixel of this axis is worth in time. tickCharts() redraws a chart
+  // only once that much has passed, so a twelve-hour view moves about once a
+  // minute and a year-wide one about once every two hours - live, without
+  // rebuilding an SVG every second to move nothing.
+  CHART_DRAWN[boss.key] = { at: Date.now(),
+                            perPixel: Math.max(1000, width / plotW) };
 
   CHART_POINTS[boss.key] = shown.map(st => ({
     x: +px(st.t).toFixed(1), y: +py(st.total).toFixed(1),
@@ -1177,10 +1261,14 @@ function killChart(boss, faces) {
     </g>`;
   }).join('');
 
-  const DAY = 86400000;
-  const label = ms => new Date(ms).toLocaleString(undefined, (to - from) > DAY
-    ? { month: 'short', day: 'numeric' }
-    : { hour: 'numeric', minute: '2-digit' });
+  // The axis now always ends at the present, which makes the far end of a wide
+  // one a date a year old sitting next to the word now - and 'Aug 29' beside
+  // 'now' on the 29th of August reads as today. Past half a year, say which.
+  const DAY = 86400000, HALF_YEAR = 15768e6;
+  const label = ms => new Date(ms).toLocaleString(undefined,
+    (to - from) > HALF_YEAR ? { year: 'numeric', month: 'short', day: 'numeric' }
+    : (to - from) > DAY     ? { month: 'short', day: 'numeric' }
+    :                         { hour: 'numeric', minute: '2-digit' });
   const fade = `bkc-fade-${boss.key}`;
 
   const picker = `<select class="bkc-range" aria-label="How far back to look"
@@ -1204,7 +1292,7 @@ function killChart(boss, faces) {
            onmousemove="probeChart(event, '${boss.key}')"
            onmouseleave="unprobeChart('${boss.key}')"
            aria-label="Running total of ${total} kill${total === 1 ? '' : 's'}, ${
-             label(from)} to ${label(to)}">
+             label(from)} to now">
         <defs>
           <linearGradient id="${fade}" x1="0" y1="0" x2="0" y2="1">
             <stop class="bkc-stop-top" offset="0%"/>
@@ -1219,12 +1307,20 @@ function killChart(boss, faces) {
         <line class="bkc-cursor" y1="${T}" y2="${T + plotH}" style="opacity:0"/>
         ${dots}
         ${heads}
+        <circle class="bkc-now" cx="${W - R}" cy="${py(prev).toFixed(1)}" r="3.5"/>
         <circle class="bkc-cursor-dot" r="6.5" style="opacity:0"/>
         <text class="bkc-tick" x="${L}" y="${H - 10}">${label(from)}</text>
-        <text class="bkc-tick" x="${W - R}" y="${H - 10}" text-anchor="end">${label(to)}</text>
+        <text class="bkc-tick now" x="${W - R}" y="${H - 10}" text-anchor="end">now</text>
       </svg>
       <div class="bkc-probe"></div>
     </div>`;
+}
+
+// Was this player one of the ones the first fight counted as a kill for?
+// Asked from the killer chips, so it has to survive a boss the log has never
+// seen (no pioneer at all) as readily as one two players took down together.
+function drewFirst(pioneer, name) {
+  return !!pioneer && (pioneer.by || []).some(who => who.name === name);
 }
 
 function fightHistory(boss) {
@@ -1252,8 +1348,32 @@ function fightHistory(boss) {
   // keeps one row's id from being another row's
   let seen = 0;
 
+  // First blood, at the head of the details. It belongs above the log rather
+  // than in it: every row below is one of many, and this is the one that was
+  // not - the night this boss stopped being something nobody here had beaten.
+  // Everyone the first fight counted as a kill for stands here, because two
+  // players who both cleared the line beat it together and neither of them
+  // came second. Whoever only assisted is named after the date instead: they
+  // were there, which is worth saying, and they did not beat it, which is
+  // the difference this line exists to keep.
+  const blood = boss.pioneer;
+  const firstBlood = blood ? `
+    <div class="bcf-first">
+      <span class="bcf-first-mark">${PIXEL_FLAG_SVG}</span>
+      <span class="bcf-first-say">
+        <b>FIRST BLOOD</b>
+        <span class="bcf-first-who">${blood.by.map(who => `
+          <span class="bcf-first-one"><i class="bc-face"${faces[who.name]
+            ? ` style="--skin:url('${faces[who.name]}')"` : ''}></i>${who.name}</span>`)
+          .join('')}</span>
+        <em>${blood.at}${blood.party.length
+          ? ` · with ${blood.party.join(', ')} assisting` : ''}</em>
+      </span>
+    </div>` : '';
+
   return `
     <div class="bc-fights">
+      ${firstBlood}
       <div class="bcf-title">
         <span>FIGHT HISTORY</span>
         <em>${logged} fight${logged === 1 ? '' : 's'}${
@@ -1433,10 +1553,19 @@ function buildLive(board) {
           <div class="bc-kills">${compact(b.kills)} kill${b.kills === 1 ? '' : 's'}${
             b.assists ? `<em class="bc-kills-assist">\u00b7 ${compact(b.assists)} assist${
               b.assists === 1 ? '' : 's'}</em>` : ''}</div>
-          <div class="bc-killers">${b.killers.map(k => `
-            <span class="bc-killer"${k.skin ? ` style="--skin:url('${k.skin}')"` : ''}>
-              <i class="bc-face"></i><b>${k.name}</b><em>${k.kills}\u00d7</em>
-            </span>`).join('')}${(b.helpers || []).map(h => `
+          <div class="bc-killers">${b.killers.map(k => {
+            // the flag goes to everyone the first fight counted as a kill
+            // for, which is sometimes two of them and never a runner-up
+            const drew = drewFirst(b.pioneer, k.name);
+            return `
+            <span class="bc-killer${drew ? ' first' : ''}"${
+              k.skin ? ` style="--skin:url('${k.skin}')"` : ''}${
+              drew ? ` title="${k.name} drew first blood on this one, ${
+                b.pioneer.at}"` : ''}>
+              <i class="bc-face"></i>${
+              drew ? `<span class="bc-flag">${PIXEL_FLAG_SVG}</span>` : ''}<b>${
+              k.name}</b><em>${k.kills}\u00d7</em>
+            </span>`; }).join('')}${(b.helpers || []).map(h => `
             <span class="bc-killer helper"${h.skin ? ` style="--skin:url('${h.skin}')"` : ''}
                   title="${h.name} helped with ${h.fights} of these fights without leading one">
               <i class="bc-face"></i><b>${h.name}</b><em class="bc-assist">+${h.fights}</em>
@@ -1634,10 +1763,37 @@ const PIXEL_HAND_SVG = `<svg class="badge-hand" viewBox="0 0 11 10" shape-render
 <rect x="4" y="8" width="2" height="1" class="px-s"/>
 </svg>`;
 
+// A pennant on a pole, drawn on the same eleven by ten grid the star and the
+// hand use so it sits in the row of badges as one of them. It marks the
+// bosses this player put down before anybody else on the server did - not
+// how well, not how often, only that they got there first, which is the one
+// thing on this page nobody can take back or catch up to.
+const PIXEL_FLAG_SVG = `<svg class="badge-flag" viewBox="0 0 11 10" shape-rendering="crispEdges">
+<rect x="1" y="0" width="1" height="10" class="px-h"/><rect x="2" y="0" width="1" height="10" class="px-s"/>
+<rect x="3" y="0" width="6" height="1" class="px-b"/><rect x="9" y="0" width="1" height="1" class="px-s"/>
+<rect x="3" y="1" width="1" height="4" class="px-h"/>
+<rect x="4" y="1" width="4" height="1" class="px-b"/><rect x="8" y="1" width="1" height="1" class="px-s"/>
+<rect x="4" y="2" width="3" height="1" class="px-b"/><rect x="7" y="2" width="1" height="1" class="px-s"/>
+<rect x="4" y="3" width="2" height="1" class="px-b"/><rect x="6" y="3" width="1" height="1" class="px-s"/>
+<rect x="4" y="4" width="1" height="1" class="px-b"/><rect x="5" y="4" width="1" height="1" class="px-s"/>
+<rect x="3" y="5" width="1" height="1" class="px-s"/>
+<rect x="0" y="9" width="1" height="1" class="px-s"/><rect x="3" y="9" width="1" height="1" class="px-s"/>
+</svg>`;
+
 // One star per tier beaten, plus a grey star for minibosses. p.bosses already
 // holds one entry per boss ID beaten, so counting entries (not summing kills)
 // is what makes a boss killed three times still worth one star. Tier 4 has no
 // bosses yet, but the counter and the CSS (.pc-badge.t4) are ready for it.
+// What each badge is, in the pack's own words: boss_rewards.js grades every
+// boss it knows as a Lesser, Greater or Apex Boss, and that is the name a
+// player has already seen in chat when one went down. Tier 4 is the rung
+// above, held open by the roster and unused so far.
+const TIER_NAMES = {
+  1: 'Lesser Boss', 2: 'Greater Boss', 3: 'Apex Boss', 4: 'Beyond Apex Boss',
+};
+// every grade ends in the word, so one rule pluralises all four
+const plural = (name, n) => n === 1 ? name : `${name}es`;
+
 function bossBadges(p) {
   const counts = { 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
   for (const b of p.bosses || []) {
@@ -1650,19 +1806,39 @@ function bossBadges(p) {
     if (b.category === 'miniboss') counts.mini++;
     else if (counts[b.tier] !== undefined) counts[b.tier]++;
   }
-  const chip = (cls, n) => n
-    ? `<span class="pc-badge ${cls}">${PIXEL_STAR_SVG}x${n}</span>` : '';
+  // one note per badge, shown on hover and read out by anything that is not
+  // looking - see [data-tip] in the stylesheet
+  const chip = (cls, n, tip) => n
+    ? `<span class="pc-badge ${cls}" role="img" data-tip="${tip(n)}"
+             aria-label="${tip(n)}">${PIXEL_STAR_SVG}x${n}</span>` : '';
+  const star = tier => n =>
+    `${n} ${plural(TIER_NAMES[tier], n)} beaten (tier ${tier})`;
   // Hands lent to somebody else's kill. Last in the row and quietest in it:
   // a star says what they have beaten, and this says only what they turned
   // up for without carrying, which is the least of the two.
   const lent = (p.bosses || []).reduce((n, b) => n + (b.assists || 0), 0);
+  const lentTip = `Was in ${lent} winning fight${
+    lent === 1 ? '' : 's'} without dealing the biggest share`;
   const helped = lent
-    ? `<span class="pc-badge assist" title="Assists: helped bring down ${lent} boss${
-        lent === 1 ? '' : 'es'} without dealing the biggest share">${
-        PIXEL_HAND_SVG}x${lent}</span>`
+    ? `<span class="pc-badge assist" role="img" data-tip="${lentTip}"
+             aria-label="${lentTip}">${PIXEL_HAND_SVG}x${lent}</span>`
     : '';
-  return [chip('t4', counts[4]), chip('t3', counts[3]), chip('t2', counts[2]),
-          chip('t1', counts[1]), chip('mini', counts.mini), helped].join('');
+  // First blood. Not a tier and not a count of fights: the number of bosses
+  // this server had never seen beaten until this player beat one. It sits
+  // below the stars and above the hand, which is where it belongs in the
+  // reading - the stars say what they have beaten, this says which of those
+  // nobody had beaten before them, and the hand says what they only helped
+  // with.
+  const led = (p.bosses || []).filter(b => b.first).length;
+  const ledTip = `First one to kill ${led} boss${led === 1 ? '' : 'es'}`;
+  const firsts = led
+    ? `<span class="pc-badge first" role="img" data-tip="${ledTip}"
+             aria-label="${ledTip}">${PIXEL_FLAG_SVG}x${led}</span>`
+    : '';
+  return [chip('t4', counts[4], star(4)), chip('t3', counts[3], star(3)),
+          chip('t2', counts[2], star(2)), chip('t1', counts[1], star(1)),
+          chip('mini', counts.mini, n => `${n} ${plural('Miniboss', n)} beaten`),
+          firsts, helped].join('');
 }
 
 // ── the world panel ────────────────────────────────────────────────────────
@@ -1991,6 +2167,7 @@ function bootLive() {
     if (document.hidden) return;
     if (--liveDue <= 0) pollLive();
     liveTick();
+    tickCharts();
   }, 1000);
 
   document.addEventListener('visibilitychange', () => {

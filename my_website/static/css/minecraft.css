@@ -875,6 +875,7 @@ body::after { display: none; }
      the least of them, not its brightness: no glow, a fainter ground, and a
      hand smaller than the stars' points. */
   --mc-assist: #7c9dff;
+  --mc-first:  #ff8a2b;   /* first blood - deliberately clear of every star */
 }
 
 .live-stage {
@@ -1485,6 +1486,85 @@ body::after { display: none; }
 .badge-hand .px-b { fill: var(--mc-assist); }
 .badge-hand .px-h { fill: #d3dcff; }
 .badge-hand .px-s { fill: #4d63c4; }
+/* First blood. Not a tier, so it takes no tier colour: an ember orange none
+   of the stars wear, next to a gold one it reads as warmer and far more
+   saturated, and the shape does the rest - a flag among stars is not a star.
+   It sits below the stars and above the hand, which is the order the row
+   reads in: what they beat, then which of those nobody had beaten before
+   them, then what they only helped with. */
+.pc-badge.first {
+  color: var(--mc-first);
+  background-color: rgba(30,16,8,0.8);
+  border-color: rgba(255,138,43,0.6);
+  box-shadow: inset 0 0 10px -3px rgba(255,138,43,0.55),
+              0 0 7px -2px rgba(255,138,43,0.5);
+  text-shadow: 0 0 6px rgba(255,138,43,0.5);
+  /* The one treatment no other badge uses: a slow light crossing it, the way
+     a banner catches the sun. Loud enough to be found in the row, quiet
+     enough to sit beside four stars without shouting over them.
+     Swept as a background position rather than a translated ::after, because
+     that needed overflow:hidden to keep the band inside the chip - and the
+     chip's own tooltip has to be able to leave it. */
+  background-image: linear-gradient(105deg, transparent 42%,
+                    rgba(255,214,160,0.45) 50%, transparent 58%);
+  background-repeat: no-repeat;
+  background-size: 240% 100%;
+  animation: pc-first-sheen 4.5s ease-in-out infinite;
+}
+@keyframes pc-first-sheen {
+  0%, 70%   { background-position: -140% 0; }
+  90%, 100% { background-position: 240% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc-badge.first { animation: none; background-image: none; }
+}
+
+/* ── what a badge means ────────────────────────────────────────────────────
+   Six chips of pixel art in a column an inch wide, and nothing on the page
+   says what any of them is. A native title would: it also waits a second,
+   arrives in the operating system's own chrome rather than this one's, and
+   caps at one line. This is the same panel every other box on the screen is
+   drawn as, and it shows the moment the pointer lands.
+
+   The text is on the element as aria-label too, so it is not only there for
+   people using a mouse. */
+[data-tip] { position: relative; }
+[data-tip]::before {
+  content: attr(data-tip);
+  position: absolute; left: calc(100% + 9px); top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  width: max-content; max-width: 210px;
+  padding: 6px 9px;
+  font-size: 12px; line-height: 1.4; font-weight: normal; letter-spacing: 0;
+  color: var(--mc-text); text-align: left; text-shadow: none;
+  white-space: normal;
+  background: #0c0c10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+  opacity: 0; visibility: hidden;
+  transition: opacity .08s linear;
+  pointer-events: none;
+}
+[data-tip]:hover::before { opacity: 1; visibility: visible; }
+
+
+/* the pointer is what opens this, so on a screen without one it never does -
+   and a chip that reserves a tooltip nobody can reach is worse than none */
+@media (hover: none) {
+  [data-tip]::before { content: none; }
+}
+
+.badge-flag {
+  width: 15px; height: 14px; flex-shrink: 0;
+  image-rendering: pixelated; shape-rendering: crispEdges;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.7));
+}
+.badge-flag .px-b { fill: var(--mc-first); }
+.badge-flag .px-h { fill: #ffcf8f; }
+.badge-flag .px-s { fill: #b8481a; }
+
 .badge-star {
   width: 22px; height: 20px; flex-shrink: 0;   /* 11:10, matching the source art */
   image-rendering: pixelated; shape-rendering: crispEdges;
@@ -1757,6 +1837,45 @@ body::after { display: none; }
 }
 /* the same cyan every other assist reading on the page wears */
 .bcf-assists { font-weight: normal; color: var(--mc-assist); }
+
+/* First blood, above the log rather than inside it. Every row below this is
+   one kill of many; this is the one that was not, and it is the only reading
+   on the card that can never change again. Ember, like the badge it earns. */
+.bcf-first {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; margin-bottom: 2px;
+  background: linear-gradient(100deg, rgba(255,138,43,0.16), rgba(255,138,43,0.03) 62%,
+              transparent);
+  border: 1px solid rgba(255,138,43,0.34);
+  border-left: 3px solid var(--mc-first);
+}
+.bcf-first-mark { flex: none; display: flex; }
+.bcf-first-mark .badge-flag {
+  width: 26px; height: 24px;
+  filter: drop-shadow(0 0 6px rgba(255,138,43,0.55));
+}
+.bcf-first-say { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bcf-first-say > b {
+  font-size: 12px; letter-spacing: 1.4px; color: var(--mc-first);
+  text-shadow: 0 0 7px rgba(255,138,43,0.45);
+}
+/* Two players who both cleared the line beat it together, so both stand on
+   this line as equals - no "and", no runner-up, just the pair of them. */
+.bcf-first-who {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px;
+  font-size: 16px; color: #fff; text-shadow: 1px 1px #000;
+}
+.bcf-first-one { display: flex; align-items: center; gap: 6px; }
+.bcf-first-say em {
+  font-style: normal; font-size: 11px; color: var(--mc-faint);
+}
+
+/* the same mark on the killers' row, so a card says who got there first
+   without being opened. It is the flag that carries it - a name in a
+   different colour is a puzzle, and there is no room here for a legend. */
+.bc-flag { flex: none; display: flex; }
+.bc-flag .badge-flag { width: 11px; height: 10px; }
+.bc-killer.first b { color: color-mix(in srgb, var(--mc-first) 60%, #fff); }
 .bcf-empty { font-size: 14px; color: var(--mc-dim); padding: 6px 0; }
 
 /* ── one block per player ──────────────────────────────────────────────────
@@ -1782,6 +1901,23 @@ body::after { display: none; }
 .bkc-gridlabel { fill: var(--mc-faint); font-size: 11px; }
 .bkc-tick { fill: var(--mc-faint); font-size: 12px; }
 .bkc-tick.mid { fill: var(--mc-dim); }
+/* the right-hand end of the axis is the present, and says so */
+.bkc-tick.now { fill: var(--tier, var(--mc-xp)); opacity: .8; }
+
+/* where the line has got to as of this second. It sits on the right edge
+   rather than on the last kill, which is the point: the gap between the two
+   is however long the boss has been left alone. */
+.bkc-now {
+  fill: var(--tier, var(--mc-xp));
+  animation: bkc-breathe 2.4s ease-in-out infinite;
+}
+@keyframes bkc-breathe {
+  0%, 100% { opacity: .35; r: 3.5; }
+  50%      { opacity: 1;   r: 4.5; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bkc-now { animation: none; opacity: .9; }
+}
 /* the curve takes the boss's own rank colour, the same one lighting the card
    it is drawn on */
 .bkc-stop-top { stop-color: var(--tier, var(--mc-xp)); stop-opacity: 0.34; }
@@ -2589,6 +2725,16 @@ body::after { display: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .lb-top em { font-style: normal; font-size: 12px; color: var(--rc, #ffd479); flex-shrink: 0; }
+/* The flag rides with the name rather than being spread away from it by the
+   row's space-between: the auto margin eats the slack that would otherwise
+   land between the two, so the pair sits left and the count stays right. */
+.lb-first {
+  flex: none; display: flex; margin-right: auto;
+  filter: drop-shadow(0 0 4px rgba(255,138,43,0.6));
+}
+.lb-first .badge-flag { width: 12px; height: 11px; }
+/* the count of them, in the BOSSES heading beside the kills and assists */
+.lb-head-first { font-style: normal; color: var(--mc-first); }
 /* A boss on the record that this player helped with rather than led. The
    star stays lit - they helped beat it, and that is what a star is for -
    so the "+1" and the HELPED beside the tier are what carry the difference

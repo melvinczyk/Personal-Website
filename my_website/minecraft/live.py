@@ -322,7 +322,7 @@ def _bosses(record, credited=None, catalogue=None):
             'last':     (entry.get('last') or '')[:10],
             # filled in from the fight log below where there is one; a kill
             # the counter recorded and the log never saw has none of this
-            'share':    0, 'health': 0, 'at': '',
+            'share':    0, 'health': 0, 'at': '', 'first': False,
         })
     held = {b['id']: b for b in out}
     for boss_id, tally in (credited or {}).items():
@@ -337,6 +337,7 @@ def _bosses(record, credited=None, catalogue=None):
             boss['last'] = max(boss['last'], tally['last'])
             boss.update({k: tally[k] for k in ('share', 'health', 'at')
                          if k in tally})
+            boss['first'] = bool(tally.get('first'))
             continue
         # a fight the kill counter never recorded: the log names the boss and
         # the moment but nothing else, so the rest comes from the roster's own
@@ -353,6 +354,7 @@ def _bosses(record, credited=None, catalogue=None):
             'share':    tally.get('share', 0),
             'health':   tally.get('health', 0),
             'at':       tally.get('at', ''),
+            'first':    bool(tally.get('first')),
         })
     # the merge above leans on ISO comparing correctly, so the reading is only
     # made readable once there is nothing left to compare
@@ -672,7 +674,8 @@ def _fight_credits(fights_raw):
             continue
         seen = out.setdefault(boss_id, {'kills': 0, 'credited': {},
                                         'assisted': {}, 'best': {},
-                                        'first': '', 'last': ''})
+                                        'first': '', 'last': '',
+                                        'pioneer': None})
         for entry in entries:
             when = (entry.get('time') or '')[:10]
             seen['kills'] += 1
@@ -688,6 +691,9 @@ def _fight_credits(fights_raw):
             if not ranked and entry.get('finisher'):
                 ranked = [(entry['finisher'], 0.0, 0.0)]
             line = _assist_line(len(ranked))
+            # kept apart for the pioneer below: who this fight counted as a
+            # kill for, and who was only in it
+            led, lent = [], []
             for place, (name, share, _dealt) in enumerate(ranked):
                 # rounded the way the history rounds it for display, so a
                 # player is judged on the number the page actually shows them
@@ -696,6 +702,7 @@ def _fight_credits(fights_raw):
                 killed = place == 0 or took >= line
                 bucket, field = (('credited', 'kills') if killed
                                  else ('assisted', 'fights'))
+                (led if killed else lent).append(name)
                 tally = seen[bucket].setdefault(name, {field: 0, 'last': ''})
                 tally[field] += 1
                 tally['last'] = max(tally['last'], when)
@@ -707,6 +714,23 @@ def _fight_credits(fights_raw):
                     best.update({'share': took,
                                  'health': _int(entry.get('maxHealth')),
                                  'at': entry.get('time') or ''})
+            # Who put this thing down for the first time on this server.
+            # Compared on the whole stamp rather than the date the board
+            # shows, because a boss first felled twice in one evening has a
+            # first of the two and a date cannot tell them apart - and the
+            # log is not written in order, so this is a minimum rather than
+            # whichever entry happened to be read first.
+            #
+            # First blood belongs to everyone the fight counted as a kill
+            # for, not to the one who happened to top the damage: two
+            # players who both cleared the line beat it together, and there
+            # is no reading of that where one of them was second. Whoever
+            # only assisted was there, which is worth naming, but did not
+            # beat it - so they are kept in `party` rather than credited.
+            stamp = entry.get('time') or ''
+            if led and stamp and (not seen['pioneer']
+                                  or stamp < seen['pioneer']['at']):
+                seen['pioneer'] = {'names': led, 'at': stamp, 'party': lent}
             if when:
                 seen['first'] = min(seen['first'] or when, when)
                 seen['last'] = max(seen['last'], when)
@@ -732,6 +756,14 @@ def _by_player(credits):
                 boss_id, {'kills': 0, 'assists': 0, 'last': ''})
             row['assists'] = tally['fights']
             row['last'] = max(row['last'], tally['last'])
+        # Everyone the earliest fight on record counted as a kill for. They
+        # are all in `credited` for this boss already, so the rows exist -
+        # set up defensively anyway, because a log that grows a new shape
+        # should leave a badge unearned rather than throw.
+        for name in (seen.get('pioneer') or {}).get('names') or ():
+            row = out.setdefault(name, {}).setdefault(
+                boss_id, {'kills': 0, 'assists': 0, 'last': ''})
+            row['first'] = True
         # what their best go at it looked like, for ranking one against another
         for name, best in seen['best'].items():
             row = out.setdefault(name, {}).setdefault(
@@ -740,6 +772,20 @@ def _by_player(credits):
             row['health'] = best['health']
             row['at'] = best['at']
     return out
+
+
+def _pioneer(blood):
+    """The first-blood record, with its stamp made readable.
+
+    Kept as a whole ISO stamp everywhere upstream so two kills on the same
+    day can be told apart; nothing below here compares it again, so this is
+    where it becomes a date somebody can read.
+    """
+    if not blood or not blood.get('by'):
+        return None
+    return {'by':    blood['by'],
+            'at':    _date((blood.get('at') or '')[:10]),
+            'party': blood.get('party') or []}
 
 
 def _uuids(players, kills):
@@ -928,7 +974,8 @@ def bosses(season_path, faces=None):
                 continue
             hit = scored.setdefault(boss_id, {'killers': [], 'helpers': [],
                                               'kills': 0, 'first': '',
-                                              'last': '', 'tier': 0})
+                                              'last': '', 'tier': 0,
+                                              'pioneer': None})
             # NOT a sum. The counter records one kill against every player who
             # was in on a fight, so adding them up turns a party of two into
             # two kills of the same mob. Whoever was there for the most of
@@ -960,7 +1007,8 @@ def bosses(season_path, faces=None):
     for boss_id, seen in _fight_credits(fights_raw).items():
         hit = scored.setdefault(boss_id, {'killers': [], 'helpers': [],
                                           'kills': 0, 'first': '',
-                                          'last': '', 'tier': 0})
+                                          'last': '', 'tier': 0,
+                                          'pioneer': None})
         # The counter's own numbers include the fights a player only helped
         # with - the Naga had eleven fights and the counter's three rows added
         # to fourteen - so where the log knows a player it replaces their
@@ -986,6 +1034,21 @@ def bosses(season_path, faces=None):
             hit['helpers'].append({
                 'name': name, 'uuid': who.get(name) or name,
                 'fights': tally['fights'], 'last': tally['last']})
+
+        # Who was first to put it down, which only the fight log knows: the
+        # kill counter records that a player has beaten a boss and how often,
+        # never in what order against anybody else.
+        blood = seen.get('pioneer')
+        if blood:
+            hit['pioneer'] = {
+                # everyone the first fight counted as a kill for, in the
+                # order they dealt damage
+                'by':    [{'name': name, 'uuid': who.get(name) or name}
+                          for name in blood['names']],
+                'at':    blood['at'],
+                # and whoever was only in it: named, but not credited
+                'party': list(blood['party']),
+            }
 
         for key in ('first', 'last'):
             when = seen[key]
@@ -1032,6 +1095,10 @@ def bosses(season_path, faces=None):
             'assists': sum(h['fights'] for h in helpers),
             'first':   _date(hit['first']) if hit else '',
             'last':    _date(hit['last']) if hit else '',
+            # first blood: who got there before anybody else, and when. Only
+            # the fight log can answer it, so a boss the counter knows and
+            # the log has never seen has nobody holding it.
+            'pioneer': _pioneer(hit.get('pioneer')) if hit else None,
             # only a felled boss has fights worth reading, but an unfelled
             # one costs nothing to look up and finding none is itself a
             # cheap confirmation that the two files agree
