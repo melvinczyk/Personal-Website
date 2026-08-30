@@ -2500,8 +2500,18 @@ function bootChat() {
 // answer is the one in the timezone of whoever is looking.
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// How often the grid re-reads its log. The endpoint reads a file rather than
+// the game host, so this costs the server nothing - and the panel is the one
+// thing on the page that is *about* time passing, which makes a copy frozen
+// at page load worse here than anywhere else. It used to be fetched once and
+// never again: a tab left open through an outage kept drawing the grid from
+// before it started, red bands and all missing.
+const RHYTHM_EVERY = 60;
+
 let rhythmBoard = null;
 let rhythmBusy = false;
+let rhythmDue = RHYTHM_EVERY;
+let rhythmSig = '';
 
 // '2026-08-30T14' -> a local Date. Built by hand rather than by handing the
 // string to Date(), which reads a bare 'YYYY-MM-DDTHH' as local time on some
@@ -2924,13 +2934,38 @@ function rhythmSay(cell) {
   read.textContent = cell.dataset.t;
 }
 
-async function loadRhythm() {
-  if (rhythmBusy || rhythmBoard) return;
+// Enough of the log to tell whether anything moved. Cheap to build and it
+// changes whenever a sample lands, which is what decides a redraw: rebuilding
+// 168 cells every minute to write the same numbers back would throw away
+// whatever the reader was hovering for no reason at all.
+function rhythmStamp(board) {
+  if (!board) return '';
+  let played = 0, down = 0, n = 0;
+  for (const b of Object.values(board.hours || {})) {
+    n += 1;
+    if (typeof b === 'number') { played += b; continue; }
+    played += b.played || 0;
+    down += b.down || 0;
+  }
+  return `${board.at}|${n}|${Math.round(played)}|${Math.round(down)}`;
+}
+
+async function loadRhythm(force) {
+  if (rhythmBusy || (rhythmBoard && !force)) return;
   rhythmBusy = true;
+  rhythmDue = RHYTHM_EVERY;
   try {
     const res = await fetch(ACTIVITY_URL, { headers: { 'X-Requested-With': 'fetch' } });
     if (!res.ok) throw new Error(res.status);
-    rhythmBoard = await res.json();
+    const board = await res.json();
+    const stamp = rhythmStamp(board);
+    rhythmBoard = board;
+    // nothing new, or somebody is reading a cell: leave the panel alone and
+    // pick it up on the next tick rather than redrawing under their cursor
+    const host = document.getElementById('ls-rhythm');
+    if (stamp === rhythmSig) return;
+    if (host && host.matches(':hover')) return;
+    rhythmSig = stamp;
     rhythmPanel(rhythmBoard);
   } catch (err) {
     const host = document.getElementById('ls-rhythm');
@@ -2956,12 +2991,14 @@ function bootLive() {
     // local file rather than the game host, so it can afford to be six times
     // as eager as the board without costing the server anything
     if (--chatDue <= 0) pollChat();
+    // the grid re-reads its own log on its own clock
+    if (--rhythmDue <= 0) loadRhythm(true);
     liveTick();
     tickCharts();
   }, 1000);
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) { pollLive(); pollChat(); }
+    if (!document.hidden) { pollLive(); pollChat(); loadRhythm(true); }
   });
 }
 
