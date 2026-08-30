@@ -3463,6 +3463,13 @@ body::after { display: none; }
 .mcc-row b { font-weight: normal; color: var(--mc-sky, #6fe0ee); margin-right: 6px; }
 .mcc-row b::after { content: ':'; color: #5f6f83; }
 
+/* the box's empty state, which is a reading in its own right - see chatNote */
+.mcc-note {
+  padding: 14px 10px; text-align: center;
+  font-size: 10px; line-height: 1.5; color: #5f6f83;
+}
+.mcc-note.cold { color: var(--mc-heart, #d94a3d); }
+
 .mcc-gap {
   margin: 5px 0; padding: 2px 0; text-align: center;
   font-size: 9px; color: #5f6f83;
@@ -3581,13 +3588,31 @@ body::after { display: none; }
    height whatever is in it, so the panel does not jump on hover. */
 .rh-read {
   /* auto, not a fixed gap: the panel is stretched to the world panel's height
-     beside it, and the slack belongs between the grid and this rather than
-     hanging off the bottom of the box */
+     beside it, and the slack belongs between the grid and the readings under
+     it rather than hanging off the bottom of the box */
   margin-top: auto; padding: 4px 6px;
   font-size: 9px; line-height: 1.4; color: var(--mc-text, #e6e6e8);
   background: rgba(0, 0, 0, 0.3);
   border-left: 2px solid var(--mc-sky, #6fe0ee);
   height: 28px; overflow: hidden;
+}
+
+/* three figures on one line, which is what replaced the bar chart that used
+   to sit under the grid */
+.rh-totals {
+  display: flex; gap: 1px; margin-top: 4px;
+}
+.rh-tot {
+  flex: 1 1 0; min-width: 0; padding: 3px 5px;
+  background: rgba(255, 255, 255, 0.04); cursor: help;
+}
+.rh-tot i {
+  display: block; font-style: normal; font-size: 8px;
+  letter-spacing: .5px; color: #5f6f83;
+}
+.rh-tot b {
+  display: block; font-weight: normal; font-size: 11px;
+  color: var(--mc-gold, #ffd24a);
 }
 
 .rh-empty { margin: auto 0; padding: 6px; text-align: center; }

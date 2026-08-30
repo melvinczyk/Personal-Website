@@ -47,6 +47,8 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 
+from . import sync
+
 WORLD = 'world_data.json'
 LOG = 'activity.json'
 
@@ -56,9 +58,13 @@ LOG = 'activity.json'
 # kilobytes, and the heatmap folds them into a week anyway.
 KEEP_HOURS = 24 * 120
 
-# Per-day, per-player totals are kept for as long, and are what "who made this
-# the biggest day of the season" is answered from.
-KEEP_DAYS = 180
+# Per-day, per-player totals are kept effectively for ever. A day is one small
+# number per player, so a decade of them on a nine-player server is a file
+# measured in low hundreds of kilobytes - cheaper than throwing away the only
+# record of the season that will exist. Weeks and months are rolled up from
+# these on demand rather than stored: a sum of exact numbers is exact, and a
+# second copy of the same truth is a second thing to keep in step.
+KEEP_DAYS = 366 * 10
 
 
 def log_path(data_dir):
@@ -66,7 +72,8 @@ def log_path(data_dir):
 
 
 def _blank():
-    return {'hours': {}, 'days': {}, 'last': {}, 'at': '', 'since': ''}
+    return {'hours': {}, 'days': {}, 'profile': {}, 'last': {},
+            'at': '', 'since': ''}
 
 
 def _bucket(log, key):
@@ -93,15 +100,30 @@ def _bucket(log, key):
 
 
 def load(data_dir):
-    """The log, or an empty one. Never raises on a bad file."""
+    """The log, or an empty one. Never raises on a bad file.
+
+    A file that will not parse is set aside rather than read past. This log is
+    the only copy of a history that cannot be rebuilt from anywhere - the game
+    kept none of it - so the one thing that must not happen is a bad read
+    quietly becoming an empty log that the next write then makes permanent.
+    Moving it aside costs a filename and keeps the bytes for a later look.
+    """
+    path = log_path(data_dir)
     try:
-        with open(log_path(data_dir)) as fh:
+        with open(path) as fh:
             data = json.load(fh)
-    except (OSError, ValueError):
+    except OSError:
+        return _blank()
+    except ValueError:
+        try:
+            os.replace(path, path + '.corrupt')
+        except OSError:
+            pass
         return _blank()
     if not isinstance(data, dict):
         return _blank()
-    for key, empty in (('hours', {}), ('days', {}), ('last', {})):
+    for key, empty in (('hours', {}), ('days', {}), ('profile', {}),
+                      ('last', {})):
         if not isinstance(data.get(key), dict):
             data[key] = empty
     data.setdefault('at', '')
@@ -147,6 +169,10 @@ def _slice(start, end):
     return out
 
 
+def lock_path(data_dir):
+    return os.path.join(data_dir, '.activity.lock')
+
+
 def sample(data_dir, world=None):
     """Read the export's counters and bank whatever has been played since.
 
@@ -162,6 +188,24 @@ def sample(data_dir, world=None):
     players = world.get('players')
     if not isinstance(players, dict):
         return 0, 0.0
+
+    # One sampler at a time. A page load starts a pull on a background thread
+    # and a scheduled sync runs in its own process, and both end up here; two
+    # of them reading the log, adding to it and writing it back will silently
+    # drop whichever finished first.
+    #
+    # Losing a sample to the lock costs nothing, which is what makes giving up
+    # the right move rather than waiting: the counters are cumulative and the
+    # baseline is whatever was last written, so the next sample measures from
+    # there and banks the seconds this one would have.
+    with sync.Lock(lock_path(data_dir)) as guard:
+        if not guard.held:
+            return 0, 0.0
+        return _sample(data_dir, world, players)
+
+
+def _sample(data_dir, world, players):
+    """One sample, with the lock already held."""
 
     now = _when(world.get('updated'))
     if now is None:
@@ -266,25 +310,112 @@ def _read_world(data_dir):
 
 
 def _trim(log):
-    if len(log['hours']) > KEEP_HOURS:
-        for key in sorted(log['hours'])[:len(log['hours']) - KEEP_HOURS]:
-            del log['hours'][key]
+    """Age the detail out, but fold its shape into something permanent first.
+
+    An hour bucket carries a row per player and cannot be kept for ever. What
+    can be kept for ever is what those buckets say about the *week*: which hour
+    of which weekday the server tends to be alive. So a bucket about to be
+    dropped is added into a 168-slot profile on the way out, and the heatmap
+    keeps its all-time shape on a file that never grows past 168 rows.
+
+    The profile is keyed by UTC weekday and hour, and a reader sees it shifted
+    by their offset today. Old buckets recorded on the other side of a daylight
+    saving change therefore land an hour out. That is a real inaccuracy and it
+    only touches data older than four months, which is being kept for its shape
+    rather than for its minutes.
+    """
+    stale = sorted(log['hours'])[:max(0, len(log['hours']) - KEEP_HOURS)]
+    for key in stale:
+        bucket = log['hours'].pop(key)
+        when = _when(f'{key}:00:00Z')
+        if when is None or not isinstance(bucket, dict):
+            continue
+        slot = _profile(log, f'{when.weekday()}-{when.hour}')
+        slot['played'] = round(slot['played'] + (bucket.get('played') or 0), 1)
+        slot['samples'] += bucket.get('samples') or 0
+        for name, row in (bucket.get('who') or {}).items():
+            keep = slot['who'].setdefault(name, {'s': 0.0, 'n': 0})
+            keep['s'] = round(keep['s'] + (row.get('s') or 0), 1)
+            keep['n'] += row.get('n') or 0
+
     if len(log['days']) > KEEP_DAYS:
         for key in sorted(log['days'])[:len(log['days']) - KEEP_DAYS]:
             del log['days'][key]
 
 
+def _profile(log, key):
+    slot = log.setdefault('profile', {}).get(key)
+    if not isinstance(slot, dict):
+        slot = {'played': 0.0, 'samples': 0, 'who': {}}
+        log['profile'][key] = slot
+    slot.setdefault('played', 0.0)
+    slot.setdefault('samples', 0)
+    if not isinstance(slot.get('who'), dict):
+        slot['who'] = {}
+    return slot
+
+
 def _write(data_dir, log):
-    """Atomically, so a page reading mid-write sees the old file, not half."""
+    """Atomically, so a page reading mid-write sees the old file, not half.
+
+    The temporary name carries the process id. A shared one is not a temporary
+    file at all: two writers land on the same path, and one of them renames it
+    out from under the other while that one is still writing into it. The
+    result is a log with half of one write and none of the other.
+    """
     path = log_path(data_dir)
-    part = path + '.part'
+    part = f'{path}.{os.getpid()}.part'
     os.makedirs(data_dir, exist_ok=True)
-    with open(part, 'w') as fh:
-        json.dump(log, fh)
-    os.replace(part, path)
+    try:
+        with open(part, 'w') as fh:
+            json.dump(log, fh)
+        os.replace(part, path)
+    except BaseException:
+        try:
+            os.remove(part)
+        except OSError:
+            pass
+        raise
 
 
 # ── what the page reads ──────────────────────────────────────────────────────
+
+def _periods(by_day):
+    """Per-day totals rolled into days, ISO weeks and calendar months.
+
+    Derived rather than stored. Summing exact per-day numbers gives an exact
+    week, and a stored copy would be a second version of the same truth to keep
+    in step with the first - which is how a total ends up disagreeing with the
+    days it is made of.
+
+    ISO weeks, so a week is Monday to Sunday and the turn of the year does not
+    produce a two-day week. The label is what a person would call it.
+    """
+    out = {'day': {}, 'week': {}, 'month': {}}
+    for day, who in by_day.items():
+        when = _when(f'{day}T00:00:00Z')
+        if when is None:
+            continue
+        iso = when.isocalendar()
+        for scale, key in (('day', day),
+                           ('week', f'{iso[0]}-W{iso[1]:02d}'),
+                           ('month', day[:7])):
+            row = out[scale].setdefault(key, {'total': 0.0, 'who': {}})
+            for name, seconds in (who or {}).items():
+                if not isinstance(seconds, (int, float)):
+                    continue
+                row['total'] += seconds
+                row['who'][name] = round(row['who'].get(name, 0) + seconds, 1)
+
+    for scale in out:
+        out[scale] = [
+            {'key': key,
+             'total': round(row['total']),
+             'who': dict(sorted(row['who'].items(),
+                                key=lambda kv: -kv[1]))}
+            for key, row in sorted(out[scale].items())]
+    return out
+
 
 def board(data_dir, days=60):
     """The log as the page wants it: hours in UTC, and the recent days.
@@ -311,6 +442,13 @@ def board(data_dir, days=60):
                   'total': round(sum(log['days'][day].values())),
                   'who': log['days'][day]}
                  for day in recent],
+        # Every day, week and month on record, not just the window the heatmap
+        # draws. These are small - one number per player per period - and they
+        # are the part worth keeping for the whole season, so they all go.
+        'periods': _periods(log['days']),
+        # the all-time shape of the week, including hours too old to still be
+        # kept in full - see _trim
+        'profile': log.get('profile') or {},
         'since': log.get('since') or '',
         'at': log.get('at') or '',
         # how much is actually in here, so a page a week old can say it is a

@@ -2359,6 +2359,27 @@ function chatGap(n) {
   return row;
 }
 
+// Why the box is empty, in one line.
+//
+// `checked` is when the server was last asked, which is the reading that tells
+// a quiet server from a stopped poller. A couple of minutes is the normal
+// state of things - the worker looks every twenty-five seconds - so anything
+// past a few minutes means nothing is filling the archive, and the box says so
+// rather than implying the players have gone to bed.
+const CHAT_COLD = 10 * 60;      // seconds before the feed itself is the story
+
+function chatNote(feed) {
+  const row = document.createElement('div');
+  row.className = 'mcc-note';
+  const since = feed.checked == null ? null : (Date.now() / 1000) - feed.checked;
+  row.textContent = (since == null || since > CHAT_COLD)
+    ? `feed not updating \u00b7 last checked ${
+        since == null ? 'never' : fmtSpan(since) + ' ago'}`
+    : 'nothing said in the last hour';
+  if (since != null && since > CHAT_COLD) row.classList.add('cold');
+  return row;
+}
+
 function chatDraw(feed) {
   const log = document.getElementById('mcc-log');
   const box = document.getElementById('mc-chat');
@@ -2379,7 +2400,13 @@ function chatDraw(feed) {
   // what a tab opened this second would show rather than this morning's
   // conversation under a heading that says the chat is live.
   if (feed.stale) {
-    log.replaceChildren();
+    // Empty, but never blank. An empty box says nothing about *why* it is
+    // empty, and the two reasons could not be further apart: nobody has
+    // spoken in an hour, or the thing that fills the archive stopped running
+    // and every message in it has simply aged out. Both look identical from
+    // the outside, which is exactly how a feed that had not been pulled in
+    // four hours passed for a quiet evening.
+    log.replaceChildren(chatNote(feed));
     chatUnread = 0;
     chatBadge();
     chatToEnd();
@@ -2602,7 +2629,51 @@ function rhythmPanel(board) {
       ${cells}
       <div class="rh-ruler"><i class="rh-day"></i>${ruler}</div>
     </div>
-    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>`;
+    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>
+    ${rhythmTotals(board.periods)}`;
+}
+
+// Day, week and month totals on one line. Deliberately three numbers rather
+// than another chart: the bars that used to sit under this grid were the thing
+// that made the panel clunky, and what anybody actually wants from them is
+// whether this week is a big one. The whole history is behind the title on
+// each figure, and behind the endpoint for anything that wants to draw it.
+function rhythmTotals(periods) {
+  if (!periods) return '';
+  const now = new Date();
+  const iso = rhythmIsoWeek(now);
+  const pad = n => String(n).padStart(2, '0');
+  const wanted = [
+    ['today', 'day', `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`],
+    ['week', 'week', iso],
+    ['month', 'month', `${now.getFullYear()}-${pad(now.getMonth() + 1)}`],
+  ];
+
+  const parts = wanted.map(([label, scale, key]) => {
+    const rows = periods[scale] || [];
+    const row = rows.find(r => r.key === key);
+    const best = rows.reduce((a, b) => (!a || b.total > a.total ? b : a), null);
+    // the record for this scale, so a quiet week reads as quiet against
+    // something rather than as a number on its own
+    const hint = best
+      ? `best ${scale}: ${rhythmSpan(best.total)} (${best.key}) · ${
+          rows.length} on record`
+      : 'nothing on record yet';
+    return `<span class="rh-tot" title="${hint}"><i>${label}</i><b>${
+      rhythmSpan(row ? row.total : 0)}</b></span>`;
+  }).join('');
+
+  return `<div class="rh-totals">${parts}</div>`;
+}
+
+// The ISO week the server counts in, worked out the same way Python's
+// isocalendar does: the week owning the Thursday of this week.
+function rhythmIsoWeek(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d - jan1) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
 function rhythmZone() {
