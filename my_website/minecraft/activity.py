@@ -27,10 +27,12 @@ The consequences of building it that way, stated plainly:
 
   * It starts empty and only grows forwards. There is no back-fill, because
     there is nothing to back-fill from.
-  * Its resolution is the sync interval. Fifteen minutes between samples means
-    a player who logged in and out inside one window still has their minutes
-    counted - the counter caught them - but they land in whichever hours the
-    window spans rather than the exact minute they were on.
+  * Its resolution is the sync interval, which the always-on worker now runs
+    at two minutes rather than fifteen. A player who logged in and out inside
+    one window still has their minutes counted - the counter caught them - but
+    they land in whichever hours the window spans rather than the exact minute
+    they were on. A shorter window mostly sharpens the second reading, the
+    snapshot of who was standing there when we looked.
   * A gap in the syncing is not a gap in the record. The counter kept climbing
     while nobody was looking, so the next sample sees all of it; the seconds
     are spread across the hours the gap covered rather than dropped on the one

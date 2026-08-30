@@ -53,10 +53,8 @@ COLOR_OVERRIDES = {
     "dreamy":(180,180,240),"epic":(80,50,130),
 }
 
-DATA_ROOT = os.path.join(os.path.dirname(__file__), '..', '..', '..',
-                         'Desktop', 'CS_CLASS', 'CS665sp26', 'Musical-Blob', 'data')
-DATA_ROOT = os.path.normpath(os.path.expanduser(
-    '~/Desktop/CS_CLASS/CS665sp26/Musical-Blob/data'))
+# Resolved in paths.py, which imports nothing heavy - see that module for why.
+from .paths import DATA_ROOT, available     # noqa: F401  (re-exported)
 
 
 def _read_csv(path):

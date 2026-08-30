@@ -13,13 +13,18 @@ It runs the two pulls this site needs on their own clocks, in one process:
   * the chat buffer, every twenty-five seconds, because the game host keeps
     only fifteen messages and drops the rest - whatever is not read before the
     sixteenth arrives is gone for good. See chat.py.
-  * everything else, every quarter of an hour, because it is five files of
-    counters that no one reads to the second and the host is a game panel's
-    SFTP gateway rather than a fileserver.
+  * everything else, every two minutes. It used to be every quarter of an
+    hour, which for "who is online" is most of a session out of date.
 
-When both fall due on the same tick they share one connection, so the quarter
-hour costs a handshake rather than two. Nothing else is shared: a chat pull
-that fails does not stop the counters being fetched, or the other way about.
+Raising that rate is close to free, which is the reason it could be raised. A
+full pull only ever runs on a tick that has already connected for chat, so it
+adds no handshake at all - it costs one directory listing and whichever files
+have actually changed, which in practice is world_data.json and nothing else.
+The floor is sixty seconds; below that the listing starts to be most of what
+the host is being asked for.
+
+Nothing else is shared between the two: a chat pull that fails does not stop
+the counters being fetched, or the other way about.
 
 Credentials come from the config file, never from the command line, so they do
 not end up in shell history or a process list.
@@ -61,9 +66,9 @@ class Command(BaseCommand):
         parser.add_argument("--loop", action="store_true",
                             help="keep pulling until stopped: chat on its own "
                                  "short clock, everything else on the long one")
-        parser.add_argument("--interval", type=float, default=puller.MIN_INTERVAL,
+        parser.add_argument("--interval", type=float, default=puller.FULL_INTERVAL,
                             help=f"seconds between full pulls under --loop "
-                                 f"(default {puller.MIN_INTERVAL})")
+                                 f"(default {puller.FULL_INTERVAL}, floor 60)")
         parser.add_argument("--chat-interval", type=float,
                             default=puller.CHAT_INTERVAL,
                             help=f"seconds between chat pulls under --loop "
@@ -154,6 +159,9 @@ class Command(BaseCommand):
         panel's SFTP gateway for counters nobody reads to the second.
         """
         chat_every = max(5.0, opts["chat_interval"])
+        # a floor rather than a clamp both ends: somebody who asks for an
+        # hourly full pull has a reason, and somebody who asks for one every
+        # ten seconds has made a mistake the game host would pay for
         full_every = max(60.0, opts["interval"])
         with_chat = not opts["no_chat"]
 
@@ -187,7 +195,7 @@ class Command(BaseCommand):
                     # Only a pull that actually happened moves the long
                     # clock on. The lock can be held by a hand-run sync or by
                     # the page's own puller, and treating that skip as a run
-                    # would cost the counters a full quarter of an hour for a
+                    # would cost the counters a whole interval for a
                     # collision that is over in seconds.
                     if due_full and self._full(sftp, cfg, season, dest):
                         # measured from the end of the pull rather than the
@@ -237,8 +245,8 @@ class Command(BaseCommand):
         Under the season lock, exactly as the one-shot run is: the lock is
         what stops this and a hand-run `sync_server` writing the same folder
         at once. Chat is deliberately outside it - it writes one file nothing
-        else touches, and queueing a twenty-five second poll behind a
-        quarter-hourly fetch would stall the box for no benefit.
+        else touches, and queueing a twenty-five second poll behind the
+        slower fetch would stall the box for no benefit.
         """
         lock = sync.Lock(puller.lock_for(season))
         with lock:

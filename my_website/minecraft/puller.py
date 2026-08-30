@@ -26,6 +26,21 @@ DEFAULT_CONFIG = "mc_sync.json"
 # it a quarter of an hour at a time. The refresh button ignores this.
 MIN_INTERVAL = 15 * 60
 
+# What the always-on worker fetches everything at, which is a different
+# question from the one above and gets a different answer.
+#
+# MIN_INTERVAL governs the page-driven pull, where every web worker that gets a
+# poll may open its own connection to the game host - so it is deliberately
+# slack. The worker is one process on one clock, and it is already connecting
+# every CHAT_INTERVAL seconds for the chat buffer; a full pull only ever runs
+# on a tick that has connected anyway, so running it more often costs a
+# directory listing and whichever files actually changed, and not one extra
+# handshake. In practice that is one listing and one 95KB world_data.json.
+#
+# Two minutes rather than fifteen because everything on the board except chat
+# was quarter-of-an-hour stale, which for "who is online" is most of a session.
+FULL_INTERVAL = 120
+
 # A host that has just refused us will not have changed its mind on the next
 # tick, and a game panel's SFTP gateway is exactly the kind of thing that
 # starts refusing when it is asked too often. Each failure in a row doubles

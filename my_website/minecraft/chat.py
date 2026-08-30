@@ -234,7 +234,7 @@ def pull(sftp, cfg, data_dir):
     file is stat'ed first and only read if its size or mtime has moved. That
     matters more than the bytes do - the host is a game panel's SFTP gateway
     and it is the number of requests it minds - and this is the one pull that
-    runs on the order of once a minute rather than once a quarter of an hour.
+    runs every twenty-five seconds rather than every couple of minutes.
     """
     remote = posixpath.join(cfg['remote_root'], REMOTE)
     try:
