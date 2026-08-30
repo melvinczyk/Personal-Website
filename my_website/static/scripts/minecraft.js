@@ -2565,6 +2565,147 @@ function setRhythmMode(mode) {
   if (rhythmBoard) rhythmPanel(rhythmBoard);
 }
 
+// How far out the grid is zoomed. A day is twenty-four hours in a row, a week
+// is those hours stacked seven deep, and a month is one square per day laid
+// out as a calendar. Week is the default because it is the only one of the
+// three that shows a *habit*: a day is an anecdote and a month is a trend, but
+// "Friday evening" only exists at this scale.
+let rhythmScale = 'week';
+
+function setRhythmScale(scale) {
+  rhythmScale = scale;
+  if (rhythmBoard) rhythmPanel(rhythmBoard);
+}
+
+// One day's row from the log, reduced under the current mode - the same three
+// questions the hour buckets answer, asked of a whole day.
+function rhythmDayValue(who, mode) {
+  const rows = who || {};
+  if (mode === 'together') {
+    return Object.values(rows).filter(v => v > 0).length;
+  }
+  if (mode === 'all') {
+    return Object.values(rows).reduce((n, v) => n + (v || 0), 0);
+  }
+  return rows[mode] || 0;
+}
+
+// ── the three grids ─────────────────────────────────────────────────────────
+// Each returns the cells, the peak to scale the heat against, and what to put
+// under them as a ruler.
+
+// The last twenty-four hours, hour by hour. Not "today": at one in the
+// morning today is an empty strip, and the zoomed-in view is the one somebody
+// opens to see whether anything is happening *now*. An hour is the smallest
+// bucket the log keeps, so this is as far in as the zoom can travel.
+function rhythmDayGrid(board) {
+  const row = new Array(24).fill(0);
+  const seen = Array.from({ length: 24 }, () => new Set());
+
+  // the 24 hours ending with the one we are in, as local Dates
+  const top = new Date();
+  top.setMinutes(0, 0, 0);
+  const slots = [];
+  for (let i = 23; i >= 0; i -= 1) {
+    slots.push(new Date(top.getTime() - i * 3600000));
+  }
+  const at = {};
+  slots.forEach((when, i) => { at[when.getTime()] = i; });
+
+  for (const [key, bucket] of Object.entries(board.hours || {})) {
+    const when = rhythmHour(key);
+    if (!when) continue;
+    const i = at[when.getTime()];
+    if (i === undefined) continue;
+    row[i] += rhythmValue(bucket, rhythmMode);
+    for (const name of Object.keys((bucket && bucket.who) || {})) seen[i].add(name);
+  }
+
+  const peak = Math.max(...row, 0);
+  const cells = `<div class="rh-row">${row.map((value, i) => `
+    <span class="rh-cell" style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
+      data-t="${rhythmClock(slots[i].getHours())}${
+        slots[i].getDate() === top.getDate() ? '' : ' yesterday'} · ${
+        rhythmReading(value, seen[i])}"
+      onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"></span>`).join('')}</div>`;
+
+  // clock labels at the ends and the middle, since the columns are a rolling
+  // window rather than a fixed midnight-to-midnight day
+  const marks = [[0, 0], [8, 33.3], [16, 66.6]].map(([i, left]) =>
+    `<i style="left:${left}%">${rhythmClock(slots[i].getHours())}</i>`).join('')
+    + '<i style="right:0">now</i>';
+  return { cells, peak, marks, empty: 'nothing played in the last day' };
+}
+
+// The week as a habit: every Tuesday 8pm that has ever been recorded, in one
+// square. This is the view the whole feature was built for.
+function rhythmWeekGrid(board) {
+  const { grid, seen } = rhythmGrid(board.hours, rhythmMode);
+  const peak = Math.max(...grid.flat(), 0);
+  const cells = grid.map((row, day) => `
+    <div class="rh-row">
+      <i class="rh-day">${DAYS[day][0]}</i>
+      ${row.map((value, hour) => `<span class="rh-cell"
+          style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
+          data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
+            rhythmReading(value, seen[day][hour])}"
+          onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
+          ></span>`).join('')}
+    </div>`).join('');
+  return { cells, peak, ruler: true, indent: true };
+}
+
+// A square per day, laid out as a calendar: weekday columns, weeks running
+// down. Padded to whole weeks so the columns actually line up with a weekday
+// rather than drifting by one every row.
+function rhythmMonthGrid(board) {
+  // six whole weeks. Sliced after padding rather than before, so the grid is
+  // always six rows tall whichever weekday the window happens to start on -
+  // a seventh row would make the panel taller than the week view beside it.
+  const rows = (board.days || []).slice(-45);
+  if (!rows.length) return { cells: '', peak: 0, empty: 'no days on record yet' };
+
+  const cell = day => {
+    const when = new Date(`${day.day}T00:00:00`);
+    return { when, value: rhythmDayValue(day.who, rhythmMode),
+             names: new Set(Object.keys(day.who || {})), day };
+  };
+  const filled = rows.map(cell);
+  const peak = Math.max(...filled.map(c => c.value), 0);
+
+  // lead the first week with blanks so Sunday is always the first column
+  const pad = filled[0].when.getDay();
+  const slots = new Array(pad).fill(null).concat(filled);
+  while (slots.length % 7) slots.push(null);
+
+  const weeks = [];
+  for (let i = 0; i < slots.length; i += 7) weeks.push(slots.slice(i, i + 7));
+  while (weeks.length > 6) weeks.shift();
+
+  const cells = weeks.map(week => `
+    <div class="rh-row month">
+      ${week.map(slot => slot === null
+        ? '<span class="rh-cell blank"></span>'
+        : `<span class="rh-cell"
+             style="--heat:${rhythmHeat(slot.value, peak).toFixed(3)}"
+             data-t="${rhythmDate(slot.day.day)} · ${
+               rhythmReading(slot.value, slot.names)}"
+             onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
+             ></span>`).join('')}
+    </div>`).join('');
+
+  const ruler = `<div class="rh-ruler month">${
+    DAYS.map(d => `<i>${d[0]}</i>`).join('')}</div>`;
+  return { cells, peak, days: ruler };
+}
+
+function rhythmDate(day) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || '');
+  if (!m) return day || '';
+  const when = new Date(+m[1], +m[2] - 1, +m[3]);
+  return `${DAYS[when.getDay()]} ${MONTHS[when.getMonth()]} ${when.getDate()}`;
+}
+
 function rhythmPanel(board) {
   const host = document.getElementById('ls-rhythm');
   if (!host) return;
@@ -2576,35 +2717,15 @@ function rhythmPanel(board) {
     rhythmMode = 'all';
   }
 
-  const { grid, seen } = rhythmGrid(board.hours, rhythmMode);
-  const peak = Math.max(...grid.flat(), 0);
+  const drawn = rhythmScale === 'day' ? rhythmDayGrid(board)
+    : rhythmScale === 'month' ? rhythmMonthGrid(board)
+    : rhythmWeekGrid(board);
 
-  if (!peak) {
-    host.innerHTML = `<div class="rh-empty">
-      <b>ACTIVE HOURS</b>
-      <span>nothing recorded yet &mdash; the game keeps no history of when it
-      was played, so this fills in from here</span>
-    </div>`;
-    return;
-  }
+  const scales = `<span class="rh-zoom">${
+    ['day', 'week', 'month'].map(key => `<button type="button"
+      class="rh-z${rhythmScale === key ? ' on' : ''}"
+      onclick="setRhythmScale('${key}')">${key}</button>`).join('')}</span>`;
 
-  const cells = grid.map((row, day) => `
-    <div class="rh-row">
-      <i class="rh-day">${DAYS[day][0]}</i>
-      ${row.map((value, hour) => `<span class="rh-cell"
-          style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
-          data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
-            rhythmReading(value, seen[day][hour])}"
-          onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
-          ></span>`).join('')}
-    </div>`).join('');
-
-  const ruler = `<span class="rh-ticks">${[0, 6, 12, 18].map(h =>
-    `<i style="left:${(h / 24) * 100}%">${rhythmClock(h)}</i>`).join('')}</span>`;
-
-  // Two buttons and a list, rather than a tab per player: nine names as tabs
-  // is four rows of them in a column this narrow, which is taller than the
-  // grid they are filtering.
   const names = board.players || [];
   const picker = `
     <div class="rh-pick">
@@ -2619,33 +2740,86 @@ function rhythmPanel(board) {
       </select>` : ''}
     </div>`;
 
-  host.innerHTML = `
+  const head = `
     <div class="rh-head">
-      <b>ACTIVE HOURS</b>
-      <em>${rhythmZone()}</em>
+      <b title="times shown in ${rhythmZone()}">ACTIVE HOURS</b>
+      ${scales}
+    </div>`;
+
+  if (!drawn.peak) {
+    host.innerHTML = `${head}${picker}
+      <div class="rh-empty"><span>${drawn.empty
+        || 'nothing recorded yet &mdash; the game keeps no history of when it was'
+           + ' played, so this fills in from here'}</span></div>
+      ${rhythmTotals(board.periods)}`;
+    return;
+  }
+
+  // hours across the bottom for the two hourly scales, weekday letters for the
+  // calendar; the week grid indents its ruler past the column of day letters
+  const ruler = drawn.days ? drawn.days : `
+    <div class="rh-ruler">${drawn.indent ? '<i class="rh-day"></i>' : ''}
+      <span class="rh-ticks">${drawn.marks || [0, 6, 12, 18].map(h =>
+        `<i style="left:${(h / 24) * 100}%">${rhythmClock(h)}</i>`).join('')}</span>
+    </div>`;
+
+  host.innerHTML = `${head}${picker}
+    <div class="rh-grid ${rhythmScale}">
+      ${drawn.cells}
+      ${ruler}
     </div>
-    ${picker}
-    <div class="rh-grid">
-      ${cells}
-      <div class="rh-ruler"><i class="rh-day"></i>${ruler}</div>
-    </div>
-    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>
+    <div class="rh-read" id="rh-read">${rhythmPeakOf(drawn)}</div>
     ${rhythmTotals(board.periods)}`;
+}
+
+// what the panel says with nothing hovered: the high-water mark of whatever
+// is currently drawn, in that scale's own units
+function rhythmPeakOf(drawn) {
+  if (!drawn.peak) return '';
+  const what = rhythmMode === 'together'
+    ? `${drawn.peak} player${drawn.peak === 1 ? '' : 's'} at once`
+    : `${rhythmSpan(drawn.peak)} played`;
+  // the day grid is a rolling twenty-four hours, not a calendar day, so it
+  // does not get to say "today"
+  const when = rhythmScale === 'day' ? 'busiest hour since yesterday'
+    : rhythmScale === 'month' ? 'biggest day' : 'busiest hour';
+  return `${when}: ${what}`;
+}
+
+function rhythmZone() {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    return zone ? zone.split('/').pop().replace(/_/g, ' ') : 'your time';
+  } catch (e) { return 'your time'; }
+}
+
+function rhythmClock(hour) {
+  return `${hour % 12 || 12}${hour < 12 ? 'am' : 'pm'}`;
+}
+
+// a cell's value in the units of whatever mode drew it
+function rhythmReading(value, names) {
+  if (rhythmMode === 'together') {
+    const who = [...names].sort().join(', ');
+    return `${value} player${value === 1 ? '' : 's'}${who ? ` · ${who}` : ''}`;
+  }
+  if (rhythmMode !== 'all') return rhythmSpan(value);
+  const who = [...names].sort().join(', ');
+  return `${rhythmSpan(value)}${who ? ` · ${who}` : ''}`;
 }
 
 // Day, week and month totals on one line. Deliberately three numbers rather
 // than another chart: the bars that used to sit under this grid were the thing
 // that made the panel clunky, and what anybody actually wants from them is
-// whether this week is a big one. The whole history is behind the title on
-// each figure, and behind the endpoint for anything that wants to draw it.
+// whether this week is a big one. The record for each scale is behind its
+// title, and the whole history is behind the endpoint.
 function rhythmTotals(periods) {
   if (!periods) return '';
   const now = new Date();
-  const iso = rhythmIsoWeek(now);
   const pad = n => String(n).padStart(2, '0');
   const wanted = [
     ['today', 'day', `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`],
-    ['week', 'week', iso],
+    ['week', 'week', rhythmIsoWeek(now)],
     ['month', 'month', `${now.getFullYear()}-${pad(now.getMonth() + 1)}`],
   ];
 
@@ -2666,53 +2840,14 @@ function rhythmTotals(periods) {
   return `<div class="rh-totals">${parts}</div>`;
 }
 
-// The ISO week the server counts in, worked out the same way Python's
-// isocalendar does: the week owning the Thursday of this week.
+// The ISO week the log counts in, worked out the way Python's isocalendar
+// does: the week that owns this week's Thursday.
 function rhythmIsoWeek(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
   const jan1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   const week = Math.ceil(((d - jan1) / 86400000 + 1) / 7);
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-}
-
-function rhythmZone() {
-  try {
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-    // just the city: "America/Chicago" is a path, and the column is narrow
-    return zone ? zone.split('/').pop().replace(/_/g, ' ') : 'your time';
-  } catch (e) { return 'your time'; }
-}
-
-function rhythmClock(hour) {
-  return `${hour % 12 || 12}${hour < 12 ? 'am' : 'pm'}`;
-}
-
-// a cell's value in the units of whatever mode drew it
-function rhythmReading(value, names) {
-  if (rhythmMode === 'together') {
-    const who = [...names].sort().join(', ');
-    return `${value} player${value === 1 ? '' : 's'}${who ? ` · ${who}` : ''}`;
-  }
-  if (rhythmMode !== 'all') return rhythmSpan(value);
-  const who = [...names].sort().join(', ');
-  return `${rhythmSpan(value)}${who ? ` · ${who}` : ''}`;
-}
-
-function rhythmPeak(grid, peak) {
-  const lead = rhythmMode === 'together' ? 'fullest hour'
-    : rhythmMode === 'all' ? 'busiest hour' : `${rhythmMode}'s hour`;
-  for (let day = 0; day < 7; day += 1) {
-    for (let hour = 0; hour < 24; hour += 1) {
-      if (grid[day][hour] === peak) {
-        const said = rhythmMode === 'together'
-          ? `${peak} player${peak === 1 ? '' : 's'} at once`
-          : `${rhythmSpan(peak)} played`;
-        return `${lead}: ${DAYS[day]} ${rhythmClock(hour)} · ${said}`;
-      }
-    }
-  }
-  return '';
 }
 
 function rhythmSay(cell) {

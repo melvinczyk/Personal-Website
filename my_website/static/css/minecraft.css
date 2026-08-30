@@ -3527,11 +3527,23 @@ body::after { display: none; }
 }
 
 .rh-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  gap: 6px; margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 6px; margin-bottom: 5px;
   font-size: 10px; letter-spacing: 1px; color: var(--mc-gold);
 }
-.rh-head em { font-style: normal; font-size: 9px; color: #5f6f83; }
+.rh-head b { font-weight: normal; cursor: help; }
+
+/* how far out the grid is zoomed. On the heading line rather than in a row of
+   its own: the panel is already two rows of controls deep and a third would be
+   taller than the grid they all point at. */
+.rh-zoom { display: flex; gap: 1px; }
+.rh-z {
+  padding: 1px 6px; border: 0; cursor: pointer;
+  font: inherit; font-size: 9px; letter-spacing: .5px;
+  color: #5f6f83; background: rgba(255, 255, 255, 0.05);
+}
+.rh-z:hover { color: var(--mc-text, #e6e6e8); }
+.rh-z.on { color: #05070a; background: var(--mc-gold, #ffd24a); }
 
 .rh-pick { display: flex; gap: 3px; margin-bottom: 6px; }
 .rh-tab {
@@ -3553,8 +3565,36 @@ body::after { display: none; }
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-.rh-grid { position: relative; margin-top: 2px; }
+/* One height for all three zoom levels. The panel is stretched against the
+   world panel beside it, so a grid that got taller when you clicked "month"
+   pushed that panel taller too - the whole top of the page jumping because
+   somebody changed a time frame. */
+.rh-grid {
+  position: relative; margin-top: 2px;
+  height: 97px;   /* the tallest of the three, fixed: min-height still let
+     the calendar run a pixel over and nudge the whole top of the page */
+  display: flex; flex-direction: column; justify-content: center;
+}
 .rh-row { display: flex; align-items: center; gap: 1px; margin-bottom: 1px; }
+
+/* Zoomed in, there is one row instead of seven, so the squares take the height
+   the other six were using. Zoomed out to the calendar there are seven wide
+   columns instead of twenty-four narrow ones. The cell is the same element
+   throughout; only how much room it gets changes. */
+.rh-grid.day .rh-cell { height: 34px; }
+.rh-grid.month .rh-cell { height: 12px; }
+.rh-row.month { gap: 2px; margin-bottom: 2px; }
+/* the days before the first week began: they hold the columns in line with
+   their weekday and are not an hour with nothing in it */
+.rh-cell.blank { background: none; box-shadow: none; }
+
+/* weekday letters under the calendar, one per column, spaced like the cells
+   above them rather than positioned along a track */
+.rh-ruler.month { display: flex; gap: 2px; margin-top: 2px; }
+.rh-ruler.month i {
+  flex: 1 1 0; text-align: center; font-style: normal;
+  font-size: 8px; color: #5f6f83;
+}
 /* one letter, not three: at this width the day column was eating an eighth of
    the grid to say "Wed" */
 .rh-day {
@@ -3615,11 +3655,7 @@ body::after { display: none; }
   color: var(--mc-gold, #ffd24a);
 }
 
-.rh-empty { margin: auto 0; padding: 6px; text-align: center; }
-.rh-empty b {
-  display: block; font-weight: normal; font-size: 10px; letter-spacing: 1px;
-  color: var(--mc-gold); margin-bottom: 5px;
-}
+.rh-empty { margin: auto 0; padding: 10px 6px; text-align: center; }
 .rh-empty span {
   display: block; font-size: 9px; line-height: 1.6; color: #5f6f83;
 }
