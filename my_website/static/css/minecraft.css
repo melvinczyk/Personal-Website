@@ -3616,6 +3616,22 @@ body::after { display: none; }
 }
 .rh-cell:hover { box-shadow: inset 0 0 0 1px var(--mc-sky, #6fe0ee); }
 
+/* Downtime, as a band across the foot of the square rather than a colour
+   mixed into it. Green blended with red is olive, and olive on this grid
+   reads as a middling amount of play - the one thing it must never mean. A
+   band keeps both facts side by side: how much was played, and how much of
+   the hour there was no server to play on.
+
+   An hour that was entirely down with nobody on is the same rule with the
+   green at zero, which draws the solid red square. */
+.rh-cell { position: relative; }
+.rh-cell::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: var(--down, 0);
+  background: var(--mc-heart, #d94a3d);
+  box-shadow: inset 0 1px 0 rgba(255, 160, 150, 0.5);
+}
+
 .rh-ruler {
   display: flex; align-items: center; gap: 1px; height: 11px; margin-top: 1px;
   font-size: 8px; color: #5f6f83;

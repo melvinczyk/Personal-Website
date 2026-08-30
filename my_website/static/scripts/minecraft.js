@@ -2525,10 +2525,16 @@ function rhythmValue(bucket, mode) {
 function rhythmGrid(hours, mode) {
   const grid = DAYS.map(() => new Array(24).fill(0));
   const seen = DAYS.map(() => Array.from({ length: 24 }, () => new Set()));
+  // downtime summed across every week that fed this cell, and how many hours
+  // that was, so the band is drawn against the time the cell actually covers
+  const down = DAYS.map(() => new Array(24).fill(0));
+  const span = DAYS.map(() => new Array(24).fill(0));
   for (const [key, bucket] of Object.entries(hours || {})) {
     const when = rhythmHour(key);
     if (!when) continue;
     const day = when.getDay(), hour = when.getHours();
+    down[day][hour] += (bucket && bucket.down) || 0;
+    span[day][hour] += 3600;
     const value = rhythmValue(bucket, mode);
     // `together` is a headcount, and a headcount does not add up across four
     // Tuesdays: the cell takes the best that week ever managed, not the sum
@@ -2541,7 +2547,7 @@ function rhythmGrid(hours, mode) {
       seen[day][hour].add(name);
     }
   }
-  return { grid, seen };
+  return { grid, seen, down, span };
 }
 
 // A cell's weight against the busiest cell, eased. Play time is wildly
@@ -2553,9 +2559,41 @@ function rhythmHeat(value, peak) {
   return Math.min(1, Math.sqrt(value / peak));
 }
 
+// How tall the red band on a cell should be, as a fraction of it.
+//
+// Nothing at all under the floor: a modded server restart is a couple of
+// minutes and is not an outage worth colouring, and the number comes from the
+// log rather than being kept here so the two cannot drift apart.
+//
+// Above it, eased the same way the green is. A one-hour outage inside a whole
+// day is four percent of that day, which as a straight proportion is a band
+// too thin to see; the square root plus a floor of an eighth means every
+// outage past the threshold is visible and worse ones are visibly worse.
+const DOWN_MIN_BAND = 0.125;
+
+function rhythmDownBand(down, span) {
+  const floor = (rhythmBoard && rhythmBoard.down_floor) || 300;
+  if (!down || !span || down < floor) return 0;
+  return Math.max(DOWN_MIN_BAND, Math.min(1, Math.sqrt(down / span)));
+}
+
+// the cell's own markup for that band, and the words for the readout
+function rhythmDownAttr(down, span) {
+  const band = rhythmDownBand(down, span);
+  return band ? ` --down:${(band * 100).toFixed(1)}%` : '';
+}
+
+function rhythmDownSay(down) {
+  const floor = (rhythmBoard && rhythmBoard.down_floor) || 300;
+  return down && down >= floor ? ` · down ${rhythmSpan(down)}` : '';
+}
+
 function rhythmSpan(seconds) {
   if (!seconds) return '0m';
-  const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+  // rounded to minutes first, then split. Splitting first and rounding the
+  // remainder lets 3570 seconds round up to sixty minutes and print "1h 60m".
+  const mins = Math.round(seconds / 60);
+  const h = Math.floor(mins / 60), m = mins % 60;
   if (h >= 10) return `${h}h`;
   return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
 }
@@ -2601,6 +2639,7 @@ function rhythmDayValue(who, mode) {
 function rhythmDayGrid(board) {
   const row = new Array(24).fill(0);
   const seen = Array.from({ length: 24 }, () => new Set());
+  const down = new Array(24).fill(0);
 
   // the 24 hours ending with the one we are in, as local Dates
   const top = new Date();
@@ -2618,15 +2657,17 @@ function rhythmDayGrid(board) {
     const i = at[when.getTime()];
     if (i === undefined) continue;
     row[i] += rhythmValue(bucket, rhythmMode);
+    down[i] += (bucket && bucket.down) || 0;
     for (const name of Object.keys((bucket && bucket.who) || {})) seen[i].add(name);
   }
 
   const peak = Math.max(...row, 0);
   const cells = `<div class="rh-row">${row.map((value, i) => `
-    <span class="rh-cell" style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
+    <span class="rh-cell" style="--heat:${rhythmHeat(value, peak).toFixed(3)};${
+      rhythmDownAttr(down[i], 3600)}"
       data-t="${rhythmClock(slots[i].getHours())}${
         slots[i].getDate() === top.getDate() ? '' : ' yesterday'} · ${
-        rhythmReading(value, seen[i])}"
+        rhythmReading(value, seen[i])}${rhythmDownSay(down[i])}"
       onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"></span>`).join('')}</div>`;
 
   // clock labels at the ends and the middle, since the columns are a rolling
@@ -2634,25 +2675,31 @@ function rhythmDayGrid(board) {
   const marks = [[0, 0], [8, 33.3], [16, 66.6]].map(([i, left]) =>
     `<i style="left:${left}%">${rhythmClock(slots[i].getHours())}</i>`).join('')
     + '<i style="right:0">now</i>';
-  return { cells, peak, marks, empty: 'nothing played in the last day' };
+  return { cells, peak, worst: Math.max(...down, 0), marks,
+           empty: 'nothing played in the last day' };
 }
 
 // The week as a habit: every Tuesday 8pm that has ever been recorded, in one
 // square. This is the view the whole feature was built for.
 function rhythmWeekGrid(board) {
-  const { grid, seen } = rhythmGrid(board.hours, rhythmMode);
+  const { grid, seen, down, span } = rhythmGrid(board.hours, rhythmMode);
   const peak = Math.max(...grid.flat(), 0);
   const cells = grid.map((row, day) => `
     <div class="rh-row">
       <i class="rh-day">${DAYS[day][0]}</i>
       ${row.map((value, hour) => `<span class="rh-cell"
-          style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
+          style="--heat:${rhythmHeat(value, peak).toFixed(3)};${
+            rhythmDownAttr(down[day][hour], span[day][hour])}"
           data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
-            rhythmReading(value, seen[day][hour])}"
+            rhythmReading(value, seen[day][hour])}${
+            rhythmDownSay(down[day][hour])}"
           onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
           ></span>`).join('')}
     </div>`).join('');
-  return { cells, peak, ruler: true, indent: true };
+  // a grid where the only thing that happened was an outage still has
+  // something to draw, so the peak alone must not decide it is empty
+  const worst = Math.max(...down.flat(), 0);
+  return { cells, peak, worst, ruler: true, indent: true };
 }
 
 // A square per day, laid out as a calendar: weekday columns, weeks running
@@ -2668,6 +2715,7 @@ function rhythmMonthGrid(board) {
   const cell = day => {
     const when = new Date(`${day.day}T00:00:00`);
     return { when, value: rhythmDayValue(day.who, rhythmMode),
+             down: day.down || 0,
              names: new Set(Object.keys(day.who || {})), day };
   };
   const filled = rows.map(cell);
@@ -2687,16 +2735,18 @@ function rhythmMonthGrid(board) {
       ${week.map(slot => slot === null
         ? '<span class="rh-cell blank"></span>'
         : `<span class="rh-cell"
-             style="--heat:${rhythmHeat(slot.value, peak).toFixed(3)}"
+             style="--heat:${rhythmHeat(slot.value, peak).toFixed(3)};${
+               rhythmDownAttr(slot.down, 86400)}"
              data-t="${rhythmDate(slot.day.day)} · ${
-               rhythmReading(slot.value, slot.names)}"
+               rhythmReading(slot.value, slot.names)}${rhythmDownSay(slot.down)}"
              onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
              ></span>`).join('')}
     </div>`).join('');
 
   const ruler = `<div class="rh-ruler month">${
     DAYS.map(d => `<i>${d[0]}</i>`).join('')}</div>`;
-  return { cells, peak, days: ruler };
+  return { cells, peak, worst: Math.max(...filled.map(c => c.down), 0),
+           days: ruler };
 }
 
 function rhythmDate(day) {
@@ -2746,7 +2796,7 @@ function rhythmPanel(board) {
       ${scales}
     </div>`;
 
-  if (!drawn.peak) {
+  if (!drawn.peak && !drawn.worst) {
     host.innerHTML = `${head}${picker}
       <div class="rh-empty"><span>${drawn.empty
         || 'nothing recorded yet &mdash; the game keeps no history of when it was'
@@ -2775,7 +2825,9 @@ function rhythmPanel(board) {
 // what the panel says with nothing hovered: the high-water mark of whatever
 // is currently drawn, in that scale's own units
 function rhythmPeakOf(drawn) {
-  if (!drawn.peak) return '';
+  if (!drawn.peak) {
+    return drawn.worst ? `server down ${rhythmSpan(drawn.worst)}` : '';
+  }
   const what = rhythmMode === 'together'
     ? `${drawn.peak} player${drawn.peak === 1 ? '' : 's'} at once`
     : `${rhythmSpan(drawn.peak)} played`;
