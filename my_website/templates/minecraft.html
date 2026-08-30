@@ -242,6 +242,35 @@
     </div>
   </div>
 
+  <!-- The server's chat, pinned to the corner of the screen rather than sat
+       in the page: it is the one thing here that is worth seeing while you
+       are reading something else. Empty and hidden until the first poll
+       lands, so a checkout with no sync configured shows nothing at all
+       rather than an empty box promising a feed that will never arrive.
+       The log's rows are built in script with textContent - chat is written
+       by players, and player text is never handed to innerHTML. -->
+  <div id="mc-chat" class="mc-chat shut" hidden>
+    <button type="button" class="mcc-tab" id="mcc-tab"
+            onclick="toggleChat()" aria-expanded="false" aria-controls="mcc-body">
+      <i class="mcc-dot"></i>
+      <!-- only drawn while the box is an icon; open, the words do the work -->
+      <svg class="mcc-icon" viewBox="0 0 16 16" aria-hidden="true"
+           shape-rendering="crispEdges" fill="currentColor">
+        <path d="M2 2h12v9H7l-3 3v-3H2z"/>
+        <rect x="4" y="5" width="8" height="1" fill="#16161a"/>
+        <rect x="4" y="7" width="5" height="1" fill="#16161a"/>
+      </svg>
+      <span class="mcc-title">SERVER CHAT</span>
+      <em class="mcc-badge" id="mcc-badge" hidden></em>
+      <span class="mcc-caret"></span>
+    </button>
+    <div class="mcc-body" id="mcc-body">
+      <div class="mcc-log" id="mcc-log" role="log" aria-live="polite"></div>
+      <button type="button" class="mcc-jump" id="mcc-jump" hidden
+              onclick="chatToEnd()">newest \u25be</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -252,6 +281,7 @@ const PORTAL_URLS = {
 };
 const HOME_URL = "{% url 'index' %}";
 const LIVE_URL = "{% url 'minecraft-live' %}";
+const CHAT_URL = "{% url 'minecraft-chat' %}";
 const LIVE_BOARD = {{ live_json|safe }};
 
 const SEASONS = [

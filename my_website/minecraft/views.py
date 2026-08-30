@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.conf import settings
 
+from . import chat as chat_data
 from . import live as live_data
 from . import puller
 from .roster import faces, season_roster
@@ -210,6 +211,35 @@ def live_board(request):
     board['season'] = LIVE_SEASON
     board['source'] = pull
     return JsonResponse(board)
+
+
+def chat_feed(request):
+    """The server's chat, from the archive rather than from the server.
+
+    The buffer on the game host holds ten messages and this endpoint is polled
+    by every open tab, so the two are deliberately not connected: a poll reads
+    a local file, and a separate clock decides when that file is refilled. A
+    hundred tabs and one tab cost the game host exactly the same.
+
+    `since` is the sequence number the caller last saw. Without it the box gets
+    a window of backlog to open with; with it, only what has been said since,
+    which on a quiet server is an empty list.
+    """
+    if not LIVE_SEASON:
+        return JsonResponse({'live': False}, status=404)
+
+    key = f'season{LIVE_SEASON}'
+    # asks for a pull, never waits for one - same bargain as the board
+    source = puller.refresh_chat(key)
+
+    try:
+        since = int(request.GET['since'])
+    except (KeyError, ValueError):
+        since = None
+
+    feed = chat_data.board(os.path.join(MINECRAFT_ROOT, key, 'data'), since)
+    feed['source'] = source
+    return JsonResponse(feed)
 
 
 def guide(request):

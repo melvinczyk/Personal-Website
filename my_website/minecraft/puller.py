@@ -16,7 +16,7 @@ import time
 
 from django.conf import settings
 
-from . import sync
+from . import chat, sync
 
 DEFAULT_CONFIG = "mc_sync.json"
 
@@ -31,6 +31,17 @@ MIN_INTERVAL = 15 * 60
 # starts refusing when it is asked too often. Each failure in a row doubles
 # the wait, up to an hour; one success clears it.
 BACKOFF_CAP = 60 * 60
+
+# The chat buffer is its own pull on its own clock. Everything else the site
+# reads is a tally that is no worse for being a quarter of an hour old, but
+# chat that is a quarter of an hour old is not chat - and the server's buffer
+# only holds ten messages, so a slow poll does not just show the talk late, it
+# loses most of it. See chat.py.
+#
+# It can afford the tempo because it is one stat and, only when that moves, one
+# read of a file measured in hundreds of bytes. The quarter-hour pull is five
+# files and the whole world's numbers.
+CHAT_INTERVAL = 25
 
 _lock    = threading.Lock()
 _running = False
@@ -57,6 +68,65 @@ def web_pull_allowed():
 SCHEDULED = {'at': 0.0, 'state': 'scheduled', 'fetched': 0, 'wait': 0,
              'message': 'the server is read on a schedule',
              'running': False, 'ago': None}
+
+
+_chat_lock = threading.Lock()
+_chat_busy = False
+_chat_at   = 0.0
+_chat_fails = 0
+_chat_last = {'at': 0.0, 'state': 'idle', 'message': '', 'added': 0}
+
+
+def _chat_pull(season):
+    """One look at the chat buffer. Runs on its own thread."""
+    global _chat_busy
+    try:
+        cfg = sync.load_config(config_path())
+        client, sftp = sync.connect(cfg)
+        try:
+            added, changed = chat.pull(sftp, cfg, dest_for(season))
+        finally:
+            sftp.close()
+            client.close()
+        _chat_mark('ok', f'{added} new' if added else 'nothing new', added)
+    except sync.ConfigError as exc:
+        _chat_mark('unconfigured', str(exc).splitlines()[0])
+    except Exception as exc:                 # noqa: BLE001 - never 500 a poll
+        _chat_mark('error', f'{type(exc).__name__}: {exc}')
+    finally:
+        with _chat_lock:
+            _chat_busy = False
+
+
+def _chat_mark(state, message, added=0):
+    global _chat_fails
+    _chat_fails = _chat_fails + 1 if state == 'error' else 0
+    _chat_last.update({'at': time.time(), 'state': state,
+                       'message': message, 'added': added})
+
+
+def refresh_chat(season):
+    """Ask for a chat pull if one is due. Returns at once, always.
+
+    Deliberately not sharing the season lock with the main sync. That lock
+    exists to stop two runs writing the same five files at once; chat writes
+    one file nothing else touches, and making a twenty-five second poll queue
+    behind a five-file pull would give the box a stall every quarter hour for
+    no benefit at all.
+    """
+    global _chat_busy, _chat_at
+    if not web_pull_allowed():
+        return {'state': 'scheduled', 'at': _chat_last['at']}
+    # a failing pull backs off the same way the main one does, so a host that
+    # has stopped answering is not asked every twenty-five seconds for ever
+    wait = min(CHAT_INTERVAL * 2 ** _chat_fails, BACKOFF_CAP)
+    with _chat_lock:
+        if _chat_busy or time.time() - _chat_at < wait:
+            return dict(_chat_last)
+        _chat_busy = True
+        _chat_at = time.time()
+    threading.Thread(target=_chat_pull, args=(season,), daemon=True).start()
+    return dict(_chat_last)
 
 
 def config_path():

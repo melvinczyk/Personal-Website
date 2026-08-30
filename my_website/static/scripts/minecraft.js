@@ -8,17 +8,27 @@ function getCtx() {
   return audioCtx;
 }
 
-// Where the sound actually starts. A clip exported from the game can carry
-// half a second of silence in front of it, and playing that from zero puts the
-// click half a second after the press, which reads as lag rather than as a
-// quiet file. Found rather than hard-coded, so swapping the mp3 needs no sums.
+// Where the sound actually starts.
 //
-// Found by walking BACK from the loudest moment, not forward from the first
-// audible one. This clip is silent for 530ms, blips once at four percent of
-// peak, goes quiet again for seventy milliseconds, and only then clicks -
-// and forwards, that blip is where the sound "starts", so the press still
-// landed seventy milliseconds before anything could be heard. Backwards, the
-// attack itself is the anchor and the blip is what it is: not the click.
+// A clip exported from the game can carry half a second of silence in front
+// of it, and playing that from zero puts the click half a second after the
+// press, which reads as lag rather than as a quiet file. Measured rather than
+// hard-coded, so swapping the mp3 needs no sums.
+//
+// Two starts are worked out and the honest one is chosen. The first is where
+// the silence ends. The second walks BACK from the loudest moment, which is
+// what this clip needs: it is silent for 530ms, blips once at four percent of
+// peak, goes quiet again for seventy milliseconds, and only then clicks - so
+// the end of its silence is the blip, not the click.
+//
+// The backward one is only trusted when it looks like that case: a first
+// sound close in front of the real one with the level dropping back to
+// silence in between. Without that guard it eats the beginning of anything
+// whose peak arrives late, starting a sound that swells on its crest. Kept
+// identical to portfolio.js's copy - the two pages load one script each, and
+// a click should not mean two different things depending which page it is on.
+const BLIP_MS = 120;               // how far in front of the sound a false start may sit
+
 function soundStart(buffer) {
   const d = buffer.getChannelData(0);
   const rate = buffer.sampleRate;
@@ -27,25 +37,32 @@ function soundStart(buffer) {
   // those crossings the start of the sound; the envelope is what a listener
   // actually hears rising.
   const win = Math.max(1, Math.round(rate / 1000));
-  const loud = [];
+  const env = [];
   for (let i = 0; i < d.length; i += win) {
     let pk = 0;
     for (let j = i, end = Math.min(i + win, d.length); j < end; j++) {
       const v = Math.abs(d[j]);
       if (v > pk) pk = v;
     }
-    loud.push(pk);
+    env.push(pk);
   }
   let peak = 0, top = 0;
-  for (let i = 0; i < loud.length; i++) {
-    if (loud[i] > peak) { peak = loud[i]; top = i; }
-  }
+  for (let i = 0; i < env.length; i++) if (env[i] > peak) { peak = env[i]; top = i; }
   if (!peak) return 0;
-  const floor = peak * 0.1;
-  let i = top;
-  while (i > 0 && loud[i - 1] >= floor) i--;
+
+  const hush = peak * 0.015;
+  let first = 0;
+  while (first < env.length && env[first] <= hush) first++;
+
+  let back = top;
+  while (back > 0 && env[back - 1] >= peak * 0.1) back--;
+
+  let quiet = false;                 // does the level fall away again in between?
+  for (let i = first; i < back; i++) if (env[i] < hush) { quiet = true; break; }
+
+  const start = (quiet && back > first && back <= first + BLIP_MS) ? back : first;
   // back off a few milliseconds so the attack is not clipped off
-  return Math.max(0, (i * win / rate) - 0.006);
+  return Math.max(0, (start * win / rate) - 0.006);
 }
 
 async function loadSound(url) {
@@ -1052,6 +1069,29 @@ const CHART_RANGES = [
 
 // Points per chart, kept so the probe can find the nearest kill without
 // redoing the arithmetic on every mouse move.
+// The one breakpoint the chart itself cares about: below it the chart is drawn
+// in a narrower box so it comes out taller for the width it is given.
+//
+// Crossing it has to redraw, or a phone turned on its side keeps the tall
+// aspect and a desktop window dragged narrow keeps the wide one. Both the
+// media query and a plain resize are watched, because an emulated resize does
+// not always raise the first, and the redraw is guarded on the flag actually
+// flipping so an ordinary resize costs a comparison and nothing else.
+const CHART_TIGHT = window.matchMedia('(max-width: 700px)');
+let chartTight = CHART_TIGHT.matches;
+
+function retuneCharts() {
+  if (CHART_TIGHT.matches === chartTight) return;
+  chartTight = CHART_TIGHT.matches;
+  for (const host of [...document.querySelectorAll('.bkc[data-boss]')]) {
+    const boss = (liveBoard.bosses || []).find(b => b.key === host.dataset.boss);
+    if (boss) host.outerHTML = killChart(boss, null);
+  }
+}
+
+CHART_TIGHT.addEventListener('change', retuneCharts);
+window.addEventListener('resize', retuneCharts);
+
 const CHART_POINTS = {};
 const CHART_RANGE = {};
 // when each chart was last drawn, and how much time a pixel of it is worth
@@ -1068,6 +1108,24 @@ function setChartRange(key, ms) {
   const host = document.querySelector(`.bkc[data-boss="${key}"]`);
   if (!boss || !host) return;
   host.outerHTML = killChart(boss, null);
+}
+
+// A pointer over the chart, from whichever kind of pointer it is.
+//
+// The chart used to probe on mousemove, which a touchscreen never sends: on a
+// phone the readout simply did not exist. A finger says the same thing with a
+// press and a drag, so a touch probes from the moment it goes down and keeps
+// probing as it slides, while a mouse still probes on hover alone.
+//
+// The stopPropagation matters as much as the probing does: the card is itself
+// a toggle, so without it a tap meant to read the line closed the card.
+// Scrolling is left alone - the svg's touch-action allows the vertical pan, so
+// a finger dragged down the page still scrolls it rather than scrubbing.
+function chartPoint(event, key) {
+  if (event.pointerType !== 'mouse') event.stopPropagation();
+  // a mouse probes by hovering; a finger only while it is actually down
+  if (event.pointerType === 'mouse' || event.type !== 'pointermove' || event.buttons ||
+      event.pressure > 0) probeChart(event, key);
 }
 
 // The readout under the line. Finds the kill nearest the pointer along the
@@ -1184,7 +1242,15 @@ function killChart(boss, faces) {
   const shown = steps.filter(st => st.t >= from && st.t <= to);
   const entering = steps.filter(st => st.t < from).length;
 
-  const W = 892, H = 250, L = 46, R = 10, T = 26, B = 34;
+  // An svg scales to the width it is given and keeps its aspect, so a viewBox
+  // this wide became 70 pixels tall inside a phone-width card: a chart with no
+  // room to be read, and faces on it seven pixels across. A narrow screen gets
+  // a narrower box for the same height, which is the same drawing at a taller
+  // aspect rather than a scaled-down one, and everything measured in viewBox
+  // units - the faces above all - comes out nearer its intended size.
+  const tight = CHART_TIGHT.matches;
+  const W = tight ? 430 : 892, H = 250,
+        L = tight ? 34 : 46, R = 10, T = 26, B = 34;
   const plotW = W - L - R, plotH = H - T - B;
   const width = Math.max(1, to - from);
   const px = t => L + ((Math.min(Math.max(t, from), to) - from) / width) * plotW;
@@ -1232,7 +1298,7 @@ function killChart(boss, faces) {
   // rather than kills, because an evening of the same person farming a boss is
   // eight kills and one fact; and any face that would land on top of the last
   // one drawn is dropped, the probe being there to name what it covered.
-  const FACE = 26, GAP = 30;
+  const FACE = tight ? 34 : 26, GAP = tight ? 40 : 30;
   const runs = [];
   for (const st of shown) {
     const back = runs[runs.length - 1];
@@ -1271,8 +1337,16 @@ function killChart(boss, faces) {
     :                         { hour: 'numeric', minute: '2-digit' });
   const fade = `bkc-fade-${boss.key}`;
 
+  // Every one of these stops the event going up. The card itself is the
+  // toggle - the whole tile is one big button - so on a phone, where opening
+  // a native select is a tap rather than a hover-and-release, choosing a range
+  // reached the card's own onclick and shut the card before the change ever
+  // landed. On a mouse it never showed: the picker opens on mousedown and the
+  // click that follows lands on the option list, not on the card.
   const picker = `<select class="bkc-range" aria-label="How far back to look"
-      onchange="setChartRange('${boss.key}', this.value)">
+      onpointerdown="event.stopPropagation()"
+      onclick="event.stopPropagation()"
+      onchange="event.stopPropagation();setChartRange('${boss.key}', this.value)">
       ${CHART_RANGES.map(([name, ms]) => `<option value="${ms}"${
         ms === span ? ' selected' : ''}>${name}</option>`).join('')}
     </select>`;
@@ -1289,8 +1363,11 @@ function killChart(boss, faces) {
         ${picker}
       </div>
       <svg class="bkc-svg" viewBox="0 0 ${W} ${H}" role="img"
-           onmousemove="probeChart(event, '${boss.key}')"
-           onmouseleave="unprobeChart('${boss.key}')"
+           onpointerdown="chartPoint(event, '${boss.key}')"
+           onpointermove="chartPoint(event, '${boss.key}')"
+           onpointerup="chartPoint(event, '${boss.key}')"
+           onpointerleave="unprobeChart('${boss.key}')"
+           onclick="event.stopPropagation()"
            aria-label="Running total of ${total} kill${total === 1 ? '' : 's'}, ${
              label(from)} to now">
         <defs>
@@ -1909,7 +1986,27 @@ function worldPanel(w) {
   host.dataset.weather = skyWeather(w);
   host.dataset.season = (w.season || '').toLowerCase();
 
-  host.innerHTML = `
+  // The weather gets real elements rather than one pseudo-element sheet. A
+  // single sliding gradient is flat by construction: one angle, one speed, one
+  // opacity, and rain read at every distance at once. These are three sheets
+  // at three depths with a mist band and a splash line under them, which is
+  // what gives it somewhere to fall from and somewhere to land.
+  //
+  // aria-hidden throughout: it is scenery, and the weather is already said in
+  // words twice over in the panel behind it.
+  const weather = `
+    <div class="lw-weather" aria-hidden="true">
+      <i class="lw-sheet far"></i>
+      <i class="lw-sheet mid"></i>
+      <i class="lw-sheet near"></i>
+      <i class="lw-mist"></i>
+      <i class="lw-splash"></i>
+      <svg class="lw-bolt" viewBox="0 0 40 100" preserveAspectRatio="none">
+        <path d="M24 0 L8 46 h12 L4 100 L34 40 H21 L32 0 Z"/>
+      </svg>
+    </div>`;
+
+  host.innerHTML = weather + `
     <div class="lw-heroes">
       <div class="lw-hero sky">
         <img class="lw-orb" src="${sky.src}" alt="${sky.alt}">
@@ -2156,6 +2253,199 @@ function toggleSection(key) {
   requestAnimationFrame(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
 
+// ── the server's chat ───────────────────────────────────────────────────────
+//
+// A box in the corner rather than a section in the page, because it is the one
+// reading here that is worth having in the corner of your eye while you read
+// something else.
+//
+// It polls its own endpoint on its own clock, faster than the board does. That
+// endpoint reads a file rather than the game host - see chat.py - so the tempo
+// here costs the server nothing, and a hundred tabs cost it the same as one.
+//
+// Every row is built with textContent. Chat is written by whoever is on the
+// server and nothing they type is ever handed to innerHTML.
+const CHAT_EVERY = 10;          // seconds between polls
+const CHAT_KEEP  = 200;         // rows kept in the box before the top is cut
+
+let chatSeq     = null;         // last sequence number we have drawn
+let chatDue     = 0;            // seconds until the next poll
+let chatPolling = false;
+let chatUnread  = 0;
+let chatLive    = false;        // has a poll ever landed
+// stuck to the bottom until the reader scrolls up, and stuck where they left
+// it after that: a box that yanks itself back down mid-read is unreadable on
+// a busy server, which is exactly when somebody would be reading it
+let chatPinned  = true;
+
+function chatOpen() {
+  try { return localStorage.getItem('mc-chat') !== 'shut'; } catch (e) { return true; }
+}
+
+function toggleChat(force) {
+  const box = document.getElementById('mc-chat');
+  if (!box) return;
+  const shut = force === undefined ? !box.classList.contains('shut') : !force;
+  box.classList.toggle('shut', shut);
+  const tab = document.getElementById('mcc-tab');
+  if (tab) tab.setAttribute('aria-expanded', String(!shut));
+  try { localStorage.setItem('mc-chat', shut ? 'shut' : 'open'); } catch (e) { /* private mode */ }
+  if (!shut) {
+    chatUnread = 0;
+    chatBadge();
+    chatToEnd();
+  }
+}
+
+function chatBadge() {
+  const el = document.getElementById('mcc-badge');
+  if (!el) return;
+  el.hidden = !chatUnread;
+  el.textContent = chatUnread > 99 ? '99+' : String(chatUnread);
+}
+
+function chatToEnd() {
+  const log = document.getElementById('mcc-log');
+  if (!log) return;
+  chatPinned = true;
+  log.scrollTop = log.scrollHeight;
+  const jump = document.getElementById('mcc-jump');
+  if (jump) jump.hidden = true;
+}
+
+// A player's own colour, the one their face is reduced to everywhere else on
+// the page, so a name in the chat matches the name on their card. Players who
+// have never been on the board - or a message from before we knew them - fall
+// through to the ordinary text colour rather than to a colour meaning nothing.
+function chatTone(uuid) {
+  if (!uuid || !liveBoard || !liveBoard.players) return '';
+  const who = liveBoard.players.find(p => p.uuid === uuid);
+  return (who && who.tone) || '';
+}
+
+function chatRow(message) {
+  const row = document.createElement('div');
+  row.className = 'mcc-row';
+
+  const when = document.createElement('time');
+  const stamp = new Date(message.at);
+  if (!isNaN(stamp.getTime())) {
+    when.dateTime = message.at;
+    when.textContent = localClock(stamp);
+  }
+  row.appendChild(when);
+
+  const who = document.createElement('b');
+  who.textContent = message.name;
+  const tone = chatTone(message.uuid);
+  if (tone) who.style.color = tone;
+  row.appendChild(who);
+
+  const said = document.createElement('span');
+  said.textContent = message.text;
+  row.appendChild(said);
+  return row;
+}
+
+// A break in the feed, drawn rather than glossed over. The server's buffer
+// holds ten messages, so a tab left shut through a busy evening comes back to
+// find the middle of it gone - see chat.py. Saying so is the only honest thing
+// the box can do; quietly butting the two ends together would read as one
+// conversation that never happened.
+function chatGap(n) {
+  const row = document.createElement('div');
+  row.className = 'mcc-gap';
+  row.textContent = `${n} message${n === 1 ? '' : 's'} not shown`;
+  return row;
+}
+
+function chatDraw(feed) {
+  const log = document.getElementById('mcc-log');
+  const box = document.getElementById('mc-chat');
+  if (!log || !box) return;
+
+  const first = chatSeq === null;
+  if (first) {
+    box.hidden = false;
+    toggleChat(chatOpen());
+  }
+
+  const dot = box.querySelector('.mcc-dot');
+  if (dot) dot.classList.toggle('cold', (feed.source || {}).state === 'error');
+
+  // Nothing said in the last hour empties the box, on the server's reckoning
+  // rather than on a timer here - see chat.py's STALE. A tab left open all
+  // afternoon clears itself on the poll that crosses the hour, so it shows
+  // what a tab opened this second would show rather than this morning's
+  // conversation under a heading that says the chat is live.
+  if (feed.stale) {
+    log.replaceChildren();
+    chatUnread = 0;
+    chatBadge();
+    chatToEnd();
+    chatSeq = feed.seq;
+    return;
+  }
+
+  if (feed.skipped) log.appendChild(chatGap(feed.skipped));
+  for (const message of feed.messages) log.appendChild(chatRow(message));
+
+  if (feed.messages.length) {
+    while (log.childElementCount > CHAT_KEEP) log.removeChild(log.firstChild);
+    if (!first && box.classList.contains('shut')) {
+      chatUnread += feed.messages.length;
+      chatBadge();
+    }
+  }
+  chatSeq = feed.seq;
+
+  if (chatPinned) {
+    chatToEnd();
+  } else if (feed.messages.length) {
+    const jump = document.getElementById('mcc-jump');
+    if (jump) jump.hidden = false;
+  }
+
+}
+
+async function pollChat() {
+  if (chatPolling) return;
+  chatPolling = true;
+  chatDue = CHAT_EVERY;
+  try {
+    const url = chatSeq === null ? CHAT_URL : `${CHAT_URL}?since=${chatSeq}`;
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'fetch' } });
+    if (!res.ok) throw new Error(res.status);
+    const feed = await res.json();
+    if (feed && Array.isArray(feed.messages)) {
+      chatLive = true;
+      chatDraw(feed);
+    }
+  } catch (err) {
+    /* a poll that does not land leaves what is on screen there. The box is
+       the least important thing on the page and it never takes anything else
+       down with it. */
+  } finally {
+    chatPolling = false;
+    if (chatDue <= 0) chatDue = CHAT_EVERY;
+  }
+}
+
+function bootChat() {
+  const log = document.getElementById('mcc-log');
+  if (!log) return;
+  log.addEventListener('scroll', () => {
+    // a few pixels of slack: a box scrolled to within a line of the bottom is
+    // a reader who is following along, not one who has gone back to look
+    const end = log.scrollHeight - log.clientHeight - log.scrollTop < 24;
+    chatPinned = end;
+    const jump = document.getElementById('mcc-jump');
+    if (jump && end) jump.hidden = true;
+  });
+  pollChat();
+}
+
+
 function bootLive() {
   if (!document.getElementById('live-stage')) return;
   renderLive(liveBoard);
@@ -2166,16 +2456,21 @@ function bootLive() {
     // ssh budget: the countdown holds until the tab comes back
     if (document.hidden) return;
     if (--liveDue <= 0) pollLive();
+    // chat runs on the same second hand but its own countdown: it is polling a
+    // local file rather than the game host, so it can afford to be six times
+    // as eager as the board without costing the server anything
+    if (--chatDue <= 0) pollChat();
     liveTick();
     tickCharts();
   }, 1000);
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) pollLive();
+    if (!document.hidden) { pollLive(); pollChat(); }
   });
 }
 
 bootLive();
+bootChat();
 
 selectDisc(0);
 

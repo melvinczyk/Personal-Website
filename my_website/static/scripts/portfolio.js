@@ -106,27 +106,91 @@ function initMuteButton() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMuteButton);
 else initMuteButton();
 
+// Where a clip's sound actually begins.
+//
+// These files carry digital silence in front of them - click.mp3 is dead for
+// its first eighty milliseconds - and playing one from zero puts the sound
+// that long after the press. It reads as lag, and it is not: it is a quiet
+// file being played faithfully. The offset is measured rather than typed in,
+// so replacing an mp3 needs no sums doing again.
+//
+// Two starts are worked out and the honest one is chosen. The first is where
+// the silence ends. The second walks BACK from the loudest moment, which is
+// what a clip needs when it opens with a stray blip, goes quiet, and only
+// then makes its noise - the Minecraft click does exactly that, ticking once
+// at 539ms and clicking at 609ms, and the end of its silence is the tick.
+//
+// The backward one is only trusted when it looks like that case: a first
+// sound close in front of the real one, with the level dropping back to
+// silence in between. Without that guard it eats the beginning of anything
+// whose peak arrives late - the ring swells for half a second before its
+// loudest point, and a rule that always walked back would throw the swell
+// away and start on the crest.
+const SOUND_START = new WeakMap();
+const BLIP_MS = 120;               // how far in front of the sound a false start may sit
+
+function soundStart(buffer) {
+  const d = buffer.getChannelData(0);
+  const rate = buffer.sampleRate;
+  // A millisecond at a time: a waveform crosses zero many times inside its own
+  // attack, so sample-by-sample reading would call the first crossing the
+  // start. The envelope is what a listener actually hears rising.
+  const win = Math.max(1, Math.round(rate / 1000));
+  const env = [];
+  for (let i = 0; i < d.length; i += win) {
+    let pk = 0;
+    for (let j = i, end = Math.min(i + win, d.length); j < end; j++) {
+      const v = Math.abs(d[j]);
+      if (v > pk) pk = v;
+    }
+    env.push(pk);
+  }
+  let peak = 0, top = 0;
+  for (let i = 0; i < env.length; i++) if (env[i] > peak) { peak = env[i]; top = i; }
+  if (!peak) return 0;
+
+  const hush = peak * 0.015;
+  let first = 0;
+  while (first < env.length && env[first] <= hush) first++;
+
+  let back = top;
+  while (back > 0 && env[back - 1] >= peak * 0.1) back--;
+
+  let quiet = false;                 // does the level fall away again in between?
+  for (let i = first; i < back; i++) if (env[i] < hush) { quiet = true; break; }
+
+  const start = (quiet && back > first && back <= first + BLIP_MS) ? back : first;
+  // back off a few milliseconds so the attack itself is not clipped
+  return Math.max(0, (start * win / rate) - 0.006);
+}
+
 async function loadSound(url) {
   try {
     const ctx = getAudioCtx();
     const res = await fetch(url);
     const arr = await res.arrayBuffer();
-    return await ctx.decodeAudioData(arr);
+    const buf = await ctx.decodeAudioData(arr);
+    // measured once, here, rather than on every press
+    if (buf) SOUND_START.set(buf, soundStart(buf));
+    return buf;
   } catch(e) { console.warn('Sound load failed:', url, e); return null; }
 }
 
 function playBuffer(buffer, volume=0.3) {
   if (!buffer) return;
   const ctx = getAudioCtx();
-  ctx.resume().then(() => {
+  const fire = () => {
     const src = ctx.createBufferSource();
     const gain = ctx.createGain();
     gain.gain.value = volume;
     src.buffer = buffer;
     src.connect(gain);
     gain.connect(getMasterGain());
-    src.start(0);
-  });
+    src.start(0, SOUND_START.get(buffer) || 0);
+  };
+  // resume() hands back a promise even when the context is already running,
+  // and waiting on it costs the one press that can least afford it
+  if (ctx.state === 'running') fire(); else ctx.resume().then(fire);
 }
 
 function playBackgroundMusic() {

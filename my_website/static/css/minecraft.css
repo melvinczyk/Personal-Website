@@ -1027,22 +1027,138 @@ body::after { display: none; }
      raining on, and the same goes for the leaves. */
   z-index: 4;
 }
-.ls-world[data-weather="rain"]::before,
-.ls-world[data-weather="storm"]::before {
-  opacity: .34;
+/* ::before is the lightning bloom now: it covers the whole panel including
+   the slots, which is what a flash has to do. The rain itself is real
+   elements - see .lw-weather - because one sliding gradient can only ever be
+   one distance, one speed and one weight of drop at a time, and rain that is
+   all one distance is the flattest thing on the page. */
+.lw-weather {
+  position: absolute; inset: 0; z-index: 4;
+  pointer-events: none; overflow: hidden;
+  display: none;
+}
+.ls-world[data-weather="rain"] .lw-weather,
+.ls-world[data-weather="storm"] .lw-weather { display: block; }
+
+/* Three sheets at three depths. Each is oversized and translated, so nothing
+   ever slides in off a visible edge, and each falls at its own rate: the far
+   sheet is a haze that barely moves, the near one is fat bright drops going
+   past fast. Parallax is the whole trick - it is what makes a flat rectangle
+   have air in it. */
+.lw-sheet {
+  position: absolute; inset: -30% -20%;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+/* A sheet is cut into dashes by a mask running ACROSS the streaks, not along
+   them. At the same angle as the streaks a mask only makes broad bands of
+   present-and-absent rain, which is what the first attempt drew: the panel is
+   wide and short, so those bands read as diagonal stripes over the whole
+   thing rather than as weather. The mask angle is the streak angle less 90. */
+.lw-sheet.far {
   background-image: repeating-linear-gradient(
-    74deg, rgba(190, 215, 240, 0.55) 0 1px, transparent 1px 9px);
-  animation: lw-rain 0.7s linear infinite;
+    76deg, rgba(190, 215, 240, 0.34) 0 1px, transparent 1px 10px);
+  opacity: .34; filter: blur(0.7px);
+  animation: lw-fall-far 1.15s linear infinite;
 }
-/* a storm is the same rain under a sky that keeps catching light */
+.lw-sheet.mid {
+  background-image: repeating-linear-gradient(
+    73deg, rgba(205, 228, 250, 0.55) 0 1px, transparent 1px 17px);
+  -webkit-mask-image: repeating-linear-gradient(
+    -17deg, #000 0 20px, transparent 20px 34px);
+  mask-image: repeating-linear-gradient(
+    -17deg, #000 0 20px, transparent 20px 34px);
+  opacity: .45;
+  animation: lw-fall-mid 0.72s linear infinite;
+}
+/* a drop close enough to see is a dash with a gap after it, not a wire */
+.lw-sheet.near {
+  background-image: repeating-linear-gradient(
+    70deg, rgba(236, 246, 255, 0.9) 0 2px, transparent 2px 34px);
+  -webkit-mask-image: repeating-linear-gradient(
+    -20deg, #000 0 11px, transparent 11px 40px);
+  mask-image: repeating-linear-gradient(
+    -20deg, #000 0 11px, transparent 11px 40px);
+  opacity: .5; filter: blur(0.35px);
+  animation: lw-fall-near 0.42s linear infinite;
+}
+
+/* what the rain kicks up where it lands, along the foot of the panel. Two
+   scattered rows of tiny ellipses blinking out of step, which reads as
+   spatter without anybody having to draw a single droplet */
+.lw-splash {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 22px;
+  background-image:
+    radial-gradient(5px 2px at 8% 100%, rgba(226, 240, 255, 0.55), transparent 70%),
+    radial-gradient(4px 2px at 23% 100%, rgba(226, 240, 255, 0.45), transparent 70%),
+    radial-gradient(6px 2px at 39% 100%, rgba(226, 240, 255, 0.5), transparent 70%),
+    radial-gradient(4px 2px at 57% 100%, rgba(226, 240, 255, 0.45), transparent 70%),
+    radial-gradient(5px 2px at 71% 100%, rgba(226, 240, 255, 0.55), transparent 70%),
+    radial-gradient(4px 2px at 86% 100%, rgba(226, 240, 255, 0.45), transparent 70%),
+    radial-gradient(5px 2px at 96% 100%, rgba(226, 240, 255, 0.5), transparent 70%);
+  opacity: .5;
+  animation: lw-splash 0.9s steps(1, end) infinite;
+}
+
+/* the low band of haze rain leaves hanging over the ground. It drifts on its
+   own slow clock, so the panel is never quite the same twice */
+.lw-mist {
+  position: absolute; left: -25%; right: -25%; bottom: -6%; height: 46%;
+  background: linear-gradient(0deg,
+    rgba(198, 216, 238, 0.20), rgba(198, 216, 238, 0.07) 55%, transparent);
+  filter: blur(6px);
+  animation: lw-drift-mist 13s ease-in-out infinite alternate;
+}
+
+/* ── the storm ──────────────────────────────────────────────────────────────
+   Harder rain, and a strike rather than a glow: the bolt is a real shape that
+   appears for two frames inside a bloom that is over almost before it starts.
+   Both run off the same seven-second clock, so the flash lights the bolt
+   instead of merely happening near it. */
+.ls-world[data-weather="storm"] .lw-sheet.far  { animation-duration: 0.8s; opacity: .46; }
+.ls-world[data-weather="storm"] .lw-sheet.mid  { animation-duration: 0.5s; opacity: .6; }
+.ls-world[data-weather="storm"] .lw-sheet.near { animation-duration: 0.3s; opacity: .68; }
+.ls-world[data-weather="storm"] .lw-splash     { animation-duration: 0.55s; }
+.ls-world[data-weather="storm"] .lw-mist       { opacity: .8; }
+/* the whole downpour leaning back and forth: one gust, thirteen seconds long,
+   over three sheets that are already moving at three different rates */
+.ls-world[data-weather="storm"] .lw-weather {
+  animation: lw-gust 9s ease-in-out infinite alternate;
+}
+
+.lw-bolt {
+  position: absolute; top: -6%; right: 15%; width: 46px; height: 80%;
+  opacity: 0; fill: #f4f8ff;
+  filter: drop-shadow(0 0 6px rgba(190, 215, 255, 0.9))
+          drop-shadow(0 0 18px rgba(140, 180, 255, 0.55));
+}
+.ls-world[data-weather="storm"] .lw-bolt {
+  animation: lw-strike 7s steps(1, end) infinite;
+}
+/* the bloom the strike throws over everything, slots included */
 .ls-world[data-weather="storm"]::before {
-  opacity: .42;
-  animation: lw-rain 0.45s linear infinite, lw-flash 7s steps(1, end) infinite;
+  opacity: 1;
+  /* struck from where the bolt is, not from the middle of the panel: a flash
+     whose brightest point is somewhere the lightning is not reads as a lamp
+     coming on. 85% across is the bolt's own column. */
+  background: radial-gradient(135% 100% at 85% 0%,
+    rgba(232, 242, 255, 0.95), rgba(180, 205, 255, 0.3) 42%, transparent 74%);
+  mix-blend-mode: screen;
+  animation: lw-flash 7s steps(1, end) infinite;
 }
+
 /* and it darkens what it is falling on */
 .ls-world[data-weather="rain"]  { --scrim: rgba(0, 0, 0, 0.5); }
 .ls-world[data-weather="storm"] { --scrim: rgba(0, 0, 0, 0.58); }
-.ls-world[data-weather="storm"] .lw-orb { filter: drop-shadow(0 0 7px var(--glow)) saturate(.7); }
+/* the sun or moon behind weather, seen through it: dimmer, hazier, and under
+   a storm it catches the strike rather than sitting untouched behind it */
+.ls-world[data-weather="rain"] .lw-orb {
+  filter: drop-shadow(0 0 6px var(--glow)) saturate(.8) brightness(.9);
+}
+.ls-world[data-weather="storm"] .lw-orb {
+  filter: drop-shadow(0 0 7px var(--glow)) saturate(.7) brightness(.82);
+  animation: lw-orb-flash 7s steps(1, end) infinite;
+}
 
 /* ── the season, over the weather ───────────────────────────────────────────
    Four drifts, each in its own colours and at its own pace: snow falls
@@ -1110,13 +1226,63 @@ body::after { display: none; }
   from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
   to   { background-position: 22px -14px, -18px 10px, 14px 12px, -12px -10px, 0 0, 0 0; }
 }
+/* The bloom, on the same seven seconds as the bolt and a beat wider than it,
+   so the sky is already lit when the shape appears and stays lit a moment
+   after it has gone. */
 @keyframes lw-flash {
-  0%, 96%  { box-shadow: none; }
-  97%      { box-shadow: inset 0 0 90px 20px rgba(226, 234, 255, 0.42); }
-  98%      { box-shadow: none; }
-  99%      { box-shadow: inset 0 0 70px 14px rgba(226, 234, 255, 0.3); }
+  0%, 92%   { opacity: 0; }
+  93%       { opacity: .95; }
+  94%       { opacity: .12; }
+  95%       { opacity: .8; }
+  96%       { opacity: .25; }
+  97%, 100% { opacity: 0; }
 }
-@keyframes lw-rain { to { transform: translate(-9px, 32px); } }
+
+/* the sun or moon catching the same strike */
+@keyframes lw-orb-flash {
+  0%, 92%   { filter: drop-shadow(0 0 7px var(--glow)) saturate(.7) brightness(.82); }
+  93%       { filter: drop-shadow(0 0 16px #fff) saturate(.9) brightness(1.5); }
+  94%       { filter: drop-shadow(0 0 7px var(--glow)) saturate(.7) brightness(.82); }
+  95%       { filter: drop-shadow(0 0 13px #fff) saturate(.9) brightness(1.32); }
+  96%, 100% { filter: drop-shadow(0 0 7px var(--glow)) saturate(.7) brightness(.82); }
+}
+/* Each sheet travels one exact tile of its own gradient, so the loop has no
+   seam in it. The angle and the tile size differ per sheet, which is what
+   keeps three layers of the same rain from ever lining up into one. */
+@keyframes lw-fall-far  { to { transform: translate3d(-7px, 28px, 0); } }
+@keyframes lw-fall-mid  { to { transform: translate3d(-13px, 42px, 0); } }
+@keyframes lw-fall-near { to { transform: translate3d(-22px, 60px, 0); } }
+
+/* the spatter, blinking in an order that does not repeat on the eye: steps()
+   rather than a fade, because a droplet hitting the ground is not a fade */
+@keyframes lw-splash {
+  0%   { opacity: .55; transform: translateX(0); }
+  25%  { opacity: .2;  transform: translateX(-4px); }
+  50%  { opacity: .6;  transform: translateX(3px); }
+  75%  { opacity: .3;  transform: translateX(-2px); }
+  100% { opacity: .55; transform: translateX(0); }
+}
+
+@keyframes lw-drift-mist {
+  from { transform: translateX(-4%) scaleY(1);    opacity: .75; }
+  to   { transform: translateX(5%)  scaleY(1.18); opacity: 1; }
+}
+
+/* the downpour leaning, slowly, the way a squall does */
+@keyframes lw-gust {
+  from { transform: skewX(0deg)    translateX(0); }
+  to   { transform: skewX(-3.5deg) translateX(-6px); }
+}
+
+/* One strike, and the flicker after it. Held on steps() so every stage is a
+   hard cut: lightning does not ease. */
+@keyframes lw-strike {
+  0%, 92%    { opacity: 0; }
+  93%        { opacity: 1; }
+  94%        { opacity: 0; }
+  95%        { opacity: .9; }
+  96%, 100%  { opacity: 0; }
+}
 
 /* the two things worth looking at: the sky, and what season it is */
 .lw-heroes {
@@ -1191,7 +1357,15 @@ body::after { display: none; }
 .lw-fact.poor b { color: var(--mc-heart); }
 
 @media (prefers-reduced-motion: reduce) {
-  .ls-world::before, .ls-world::after { animation: none; }
+  .ls-world::before, .ls-world::after,
+  .lw-weather, .lw-sheet, .lw-splash, .lw-mist, .lw-bolt, .lw-orb {
+    animation: none;
+  }
+  /* the rain stays, as a still sheet: it is what says it is raining, and the
+     reading would be wrong without it. Only the parts whose whole point is
+     movement go - the lightning, the spatter, the drifting haze. */
+  .lw-splash, .lw-mist, .lw-bolt { display: none; }
+  .ls-world[data-weather="storm"]::before { opacity: 0; }
 }
 
 .ls-bar {
@@ -2345,6 +2519,21 @@ body::after { display: none; }
 /* the card the record sits in opens and shuts on a click, and this is inside
    it - see the same guard on a fight row */
 @media (pointer: coarse) { .lb-more { min-height: 44px; } }
+
+/* ── the chart, under a finger ─────────────────────────────────────────────
+   pan-y and not none: a finger dragged across the chart scrubs the readout
+   along it, and one dragged down the page still scrolls the page. Declaring
+   none here would have made the chart a hole the page could not be scrolled
+   past, which on a phone is most of the card. */
+.bkc-svg { touch-action: pan-y; }
+
+/* A 22px select is a mouse target. The picker is the only control on the
+   whole roster that was still under the 44px a fingertip needs, and it is
+   also the one sat inside a card that toggles - so a near miss did not just
+   fail, it shut the thing being read. */
+@media (pointer: coarse) {
+  .bkc-range { min-height: 44px; font-size: 14px; padding: 4px 8px; }
+}
 .lsd-pill {
   font-style: normal; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
   padding: 1px 6px; border: 1px solid currentColor; border-radius: 2px;
@@ -2425,6 +2614,25 @@ body::after { display: none; }
   .ls-tile i { font-size: 12px; }
   .ls-tile b { font-size: 15px; }
   .ls-bar { padding: 6px 7px; gap: 6px; }
+
+  /* the world panel was inset ten pixels where every section around it is
+     inset seven, so on a narrow screen it sat visibly proud of the tiles
+     directly under it */
+  .ls-world { margin: 8px 7px 0; }
+
+  /* Three readings in a grid that fits two of them left the third alone in
+     its own row beside an empty half. They are short - a duration, a word,
+     a percentage - so three across fits and the row closes up. */
+  .lw-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .lw-fact { padding: 5px 6px; }
+  .lw-fact i { font-size: 10px; }
+  .lw-fact b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+
+  /* The same orphan, one card down: COMBAT has five readings and the grid
+     holds two a row, so DAMAGE TAKEN sat by itself with a hole beside it.
+     An odd one out is given the whole row rather than half of one - which
+     also lets the longest labels on the card have the width they want. */
+  .live-grid > .live-cell:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
   /* two cards a row rather than one, matched to the smaller canvases the
      script now renders on a narrow screen - see LIVE_MODEL/BOSS_MODEL */
@@ -3141,3 +3349,149 @@ body::after { display: none; }
 .roster-slot:not(.active) .roster-card::before,
 .roster-slot:not(.active) .roster-card::after,
 .roster-slot:not(.active) .ps-fill::after { animation-play-state: paused; }
+
+
+/* ── the server's chat, pinned to the corner ──────────────────────────────
+   Fixed rather than in the flow: the point of it is to be readable while you
+   are reading something else, which a panel that scrolls away with the page
+   cannot do. It sits above the disc rail and below the lightbox, so it never
+   covers the thing somebody has just opened.
+
+   Shut, it is a tab the height of one line; open, it is a box that stops well
+   short of the viewport so it never becomes the page. */
+.mc-chat {
+  /* under #item-tip's 60, which is a cursor tooltip and has to be able to
+     appear over anything, and far under the lightbox */
+  position: fixed; right: 14px; bottom: 14px; z-index: 55;
+  width: 310px; max-width: calc(100vw - 28px);
+  display: flex; flex-direction: column;
+  background: var(--mc-panel, #16161a);
+  box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--mc-lit, #3d3d46),
+              0 10px 26px rgba(0,0,0,0.55);
+}
+.mc-chat[hidden] { display: none; }
+
+.mcc-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border: 0; width: 100%;
+  font: inherit; font-size: 11px; letter-spacing: 1px; text-align: left;
+  color: #cfe3ff; background: rgba(111, 224, 238, 0.14);
+  border-left: 3px solid var(--mc-sky, #6fe0ee);
+  cursor: pointer;
+}
+.mcc-tab:hover { background: rgba(111, 224, 238, 0.22); }
+.mcc-title { flex: 1; }
+
+/* alive, and not. The dot is the whole status readout: a box in the corner
+   has no room for a sentence about the SSH gateway, and the footer under the
+   log already says how much has been kept. */
+.mcc-dot {
+  width: 7px; height: 7px; background: var(--mc-xp, #7bc518);
+  box-shadow: 0 0 6px rgba(123, 197, 24, 0.8); flex: none;
+}
+.mcc-dot.cold { background: var(--mc-heart, #d94a3d); box-shadow: none; }
+
+.mcc-badge {
+  font-style: normal; font-size: 10px; padding: 1px 5px;
+  color: #05070a; background: var(--mc-gold, #ffd24a);
+}
+.mcc-badge[hidden] { display: none; }
+
+.mcc-caret { width: 0; height: 0; flex: none;
+  border: 4px solid transparent; border-top-color: currentColor;
+  margin-top: 3px; }
+.mc-chat.shut .mcc-body { display: none; }
+
+/* ── minimised: a square, not a rail ──────────────────────────────────────
+   Shut, this is a thing you glance at and click, so it takes the room a
+   button takes. The full-width bar it used to collapse to was still a strip
+   across the corner of the screen claiming attention it had no use for.
+
+   The whole box shrinks rather than the tab alone, so the shadow and the
+   bevel that frame it stay wrapped around the icon instead of around a
+   304-pixel gap where the panel used to be. */
+.mcc-icon { display: none; width: 20px; height: 20px; flex: none; }
+
+.mc-chat.shut {
+  width: 44px;
+  /* the bar's left rule reads as a heading marker; a square icon wants the
+     border all the way round it or not at all */
+  border-left: 0;
+}
+.mc-chat.shut .mcc-tab {
+  position: relative;
+  justify-content: center; padding: 12px 0; border-left: 0;
+  box-shadow: inset 0 0 0 1px rgba(111, 224, 238, 0.35);
+}
+.mc-chat.shut .mcc-icon { display: block; }
+.mc-chat.shut .mcc-caret { display: none; }
+
+/* the words stay in the accessibility tree with the button collapsed: it is
+   the only label the control has once the icon is all that is drawn */
+.mc-chat.shut .mcc-title {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* the two readouts move onto the corners of the square, the way a count sits
+   on an app icon, rather than queueing beside a label that is no longer there */
+.mc-chat.shut .mcc-dot {
+  position: absolute; top: 4px; left: 4px;
+}
+.mc-chat.shut .mcc-badge {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 16px; text-align: center;
+  box-shadow: 0 0 0 2px #000;
+}
+
+.mcc-body { position: relative; }
+
+/* height, not max-height alone: the pane's renderer drops min(), and a log
+   that is only as tall as its content leaves the newest line floating in the
+   middle of the box on a quiet server */
+.mcc-log {
+  height: 232px; max-height: 42vh; overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px 8px; font-size: 11px; line-height: 1.5;
+  color: var(--mc-text, #e6e6e8);
+  background: rgba(0, 0, 0, 0.36);
+}
+.mcc-row { display: block; padding: 2px 0; word-wrap: break-word; }
+.mcc-row time { color: #5f6f83; font-size: 9px; margin-right: 6px; }
+/* the name takes the player's own colour where the board knows them, so a
+   line in the chat and that player's card agree without a face on the row:
+   a chat log is the last place on this page that needs more faces */
+.mcc-row b { font-weight: normal; color: var(--mc-sky, #6fe0ee); margin-right: 6px; }
+.mcc-row b::after { content: ':'; color: #5f6f83; }
+
+.mcc-gap {
+  margin: 5px 0; padding: 2px 0; text-align: center;
+  font-size: 9px; color: #5f6f83;
+  border-top: 1px dashed rgba(255,255,255,0.12);
+}
+
+.mcc-jump {
+  /* clear of the log's bottom edge, which the footer used to hold it off */
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px;
+  padding: 3px 9px; border: 0; font: inherit; font-size: 10px; cursor: pointer;
+  color: #05070a; background: var(--mc-gold, #ffd24a);
+}
+.mcc-jump[hidden] { display: none; }
+
+
+/* on a phone the box spans the screen's width rather than floating in a
+   corner of it, and gives back most of its height */
+@media (max-width: 520px) {
+  .mc-chat { right: 8px; left: 8px; bottom: 8px; width: auto; }
+  .mcc-log { height: 168px; max-height: 32vh; }
+  /* the open box spans the screen here, but the icon still must not: left is
+     what the rule above set, and a square has to give it back */
+  .mc-chat.shut { left: auto; width: 44px; }
+}
+
+/* the tab is the only way to get the panel out of the way again, and on a
+   phone it sits over the roster - a 27px target for the one control somebody
+   reaches for when the chat is in their way is the wrong way round */
+@media (pointer: coarse) {
+  .mcc-tab { min-height: 44px; }
+  .mcc-jump { min-height: 36px; }
+}
