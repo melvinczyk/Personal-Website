@@ -3512,21 +3512,6 @@ body::after { display: none; }
 .rh-head.second { margin-top: 14px; }
 .rh-head em { font-style: normal; font-size: 10px; color: #5f6f83; }
 
-/* everyone / together / one player. A row of tabs rather than a select: there
-   are a handful of names on a whitelisted server, and seeing them all at once
-   is half the invitation to click one. */
-.rh-pick { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
-.rh-tab {
-  padding: 3px 8px; border: 0; cursor: pointer;
-  font: inherit; font-size: 10px; letter-spacing: .5px;
-  color: var(--mc-dim, #9b9ba4); background: var(--mc-slot, #232329);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-.rh-tab:hover { color: var(--mc-text, #e6e6e8); }
-.rh-tab.on {
-  color: #05070a; background: var(--mc-sky, #6fe0ee); box-shadow: none;
-}
-
 .rh-grid { position: relative; }
 .rh-row { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
 /* the day names are a fixed column so all seven rows start on the same line

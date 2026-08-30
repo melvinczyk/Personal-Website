@@ -2244,6 +2244,8 @@ function toggleSection(key) {
   if (btn) btn.textContent = shut ? 'Show' : 'Hide';
   if (shut) return;
 
+  if (box.dataset.feed === 'activity') loadRhythm();
+
   if (box.dataset.src && !box.firstChild) {
     const frame = document.createElement('iframe');
     frame.title = 'Live world map';
@@ -2443,6 +2445,285 @@ function bootChat() {
     if (jump && end) jump.hidden = true;
   });
   pollChat();
+}
+
+
+// ── the server's rhythm ─────────────────────────────────────────────────────
+//
+// Two readings off one log: which hours of which days the server is alive, and
+// which days were the big ones. Both come from activity.py, which builds them
+// by sampling a counter - nothing the game exports carries this history, so it
+// starts the day the sampling started and grows forwards.
+//
+// The buckets arrive keyed by UTC hour and are rolled up here rather than on
+// the server, because rolling them up means choosing a timezone: 8pm on the
+// server's clock is a different evening for every reader, and the only useful
+// answer is the one in the timezone of whoever is looking.
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+let rhythmBoard = null;
+let rhythmBusy = false;
+
+// '2026-08-30T14' -> a local Date. Built by hand rather than by handing the
+// string to Date(), which reads a bare 'YYYY-MM-DDTHH' as local time on some
+// engines and UTC on others; these keys are always UTC.
+function rhythmHour(key) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})$/.exec(key);
+  if (!m) return null;
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4]));
+}
+
+// What the grid is showing. Three different questions off the same buckets,
+// and the third is the one people actually ask: not when the server is busy
+// but when everybody is on at once.
+let rhythmMode = 'all';
+
+// A bucket, reduced to one number under the current mode. `together` counts
+// distinct players seen in the hour rather than summing their time: two people
+// on for half an hour each is a pair, and the same half-hour played by one
+// person twice as long is not.
+function rhythmValue(bucket, mode) {
+  if (!bucket || typeof bucket !== 'object') {
+    // a bucket from the version that stored a bare total still reads under
+    // 'all' and has nothing to say about who was in it
+    return mode === 'all' && typeof bucket === 'number' ? bucket : 0;
+  }
+  const who = bucket.who || {};
+  if (mode === 'all') return bucket.played || 0;
+  if (mode === 'together') {
+    return Object.values(who).filter(r => (r.n || 0) > 0 || (r.s || 0) > 0).length;
+  }
+  return (who[mode] || {}).s || 0;
+}
+
+// the grid, in the reader's own week: 7 rows of 24
+function rhythmGrid(hours, mode) {
+  const grid = DAYS.map(() => new Array(24).fill(0));
+  const seen = DAYS.map(() => Array.from({ length: 24 }, () => new Set()));
+  for (const [key, bucket] of Object.entries(hours || {})) {
+    const when = rhythmHour(key);
+    if (!when) continue;
+    const day = when.getDay(), hour = when.getHours();
+    const value = rhythmValue(bucket, mode);
+    // `together` is a headcount, and a headcount does not add up across four
+    // Tuesdays: the cell takes the best that week ever managed, not the sum
+    if (mode === 'together') {
+      grid[day][hour] = Math.max(grid[day][hour], value);
+    } else {
+      grid[day][hour] += value;
+    }
+    for (const name of Object.keys((bucket && bucket.who) || {})) {
+      seen[day][hour].add(name);
+    }
+  }
+  return { grid, seen };
+}
+
+// A cell's weight against the busiest cell, eased. Play time is wildly
+// lopsided - one evening raid can be twenty times a quiet Tuesday afternoon -
+// and a linear ramp against the peak draws every ordinary hour as empty. The
+// square root keeps the quiet hours visible while the busy ones still lead.
+function rhythmHeat(value, peak) {
+  if (!value || !peak) return 0;
+  return Math.min(1, Math.sqrt(value / peak));
+}
+
+function rhythmSpan(seconds) {
+  if (!seconds) return '0m';
+  const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+  if (h >= 10) return `${h}h`;
+  return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
+}
+
+function setRhythmMode(mode) {
+  rhythmMode = mode;
+  if (rhythmBoard) rhythmPanel(rhythmBoard);
+}
+
+function rhythmPanel(board) {
+  const host = document.getElementById('ls-rhythm');
+  if (!host) return;
+
+  // a player picked and then never seen again in the window would leave the
+  // grid stuck on an empty mode with no way back
+  if (rhythmMode !== 'all' && rhythmMode !== 'together'
+      && !(board.players || []).includes(rhythmMode)) {
+    rhythmMode = 'all';
+  }
+
+  const { grid, seen } = rhythmGrid(board.hours, rhythmMode);
+  const peak = Math.max(...grid.flat(), 0);
+
+  // Nothing sampled yet is the ordinary state on the day this ships, and it
+  // is worth saying so rather than drawing a confident empty grid that looks
+  // like a server nobody plays on.
+  if (!peak) {
+    host.innerHTML = `<div class="rh-empty">
+      <b>nothing recorded yet</b>
+      <span>The game keeps no history of when it was played, so this is built
+      one sync at a time. It fills in from here.</span>
+    </div>`;
+    return;
+  }
+
+  // the reader's own zone, named, because the whole grid depends on it
+  const zone = (() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
+    catch (e) { return ''; }
+  })();
+
+  const cells = grid.map((row, day) => `
+    <div class="rh-row">
+      <i class="rh-day">${DAYS[day]}</i>
+      ${row.map((value, hour) => `<span class="rh-cell"
+          style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
+          data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
+            rhythmReading(value, seen[day][hour])}"
+          onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
+          ></span>`).join('')}
+    </div>`).join('');
+
+  // Everyone, one player, or how many of them were on together. The names come
+  // from the window itself, so somebody who has not played in two months is
+  // not offered as a filter that would draw an empty grid.
+  const picker = `
+    <div class="rh-pick">
+      ${[['all', 'everyone'], ['together', 'together']]
+        .concat((board.players || []).map(n => [n, n]))
+        .map(([key, label]) => `<button type="button"
+          class="rh-tab${rhythmMode === key ? ' on' : ''}"
+          onclick="setRhythmMode('${label.replace(/'/g, "\\'")}')"
+          >${label}</button>`).join('')}
+    </div>`;
+
+  // the hour ruler, every six hours: a label per column is unreadable at this
+  // size and the shape of a day is what the row is for
+  // inside a track that starts where the cells start, not where the row does:
+  // measured against the whole row the labels drift right by the width of the
+  // day column and 6pm ends up sitting over the 8pm cell
+  const ruler = `<span class="rh-ticks">${[0, 6, 12, 18].map(h =>
+    `<i style="left:${(h / 24) * 100}%">${rhythmClock(h)}</i>`).join('')}</span>`;
+
+  host.innerHTML = `
+    <div class="rh-head">
+      <b>WHEN THE SERVER IS ALIVE</b>
+      <em>${zone ? `your time · ${zone}` : 'your time'}</em>
+    </div>
+    ${picker}
+    <div class="rh-grid">
+      ${cells}
+      <div class="rh-ruler"><i class="rh-day"></i>${ruler}</div>
+    </div>
+    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>
+    ${rhythmDays(board.days || [])}
+    <div class="rh-note">${rhythmSince(board)}</div>`;
+}
+
+function rhythmClock(hour) {
+  return `${hour % 12 || 12}${hour < 12 ? 'am' : 'pm'}`;
+}
+
+// a cell's value in the units of whatever mode drew it
+function rhythmReading(value, names) {
+  if (rhythmMode === 'together') {
+    const who = [...names].sort().join(', ');
+    return `${value} player${value === 1 ? '' : 's'}${who ? ` · ${who}` : ''}`;
+  }
+  if (rhythmMode !== 'all') return rhythmSpan(value);
+  const who = [...names].sort().join(', ');
+  return `${rhythmSpan(value)}${who ? ` · ${who}` : ''}`;
+}
+
+function rhythmPeak(grid, peak) {
+  const lead = rhythmMode === 'together' ? 'fullest hour'
+    : rhythmMode === 'all' ? 'busiest hour' : `${rhythmMode}'s hour`;
+  for (let day = 0; day < 7; day += 1) {
+    for (let hour = 0; hour < 24; hour += 1) {
+      if (grid[day][hour] === peak) {
+        const said = rhythmMode === 'together'
+          ? `${peak} player${peak === 1 ? '' : 's'} at once`
+          : `${rhythmSpan(peak)} played`;
+        return `${lead}: ${DAYS[day]} ${rhythmClock(hour)} · ${said}`;
+      }
+    }
+  }
+  return '';
+}
+
+function rhythmSay(cell) {
+  const read = document.getElementById('rh-read');
+  if (!read) return;
+  if (!cell) { read.textContent = read.dataset.rest || ''; return; }
+  if (!read.dataset.rest) read.dataset.rest = read.textContent;
+  read.textContent = cell.dataset.t;
+}
+
+// The days, biggest first is wrong here: a calendar reads left to right, and
+// what the bar chart is for is the shape of the last few weeks rather than a
+// ranking. The biggest one is called out in words underneath instead.
+function rhythmDays(days) {
+  const shown = days.slice(-28);
+  if (!shown.length) return '';
+  const peak = Math.max(...shown.map(d => d.total));
+  if (!peak) return '';
+  const best = shown.reduce((a, b) => (b.total > a.total ? b : a));
+
+  const bars = shown.map(d => {
+    const who = Object.entries(d.who || {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, secs]) => `${name} ${rhythmSpan(secs)}`).join(', ');
+    return `<span class="rh-bar" style="--fill:${(d.total / peak) * 100}%"
+      data-t="${rhythmDate(d.day)} · ${rhythmSpan(d.total)}${
+        who ? ` · ${who}` : ''}"
+      onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"><i></i></span>`;
+  }).join('');
+
+  return `
+    <div class="rh-head second">
+      <b>BUSIEST DAYS</b><em>last ${shown.length} day${shown.length === 1 ? '' : 's'}</em>
+    </div>
+    <div class="rh-days">${bars}</div>
+    <div class="rh-best">biggest day: <b>${rhythmDate(best.day)}</b> · ${
+      rhythmSpan(best.total)} played</div>`;
+}
+
+function rhythmDate(day) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || '');
+  if (!m) return day || '';
+  const when = new Date(+m[1], +m[2] - 1, +m[3]);
+  return `${DAYS[when.getDay()]} ${MONTHS[when.getMonth()]} ${when.getDate()}`;
+}
+
+function rhythmSince(board) {
+  const hours = board.samples || 0;
+  if (!board.since) return '';
+  return `recording since ${localMoment(board.since)} · ${
+    hours} hourly sample${hours === 1 ? '' : 's'}`;
+}
+
+async function loadRhythm() {
+  if (rhythmBusy || rhythmBoard) return;
+  rhythmBusy = true;
+  try {
+    const res = await fetch(ACTIVITY_URL, { headers: { 'X-Requested-With': 'fetch' } });
+    if (!res.ok) throw new Error(res.status);
+    rhythmBoard = await res.json();
+    rhythmPanel(rhythmBoard);
+    const count = document.getElementById('ls-rhythm-count');
+    if (count) {
+      const total = (rhythmBoard.days || []).reduce((n, d) => n + d.total, 0);
+      // player-hours, which is not the same number as the count of hourly
+      // buckets in the note at the foot of the panel: five people on for an
+      // hour is one bucket and five player-hours
+      count.textContent = total
+        ? `${Math.round(total / 3600)} player-hours` : 'building';
+    }
+  } catch (err) {
+    const host = document.getElementById('ls-rhythm');
+    if (host) host.innerHTML = '<div class="rh-empty"><b>could not read the log</b></div>';
+  } finally {
+    rhythmBusy = false;
+  }
 }
 
 
