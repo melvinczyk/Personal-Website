@@ -1356,6 +1356,24 @@ body::after { display: none; }
 .lw-fact.fair b { color: var(--mc-gold); }
 .lw-fact.poor b { color: var(--mc-heart); }
 
+/* The uptime tile turned inside out. A red number alone is easy to skim past
+   in a row of three tiles, so the whole slot carries it: the label reddens
+   with the value and the tile takes an edge, which is the same treatment the
+   OFFLINE badge in the header gets. Everything else in this panel is still the
+   last thing the server managed to say before it stopped, and this is the tile
+   that admits it. */
+.lw-fact.down {
+  box-shadow: inset 0 0 0 2px rgba(217, 74, 61, 0.55);
+  /* Layered ON the scrim, not instead of it. `background` is a shorthand, so
+     setting a flat colour here dropped var(--scrim) entirely - and the scrim
+     is the only thing keeping light text legible over the day sky, which is
+     amber and bright. The tile went nearly unreadable at noon. */
+  background:
+    linear-gradient(0deg, rgba(217, 74, 61, 0.22), rgba(217, 74, 61, 0.22)),
+    var(--scrim);
+}
+.lw-fact.down i { color: #f0a49c; }
+
 @media (prefers-reduced-motion: reduce) {
   .ls-world::before, .ls-world::after,
   .lw-weather, .lw-sheet, .lw-splash, .lw-mist, .lw-bolt, .lw-orb {

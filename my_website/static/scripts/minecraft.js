@@ -1951,7 +1951,7 @@ function worldFact(label, value, tone, hint) {
     hint ? ` title="${hint}"` : ''}><i>${label}</i><b>${value}</b></span>`;
 }
 
-function worldPanel(w) {
+function worldPanel(w, server) {
   const host = document.getElementById('ls-world');
   if (!host) return;
   // an export from before the world section existed, or one that could not be
@@ -2028,7 +2028,21 @@ function worldPanel(w) {
       </div>
     </div>
     <div class="lw-facts">
-      ${worldFact('uptime', w.uptime)}
+      ${(() => {
+        // Up, the tile counts how long the server has been running. Down, it
+        // counts how long it has been down instead - the same slot answering
+        // the same question, "how long has it been like this", with the sign
+        // flipped. Green for one and red for the other, so the state reads off
+        // the colour before anybody parses the word.
+        //
+        // The downtime is measured from the last thing the server wrote, which
+        // is the moment it stopped; see live.py's _server_up.
+        const down = server && server.down;
+        return down
+          ? worldFact('downtime', fmtSpan(down), 'poor down',
+                      'the server stopped writing this long ago')
+          : worldFact('uptime', w.uptime, 'good');
+      })()}
       ${worldFact('weather', w.weather)}
       ${worldFact('year', w.year_pct ? `${w.year_pct}%` : '', '',
                   w.year_days ? `day ${w.season_day} of ${w.year_days}` : '')}
@@ -2047,7 +2061,7 @@ function updateLive(board) {
     status.textContent = up === null ? '' : up ? 'ONLINE' : 'OFFLINE';
     status.className = `ls-status${up === null ? '' : up ? ' on' : ' off'}`;
   }
-  worldPanel(board.world);
+  worldPanel(board.world, board.server);
 
   const tile = (label, value, hot) =>
     `<span class="ls-tile${hot ? ' hot' : ''}"><i>${label}</i><b>${value}</b></span>`;

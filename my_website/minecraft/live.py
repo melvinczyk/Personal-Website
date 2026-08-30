@@ -1202,17 +1202,39 @@ def fish(season_path, faces=None):
 
 
 def _server_up(age, checked):
-    """Was the game server writing, as of our last look at it?
+    """Is the game server writing? And if not, how long has it not been?
 
-    `age` counts from the export's own timestamp and `checked` from the moment
-    we last fetched, both to now, so the difference is how stale the export
-    already was when it reached us. A small skew the wrong way is normal and
-    still counts as up: the two numbers come off two different clocks.
+    `age` is how old the export is now, which is the whole answer: the server
+    rewrites it about once a minute, so an export older than SERVER_WINDOW is a
+    server that has stopped.
+
+    This used to read `age - checked` - how stale the export already was at the
+    moment we fetched it - to keep a healthy server from reading OFFLINE
+    between fifteen-minute pulls. Two things were wrong with that once the
+    worker dropped to a two-minute interval, and the second is the serious one:
+
+      * It added a whole sync interval to how long a dead server kept saying
+        ONLINE, on top of the grace window.
+      * Subtracting one age from another cancels the clock out entirely:
+        (now - updated) - (now - fetched) is just (fetched - updated). The
+        verdict could not change unless a fetch happened, so a sync that died
+        while the server was up left the badge reading ONLINE for ever.
+
+    `checked` is no longer part of the verdict. It stays in the signature
+    because the caller has it and a future third state - "we have not looked
+    recently enough to say" - belongs here rather than in the page.
     """
-    if age is None or checked is None:
-        return {'online': None, 'lag': None}
-    lag = age - checked
-    return {'online': lag < SERVER_WINDOW, 'lag': lag}
+    if age is None:
+        return {'online': None, 'lag': None, 'down': None}
+    up = age < SERVER_WINDOW
+    return {
+        'online': up,
+        'lag': age,
+        # how long it has been dark, counted from the last thing it wrote.
+        # None while it is up, so the page has nothing to draw rather than a
+        # zero that looks like a reading.
+        'down': None if up else age,
+    }
 
 
 def board(season_path):
