@@ -48,9 +48,22 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from . import sync
+from .live import SERVER_WINDOW
 
 WORLD = 'world_data.json'
 LOG = 'activity.json'
+
+# How stale the export may be before the server counts as down: live.SERVER_WINDOW,
+# the same 300 seconds behind the ONLINE/OFFLINE badge at the top of the page.
+# Imported rather than repeated - two definitions of "down" on one page will
+# eventually disagree in front of somebody.
+
+# Downtime under this in a given hour is not drawn at all. A modded server
+# restart is a couple of minutes and happens on purpose; painting the grid red
+# for one is how the colour stops meaning anything. Five minutes needs two or
+# three bad looks in a row at the current sync interval, so a single slow
+# export write cannot trigger it either.
+DOWN_FLOOR = 5 * 60
 
 # How many hourly buckets to keep. A bucket is no longer a single number - it
 # carries a row per player who was on in that hour - so this is shorter than it
@@ -72,8 +85,8 @@ def log_path(data_dir):
 
 
 def _blank():
-    return {'hours': {}, 'days': {}, 'profile': {}, 'last': {},
-            'at': '', 'since': ''}
+    return {'hours': {}, 'days': {}, 'downdays': {}, 'profile': {},
+            'last': {}, 'at': '', 'since': '', 'downto': ''}
 
 
 def _bucket(log, key):
@@ -94,6 +107,7 @@ def _bucket(log, key):
         log['hours'][key] = hour
     hour.setdefault('played', 0.0)
     hour.setdefault('samples', 0)
+    hour.setdefault('down', 0.0)
     if not isinstance(hour.get('who'), dict):
         hour['who'] = {}
     return hour
@@ -122,12 +136,13 @@ def load(data_dir):
         return _blank()
     if not isinstance(data, dict):
         return _blank()
-    for key, empty in (('hours', {}), ('days', {}), ('profile', {}),
-                      ('last', {})):
+    for key, empty in (('hours', {}), ('days', {}), ('downdays', {}),
+                      ('profile', {}), ('last', {})):
         if not isinstance(data.get(key), dict):
             data[key] = empty
     data.setdefault('at', '')
     data.setdefault('since', '')
+    data.setdefault('downto', '')
     return data
 
 
@@ -204,6 +219,57 @@ def sample(data_dir, world=None):
         return _sample(data_dir, world, players)
 
 
+def _downtime(log, updated, looked):
+    """Bank whatever the server has been down for since we last accounted.
+
+    Measured from the export's own timestamp against the wall clock, not from
+    our sampling continuity, and that distinction is the whole design:
+
+      * A dead server is exactly a server whose export stops changing. The
+        sample below gives up early when the export has not moved, so an
+        outage recorded from *our* rhythm would record nothing at all - the
+        thing being measured is the thing that stops the measuring.
+      * Our own gaps are not the server's. If the website is off for six hours
+        while the game is fine, the export comes back fresh and none of it
+        counts. If the game was down for four of those six, the export is four
+        hours stale and the whole outage is recovered retroactively.
+
+    `downto` is how far the accounting has reached, so an outage spanning many
+    samples is banked once rather than once per look.
+    """
+    if updated is None or looked is None:
+        return 0.0
+    if (looked - updated).total_seconds() <= SERVER_WINDOW:
+        # Writing normally: nothing owed. The ledger catches up to the export's
+        # own timestamp rather than to now, because that is the last moment the
+        # server is known to have been alive - anything after it is not yet
+        # accounted for either way.
+        #
+        # Advancing to `now` instead would silently eat the start of every
+        # outage: a look taken inside the grace period would mark the ledger
+        # past the moment the server actually stopped, and those minutes could
+        # never be claimed back.
+        log['downto'] = updated.isoformat().replace('+00:00', 'Z')
+        return 0.0
+
+    # Down since the export stopped moving, which is the truth of it - the
+    # grace period is how long we wait before saying so, not when it began.
+    since = _when(log.get('downto')) or updated
+    start = max(since, updated)
+    if start >= looked:
+        return 0.0
+
+    banked = 0.0
+    for hour, day, seconds in _slice(start, looked):
+        bucket = _bucket(log, hour)
+        bucket['down'] = round(bucket['down'] + seconds, 1)
+        log.setdefault('downdays', {})[day] = round(
+            log['downdays'].get(day, 0) + seconds, 1)
+        banked += seconds
+    log['downto'] = looked.isoformat().replace('+00:00', 'Z')
+    return banked
+
+
 def _sample(data_dir, world, players):
     """One sample, with the lock already held."""
 
@@ -213,9 +279,17 @@ def _sample(data_dir, world, players):
 
     log = load(data_dir)
     before = _when(log.get('at'))
+
+    # Downtime first, and outside the early return below. A server that has
+    # stopped writing produces the same export every time we look, which is
+    # what that return is for - so anything measured after it would never see
+    # an outage at all.
+    _downtime(log, now, datetime.now(timezone.utc))
+
     # the same export twice is not a new sample: the counters in it have not
     # moved, and treating it as one would bank a window with nothing in it
     if before is not None and now <= before:
+        _write(data_dir, log)
         return 0, 0.0
 
     # Who was standing in the world at this instant. Recorded against the hour
@@ -333,6 +407,7 @@ def _trim(log):
         slot = _profile(log, f'{when.weekday()}-{when.hour}')
         slot['played'] = round(slot['played'] + (bucket.get('played') or 0), 1)
         slot['samples'] += bucket.get('samples') or 0
+        slot['down'] = round(slot.get('down', 0) + (bucket.get('down') or 0), 1)
         for name, row in (bucket.get('who') or {}).items():
             keep = slot['who'].setdefault(name, {'s': 0.0, 'n': 0})
             keep['s'] = round(keep['s'] + (row.get('s') or 0), 1)
@@ -341,12 +416,16 @@ def _trim(log):
     if len(log['days']) > KEEP_DAYS:
         for key in sorted(log['days'])[:len(log['days']) - KEEP_DAYS]:
             del log['days'][key]
+    downdays = log.setdefault('downdays', {})
+    if len(downdays) > KEEP_DAYS:
+        for key in sorted(downdays)[:len(downdays) - KEEP_DAYS]:
+            del downdays[key]
 
 
 def _profile(log, key):
     slot = log.setdefault('profile', {}).get(key)
     if not isinstance(slot, dict):
-        slot = {'played': 0.0, 'samples': 0, 'who': {}}
+        slot = {'played': 0.0, 'samples': 0, 'down': 0.0, 'who': {}}
         log['profile'][key] = slot
     slot.setdefault('played', 0.0)
     slot.setdefault('samples', 0)
@@ -440,8 +519,12 @@ def board(data_dir, days=60):
                            for name in (bucket.get('who') or {})}),
         'days': [{'day': day,
                   'total': round(sum(log['days'][day].values())),
+                  'down': round((log.get('downdays') or {}).get(day, 0)),
                   'who': log['days'][day]}
                  for day in recent],
+        # the page draws nothing under this, and gets it from here rather than
+        # keeping its own copy of the number
+        'down_floor': DOWN_FLOOR,
         # Every day, week and month on record, not just the window the heatmap
         # draws. These are small - one number per player per period - and they
         # are the part worth keeping for the whole season, so they all go.
