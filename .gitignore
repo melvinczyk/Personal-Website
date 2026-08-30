@@ -14,3 +14,20 @@ mc_sync.json
 config.json
 known_hosts
 *.sync.lock
+
+# The live season's data folder is written by the sync worker, not by hand.
+#
+# Tracking it meant every deploy hit "local changes would be overwritten", and
+# the usual way out of that - git checkout / reset --hard - silently rewinds
+# the two files in here that cannot be re-fetched:
+#
+#   chat_history.json  the chat archive. The game host keeps fifteen messages
+#                      and drops the rest, so anything the archive loses is
+#                      gone for good. A reset on 2026-08-30 would have thrown
+#                      away four hours of talk.
+#   activity.json      when the server was played, built one sample at a time.
+#                      There is nothing to rebuild it from.
+#
+# The rest is re-fetched within a couple of minutes of the worker starting, so
+# a fresh clone shows an empty board until the first sync and then fills in.
+my_website/static/minecraft/season5/data/

@@ -95,21 +95,45 @@ class Command(BaseCommand):
                                    "drop --explore/--dry-run")
             return self._watch(cfg, season, dest, opts)
 
-        lock = sync.Lock(puller.lock_for(season))
-        with lock:
-            if not lock.held:
-                self.stdout.write("another sync is already running; skipping")
+        self.stdout.write(f"connecting to {cfg['user']}@{cfg['host']}:{cfg['port']}")
+        try:
+            client, sftp = sync.connect(cfg)
+        except sync.SyncError as exc:
+            raise CommandError(str(exc))
+
+        try:
+            if opts["explore"]:
+                self._explore(sftp, cfg["remote_root"], opts["depth"])
                 return
 
-            self.stdout.write(f"connecting to {cfg['user']}@{cfg['host']}:{cfg['port']}")
-            try:
-                client, sftp = sync.connect(cfg)
-            except sync.SyncError as exc:
-                raise CommandError(str(exc))
+            # Chat first, and outside the lock.
+            #
+            # Outside because it writes one file nothing else touches, so a
+            # run that finds another sync holding the lock can still bring the
+            # chat back rather than returning with nothing.
+            #
+            # At all, because this path did not used to. Chat was only pulled
+            # under --loop, and a host that gives you one always-on task and
+            # runs this command from a wrapper every few minutes therefore
+            # never pulled chat at all - the five data files moved and the
+            # archive sat still. Whichever way this command is invoked, it now
+            # grabs the buffer.
+            if not opts["no_chat"] and not opts["dry_run"]:
+                try:
+                    added, _changed = chat.pull(sftp, cfg, dest)
+                    self.stdout.write(f"  chat      {added} new" if added
+                                      else "  chat      nothing new")
+                except Exception as exc:     # noqa: BLE001
+                    # the counters are the point of this command; a chat
+                    # buffer that would not come back is worth a line, not a
+                    # failed run
+                    self.stdout.write(self.style.WARNING(
+                        f"  chat      {type(exc).__name__}: {exc}"))
 
-            try:
-                if opts["explore"]:
-                    self._explore(sftp, cfg["remote_root"], opts["depth"])
+            lock = sync.Lock(puller.lock_for(season))
+            with lock:
+                if not lock.held:
+                    self.stdout.write("another sync is already running; skipping")
                     return
 
                 self.stdout.write(f"season {season} -> {dest}")
@@ -118,9 +142,9 @@ class Command(BaseCommand):
                     dry_run=opts["dry_run"],
                     log=self.stdout.write,
                 )
-            finally:
-                sftp.close()
-                client.close()
+        finally:
+            sftp.close()
+            client.close()
 
         clean = True
         if not opts["dry_run"]:
@@ -182,6 +206,12 @@ class Command(BaseCommand):
         # hour to do the thing it was restarted for
         next_full = 0.0
         fails = 0
+        # What chat has done since the last time the log said anything about
+        # it. Only a new message was ever printed, so a chat pull that ran two
+        # hundred times and found nothing looked exactly like one that was
+        # never running at all - which is precisely the question somebody
+        # reading an always-on task's log is trying to answer.
+        chat_new = chat_looks = 0
         while not self.stopping:
             started = time.monotonic()
             due_full = started >= next_full
@@ -190,6 +220,8 @@ class Command(BaseCommand):
                 try:
                     if with_chat:
                         added, _changed = chat.pull(sftp, cfg, dest)
+                        chat_looks += 1
+                        chat_new += added
                         if added:
                             self._log(f"  chat      {added} new")
                     # Only a pull that actually happened moves the long
@@ -197,6 +229,15 @@ class Command(BaseCommand):
                     # the page's own puller, and treating that skip as a run
                     # would cost the counters a whole interval for a
                     # collision that is over in seconds.
+                    # said on the full pull's clock rather than chat's own:
+                    # once every couple of minutes is enough to show the poll
+                    # is alive, where a line every twenty-five seconds would
+                    # be the only thing in the log
+                    if due_full and with_chat and not chat_new:
+                        self._log(f"  chat      quiet, {chat_looks} look"
+                                  f"{'' if chat_looks == 1 else 's'}")
+                    if due_full:
+                        chat_new = chat_looks = 0
                     if due_full and self._full(sftp, cfg, season, dest):
                         # measured from the end of the pull rather than the
                         # start, so a slow fetch does not shorten the wait
