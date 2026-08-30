@@ -51,7 +51,12 @@
           <!-- the server describing itself: what day it is in there, what the
                sky is doing, and how well the tick is holding up. Ahead of the
                players' numbers because it is the ground all of them stand on. -->
-          <div class="ls-world" id="ls-world"></div>
+          <div class="ls-top">
+            <div class="ls-world" id="ls-world"></div>
+            <!-- when the server is alive, beside what it is doing right now:
+                 the two readings answer the same question at two scales -->
+            <div class="ls-rhythm" id="ls-rhythm"></div>
+          </div>
 
           <div class="ls-tiles" id="ls-tiles"></div>
 
@@ -105,19 +110,6 @@
           </div>
           <div class="ls-sec" id="sec-fish">
             <div class="ls-fish" id="ls-fish"></div>
-          </div>
-
-          <!-- Shut by default and fetched on first open, the way the map is:
-               it is the one reading here that nothing else on the page needs,
-               and it comes off its own endpoint. -->
-          <div class="ls-bar rhythm">
-            <span class="lb-t">Server Rhythm</span>
-            <button class="ls-btn sm" data-sec="sec-rhythm"
-                    onclick="toggleSection('sec-rhythm')">Show</button>
-            <span class="lb-r" id="ls-rhythm-count">&mdash;</span>
-          </div>
-          <div class="ls-sec shut" id="sec-rhythm" data-feed="activity">
-            <div class="ls-rhythm" id="ls-rhythm"></div>
           </div>
 
         </div>

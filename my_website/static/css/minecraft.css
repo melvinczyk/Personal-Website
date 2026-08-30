@@ -3497,51 +3497,66 @@ body::after { display: none; }
 }
 
 
-/* ── the server's rhythm ──────────────────────────────────────────────────
-   A 7x24 grid of when the world is actually being played, and a bar per day
-   under it. Both are built from samples rather than read from the game - see
-   activity.py - so they start empty and fill in. */
-.ls-rhythm { padding: 10px; }
+/* ── active hours ─────────────────────────────────────────────────────────
+   A week of the server's day, sat beside the world panel at the top rather
+   than in a section of its own down the page: it is small, it answers "is
+   anyone ever on" at a glance, and that is a question you have while you are
+   looking at the server, not one you go hunting for. */
+.ls-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 322px;
+  gap: 8px; margin: 8px 10px 0; align-items: stretch;
+}
+/* the world panel carried its own margin when it stood alone; the row owns
+   the spacing now */
+.ls-top .ls-world { margin: 0; }
+
+.ls-rhythm {
+  display: flex; flex-direction: column;
+  padding: 8px 9px;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  background: linear-gradient(180deg, #191c28, #101219);
+}
 
 .rh-head {
   display: flex; justify-content: space-between; align-items: baseline;
-  gap: 8px; margin-bottom: 7px;
-  font-size: 12px; letter-spacing: 1px; color: var(--mc-gold);
-  text-shadow: 2px 2px #000;
+  gap: 6px; margin-bottom: 6px;
+  font-size: 10px; letter-spacing: 1px; color: var(--mc-gold);
 }
-.rh-head.second { margin-top: 14px; }
-.rh-head em { font-style: normal; font-size: 10px; color: #5f6f83; }
+.rh-head em { font-style: normal; font-size: 9px; color: #5f6f83; }
 
-/* everyone / together / one player. A row of tabs rather than a select: there
-   are a handful of names on a whitelisted server, and seeing them all at once
-   is half the invitation to click one. */
-.rh-pick { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
+.rh-pick { display: flex; gap: 3px; margin-bottom: 6px; }
 .rh-tab {
-  padding: 3px 8px; border: 0; cursor: pointer;
-  font: inherit; font-size: 10px; letter-spacing: .5px;
+  padding: 2px 7px; border: 0; cursor: pointer;
+  font: inherit; font-size: 9px; letter-spacing: .5px;
   color: var(--mc-dim, #9b9ba4); background: var(--mc-slot, #232329);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .rh-tab:hover { color: var(--mc-text, #e6e6e8); }
-.rh-tab.on {
-  color: #05070a; background: var(--mc-sky, #6fe0ee); box-shadow: none;
+.rh-tab.on { color: #05070a; background: var(--mc-sky, #6fe0ee); box-shadow: none; }
+
+/* a list rather than nine more buttons: the column is 322px wide and the
+   names on a whitelisted server are long */
+.rh-who {
+  flex: 1 1 0; min-width: 0;
+  padding: 2px 4px; border: 0; cursor: pointer;
+  font: inherit; font-size: 9px;
+  color: var(--mc-dim, #9b9ba4); background: var(--mc-slot, #232329);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-.rh-grid { position: relative; }
-.rh-row { display: flex; align-items: center; gap: 2px; margin-bottom: 2px; }
-/* the day names are a fixed column so all seven rows start on the same line
-   and the columns actually read as hours */
+.rh-grid { position: relative; margin-top: 2px; }
+.rh-row { display: flex; align-items: center; gap: 1px; margin-bottom: 1px; }
+/* one letter, not three: at this width the day column was eating an eighth of
+   the grid to say "Wed" */
 .rh-day {
-  flex: none; width: 30px; font-style: normal;
-  font-size: 9px; color: #5f6f83; letter-spacing: .5px;
+  flex: none; width: 11px; font-style: normal; text-align: center;
+  font-size: 8px; color: #5f6f83;
 }
 
-/* One cell per hour. The heat is a variable so the colour ramp lives in one
-   place: quiet hours are the panel's own slot colour barely lifted, busy ones
-   climb through the experience green to gold, which is the same ladder the
-   rest of the page uses for "more of this is better". */
 .rh-cell {
-  flex: 1 1 0; height: 15px; min-width: 0;
+  flex: 1 1 0; height: 10px; min-width: 0;
   background:
     linear-gradient(0deg,
       rgba(123, 197, 24, calc(var(--heat) * 0.85)),
@@ -3555,55 +3570,39 @@ body::after { display: none; }
 .rh-cell:hover { box-shadow: inset 0 0 0 1px var(--mc-sky, #6fe0ee); }
 
 .rh-ruler {
-  display: flex; align-items: center; gap: 2px; height: 13px; margin-top: 1px;
-  font-size: 9px; color: #5f6f83;
+  display: flex; align-items: center; gap: 1px; height: 11px; margin-top: 1px;
+  font-size: 8px; color: #5f6f83;
 }
-/* the track the labels are measured against: the same box the cells occupy,
-   so 6pm lands over the 6pm column instead of a day-column's width to its right */
 .rh-ticks { position: relative; flex: 1 1 0; height: 100%; }
 .rh-ticks i { position: absolute; top: 0; font-style: normal; }
 
 /* what the cell under the cursor says, in a line that does not move: a
-   tooltip that follows the mouse across a grid this dense is unreadable */
+   tooltip chasing the mouse across 168 targets is unreadable. It holds its
+   height whatever is in it, so the panel does not jump on hover. */
 .rh-read {
-  margin-top: 8px; padding: 5px 8px;
-  font-size: 11px; color: var(--mc-text, #e6e6e8);
+  /* auto, not a fixed gap: the panel is stretched to the world panel's height
+     beside it, and the slack belongs between the grid and this rather than
+     hanging off the bottom of the box */
+  margin-top: auto; padding: 4px 6px;
+  font-size: 9px; line-height: 1.4; color: var(--mc-text, #e6e6e8);
   background: rgba(0, 0, 0, 0.3);
-  border-left: 3px solid var(--mc-sky, #6fe0ee);
-  min-height: 12px;
+  border-left: 2px solid var(--mc-sky, #6fe0ee);
+  height: 28px; overflow: hidden;
 }
 
-.rh-days {
-  display: flex; align-items: flex-end; gap: 2px; height: 54px;
-}
-.rh-bar {
-  flex: 1 1 0; height: 100%; min-width: 0;
-  display: flex; align-items: flex-end;
-  background: rgba(255, 255, 255, 0.04);
-}
-.rh-bar i {
-  display: block; width: 100%; height: var(--fill, 0%);
-  background: var(--mc-sky, #6fe0ee);
-}
-.rh-bar:hover i { background: var(--mc-gold, #ffd24a); }
-
-.rh-best { margin-top: 6px; font-size: 11px; color: var(--mc-dim, #9b9ba4); }
-.rh-best b { color: var(--mc-gold, #ffd24a); font-weight: normal; }
-.rh-note { margin-top: 10px; font-size: 9px; color: #5f6f83; }
-
-.rh-empty { padding: 18px 12px; text-align: center; }
+.rh-empty { margin: auto 0; padding: 6px; text-align: center; }
 .rh-empty b {
-  display: block; font-weight: normal; font-size: 12px;
-  color: var(--mc-dim, #9b9ba4); margin-bottom: 6px;
+  display: block; font-weight: normal; font-size: 10px; letter-spacing: 1px;
+  color: var(--mc-gold); margin-bottom: 5px;
 }
 .rh-empty span {
-  display: block; max-width: 46ch; margin: 0 auto;
-  font-size: 10px; line-height: 1.6; color: #5f6f83;
+  display: block; font-size: 9px; line-height: 1.6; color: #5f6f83;
 }
 
-/* the day column costs more than it is worth on a phone: the rows are short
-   enough to read by their order alone once the grid is this narrow */
+/* below this the two panels stack, and the grid gets the full width back */
+@media (max-width: 900px) {
+  .ls-top { grid-template-columns: 1fr; }
+}
 @media (max-width: 520px) {
-  .rh-day { width: 22px; font-size: 8px; }
-  .rh-cell { height: 12px; }
+  .ls-top { margin: 8px 7px 0; }
 }

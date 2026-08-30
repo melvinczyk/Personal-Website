@@ -2244,8 +2244,6 @@ function toggleSection(key) {
   if (btn) btn.textContent = shut ? 'Show' : 'Hide';
   if (shut) return;
 
-  if (box.dataset.feed === 'activity') loadRhythm();
-
   if (box.dataset.src && !box.firstChild) {
     const frame = document.createElement('iframe');
     frame.title = 'Live world map';
@@ -2554,27 +2552,18 @@ function rhythmPanel(board) {
   const { grid, seen } = rhythmGrid(board.hours, rhythmMode);
   const peak = Math.max(...grid.flat(), 0);
 
-  // Nothing sampled yet is the ordinary state on the day this ships, and it
-  // is worth saying so rather than drawing a confident empty grid that looks
-  // like a server nobody plays on.
   if (!peak) {
     host.innerHTML = `<div class="rh-empty">
-      <b>nothing recorded yet</b>
-      <span>The game keeps no history of when it was played, so this is built
-      one sync at a time. It fills in from here.</span>
+      <b>ACTIVE HOURS</b>
+      <span>nothing recorded yet &mdash; the game keeps no history of when it
+      was played, so this fills in from here</span>
     </div>`;
     return;
   }
 
-  // the reader's own zone, named, because the whole grid depends on it
-  const zone = (() => {
-    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
-    catch (e) { return ''; }
-  })();
-
   const cells = grid.map((row, day) => `
     <div class="rh-row">
-      <i class="rh-day">${DAYS[day]}</i>
+      <i class="rh-day">${DAYS[day][0]}</i>
       ${row.map((value, hour) => `<span class="rh-cell"
           style="--heat:${rhythmHeat(value, peak).toFixed(3)}"
           data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
@@ -2583,40 +2572,45 @@ function rhythmPanel(board) {
           ></span>`).join('')}
     </div>`).join('');
 
-  // Everyone, one player, or how many of them were on together. The names come
-  // from the window itself, so somebody who has not played in two months is
-  // not offered as a filter that would draw an empty grid.
-  const picker = `
-    <div class="rh-pick">
-      ${[['all', 'everyone'], ['together', 'together']]
-        .concat((board.players || []).map(n => [n, n]))
-        .map(([key, label]) => `<button type="button"
-          class="rh-tab${rhythmMode === key ? ' on' : ''}"
-          onclick="setRhythmMode('${label.replace(/'/g, "\\'")}')"
-          >${label}</button>`).join('')}
-    </div>`;
-
-  // the hour ruler, every six hours: a label per column is unreadable at this
-  // size and the shape of a day is what the row is for
-  // inside a track that starts where the cells start, not where the row does:
-  // measured against the whole row the labels drift right by the width of the
-  // day column and 6pm ends up sitting over the 8pm cell
   const ruler = `<span class="rh-ticks">${[0, 6, 12, 18].map(h =>
     `<i style="left:${(h / 24) * 100}%">${rhythmClock(h)}</i>`).join('')}</span>`;
 
+  // Two buttons and a list, rather than a tab per player: nine names as tabs
+  // is four rows of them in a column this narrow, which is taller than the
+  // grid they are filtering.
+  const names = board.players || [];
+  const picker = `
+    <div class="rh-pick">
+      <button type="button" class="rh-tab${rhythmMode === 'all' ? ' on' : ''}"
+              onclick="setRhythmMode('all')">everyone</button>
+      <button type="button" class="rh-tab${rhythmMode === 'together' ? ' on' : ''}"
+              onclick="setRhythmMode('together')">together</button>
+      ${names.length ? `<select class="rh-who" onchange="setRhythmMode(this.value)">
+        <option value="all">one player…</option>
+        ${names.map(n => `<option value="${n}"${
+          rhythmMode === n ? ' selected' : ''}>${n}</option>`).join('')}
+      </select>` : ''}
+    </div>`;
+
   host.innerHTML = `
     <div class="rh-head">
-      <b>WHEN THE SERVER IS ALIVE</b>
-      <em>${zone ? `your time · ${zone}` : 'your time'}</em>
+      <b>ACTIVE HOURS</b>
+      <em>${rhythmZone()}</em>
     </div>
     ${picker}
     <div class="rh-grid">
       ${cells}
       <div class="rh-ruler"><i class="rh-day"></i>${ruler}</div>
     </div>
-    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>
-    ${rhythmDays(board.days || [])}
-    <div class="rh-note">${rhythmSince(board)}</div>`;
+    <div class="rh-read" id="rh-read">${rhythmPeak(grid, peak)}</div>`;
+}
+
+function rhythmZone() {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    // just the city: "America/Chicago" is a path, and the column is narrow
+    return zone ? zone.split('/').pop().replace(/_/g, ' ') : 'your time';
+  } catch (e) { return 'your time'; }
 }
 
 function rhythmClock(hour) {
@@ -2658,49 +2652,6 @@ function rhythmSay(cell) {
   read.textContent = cell.dataset.t;
 }
 
-// The days, biggest first is wrong here: a calendar reads left to right, and
-// what the bar chart is for is the shape of the last few weeks rather than a
-// ranking. The biggest one is called out in words underneath instead.
-function rhythmDays(days) {
-  const shown = days.slice(-28);
-  if (!shown.length) return '';
-  const peak = Math.max(...shown.map(d => d.total));
-  if (!peak) return '';
-  const best = shown.reduce((a, b) => (b.total > a.total ? b : a));
-
-  const bars = shown.map(d => {
-    const who = Object.entries(d.who || {})
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, secs]) => `${name} ${rhythmSpan(secs)}`).join(', ');
-    return `<span class="rh-bar" style="--fill:${(d.total / peak) * 100}%"
-      data-t="${rhythmDate(d.day)} · ${rhythmSpan(d.total)}${
-        who ? ` · ${who}` : ''}"
-      onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"><i></i></span>`;
-  }).join('');
-
-  return `
-    <div class="rh-head second">
-      <b>BUSIEST DAYS</b><em>last ${shown.length} day${shown.length === 1 ? '' : 's'}</em>
-    </div>
-    <div class="rh-days">${bars}</div>
-    <div class="rh-best">biggest day: <b>${rhythmDate(best.day)}</b> · ${
-      rhythmSpan(best.total)} played</div>`;
-}
-
-function rhythmDate(day) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || '');
-  if (!m) return day || '';
-  const when = new Date(+m[1], +m[2] - 1, +m[3]);
-  return `${DAYS[when.getDay()]} ${MONTHS[when.getMonth()]} ${when.getDate()}`;
-}
-
-function rhythmSince(board) {
-  const hours = board.samples || 0;
-  if (!board.since) return '';
-  return `recording since ${localMoment(board.since)} · ${
-    hours} hourly sample${hours === 1 ? '' : 's'}`;
-}
-
 async function loadRhythm() {
   if (rhythmBusy || rhythmBoard) return;
   rhythmBusy = true;
@@ -2709,18 +2660,10 @@ async function loadRhythm() {
     if (!res.ok) throw new Error(res.status);
     rhythmBoard = await res.json();
     rhythmPanel(rhythmBoard);
-    const count = document.getElementById('ls-rhythm-count');
-    if (count) {
-      const total = (rhythmBoard.days || []).reduce((n, d) => n + d.total, 0);
-      // player-hours, which is not the same number as the count of hourly
-      // buckets in the note at the foot of the panel: five people on for an
-      // hour is one bucket and five player-hours
-      count.textContent = total
-        ? `${Math.round(total / 3600)} player-hours` : 'building';
-    }
   } catch (err) {
     const host = document.getElementById('ls-rhythm');
-    if (host) host.innerHTML = '<div class="rh-empty"><b>could not read the log</b></div>';
+    if (host) host.innerHTML = '<div class="rh-empty"><b>ACTIVE HOURS</b>'
+      + '<span>could not read the log</span></div>';
   } finally {
     rhythmBusy = false;
   }
@@ -2752,6 +2695,7 @@ function bootLive() {
 
 bootLive();
 bootChat();
+loadRhythm();
 
 selectDisc(0);
 
