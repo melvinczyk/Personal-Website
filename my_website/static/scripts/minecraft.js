@@ -2730,48 +2730,76 @@ function rhythmWeekGrid(board) {
 // down. Padded to whole weeks so the columns actually line up with a weekday
 // rather than drifting by one every row.
 function rhythmMonthGrid(board) {
-  // six whole weeks. Sliced after padding rather than before, so the grid is
-  // always six rows tall whichever weekday the window happens to start on -
-  // a seventh row would make the panel taller than the week view beside it.
-  const rows = (board.days || []).slice(-45);
-  if (!rows.length) return { cells: '', peak: 0, empty: 'no days on record yet' };
+  // Built from dates, not from the record. Reading the days we happen to have
+  // and padding them into weeks drew one row while the log held two days: a
+  // calendar with a fortnight in it is still a calendar, and the empty squares
+  // are half of what it says.
+  const byDay = new Map((board.days || []).map(d => [d.day, d]));
+  const pad = n => String(n).padStart(2, '0');
+  const key = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-  const cell = day => {
-    const when = new Date(`${day.day}T00:00:00`);
-    return { when, value: rhythmDayValue(day.who, rhythmMode),
-             down: day.down || 0,
-             names: new Set(Object.keys(day.who || {})), day };
-  };
-  const filled = rows.map(cell);
-  const peak = Math.max(...filled.map(c => c.value), 0);
+  const WEEKS = 6;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // run to the end of the week we are in, so the current week is a whole row
+  // and today is never jammed against the right edge
+  const last = new Date(today);
+  last.setDate(last.getDate() + (6 - last.getDay()));
+  const first = new Date(last);
+  first.setDate(first.getDate() - (WEEKS * 7 - 1));
 
-  // lead the first week with blanks so Sunday is always the first column
-  const pad = filled[0].when.getDay();
-  const slots = new Array(pad).fill(null).concat(filled);
-  while (slots.length % 7) slots.push(null);
+  const days = [];
+  for (let i = 0; i < WEEKS * 7; i += 1) {
+    const when = new Date(first);
+    when.setDate(when.getDate() + i);
+    const row = byDay.get(key(when));
+    days.push({
+      when,
+      row,
+      ahead: when > today,
+      value: row ? rhythmDayValue(row.who, rhythmMode) : 0,
+      down: row ? (row.down || 0) : 0,
+      names: new Set(Object.keys((row && row.who) || {})),
+    });
+  }
+  const peak = Math.max(...days.map(d => d.value), 0);
 
   const weeks = [];
-  for (let i = 0; i < slots.length; i += 7) weeks.push(slots.slice(i, i + 7));
-  while (weeks.length > 6) weeks.shift();
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
 
-  const cells = weeks.map(week => `
+  // the month down the side, named on the row it starts in, so six weeks of
+  // squares still reads as a calendar rather than as a block of them
+  const cells = weeks.map(week => {
+    const starts = week.find(d => d.when.getDate() === 1);
+    const mark = starts ? MONTHS[starts.when.getMonth()]
+      : (week === weeks[0] ? MONTHS[week[0].when.getMonth()] : '');
+    return `
     <div class="rh-row month">
-      ${week.map(slot => slot === null
-        ? '<span class="rh-cell blank"></span>'
-        : `<span class="rh-cell"
-             style="--heat:${rhythmHeat(slot.value, peak).toFixed(3)};${
-               rhythmDownAttr(slot.down, 86400)}"
-             data-t="${rhythmDate(slot.day.day)} · ${
-               rhythmReading(slot.value, slot.names)}${rhythmDownSay(slot.down)}"
-             onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
-             ></span>`).join('')}
-    </div>`).join('');
+      <i class="rh-mon">${mark}</i>
+      ${week.map(d => {
+        if (d.ahead) return '<span class="rh-cell ahead"></span>';
+        if (!d.row) {
+          return `<span class="rh-cell void"
+            data-t="${rhythmDate(key(d.when))} · nothing recorded"
+            onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"></span>`;
+        }
+        return `<span class="rh-cell${
+            d.when.getTime() === today.getTime() ? ' today' : ''}"
+          style="--heat:${rhythmHeat(d.value, peak).toFixed(3)};${
+            rhythmDownAttr(d.down, 86400)}"
+          data-t="${rhythmDate(d.row.day)} · ${
+            rhythmReading(d.value, d.names)}${rhythmDownSay(d.down)}"
+          onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"></span>`;
+      }).join('')}
+    </div>`;
+  }).join('');
 
-  const ruler = `<div class="rh-ruler month">${
+  const ruler = `<div class="rh-ruler month"><i class="rh-mon"></i>${
     DAYS.map(d => `<i>${d[0]}</i>`).join('')}</div>`;
-  return { cells, peak, worst: Math.max(...filled.map(c => c.down), 0),
+  return { cells, peak, worst: Math.max(...days.map(d => d.down), 0),
            days: ruler };
 }
+
 
 function rhythmDate(day) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day || '');

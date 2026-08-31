@@ -3602,6 +3602,22 @@ body::after { display: none; }
 .rh-grid.day .rh-cell { height: 34px; }
 .rh-grid.month .rh-cell { height: 12px; }
 .rh-row.month { gap: 2px; margin-bottom: 2px; }
+
+/* the month down the left, named on the row it begins in */
+.rh-mon {
+  flex: none; width: 20px; font-style: normal; text-align: right;
+  font-size: 8px; color: #5f6f83; padding-right: 2px;
+}
+/* A day inside the window with nothing recorded against it. Present, because
+   the gaps are half of what a calendar says, but plainly not a quiet day: the
+   log simply was not running. */
+.rh-cell.void {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+/* days after today, which are neither quiet nor unrecorded */
+.rh-cell.ahead { background: none; box-shadow: none; pointer-events: none; }
+.rh-cell.today { box-shadow: inset 0 0 0 1px var(--mc-gold, #ffd24a); }
 /* the days before the first week began: they hold the columns in line with
    their weekday and are not an hour with nothing in it */
 .rh-cell.blank { background: none; box-shadow: none; }
@@ -3613,6 +3629,9 @@ body::after { display: none; }
   flex: 1 1 0; text-align: center; font-style: normal;
   font-size: 8px; color: #5f6f83;
 }
+/* the ruler carries the same left spacer as the rows, or the weekday letters
+   sit a month-label's width out of step with the columns they name */
+.rh-ruler.month .rh-mon { flex: none; width: 20px; }
 /* one letter, not three: at this width the day column was eating an eighth of
    the grid to say "Wed" */
 .rh-day {
