@@ -2808,7 +2808,7 @@ function rhythmPanel(board) {
       <button type="button" class="rh-tab${rhythmMode === 'together' ? ' on' : ''}"
               onclick="setRhythmMode('together')">together</button>
       ${names.length ? `<select class="rh-who" onchange="setRhythmMode(this.value)">
-        <option value="all">one player…</option>
+        <option value="all">all players</option>
         ${names.map(n => `<option value="${n}"${
           rhythmMode === n ? ' selected' : ''}>${n}</option>`).join('')}
       </select>` : ''}

@@ -10,6 +10,7 @@ later, picks up whatever landed. So a slow or unreachable server costs a page
 nothing, and the worst case is a board that says how old its numbers are.
 """
 
+import json
 import os
 import threading
 import time
