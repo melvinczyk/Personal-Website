@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     {
+      "id": "alexscaves:brainiac",
+      "required": false
+    },
+    {
       "id": "alexscaves:forsaken",
       "required": false
     },

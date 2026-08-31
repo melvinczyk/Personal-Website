@@ -21,6 +21,13 @@
   "model": "ravager.model.json"
  },
  {
+  "key": "alexscaves__brainiac",
+  "id": "alexscaves:brainiac",
+  "name": "Brainiac",
+  "mod": "alexscaves",
+  "model": "alexscaves__brainiac.model.json"
+ },
+ {
   "key": "alexscaves__forsaken",
   "id": "alexscaves:forsaken",
   "name": "Forsaken",
