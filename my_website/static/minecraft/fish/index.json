@@ -132,6 +132,30 @@
   "chance": 2
  },
  {
+  "key": "unusualfishmod__celestial_fish_spawn_egg",
+  "id": "unusualfishmod:celestial_fish_spawn_egg",
+  "item": "unusualfishmod:celestial_fish_spawn_egg",
+  "name": "Celestial Fish",
+  "mod": "unusualfishmod",
+  "rarity": "LEGENDARY",
+  "icon": "unusualfishmod__celestial_fish_spawn_egg.png",
+  "size": 41,
+  "weight": 2001,
+  "chance": 30
+ },
+ {
+  "key": "unusualfishmod__gnasher_spawn_egg",
+  "id": "unusualfishmod:gnasher_spawn_egg",
+  "item": "unusualfishmod:gnasher_spawn_egg",
+  "name": "Gnasher",
+  "mod": "unusualfishmod",
+  "rarity": "LEGENDARY",
+  "icon": "unusualfishmod__gnasher_spawn_egg.png",
+  "size": 41,
+  "weight": 2001,
+  "chance": 1
+ },
+ {
   "key": "minecraft__nether_star",
   "id": "minecraft:nether_star",
   "item": "minecraft:nether_star",
@@ -154,5 +178,29 @@
   "size": 30,
   "weight": 500,
   "chance": 5
+ },
+ {
+  "key": "unusualfishmod__prawn_spawn_egg",
+  "id": "unusualfishmod:prawn_spawn_egg",
+  "item": "unusualfishmod:prawn_spawn_egg",
+  "name": "Prawn",
+  "mod": "unusualfishmod",
+  "rarity": "LEGENDARY",
+  "icon": "unusualfishmod__prawn_spawn_egg.png",
+  "size": 41,
+  "weight": 2001,
+  "chance": 5
+ },
+ {
+  "key": "unusualfishmod__raw_spindlefish",
+  "id": "unusualfishmod:raw_spindlefish",
+  "item": "unusualfishmod:raw_spindlefish",
+  "name": "Spindlefish",
+  "mod": "unusualfishmod",
+  "rarity": "LEGENDARY",
+  "icon": "unusualfishmod__raw_spindlefish.png",
+  "size": 80,
+  "weight": 12000,
+  "chance": 30
  }
 ]

@@ -25,8 +25,13 @@ STATIC = os.path.join(os.path.dirname(HERE), 'static', 'minecraft')
 OUT_DIR = os.path.join(STATIC, 'items')
 INDEX   = os.path.join(OUT_DIR, 'items.json')
 
-VANILLA_JAR = os.path.expanduser(
-    '~/Documents/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar')
+# CurseForge's own launcher lands in a different place on each machine this
+# has been run from - fish.py's MODS list carries the same pair for the same
+# reason - so both are tried and the first one that exists wins.
+VANILLA_JARS = [os.path.expanduser(p) for p in (
+    '~/Documents/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar',
+    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar',
+)]
 
 # in the order the game itself would reach for them
 FACES = ('layer0', 'all', 'texture', 'side', 'north', 'front', 'end', 'particle',
@@ -34,7 +39,7 @@ FACES = ('layer0', 'all', 'texture', 'side', 'north', 'front', 'end', 'particle'
 
 
 def jars(folders):
-    found = [VANILLA_JAR] if os.path.exists(VANILLA_JAR) else []
+    found = [j for j in VANILLA_JARS if os.path.exists(j)][:1]
     for folder in folders:
         for name in sorted(os.listdir(folder)):
             if name.endswith('.jar'):

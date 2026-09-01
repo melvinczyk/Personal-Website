@@ -1537,11 +1537,13 @@ function fmtSpan(seconds) {
 let liveShape = '';
 let liveMounted = [];
 
-// ?reveal=1 draws every boss with its texture on, beaten or not, and names it.
-// It is for checking the models are the mobs they claim to be. Otherwise a
-// boss keeps its name until somebody has beaten it, and the search matches
-// only what a card is actually showing - so it cannot be used to confirm a
-// name the roster is still holding back.
+// ?reveal=1 draws every boss with its texture on, beaten or not, and names
+// it - and every legendary fish with its real icon, landed or not. It is for
+// checking the models and the icons are the mobs and catches they claim to
+// be. Otherwise a boss keeps its name until somebody has beaten it and a fish
+// keeps the shared silhouette until somebody has landed one, and the search
+// matches only what a card is actually showing - so neither can be used to
+// confirm something the roster is still holding back.
 const REVEAL = new URLSearchParams(location.search).has('reveal');
 
 // A model is a canvas rendered at a fixed pixel size, so a phone cannot be
@@ -1668,7 +1670,7 @@ function buildLive(board) {
     <div class="fcard${f.caught ? ' caught' : ' locked'}" id="fc-${f.key}"
          data-caught="${f.caught ? 1 : 0}">
       <div class="fc-stage">
-        <img class="fc-icon" src="${f.caught ? f.icon : unknown}" alt=""
+        <img class="fc-icon" src="${f.caught || REVEAL ? f.icon : unknown}" alt=""
              loading="lazy" width="64" height="64">
       </div>
       <div class="fc-foot">
@@ -1944,47 +1946,354 @@ function skyWeather(w) {
   return 'clear';
 }
 
-// one reading: a small label over a value, in a slot of its own
-function worldFact(label, value, tone, hint) {
-  if (value === '' || value === null || value === undefined) return '';
-  return `<span class="lw-fact${tone ? ` ${tone}` : ''}"${
-    hint ? ` title="${hint}"` : ''}><i>${label}</i><b>${value}</b></span>`;
+// '14:32' -> '2:32 PM'. The export writes 24-hour because that is the game's
+// own clock; a person reads the other one.
+function to12Hour(clock) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(clock || '');
+  if (!m) return clock || '';
+  let hour = parseInt(m[1], 10);
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${hour}:${m[2]} ${suffix}`;
 }
 
-function worldPanel(w, server) {
-  const host = document.getElementById('ls-world');
+// Four stretches of the day out of the raw tick rather than the export's own
+// isDay, which only ever has two states - the sun does not go from up to
+// down in one frame, and neither should the label for it. Ticks run
+// 0-24000: 0 is sunrise, 6000 is noon, 12000 is sunset, 18000 is midnight.
+function dayPhase(ticks) {
+  if (ticks === null || ticks === undefined) return '';
+  const t = ((ticks % 24000) + 24000) % 24000;
+  if (t < 1000 || t >= 23000) return 'Sunrise';
+  if (t < 11000) return 'Midday';
+  if (t < 13000) return 'Evening';
+  return 'Night';
+}
+
+// How dark the sky is, 0 (noon) to 1 (midnight), as a smooth curve rather
+// than the jump cut isDay would give the background - brightest at 6000
+// ticks, darkest at 18000, half-lit at both the sunrise and sunset in between.
+function dayDarkness(ticks) {
+  if (ticks === null || ticks === undefined) return 0.5;
+  const t = ((ticks % 24000) + 24000) % 24000;
+  const angle = ((t - 6000) / 24000) * Math.PI * 2;
+  return (1 - Math.cos(angle)) / 2;
+}
+
+// blocky little glyphs rather than a photo of a sky, to match everything else
+// the panel draws out of pixels rather than gradients
+const WEATHER_ICONS = {
+  clear: `<rect x="6" y="6" width="4" height="4"/>
+          <rect x="7" y="1" width="2" height="2"/><rect x="7" y="13" width="2" height="2"/>
+          <rect x="1" y="7" width="2" height="2"/><rect x="13" y="7" width="2" height="2"/>
+          <rect x="3" y="3" width="2" height="2"/><rect x="11" y="3" width="2" height="2"/>
+          <rect x="3" y="11" width="2" height="2"/><rect x="11" y="11" width="2" height="2"/>`,
+  rain: `<rect x="3" y="5" width="10" height="4"/><rect x="5" y="3" width="6" height="2"/>
+         <rect class="lw-wicon-drop" x="4" y="11" width="2" height="2"/>
+         <rect class="lw-wicon-drop" x="8" y="12" width="2" height="2"/>
+         <rect class="lw-wicon-drop" x="11" y="10" width="2" height="2"/>`,
+  storm: `<rect x="3" y="5" width="10" height="4"/><rect x="5" y="3" width="6" height="2"/>
+          <rect class="lw-wicon-bolt" x="8" y="10" width="2" height="2"/>
+          <rect class="lw-wicon-bolt" x="6" y="12" width="2" height="2"/>
+          <rect class="lw-wicon-bolt" x="9" y="12" width="2" height="2"/>`,
+};
+
+function weatherIcon(kind) {
+  return `<svg class="lw-wicon" viewBox="0 0 16 16">${
+    WEATHER_ICONS[kind] || WEATHER_ICONS.clear}</svg>`;
+}
+
+// Scattered, not a carpet: a real patch of ground has grass on some blocks
+// and dirt showing through on others, so this is a handful of tufts and two
+// flowers at their own positions rather than one tiled strip repeating the
+// same sprite under every block. Left in the tree's own quarter of the strip
+// deliberately empty - it stands there instead.
+const GROUND_PROPS = [
+  { x: 2,  kind: 'blade' },  { x: 9,  kind: 'flower_dandelion' },
+  { x: 16, kind: 'blade' },  { x: 24, kind: 'blade' },
+  { x: 31, kind: 'flower_poppy' }, { x: 39, kind: 'blade' },
+  { x: 47, kind: 'blade' },  { x: 54, kind: 'flower_dandelion' },
+  { x: 61, kind: 'blade' },  { x: 68, kind: 'blade' },
+  { x: 75, kind: 'flower_poppy' },
+];
+
+// ── what drifts through the season ──────────────────────────────────────────
+// Real textures again rather than drawn dots: autumn's leaves are the same
+// tree_leaves.png the canopy above them is built out of, just hue-rotated
+// three different ways off its one green rather than baked into three
+// separate autumn-coloured files - and spring's petals are the ground's own
+// two flowers, adrift instead of rooted. Winter and summer stay pure CSS -
+// see the stylesheet - a falling square already reads as snow, and there is
+// no texture for "bright" to borrow.
+const AUTUMN_TINTS = [
+  'hue-rotate(-60deg) saturate(2.4)',                    // orange
+  'hue-rotate(-100deg) saturate(2) brightness(1.1)',     // red
+  'hue-rotate(-40deg) saturate(2.6) brightness(1.15)',   // gold
+];
+// evenly spread across the width with a little jitter so it does not read as
+// a grid, rather than hand-placed - eight of anything looked sparse next to a
+// card this wide, so this is the generator that gets to be as full as it needs
+function driftSet(n, filters) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const left = Math.min(98, Math.max(0, (i / n) * 100 + (Math.random() * 9 - 4.5)));
+    out.push({
+      left: Math.round(left * 10) / 10,
+      delay: -(Math.random() * 9).toFixed(2),
+      dur: (5.5 + Math.random() * 4.5).toFixed(2),
+      size: (6.5 + Math.random() * 6).toFixed(1),
+      filter: filters ? filters[i % filters.length] : null,
+    });
+  }
+  return out;
+}
+const SEASON_FX = {
+  autumn: driftSet(100, AUTUMN_TINTS).map(p => ({ ...p, cls: 'lw-leaf' })),
+  spring: driftSet(100).map((p, i) => ({
+    ...p, cls: `lw-petal ${i % 2 ? 'flower_dandelion' : 'flower_poppy'}` })),
+};
+
+function seasonFX(season) {
+  const set = SEASON_FX[season];
+  if (!set) return '';
+  return set.map(p => `<i class="${p.cls}" style="left:${p.left}%; width:${
+    p.size}px; height:${p.size}px; animation-delay:${p.delay}s; animation-duration:${
+    p.dur}s;${p.filter ? ` filter:${p.filter};` : ''}"></i>`).join('');
+}
+
+function groundProps() {
+  return GROUND_PROPS.map(p => `<i class="lw-prop ${p.kind}" style="left:${p.x}%"></i>`).join('');
+}
+
+// ── the year calendar ───────────────────────────────────────────────────────
+// Serene Seasons' own order again - EARLY_SPRING through LATE_WINTER, the
+// same twelve places worldPanel's calendar face indexes into. Kept as its own
+// list here because this panel draws all twelve at once rather than just the
+// one the pack is currently on.
+const YEAR_MONTHS = [
+  { season: 'spring', label: 'Early' }, { season: 'spring', label: 'Mid' },   { season: 'spring', label: 'Late' },
+  { season: 'summer', label: 'Early' }, { season: 'summer', label: 'Mid' },   { season: 'summer', label: 'Late' },
+  { season: 'autumn', label: 'Early' }, { season: 'autumn', label: 'Mid' },   { season: 'autumn', label: 'Late' },
+  { season: 'winter', label: 'Early' }, { season: 'winter', label: 'Mid' },   { season: 'winter', label: 'Late' },
+];
+const YEAR_SEASON_NAMES = { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' };
+
+function yearPanel(w) {
+  const host = document.getElementById('ls-year');
   if (!host) return;
-  // an export from before the world section existed, or one that could not be
-  // read: say nothing rather than a panel full of zeroes
-  if (!w || !Object.keys(w).length) {
+  // sub_index is -1 when the pack names a sub-season this build has never
+  // heard of - the same case worldPanel draws no calendar face for
+  if (!w || !Object.keys(w).length || w.sub_index < 0 || !w.year_days) {
     host.innerHTML = '';
     host.hidden = true;
     return;
   }
   host.hidden = false;
+  host.dataset.season = (w.season || '').toLowerCase();
 
-  const sky = w.daylight
-    ? { src: `${WORLD_ICONS}/sun.png`, alt: 'Sun', name: w.phase || 'Day' }
-    : { src: `${WORLD_ICONS}/moon_${w.moon || 0}.png`, alt: 'Moon',
-        name: w.moon_name || w.phase || 'Night' };
+  // the pack's own duration for the sub-season it is currently on, not a
+  // guess divided evenly out of the year - see live.py's sub_days
+  const perMonth = w.sub_days || Math.round(w.year_days / 12) || 8;
+  const today = w.season_day || 0;
 
-  // the calendar face for this sub-season, when the pack names one this build
-  // knows. An unknown season gets the words and no picture, which is honest.
+  const months = YEAR_MONTHS.map((m, i) => {
+    const start = i * perMonth + 1;
+    const end = start + perMonth - 1;
+    const state = i < w.sub_index ? 'past' : i > w.sub_index ? 'future' : 'active';
+    // days elapsed in *this* stretch, from how many are left rather than from
+    // season.day counted against an assumed start - season.day's own count
+    // does not agree with which sub-season is named at its boundaries, and
+    // subSeasonDaysLeft is the number the pack actually stands behind
+    const dayInMonth = state === 'active'
+      ? Math.max(1, perMonth - (w.season_left || 0) + 1) : 0;
+    // real date cells rather than a row of dots - a number is what makes a
+    // grid of squares read as a calendar page instead of a progress bar
+    const cells = Array.from({ length: perMonth }, (_, d) => {
+      const n = d + 1;
+      const cls = state === 'past' || (state === 'active' && n < dayInMonth) ? 'done'
+                : (state === 'active' && n === dayInMonth) ? 'today' : '';
+      return `<span class="yr-day${cls ? ` ${cls}` : ''}">${n}</span>`;
+    }).join('');
+    return `
+      <div class="yr-month ${state}" title="${m.label} ${YEAR_SEASON_NAMES[m.season]} · days ${start}-${end}">
+        <span class="yr-m-name">${m.label}</span>
+        <div class="yr-days">${cells}</div>
+      </div>`;
+  });
+
+  const groups = ['spring', 'summer', 'autumn', 'winter'].map((season, gi) => `
+    <div class="yr-group ${season}">
+      <span class="yr-group-label">${YEAR_SEASON_NAMES[season]}</span>
+      <div class="yr-months">${months.slice(gi * 3, gi * 3 + 3).join('')}</div>
+    </div>`).join('');
+
   const leaf = w.sub_index >= 0
-    ? `<img class="lw-orb leaf" src="${WORLD_ICONS}/season_${
+    ? `<img class="yr-icon" src="${WORLD_ICONS}/season_${
         String(w.sub_index).padStart(2, '0')}.png" alt="${w.sub_season}">`
     : '';
   const soon = w.season_left
     ? `${w.season_left} day${w.season_left === 1 ? '' : 's'}${
         w.next_season ? ` to ${w.next_season}` : ' left'}`
     : '';
-  const year = w.year_days
-    ? `day ${w.season_day} of ${w.year_days}`
-    : (w.season_day ? `day ${w.season_day}` : '');
+  // in days, the way a year actually is one - not a percentage nobody thinks
+  // in when they mean "day 48"
+  const left = w.year_days ? Math.max(0, w.year_days - today) : null;
+
+  host.innerHTML = `
+    <div class="yr-head">
+      ${leaf}
+      <div class="yr-say">
+        <b>${w.year_number ? `Year ${w.year_number}` : (w.sub_season || w.season || 'The Calendar')}</b>
+        <span>${w.sub_season || w.season}${w.season ? ` · Day ${today} of ${w.year_days}` : ''}</span>
+        <em>${soon}</em>
+      </div>
+      ${left !== null ? `<div class="yr-remain" title="${left} day${left === 1 ? '' : 's'} left in the year">
+        <b>${left}</b><i>day${left === 1 ? '' : 's'} left</i></div>` : ''}
+    </div>
+    <div class="yr-strip">${groups}</div>`;
+}
+
+// ── the forecast card's three realms ────────────────────────────────────────
+// The overworld is the one with a real forecast countdown and a fact row;
+// Twilight Forest and Aether only ever get a current reading off
+// dim_weather, with no ticks behind it to count down - see live.py's
+// _dim_weather. The card cycles through whichever of the three it actually
+// has data for, rather than showing the footnote row it used to.
+const REALM_ROTATE_MS = 7000;
+// how long the scene's own slide-out runs - goToRealm's swap waits this long
+// before building the next realm, so the two stay in step without wiring up
+// a transitionend listener for it
+const REALM_SLIDE_MS = 380;
+let realmWorld  = null;   // last board.world, so the timer can redraw without new data
+let realmIndex  = 0;
+let realmTimer  = null;
+let realmBusy   = false;  // a slide already running - a second one mid-flight tears the DOM out from under the first's callback
+
+function buildRealms(w) {
+  const realms = [{ key: 'overworld', name: 'Overworld', weather: w.weather,
+                     forecast: w.weather_forecast }];
+  for (const d of (w.dim_weather || [])) {
+    realms.push({ key: d.key, name: d.name, weather: d.weather, forecast: '' });
+  }
+  return realms;
+}
+
+// the weather hero's own text, pulled out of renderWorldPanel so goToRealm
+// can redraw just this on a switch rather than the whole card
+function realmInfo(realm, w) {
+  return `
+    <b class="lw-realm-name">${realm.name}</b>
+    <span>${realm.weather || '—'}</span>
+    <em>${realm.key === 'overworld' ? (realm.forecast || 'no forecast yet') : ''}</em>
+    ${realm.key === 'overworld' && (w.sub_season || w.season) ? `<i class="lw-say-season">${w.sub_season || w.season}</i>` : ''}`;
+}
+
+// what the ground looks like in each realm - the sky and the weather effects
+// above it stay the game's own shared clock and forecast; only the scenery
+// at ground level and the accent colour change realm to realm
+function tree(extraClass, logClass) {
+  const cls = [extraClass, logClass].filter(Boolean).join(' ');
+  return `
+    <div class="lw-tree${cls ? ` ${cls}` : ''}" aria-hidden="true">
+      <div class="lw-trunk"></div>
+      <div class="lw-canopy lower"></div>
+      <div class="lw-canopy upper"></div>
+    </div>`;
+}
+
+// a Minecraft cloud is already a flat rectangle, not a puff - two stacked
+// rectangles, same as the tree and the island, rather than a soft blob
+function cloudBlock(extraClass) {
+  return `<div class="lw-cloud ${extraClass}" aria-hidden="true"><i class="a"></i><i class="b"></i></div>`;
+}
+
+// a hill is not a smooth dome here either - a stack of real dirt underneath
+// one real grass_top on top, narrowing band by band the way terrain actually
+// steps up in this game. The CSS sizes each one; this just gives it the
+// bands to size.
+function hillBlock(extraClass) {
+  return `
+    <div class="lw-hill ${extraClass}" aria-hidden="true">
+      <i class="hb b1"></i><i class="hb b2"></i><i class="hb b3"></i><i class="hb top"></i>
+    </div>`;
+}
+
+function realmScenery(key) {
+  if (key === 'aether') {
+    // stacked squares narrowing toward the bottom, the same "real blocks"
+    // reasoning as the tree - see the CSS for why this isn't one clipped shape.
+    // A couple of smaller ones drift further back for depth, the same idea
+    // as the ones scattered through the sky in game.
+    return `
+      ${cloudBlock('c1')}${cloudBlock('c2')}${cloudBlock('c3')}
+      <div class="lw-isle-far f1" aria-hidden="true"></div>
+      <div class="lw-isle-far f2" aria-hidden="true"></div>
+      <div class="lw-isle-far f3" aria-hidden="true"></div>
+      <div class="lw-island" aria-hidden="true">
+        <div class="lw-isle-band top"></div>
+        <div class="lw-isle-band s2"></div>
+        <div class="lw-isle-band s3"></div>
+        <div class="lw-isle-band s4"></div>
+        <div class="lw-isle-band s5"></div>
+        <div class="lw-aether-tree" aria-hidden="true">
+          <div class="lw-aether-trunk"></div>
+          <div class="lw-aether-canopy lower"></div>
+          <div class="lw-aether-canopy upper"></div>
+        </div>
+        <i class="lw-drip d1"></i><i class="lw-drip d2"></i><i class="lw-drip d3"></i>
+      </div>`;
+  }
+  if (key === 'twilight') {
+    // five real Twilight Forest trees at five different sizes, not one
+    // recoloured over and over - Canopy, the mod's own giant hollow tree,
+    // stands out front; Dark and Mangrove cluster smaller behind it, and two
+    // more spread out to the left so the forest reads as a treeline the
+    // whole width of the card rather than one clump in the corner. See
+    // tools/extract_tree_texture.py for where the three log textures come from.
+    return `
+      ${tree('t5', 'log-dark')}${tree('t4', 'log-canopy')}
+      ${tree('t3', 'log-mangrove')}${tree('t2', 'log-dark')}${tree('', 'log-canopy')}
+      <div class="lw-ground twilight" aria-hidden="true"></div>
+      <div class="lw-flora twilight" aria-hidden="true">${groundProps()}</div>
+      <i class="lw-firefly f1"></i><i class="lw-firefly f2"></i>
+      <i class="lw-firefly f3"></i><i class="lw-firefly f4"></i>`;
+  }
+  return `
+    ${cloudBlock('c1')}${cloudBlock('c2')}${cloudBlock('c3')}
+    <div class="lw-hills" aria-hidden="true">
+      ${hillBlock('h1')}${hillBlock('h2')}${hillBlock('h3')}
+    </div>
+    ${tree('bg2')}${tree('bg1')}${tree('')}
+    <div class="lw-ground" aria-hidden="true"></div>
+    <div class="lw-flora" aria-hidden="true">${groundProps()}</div>`;
+}
+
+function renderWorldPanel() {
+  const host = document.getElementById('ls-world');
+  const w = realmWorld;
+  if (!host || !w || !Object.keys(w).length) return;
+
+  const realms = buildRealms(w);
+  const realm = realms[realmIndex % realms.length];
+  const wx = skyWeather({ weather: realm.weather });
 
   host.dataset.mood = skyMood(w);
-  host.dataset.weather = skyWeather(w);
-  host.dataset.season = (w.season || '').toLowerCase();
+  host.dataset.weather = wx;
+  // Serene Seasons is an overworld cycle - the falling leaves and snow it
+  // drives are wrong wherever else the card is showing, so they only run
+  // when the overworld itself is the one on screen
+  host.dataset.season = realm.key === 'overworld' ? (w.season || '').toLowerCase() : '';
+  host.dataset.realm = realm.key;
+  // continuous rather than the two-state jump cut of day/night - see
+  // dayDarkness. Set as a variable rather than picked apart in CSS because
+  // the curve itself only makes sense worked out from the raw tick, once,
+  // here.
+  host.style.setProperty('--tod', dayDarkness(w.time_ticks).toFixed(3));
+
+  const phase = dayPhase(w.time_ticks);
+  const sky = w.daylight
+    ? { src: `${WORLD_ICONS}/sun.png`, alt: 'Sun' }
+    : { src: `${WORLD_ICONS}/moon_${w.moon || 0}.png`, alt: 'Moon' };
 
   // The weather gets real elements rather than one pseudo-element sheet. A
   // single sliding gradient is flat by construction: one angle, one speed, one
@@ -1995,6 +2304,12 @@ function worldPanel(w, server) {
   // aria-hidden throughout: it is scenery, and the weather is already said in
   // words twice over in the panel behind it.
   const weather = `
+    <div class="lw-sun" aria-hidden="true"></div>
+    <div class="lw-scene-viewport" aria-hidden="true">
+      <div class="lw-scene" id="lw-scene">${realmScenery(realm.key)}</div>
+    </div>
+    <div class="lw-season-fx" id="lw-season-fx" aria-hidden="true">${seasonFX(host.dataset.season)}</div>
+    <div class="lw-clouds" aria-hidden="true"></div>
     <div class="lw-weather" aria-hidden="true">
       <i class="lw-sheet far"></i>
       <i class="lw-sheet mid"></i>
@@ -2004,7 +2319,8 @@ function worldPanel(w, server) {
       <svg class="lw-bolt" viewBox="0 0 40 100" preserveAspectRatio="none">
         <path d="M24 0 L8 46 h12 L4 100 L34 40 H21 L32 0 Z"/>
       </svg>
-    </div>`;
+    </div>
+    <div class="lw-tod" aria-hidden="true"></div>`;
 
   host.innerHTML = weather + `
     <div class="lw-heroes">
@@ -2012,41 +2328,174 @@ function worldPanel(w, server) {
         <img class="lw-orb" src="${sky.src}" alt="${sky.alt}">
         <div class="lw-say">
           <b>Day ${w.day}</b>
-          <span>${w.clock}${w.clock && sky.name ? ' · ' : ''}${sky.name}</span>
-          <em>${w.weather}</em>
+          <span>${to12Hour(w.clock)}</span>
+          <em>${phase}${!w.daylight && w.moon_name ? ` · ${w.moon_name}` : ''}</em>
         </div>
       </div>
-      <div class="lw-hero season">
-        ${leaf}
-        <div class="lw-say">
-          <b>${w.sub_season || w.season || '—'}</b>
-          <span>${w.season}${w.season && year ? ' · ' : ''}${year}</span>
-          <em>${soon}</em>
-          ${w.year_pct ? `<span class="lw-year" title="${
-            w.year_pct}% through the year"><i style="width:${w.year_pct}%"></i></span>` : ''}
-        </div>
+      <div class="lw-hero weather">
+        ${weatherIcon(wx)}
+        <div class="lw-say" id="lw-realm-info">${realmInfo(realm, w)}</div>
       </div>
     </div>
-    <div class="lw-facts">
-      ${(() => {
-        // Up, the tile counts how long the server has been running. Down, it
-        // counts how long it has been down instead - the same slot answering
-        // the same question, "how long has it been like this", with the sign
-        // flipped. Green for one and red for the other, so the state reads off
-        // the colour before anybody parses the word.
-        //
-        // The downtime is measured from the last thing the server wrote, which
-        // is the moment it stopped; see live.py's _server_up.
-        const down = server && server.down;
-        return down
-          ? worldFact('downtime', fmtSpan(down), 'poor down',
-                      'the server stopped writing this long ago')
-          : worldFact('uptime', w.uptime, 'good');
-      })()}
-      ${worldFact('weather', w.weather)}
-      ${worldFact('year', w.year_pct ? `${w.year_pct}%` : '', '',
-                  w.year_days ? `day ${w.season_day} of ${w.year_days}` : '')}
-    </div>`;
+    <div class="lw-presence" id="lw-presence">${presenceStrip(realm, realmPlayers)}</div>
+    ${realms.length > 1 ? `<div class="lw-realms">${
+      realms.map((r, i) => `<i class="lw-realm-dot${
+        i === realmIndex % realms.length ? ' on' : ''}" onclick="selectRealm(${i})"
+        title="${r.name}"></i>`).join('')
+    }</div>` : ''}`;
+}
+
+// A slide rather than the hard cut a full re-render gives: the scene fades
+// and eases sideways out, swaps once it is offscreen, then eases back in.
+// Everything that is NOT the ground scenery - the sun, the weather sheets,
+// the sky hero - stays put and is only relabelled, since none of it actually
+// changes realm to realm; see renderWorldPanel's own split between what it
+// builds once and what this touches on a switch.
+function goToRealm(newIndex) {
+  const host   = document.getElementById('ls-world');
+  const scene  = document.getElementById('lw-scene');
+  const info   = document.getElementById('lw-realm-info');
+  const presence = document.getElementById('lw-presence');
+  const seasonFx = document.getElementById('lw-season-fx');
+  const w = realmWorld;
+  if (realmBusy || !host || !scene || !w) return;
+  const realms = buildRealms(w);
+  newIndex = ((newIndex % realms.length) + realms.length) % realms.length;
+  if (newIndex === realmIndex) return;
+
+  realmBusy = true;
+  realmIndex = newIndex;
+  const realm = realms[realmIndex];
+
+  scene.classList.add('out');
+  if (info) info.classList.add('fading');
+  if (presence) presence.classList.add('fading');
+
+  setTimeout(() => {
+    scene.innerHTML = realmScenery(realm.key);
+    scene.classList.remove('out');
+    scene.classList.add('in');
+    // forces the 'in' starting position to actually paint before the very
+    // next line takes it away again - reading offsetHeight makes the browser
+    // flush layout right here rather than queue it, so this is synchronous
+    // rather than a wait tied to the tab having a frame to give it. Two
+    // nested rAFs did the same job until a backgrounded tab went a long
+    // time between frames and left the scene - and realmBusy - stuck.
+    void scene.offsetHeight;
+    scene.classList.remove('in');
+    realmBusy = false;
+
+    const wx = skyWeather({ weather: realm.weather });
+    host.dataset.weather = wx;
+    // Serene Seasons is an overworld cycle - the falling leaves and snow it
+    // drives are wrong wherever else the card is showing
+    host.dataset.season = realm.key === 'overworld' ? (w.season || '').toLowerCase() : '';
+    host.dataset.realm = realm.key;
+    // winter and summer are pure CSS, gated on data-season above and already
+    // cut off by it - but autumn's leaves and spring's petals are real
+    // elements dropped into the DOM once at build time, with no attribute
+    // gate of their own to stop them falling over a realm they do not belong
+    // in. Rebuilt here rather than left running: not doing this is exactly
+    // the bug, autumn leaves drifting across the Aether.
+    if (seasonFx) seasonFx.innerHTML = seasonFX(host.dataset.season);
+
+    if (info) {
+      info.innerHTML = realmInfo(realm, w);
+      info.classList.remove('fading');
+    }
+    if (presence) {
+      presence.innerHTML = presenceStrip(realm, realmPlayers);
+      presence.classList.remove('fading');
+    }
+    document.querySelectorAll('.lw-realm-dot').forEach((dot, i) => {
+      dot.classList.toggle('on', i === realmIndex);
+    });
+  }, REALM_SLIDE_MS);
+}
+
+// a click picked a realm on purpose, so the clock stops running it over -
+// cycling back over somebody's own choice would read as ignoring it
+function selectRealm(i) {
+  if (realmTimer) { clearInterval(realmTimer); realmTimer = null; }
+  goToRealm(i);
+}
+
+// ── who is here ─────────────────────────────────────────────────────────────
+// Whoever is actually standing in whichever realm the card is currently
+// showing - not the other two, and not a summary of all three at once. The
+// card already answers "what is it like in the Aether"; this answers "is
+// anybody there to find out", for that same realm, and changes exactly when
+// the realm on screen does.
+let realmPlayers = [];   // last board.players, same idea as realmWorld
+
+function presenceStrip(realm, players) {
+  const here = (players || []).filter(p => p.online && p.realm === realm.key);
+  if (!here.length) return '';
+  return here.map(p => `
+    <span class="lw-presence-player" title="${p.name}">
+      <i class="bc-face"${p.skin ? ` style="--skin:url('${p.skin}')"` : ''}></i>${p.name}
+    </span>`).join('');
+}
+
+function worldPanel(w) {
+  const host = document.getElementById('ls-world');
+  if (!host) return;
+  // an export from before the world section existed, or one that could not be
+  // read: say nothing rather than a panel full of zeroes
+  if (!w || !Object.keys(w).length) {
+    host.innerHTML = '';
+    host.hidden = true;
+    realmWorld = null;
+    return;
+  }
+  host.hidden = false;
+  realmWorld = w;
+  renderWorldPanel();
+
+  // one clock for every load of the page, cycling whichever realms this
+  // world actually has weather for - a card with only the overworld to show
+  // just never advances. Stopped for good the moment somebody picks one
+  // themselves - see selectRealm.
+  if (!realmTimer) {
+    realmTimer = setInterval(() => {
+      if (!realmWorld) return;
+      const count = buildRealms(realmWorld).length;
+      if (count <= 1) return;
+      goToRealm((realmIndex + 1) % count);
+    }, REALM_ROTATE_MS);
+  }
+}
+
+// The map is blacked out rather than left to sit there broken: a server that
+// is down has nothing live to draw either, and a map served over plain HTTP
+// never loads inside an HTTPS page at all - the browser drops it silently, so
+// without this the embed just looks dead with no way to tell why. Checked
+// every poll rather than once, since the server can go down without the page
+// ever reloading.
+function mapPanel(server) {
+  const overlay = document.getElementById('lm-overlay');
+  if (!overlay) return;
+  const frame = document.querySelector('.lm-frame');
+  const full = document.querySelector('.lm-full');
+  const up = server ? server.online : null;
+
+  if (up === false) {
+    overlay.innerHTML = `<b>Server is down</b><span>the map can't update while it's offline</span>`;
+    overlay.hidden = false;
+    return;
+  }
+  // mixed content: the browser blocks an http:// frame inside an https:// page
+  // outright, with nothing worth waiting on - so this is checked once the
+  // server is known to be up rather than treated as its own kind of down
+  const mixed = frame && location.protocol === 'https:' && frame.src.startsWith('http://');
+  if (mixed) {
+    overlay.innerHTML = `<b>Can't preview here</b>
+      <span>the map serves over HTTP, not HTTPS, so this page can't embed it -
+      ${full ? `<a href="${full.href}" target="_blank" rel="noopener">view it full screen</a>` : 'use the full screen link'} instead</span>`;
+    overlay.hidden = false;
+    return;
+  }
+  overlay.hidden = true;
 }
 
 function updateLive(board) {
@@ -2054,14 +2503,39 @@ function updateLive(board) {
   if (!T) return;
 
   // up, down, or not yet known: an unsynced checkout has nothing to go on and
-  // should say so rather than accuse a server that is very likely running
+  // should say so rather than accuse a server that is very likely running.
+  // Nothing in between those - see live.py's _server_up for what a stale
+  // export by itself does and does not prove.
   const status = document.getElementById('ls-status');
   if (status) {
     const up = board.server ? board.server.online : null;
     status.textContent = up === null ? '' : up ? 'ONLINE' : 'OFFLINE';
     status.className = `ls-status${up === null ? '' : up ? ' on' : ' off'}`;
   }
-  worldPanel(board.world, board.server);
+  // beside the status it already agrees with, rather than buried in the
+  // forecast card - that card now rotates through three realms, and this
+  // reading is about the server itself, not about any one of them
+  const updown = document.getElementById('ls-updown');
+  if (updown) {
+    const down = board.server && board.server.down;
+    const w = board.world || {};
+    if (down) {
+      updown.textContent = `down ${fmtSpan(down)}`;
+      updown.className = 'ls-updown off';
+    } else if (w.uptime) {
+      updown.textContent = `up ${w.uptime}`;
+      updown.className = 'ls-updown on';
+    } else {
+      updown.textContent = '';
+      updown.className = 'ls-updown';
+    }
+  }
+  yearPanel(board.world);
+  // set ahead of worldPanel, which reads it while building the card's own
+  // presence footer - see presenceStrip
+  realmPlayers = board.players || [];
+  worldPanel(board.world);
+  mapPanel(board.server);
 
   const tile = (label, value, hot) =>
     `<span class="ls-tile${hot ? ' hot' : ''}"><i>${label}</i><b>${value}</b></span>`;

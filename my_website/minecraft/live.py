@@ -104,6 +104,59 @@ SUB_SEASONS = ('EARLY_SPRING', 'MID_SPRING', 'LATE_SPRING',
 MOONS = ('Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent',
          'New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous')
 
+# The only other dimensions that ever roll their own weather. The nether, the
+# end and the small custom realms are always calm - vanilla never rains on
+# them - so a line for them would only ever say "Clear" and mean nothing.
+WEATHER_DIMS = (
+    ('twilightforest:twilight_forest', 'twilight', 'Twilight Forest'),
+    ('aether:the_aether', 'aether', 'Aether'),
+)
+
+
+def _dim_weather(detail):
+    """What it is doing in the one or two other places it can do anything.
+
+    dimensionDetail carries raining/thundering for every dimension, but only
+    ever meaningfully for the ones in WEATHER_DIMS - reading it for the rest
+    would just be a longer list of "Clear" for places that can never be
+    anything else.
+    """
+    if not isinstance(detail, list):
+        return []
+    by_id = {d.get('id'): d for d in detail if isinstance(d, dict)}
+    out = []
+    for dim_id, key, name in WEATHER_DIMS:
+        row = by_id.get(dim_id)
+        if not row:
+            continue
+        out.append({
+            'key': key,
+            'name': name,
+            'weather': ('Thunder' if row.get('thundering')
+                        else 'Rain' if row.get('raining') else 'Clear'),
+        })
+    return out
+
+
+def _forecast(weather):
+    """When the weather next changes, in the one form the game can say it.
+
+    Minecraft's weather is not a multi-day forecast: it is one countdown per
+    level, and the *next* state is not even rolled until this one's timer
+    hits zero. rainChangeTicks/thunderChangeTicks are ticks left before
+    isRaining()/isThundering() flips, and that flip is the only thing here
+    worth naming - there is no "tomorrow" to read off the server.
+    """
+    forecast = weather.get('forecast') or {}
+    if forecast.get('clearLocked'):
+        secs = _int(forecast.get('clearLockedSeconds'))
+        return f'locked clear for {_span(secs)}' if secs > 0 else 'locked clear'
+    secs = _int(forecast.get('rainChangeSeconds'))
+    if secs <= 0:
+        return ''
+    return f'clears in ~{_span(secs)}' if weather.get('raining') \
+        else f'rain in ~{_span(secs)}'
+
 
 def _world_state(raw):
     """The world's own readings, out of the export and into shape.
@@ -128,17 +181,25 @@ def _world_state(raw):
     place = SUB_SEASONS.index(sub) if sub in SUB_SEASONS else -1
     # a year is however many days the pack's own cycle divides into
     a_day = _int(season.get('dayDurationTicks'))
+    year_days = _int(_int(season.get('cycleDurationTicks')) / a_day) if a_day else 0
     return {
         'day':      _int(time_.get('day')),
         'clock':    time_.get('clock') or '',
         'phase':    _pretty(time_.get('phase')),
         'daylight': bool(time_.get('isDay')),
+        # the raw tick of day, 0-24000 - the page works out sunrise/midday/
+        # evening/night and how dark the sky should be from this rather than
+        # from isDay, which only ever has two states to give it
+        'time_ticks': _int(time_.get('timeOfDay')),
         'moon':      _int(time_.get('moonPhase')) % len(MOONS),
         'moon_name': MOONS[_int(time_.get('moonPhase')) % len(MOONS)],
         # thunder is weather too, and the one worth saying out loud
         'weather':  ('Thunder' if weather.get('thundering')
                      else 'Rain' if weather.get('raining')
                      else _pretty(weather.get('state')) or 'Clear'),
+        # the overworld's own weather, above - the only two other places that
+        # roll their own
+        'dim_weather': _dim_weather(raw.get('dimensionDetail')),
         'difficulty': _pretty(raw.get('difficulty')),
         'season':     _pretty(season.get('season')),
         'sub_season': _pretty(season.get('subSeason')),
@@ -147,12 +208,24 @@ def _world_state(raw):
         'sub_index':  place,
         'next_season': _pretty(SUB_SEASONS[(place + 1) % len(SUB_SEASONS)])
                        if place >= 0 else '',
-        'year_days':  _int(_int(season.get('cycleDurationTicks')) / a_day)
-                      if a_day else 0,
+        'year_days':  year_days,
+        # how many full years the world's own day count has run through. Read
+        # off time.day rather than season.day, which resets every year and so
+        # cannot say which one this is; floor division rather than _int's
+        # round, or day 1 of a fresh year would call itself the year before
+        'year_number': _int(time_.get('day')) // year_days + 1 if year_days else 0,
         'tropical':   _pretty(season.get('tropicalSeason')),
         'season_day': _int(season.get('day')),
         'season_left': _int(season.get('subSeasonDaysLeft')),
-        'year_pct':   round(_float(season.get('yearProgress')) * 100),
+        # how many days the current sub-season runs for, so a reader can be
+        # told "day 3 of 8" without the year calendar assuming every one of
+        # the twelve is the same length it just happens to be in this pack
+        'sub_days':   _int(_int(season.get('subSeasonDurationTicks')) / a_day)
+                      if a_day else 0,
+        # a phrase, not a number: Serene Seasons and vanilla weather both work
+        # the same way, as one countdown to the next flip rather than a
+        # calendar of days ahead - see _forecast
+        'weather_forecast': _forecast(weather),
         'online':     _int(online.get('count')),
         'slots':      _int(online.get('max')),
         'tps':        _float(speed.get('tps')),
@@ -280,13 +353,16 @@ def _moment(when):
 # in the world right now. That is the whole of the presence check.
 ONLINE_WINDOW = 180
 
-# Whether the game server itself is up. The export is rewritten while it runs,
-# so the question is not how old the file is now but how old it was the last
-# time we went and looked: measured against now, a healthy server would read
-# offline for the whole hour between one scheduled pull and the next. A file
-# that was current when we checked means the server was writing when we
-# checked, which is as fresh an answer as anything here can give.
+# Whether the game server itself is up. It rewrites the export about once a
+# minute while it runs, so an export older than this was not written by a
+# server that is currently up.
 SERVER_WINDOW = 300
+
+# How long our own sync can go without a look before a stale export stops
+# meaning "the server is down" and starts meaning "we do not know" - see
+# _server_up. Wide on purpose: the worker polls every couple of minutes, and
+# this only has to catch the worker itself being gone, not one slow poll.
+CHECK_WINDOW = 900
 
 
 def _kill_entries(record):
@@ -1202,38 +1278,43 @@ def fish(season_path, faces=None):
 
 
 def _server_up(age, checked):
-    """Is the game server writing? And if not, how long has it not been?
+    """Is the game server writing? Two states, ONLINE or OFFLINE - nothing
+    in between makes it to the page.
 
-    `age` is how old the export is now, which is the whole answer: the server
-    rewrites it about once a minute, so an export older than SERVER_WINDOW is a
-    server that has stopped.
+    `age` is how old the export is now: the server rewrites it about once a
+    minute, so a fresh export is a server that is up, plainly. The question
+    is what a STALE export means, because there are two different reasons one
+    happens and they do not mean the same thing:
 
-    This used to read `age - checked` - how stale the export already was at the
-    moment we fetched it - to keep a healthy server from reading OFFLINE
-    between fifteen-minute pulls. Two things were wrong with that once the
-    worker dropped to a two-minute interval, and the second is the serious one:
+      * we checked recently and the server had nothing new to say - that is
+        the server actually down.
+      * our own sync has gone quiet - the worker died, or nobody has had the
+        page open to trigger a pull - and a stale export is all that is left
+        lying around from whenever it last ran. A server sitting there fine
+        looks exactly like a dead one on that reading alone.
 
-      * It added a whole sync interval to how long a dead server kept saying
-        ONLINE, on top of the grace window.
-      * Subtracting one age from another cancels the clock out entirely:
-        (now - updated) - (now - fetched) is just (fetched - updated). The
-        verdict could not change unless a fetch happened, so a sync that died
-        while the server was up left the badge reading ONLINE for ever.
-
-    `checked` is no longer part of the verdict. It stays in the signature
-    because the caller has it and a future third state - "we have not looked
-    recently enough to say" - belongs here rather than in the page.
+    Only the first is grounds to call it OFFLINE. The second defaults to
+    ONLINE rather than a third state on the page: a wrong ONLINE corrects
+    itself the moment anybody looks again, where a wrong OFFLINE is the thing
+    that was actually reported - the badge insisting a server was down while
+    it plainly was not, because the read it was going on was ours, not the
+    server's.
     """
     if age is None:
         return {'online': None, 'lag': None, 'down': None}
-    up = age < SERVER_WINDOW
+    fresh = age < SERVER_WINDOW
+    # stale and checked recently enough to trust that reading: down, in fact.
+    # stale but we have not looked in a while ourselves: not grounds to say
+    # so, so it reads online until a fresher check says otherwise
+    confirmed_down = (not fresh) and checked is not None and checked < CHECK_WINDOW
+    up = not confirmed_down
     return {
         'online': up,
         'lag': age,
         # how long it has been dark, counted from the last thing it wrote.
-        # None while it is up, so the page has nothing to draw rather than a
-        # zero that looks like a reading.
-        'down': None if up else age,
+        # None while it reads up, so the page has nothing to draw rather than
+        # a zero that looks like a reading
+        'down': age if confirmed_down else None,
     }
 
 

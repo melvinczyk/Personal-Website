@@ -42,10 +42,31 @@
             <span class="ls-name">{{ live.name }}</span>
             <span class="ls-sub">Season {{ live.number }}, in progress</span>
             <span class="ls-status" id="ls-status"></span>
+            <span class="ls-updown" id="ls-updown"></span>
             <a class="ls-btn rainbow guide-cta" href="{% url 'minecraft-guide' %}">Modpack Guide</a>
             <span class="ls-read" id="ls-read">
               <span class="ls-age" id="ls-age"></span>
             </span>
+          </div>
+
+          <!-- where in the pack's own year the server sits, spelled out in
+               full rather than the single line worldPanel gives it below - the
+               map rides along beside it, sized to match rather than squeezed
+               into the shorter forecast row below. -->
+          <div class="ls-calendar-row">
+            <div class="ls-year" id="ls-year"></div>
+            {% if map_url %}
+            <div class="ls-map-mini">
+              <div class="lm-head">
+                <span class="lm-t">World map</span>
+                <a class="lm-full" href="{{ map_home }}" target="_blank" rel="noopener">Full screen ↗</a>
+              </div>
+              <div class="lm-body">
+                <iframe class="lm-frame" src="{{ map_url }}" title="Live world map" loading="lazy"></iframe>
+                <div class="lm-overlay" id="lm-overlay" hidden></div>
+              </div>
+            </div>
+            {% endif %}
           </div>
 
           <!-- the server describing itself: what day it is in there, what the
@@ -59,16 +80,6 @@
           </div>
 
           <div class="ls-tiles" id="ls-tiles"></div>
-
-          {% if map_url %}
-          <div class="ls-bar">
-            <span class="lb-t">World map</span>
-            <button class="ls-btn sm" data-sec="ls-map" onclick="toggleSection('ls-map')">Show</button>
-            <a class="ls-btn sm alt" href="{{ map_home }}" target="_blank" rel="noopener">Full screen ↗</a>
-            <span class="lb-r">Season {{ live.number }}, rendering live</span>
-          </div>
-          <div class="ls-sec shut" id="ls-map" data-src="{{ map_url }}"></div>
-          {% endif %}
 
           <div class="ls-bar">
             <span class="lb-t">Players</span>

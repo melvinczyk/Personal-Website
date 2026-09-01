@@ -919,6 +919,17 @@ body::after { display: none; }
 .ls-status.on  { color: var(--mc-xp);    background: rgba(123, 197, 24, 0.16); }
 .ls-status.off { color: var(--mc-heart); background: rgba(217, 74, 61, 0.20); }
 
+/* how long it has been that way, beside the badge that says which way it is -
+   about the server itself, so it lives at the top with the status rather
+   than buried in the forecast card, which now rotates through three realms
+   that have nothing to do with whether the server is up. */
+.ls-updown {
+  flex: none; font-size: 12px; color: var(--mc-faint);
+}
+.ls-updown:empty { display: none; }
+.ls-updown.on  { color: var(--mc-xp); }
+.ls-updown.off { color: var(--mc-heart); }
+
 .ls-read {
   margin-left: auto; display: flex; align-items: baseline; gap: 8px;
   font-size: 13px; color: var(--mc-dim); text-align: right;
@@ -934,6 +945,7 @@ body::after { display: none; }
 }
 .ls-btn:hover  { background: #5a5a64; }
 .ls-btn:active { border-color: #26262c #6e6e78 #6e6e78 #26262c; }
+
 
 /* the numbers, as a row of inventory slots */
 .ls-tiles {
@@ -961,11 +973,15 @@ body::after { display: none; }
 .ls-world {
   position: relative; overflow: hidden;
   margin: 8px 10px 0; padding: 10px;
+  /* room at the foot of the panel for the grass strip, so the last row of
+     readings does not sit in the dirt */
+  padding-bottom: 30px;
   border: 2px solid var(--mc-shade);
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
   /* the sky, until a mood below says otherwise */
   background: linear-gradient(180deg, #191c28, #101219);
   --season: var(--mc-xp);
+  --wx: var(--mc-gold);
   --glow: rgba(255, 210, 74, 0.5);
   /* How dark the slots inside sit against that sky. It has to be a variable
      because the day sky is bright: the readings are light text on these
@@ -984,20 +1000,18 @@ body::after { display: none; }
 /* Four skies. Each one is a low pool of its own light over a dark ground,
    rather than the real daytime blue: the text on this page is light, and a
    panel bright enough to be honest about noon would take the words with it. */
-/* Noon: the sun burning down out of the top left, where the sun icon itself
-   sits, over a sky that warms to amber at the horizon. */
+/* Noon: an actual daytime blue rather than the wash of amber this used to
+   be - the corner sun (.lw-sun below) is the thing that shines, but the sky
+   it shines out of still has to read as midday and not dusk. */
 .ls-world[data-mood="day"] {
   background:
-    radial-gradient(85% 115% at 16% -22%, #fff3b0, rgba(255, 226, 120, 0) 60%),
-    radial-gradient(120% 130% at 85% 125%, rgba(255, 158, 46, 0.6), transparent 58%),
-    linear-gradient(180deg, #ffd23f 0%, #f5aa2c 55%, #d9822b 100%);
+    radial-gradient(75% 90% at 14% -6%, rgba(255, 234, 170, 0.3), transparent 62%),
+    linear-gradient(165deg, #6fc6e8 0%, #4a9fcc 55%, #35789e 100%);
   --glow: rgba(255, 246, 190, 0.85);
-  /* deep enough that light text still reads, which on a sky this bright takes
-     considerably more than the night needs */
-  --scrim: rgba(26, 13, 0, 0.74);
-  --edge: rgba(255, 244, 200, 0.24);
-  --label: #d9c391;
-  --sub:   #f4e7c6;
+  --scrim: rgba(10, 16, 22, 0.42);
+  --edge: rgba(255, 244, 200, 0.2);
+  --label: var(--mc-faint);
+  --sub:   var(--mc-dim);
 }
 /* Midnight: proper navy rather than the near-black it was, so the stars and
    the moon have something to sit in. */
@@ -1147,9 +1161,17 @@ body::after { display: none; }
   animation: lw-flash 7s steps(1, end) infinite;
 }
 
-/* and it darkens what it is falling on */
-.ls-world[data-weather="rain"]  { --scrim: rgba(0, 0, 0, 0.5); }
-.ls-world[data-weather="storm"] { --scrim: rgba(0, 0, 0, 0.58); }
+/* and it darkens what it is falling on - overriding the sky outright rather
+   than just tinting it, because rain and thunder look the same regardless of
+   what hour they are happening at */
+.ls-world[data-weather="rain"] {
+  --scrim: rgba(0, 0, 0, 0.5); --wx: #8ea6b8;
+  background: linear-gradient(165deg, #5b6570 0%, #454e57 55%, #33393f 100%);
+}
+.ls-world[data-weather="storm"] {
+  --scrim: rgba(0, 0, 0, 0.62); --wx: #9b93b0;
+  background: linear-gradient(165deg, #24262c 0%, #191a1f 55%, #0c0d0f 100%);
+}
 /* the sun or moon behind weather, seen through it: dimmer, hazier, and under
    a storm it catches the strike rather than sitting untouched behind it */
 .ls-world[data-weather="rain"] .lw-orb {
@@ -1160,71 +1182,301 @@ body::after { display: none; }
   animation: lw-orb-flash 7s steps(1, end) infinite;
 }
 
-/* ── the season, over the weather ───────────────────────────────────────────
-   Four drifts, each in its own colours and at its own pace: snow falls
-   straight and slow, leaves and petals slant, and summer only shimmers. */
-.ls-world[data-season="winter"]::after {
-  opacity: .85;
-  background-image:
-    radial-gradient(2.6px 2.6px at 12% 8%,  #fff, transparent),
-    radial-gradient(2px 2px     at 38% 22%, #e8f4ff, transparent),
-    radial-gradient(3px 3px     at 63% 6%,  #fff, transparent),
-    radial-gradient(2.2px 2.2px at 84% 30%, #dbeaff, transparent),
-    radial-gradient(2.6px 2.6px at 26% 54%, #fff, transparent),
-    radial-gradient(2px 2px     at 72% 66%, #e8f4ff, transparent),
-    radial-gradient(2.4px 2.4px at 50% 38%, #fff, transparent),
-    radial-gradient(1.8px 1.8px at 6% 78%,  #dbeaff, transparent),
-    radial-gradient(2.8px 2.8px at 92% 84%, #fff, transparent);
-  background-size: 130px 110px;
-  animation: lw-fall 7s linear infinite;
+/* ── the corner sun, and the clouds that hide it ────────────────────────────
+   A held light source rather than a wash of colour: a bright disc in the top
+   left, shining down over the panel. Rain dims it - there is still a sun
+   above the clouds - and a storm hides it outright, because there is nothing
+   left of it to see through cloud that dark. */
+.lw-sun {
+  position: absolute; top: -42px; left: -24px; width: 140px; height: 140px;
+  border-radius: 50%; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle at 42% 42%,
+    #fffce8 0%, #ffe066 26%, #ffb02e 48%, rgba(255, 138, 0, 0.4) 64%, transparent 76%);
+  opacity: 0; transition: opacity .5s ease;
 }
-.ls-world[data-season="autumn"]::after {
+.ls-world[data-mood="day"] .lw-sun { opacity: 1; }
+.ls-world[data-weather="rain"] .lw-sun { opacity: .35; }
+.ls-world[data-weather="storm"] .lw-sun { opacity: 0; }
+
+/* clouds roll in along the top edge for both rain and storm, and go flatter
+   and darker once it is properly thundering */
+.lw-clouds {
+  position: absolute; top: 0; left: 0; right: 0; height: 72px;
+  pointer-events: none; z-index: 1; opacity: 0; transition: opacity .5s ease;
+  background-image:
+    radial-gradient(30px 17px at 8%  35%, rgba(216, 220, 227, .9), transparent 70%),
+    radial-gradient(40px 22px at 24% 16%, rgba(203, 208, 217, .95), transparent 70%),
+    radial-gradient(34px 19px at 42% 34%, rgba(220, 224, 230, .85), transparent 70%),
+    radial-gradient(46px 24px at 62% 14%, rgba(196, 201, 211, .95), transparent 70%),
+    radial-gradient(34px 19px at 80% 32%, rgba(216, 220, 227, .85), transparent 70%),
+    radial-gradient(38px 21px at 96% 18%, rgba(203, 208, 217, .9),  transparent 70%);
+}
+.ls-world[data-weather="rain"]  .lw-clouds { opacity: .9; }
+.ls-world[data-weather="storm"] .lw-clouds { opacity: 1; filter: brightness(.48) saturate(.7); }
+
+/* ── the day going dark ──────────────────────────────────────────────────────
+   A plain black wash over everything behind the readings, its opacity set
+   from --tod in JS - see dayDarkness. Continuous rather than the hard cut
+   the mood classes give the base sky, so noon fades into evening into a real
+   night rather than jumping there the moment isDay flips. Capped short of
+   solid black: the point is dusk, not a blackout. */
+.lw-tod {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: #05070a;
+  opacity: calc(var(--tod, 0.5) * 0.72);
+  transition: opacity 2s ease;
+}
+
+/* ── the tree in the corner ─────────────────────────────────────────────────
+   Built out of the game's own oak log and leaves textures (see
+   tools/extract_tree_texture.py) rather than drawn, the same reasoning as the
+   sun and the calendar face: it should look like the block it is. Planted
+   opposite the sun so neither crowds the readings between them. */
+.lw-tree {
+  /* bottom matches .lw-ground's own height exactly, so the trunk starts right
+     at the grass's top surface instead of sinking into it */
+  position: absolute; bottom: 15px; right: 8px; z-index: 1;
+  width: 128px; height: 152px; pointer-events: none;
+  filter: drop-shadow(4px 5px 0 rgba(0, 0, 0, 0.35));
+}
+.lw-trunk {
+  position: absolute; bottom: 0; left: 50%; width: 24px; height: 52px;
+  transform: translateX(-50%);
+  background: url('/static/minecraft/icons/tree_log.png');
+  background-size: 24px 24px; image-rendering: pixelated;
+}
+/* two stacked rectangles, wider one under narrower one, dead square corners
+   throughout - that stepped block-on-block silhouette is the whole shape of
+   a Minecraft tree's top, not a rounded canopy standing in for one. Upscaled
+   by making each tile bigger rather than by tiling more of the same small
+   ones, or it reads as a blurry smear instead of blocks. */
+.lw-canopy {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  background: url('/static/minecraft/icons/tree_leaves.png');
+  background-size: 22px 22px; image-rendering: pixelated;
+}
+.lw-canopy.lower { bottom: 44px; width: 128px; height: 52px; }
+.lw-canopy.upper { bottom: 84px; width: 74px; height: 48px; }
+.ls-world[data-weather="storm"] .lw-tree { filter: brightness(.55); }
+
+/* ── grass along the bottom edge ─────────────────────────────────────────────
+   A row of grass blocks - side face, dirt below the green fringe. */
+.lw-ground {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 15px; z-index: 1;
+  background: url('/static/minecraft/icons/grass_side.png');
+  background-size: 15px 15px; image-rendering: pixelated;
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3) inset;
+}
+/* scattered tufts and flowers rather than a tile repeating under every
+   single block - see GROUND_PROPS in the script */
+.lw-flora { position: absolute; bottom: 13px; left: 0; right: 22%; height: 13px; z-index: 1; }
+.lw-prop {
+  position: absolute; bottom: 0; width: 11px; height: 13px;
+  image-rendering: pixelated; background-repeat: no-repeat; background-size: contain;
+}
+.lw-prop.blade            { background-image: url('/static/minecraft/icons/grass_blade.png'); }
+.lw-prop.flower_poppy     { background-image: url('/static/minecraft/icons/flower_poppy.png'); }
+.lw-prop.flower_dandelion { background-image: url('/static/minecraft/icons/flower_dandelion.png'); }
+.ls-world[data-weather="storm"] .lw-ground,
+.ls-world[data-weather="storm"] .lw-flora { filter: brightness(.55); }
+
+/* winter caps the same block in snow rather than green - the real texture
+   again, not a white overlay drawn over the summer one - and nothing is
+   blooming under it, so the scattered flowers and tufts stand down instead
+   of looking planted in a snowbank */
+.ls-world[data-season="winter"] .lw-ground {
+  background-image: url('/static/minecraft/icons/grass_snow_side.png');
+}
+.ls-world[data-season="winter"] .lw-flora { display: none; }
+/* and the canopy above it goes with it - the same leaves, just bleached the
+   way frost does it rather than swapped for a separate white texture */
+.ls-world[data-season="winter"] .lw-canopy {
+  filter: grayscale(1) brightness(2.1) contrast(.92);
+}
+
+/* autumn turns the canopy, the ground and the grass tufts all sepia rather
+   than swapping any of them for a separate brown texture - the leaves
+   overhead and the ones that have already come down and covered the grass
+   are the same colour for the same reason */
+.ls-world[data-season="autumn"] .lw-canopy,
+.ls-world[data-season="autumn"] .lw-ground,
+.ls-world[data-season="autumn"] .lw-prop.blade {
+  filter: sepia(1) saturate(2.6) brightness(.82) hue-rotate(-8deg);
+}
+
+/* spring turns the same canopy to blossom instead - the ground itself is
+   already right for spring and stays green, only the tree overhead changes,
+   the way a real flowering tree is the one thing that visibly changes while
+   the grass under it does not */
+.ls-world[data-season="spring"] .lw-canopy {
+  filter: hue-rotate(245deg) saturate(1.5) brightness(1.35);
+}
+
+/* ── the hills behind everything else ────────────────────────────────────────
+   Not a smooth dome - there is no such block in this game. A hill here is
+   real dirt stacked in narrowing bands up to one real grass_top on top, the
+   same terraced-block reasoning the Aether's island already uses (see
+   .lw-isle-band), just built to widen toward the ground instead of narrow
+   toward it. Hazy and dim rather than full colour, the way distance actually
+   fades a block's colour toward the sky behind it. Sits behind the ground and
+   every tree so it reads as what is over the horizon, not what is standing
+   on it. */
+.lw-hills {
+  position: absolute; left: 0; right: 0; bottom: 13px; height: 70px;
+  z-index: 0; pointer-events: none; overflow: hidden;
+}
+.lw-hill { position: absolute; bottom: 0; }
+.lw-hill .hb {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  background-image: url('/static/minecraft/icons/dirt.png');
+  background-size: 10px 10px; image-rendering: pixelated;
+}
+.lw-hill .hb.top { background-image: url('/static/minecraft/icons/grass_top.png'); }
+
+.lw-hill.h1 { left: -8%; opacity: .6;  filter: brightness(.75) saturate(.85); }
+.lw-hill.h1 .hb.b1  { bottom: 0;   width: 120px; height: 14px; }
+.lw-hill.h1 .hb.b2  { bottom: 12px; width: 92px;  height: 12px; }
+.lw-hill.h1 .hb.b3  { bottom: 22px; width: 62px;  height: 11px; }
+.lw-hill.h1 .hb.top { bottom: 31px; width: 38px;  height: 10px; }
+
+.lw-hill.h2 { left: 26%; opacity: .75; filter: brightness(.82) saturate(.9); }
+.lw-hill.h2 .hb.b1  { bottom: 0;   width: 160px; height: 16px; }
+.lw-hill.h2 .hb.b2  { bottom: 14px; width: 122px; height: 14px; }
+.lw-hill.h2 .hb.b3  { bottom: 26px; width: 84px;  height: 12px; }
+.lw-hill.h2 .hb.top { bottom: 36px; width: 52px;  height: 11px; }
+
+.lw-hill.h3 { left: 64%; opacity: .55; filter: brightness(.7) saturate(.8); }
+.lw-hill.h3 .hb.b1  { bottom: 0;   width: 108px; height: 12px; }
+.lw-hill.h3 .hb.b2  { bottom: 10px; width: 78px;  height: 11px; }
+.lw-hill.h3 .hb.b3  { display: none; }
+.lw-hill.h3 .hb.top { bottom: 19px; width: 46px;  height: 10px; }
+
+.ls-world[data-season="winter"] .lw-hill { filter: grayscale(1) brightness(1.7); }
+.ls-world[data-season="autumn"] .lw-hill { filter: sepia(1) saturate(1.8) brightness(.85); }
+.ls-world[data-season="spring"] .lw-hill { filter: saturate(1.3) brightness(1.08); }
+
+/* two more of the same tree, smaller and fainter further back - the same
+   "a real forest, not one planted specimen" reasoning the Twilight Forest
+   realm already uses (see .lw-tree.t2/.t3). Spread across the card by `left`
+   instead, well clear of the main tree's own right-anchored spot, each at
+   its own size and standing height rather than two copies shrunk in a line
+   next to it - the point is a scattered tree line, not one tree twice. */
+.ls-world[data-realm="overworld"] .lw-tree.bg1 {
+  left: 46%; right: auto; bottom: 15px;
+  transform: scale(.7); transform-origin: bottom center;
+  opacity: .45; filter: saturate(.68) brightness(.83);
+}
+.ls-world[data-realm="overworld"] .lw-tree.bg2 {
+  /* same bottom as the main tree and bg1 - one ground line for all three,
+     rather than a lift that read as the tree floating off it */
+  left: 65%; right: auto; bottom: 15px;
+  transform: scale(.46); transform-origin: bottom center;
+  opacity: .3; filter: saturate(.58) brightness(.78);
+}
+
+/* ── the season, over the weather ───────────────────────────────────────────
+   Winter and summer still work in flat drawn drift, because there is no
+   texture for "snowfall" or "bright" to borrow and a soft blurred dot already
+   reads as a snowflake. Autumn's leaves and spring's petals are real DOM
+   elements built off the game's own textures instead - see .lw-season-fx
+   and seasonFX() in the script - so each one can fall, sway and spin on its
+   own path rather than all sharing one tiled drift. */
+.ls-world[data-season="winter"]::after {
   opacity: .9;
   background-image:
-    radial-gradient(4px 2.4px at 16% 10%, #ff9436, transparent),
-    radial-gradient(3.4px 2px at 44% 26%, #e2621f, transparent),
-    radial-gradient(4.4px 2.6px at 69% 12%, #ffb85c, transparent),
-    radial-gradient(3px 1.9px at 88% 38%, #d1481a, transparent),
-    radial-gradient(4px 2.4px at 31% 62%, #ff9436, transparent),
-    radial-gradient(3.6px 2.2px at 58% 78%, #e2621f, transparent),
-    radial-gradient(3.2px 2px at 8% 44%,  #ffb85c, transparent),
-    radial-gradient(4.2px 2.5px at 78% 58%, #c95a12, transparent);
-  background-size: 150px 120px;
-  animation: lw-drift 8s linear infinite;
+    radial-gradient(3.2px 3.2px at 12% 8%,  #fff, transparent),
+    radial-gradient(2px 2px     at 38% 22%, #e8f4ff, transparent),
+    radial-gradient(3.6px 3.6px at 63% 6%,  #fff, transparent),
+    radial-gradient(2.2px 2.2px at 84% 30%, #dbeaff, transparent),
+    radial-gradient(3px 3px     at 26% 54%, #fff, transparent),
+    radial-gradient(2px 2px     at 72% 66%, #e8f4ff, transparent),
+    radial-gradient(2.8px 2.8px at 50% 38%, #fff, transparent),
+    radial-gradient(1.8px 1.8px at 6% 78%,  #dbeaff, transparent),
+    radial-gradient(3.4px 3.4px at 92% 84%, #fff, transparent),
+    radial-gradient(2.4px 2.4px at 45% 92%, #fff, transparent),
+    radial-gradient(2px 2px     at 15% 40%, #e8f4ff, transparent),
+    radial-gradient(3px 3px     at 96% 50%, #fff, transparent);
+  background-size: 130px 110px;
+  filter: blur(.2px);
+  animation: lw-fall 6.5s linear infinite;
 }
-.ls-world[data-season="spring"]::after {
-  opacity: .85;
-  background-image:
-    radial-gradient(3.6px 2.4px at 18% 14%, #ffb3d9, transparent),
-    radial-gradient(3px 2px at 47% 30%,     #9dee7e, transparent),
-    radial-gradient(4px 2.6px at 71% 9%,    #ffd0ea, transparent),
-    radial-gradient(2.8px 1.9px at 90% 44%, #7fd45c, transparent),
-    radial-gradient(3.6px 2.4px at 34% 68%, #ffb3d9, transparent),
-    radial-gradient(3.2px 2.1px at 62% 82%, #9dee7e, transparent),
-    radial-gradient(3px 2px at 5% 52%,      #ffd0ea, transparent);
-  background-size: 160px 125px;
-  animation: lw-drift 10s linear infinite;
+/* the air itself catches the light, not just the sun's own corner glow -
+   a faint frost haze the snow falls through rather than a bare card behind it */
+.ls-world[data-season="winter"] { --winter-haze: rgba(210, 230, 255, .10); }
+.ls-world[data-season="winter"]::before {
+  background: radial-gradient(120% 90% at 50% 0%, var(--winter-haze), transparent 65%);
+  opacity: 1; animation: none;
 }
-/* summer brings nothing down; it just sits heavy and bright, with the air
-   over it shimmering */
+
+/* summer brings nothing down; it just sits heavy and bright, the air
+   shimmering and the corner sun burning harder than it does the rest of the
+   year - see .lw-sun below for the second half of that. */
 .ls-world[data-season="summer"]::after {
-  opacity: .6;
+  opacity: .75;
   background-image:
     radial-gradient(2.4px 2.4px at 22% 26%, rgba(255, 244, 170, 0.9), transparent),
     radial-gradient(2px 2px at 58% 48%,     rgba(255, 232, 140, 0.8), transparent),
     radial-gradient(2.6px 2.6px at 84% 20%, rgba(255, 248, 190, 0.9), transparent),
     radial-gradient(2.2px 2.2px at 40% 74%, rgba(255, 236, 150, 0.8), transparent),
-    radial-gradient(70% 90% at 22% -10%, rgba(255, 232, 150, 0.34), transparent 62%),
-    radial-gradient(60% 80% at 82% 108%, rgba(255, 190, 90, 0.22), transparent 60%);
+    radial-gradient(90% 110% at 14% -14%, rgba(255, 226, 140, 0.5), transparent 64%),
+    radial-gradient(70% 95% at 86% 112%, rgba(255, 190, 90, 0.3), transparent 60%);
   background-size: 180px 140px, 180px 140px, 180px 140px, 180px 140px, auto, auto;
   animation: lw-motes 14s ease-in-out infinite alternate;
 }
+.ls-world[data-season="summer"] .lw-sun {
+  filter: brightness(1.35) saturate(1.15);
+  transform: scale(1.22);
+}
+.ls-world[data-season="summer"][data-mood="day"] .lw-heroes,
+.ls-world[data-season="summer"][data-mood="day"] .lw-facts { --glow: rgba(255, 248, 200, 0.95); }
 
 @keyframes lw-fall  { to { background-position: 0 110px; } }
-@keyframes lw-drift { to { background-position: 55px 120px; } }
 @keyframes lw-motes {
   from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
   to   { background-position: 22px -14px, -18px 10px, 14px 12px, -12px -10px, 0 0, 0 0; }
+}
+
+/* ── the leaves and the petals ───────────────────────────────────────────────
+   Real sprites, each on its own fall so the drift never looks like one tiled
+   sheet repeating - see seasonFX() in the script for the numbers each one is
+   given. Leaves borrow the canopy's own texture and just hue-rotate it three
+   different ways; petals are the ground's own two flowers, come loose. */
+.lw-season-fx {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  overflow: hidden;
+}
+.lw-leaf, .lw-petal {
+  position: absolute; top: -8%; width: 9px; height: 9px;
+  background-repeat: no-repeat; background-size: contain;
+  image-rendering: pixelated;
+  animation-timing-function: linear; animation-iteration-count: infinite;
+}
+.lw-leaf {
+  background-image: url('/static/minecraft/icons/tree_leaves.png');
+  animation-name: lw-leaf-fall;
+}
+.lw-petal {
+  width: 7px; height: 7px;
+  animation-name: lw-petal-fall;
+}
+.lw-petal.flower_poppy     { background-image: url('/static/minecraft/icons/flower_poppy.png'); }
+.lw-petal.flower_dandelion { background-image: url('/static/minecraft/icons/flower_dandelion.png'); }
+
+@keyframes lw-leaf-fall {
+  0%   { top: -8%;  transform: translateX(0)     rotate(0deg);   opacity: 0; }
+  8%   { opacity: .95; }
+  30%  { transform: translateX(11px)  rotate(120deg); }
+  60%  { transform: translateX(-9px)  rotate(230deg); }
+  92%  { opacity: .85; }
+  100% { top: 108%; transform: translateX(6px)   rotate(340deg); opacity: 0; }
+}
+@keyframes lw-petal-fall {
+  0%   { top: -8%;  transform: translateX(0)     rotate(0deg);    opacity: 0; }
+  10%  { opacity: .9; }
+  35%  { transform: translateX(-10px) rotate(-100deg); }
+  65%  { transform: translateX(8px)   rotate(-220deg); }
+  90%  { opacity: .8; }
+  100% { top: 108%; transform: translateX(-5px)  rotate(-320deg); opacity: 0; }
 }
 /* The bloom, on the same seven seconds as the bolt and a beat wider than it,
    so the sky is already lit when the shape appears and stays lit a moment
@@ -1284,29 +1536,57 @@ body::after { display: none; }
   96%, 100%  { opacity: 0; }
 }
 
-/* the two things worth looking at: the sky, and what season it is */
+/* the day, and the weather under it - stacked rather than side by side, and
+   narrow, so the scene behind them (the tree, the island) is actually the
+   thing the card shows rather than two cards' worth of scrim covering it */
 .lw-heroes {
-  position: relative;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(238px, 1fr));
-  gap: 8px;
+  /* above the corner sun and the clouds, which are decoration behind the
+     readings rather than something meant to sit over them - and above the
+     rain sheets too (z-index 4): those used to draw in front of these cards
+     during a storm, which is one thing for scenery and another for the day,
+     weather and dimension readings actually meant to be read. */
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column; gap: 6px;
+  width: 100%; max-width: 232px;
 }
 .lw-hero {
   display: flex; align-items: center; gap: 12px; min-width: 0;
   padding: 10px 12px;
-  background: var(--scrim);
+  /* a flat dark layer under the mood's own scrim, so the card reads the same
+     amount darker in every sky rather than only in the ones whose --scrim
+     happened to be tuned deep enough on its own */
+  background: linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)), var(--scrim);
   border: 2px solid var(--edge);
 }
-/* the season pane carries its season's colour down one edge, which is the
-   only place on this panel the four of them differ */
-.lw-hero.season { border-left: 2px solid var(--season); }
+/* the weather pane carries its own colour down one edge, which is the only
+   place on this panel clear/rain/storm differ from each other */
+.lw-hero.weather {
+  border-left: 2px solid var(--wx);
+  box-shadow: 0 0 12px -4px var(--wx);
+}
+/* the sky pane gets the same treatment in gold by day, a cool indigo by
+   night - the two readings either side of it are lit by two different
+   colours for the same reason a boss card's star is */
+.lw-hero.sky { border-left: 2px solid var(--mc-gold); box-shadow: 0 0 12px -4px var(--mc-gold); }
+.ls-world[data-mood="night"] .lw-hero.sky {
+  border-left-color: #8fa8ff; box-shadow: 0 0 12px -4px #8fa8ff;
+}
 
 .lw-orb {
   flex: none; width: 54px; height: 54px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 9px var(--glow));
 }
-/* a calendar is a held object, not a light source */
-.lw-orb.leaf { filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6)); }
+
+/* a blocky little glyph rather than a photo of a sky, coloured by whichever
+   of clear/rain/storm is actually happening */
+.lw-wicon {
+  flex: none; width: 40px; height: 40px; color: var(--wx);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--wx) 55%, transparent));
+}
+.lw-wicon rect { fill: currentColor; }
+.lw-wicon-drop { fill: #bcdcff; }
+.lw-wicon-bolt { fill: var(--mc-gold); }
 
 .lw-say { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .lw-say b {
@@ -1317,15 +1597,14 @@ body::after { display: none; }
 .lw-say span { font-size: 13px; color: var(--sub); }
 .lw-say em    { font-style: normal; font-size: 12px; color: var(--label); }
 .lw-say em:empty { display: none; }
-
-/* how far through the year the pack is: the one number here that only means
-   anything as a length */
-.lw-year {
-  height: 6px; margin-top: 5px; padding: 0;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(0, 0, 0, 0.7);
+/* the overworld's own forecast countdown - the one reading here that only
+   ever means anything for the overworld, since neither Twilight Forest nor
+   the Aether have a weather timer at all. Given the weight and the colour
+   the label styling otherwise reserves for a value, not a caption. */
+.lw-hero.weather em {
+  font-size: 13px; font-weight: 600; color: var(--wx);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--wx) 45%, transparent);
 }
-.lw-year i { display: block; height: 100%; background: var(--season); }
 
 /* the four seasons, in the colours their own calendar faces are drawn in */
 .ls-world[data-season="spring"] { --season: #8fdc6a; }
@@ -1333,46 +1612,340 @@ body::after { display: none; }
 .ls-world[data-season="autumn"] { --season: #e2803a; }
 .ls-world[data-season="winter"] { --season: #7fd4ff; }
 
-/* the smaller readings, in slots like the tiles but stacked, because these
-   are labels people read once rather than numbers they compare */
-.lw-facts {
-  position: relative;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr));
-  gap: 4px; margin-top: 8px;
+/* who is actually standing in whichever realm the card is showing right now
+   - not the other two. Fades with the weather hero's own text on a switch
+   (see goToRealm), and empties out to nothing rather than an empty row when
+   nobody happens to be there. Coloured off --wx, the same accent the realm's
+   own weather reading already wears, rather than a palette of its own -
+   there is only ever one realm's worth on screen at a time now. */
+.lw-presence {
+  /* same reasoning as .lw-heroes above: this is a reading, and z-index 4's
+     rain sheets used to draw in front of it during a storm */
+  position: relative; z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+  transition: opacity .2s ease;
 }
-.lw-fact {
-  display: flex; flex-direction: column; gap: 1px;
-  padding: 5px 8px; min-width: 0; white-space: nowrap; overflow: hidden;
-  background: var(--scrim);
-  border: 2px solid rgba(0, 0, 0, 0.45);
-  border-right-color: var(--edge);
-  border-bottom-color: var(--edge);
-}
-.lw-fact i { font-style: normal; font-size: 11px; color: var(--label);
-             letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; }
-.lw-fact b { font-size: 16px; font-weight: 600; color: var(--mc-text); }
-.lw-fact.lit  b { color: var(--mc-xp); }
-.lw-fact.good b { color: var(--mc-xp); }
-.lw-fact.fair b { color: var(--mc-gold); }
-.lw-fact.poor b { color: var(--mc-heart); }
-
-/* The uptime tile turned inside out. A red number alone is easy to skim past
-   in a row of three tiles, so the whole slot carries it: the label reddens
-   with the value and the tile takes an edge, which is the same treatment the
-   OFFLINE badge in the header gets. Everything else in this panel is still the
-   last thing the server managed to say before it stopped, and this is the tile
-   that admits it. */
-.lw-fact.down {
-  box-shadow: inset 0 0 0 2px rgba(217, 74, 61, 0.55);
-  /* Layered ON the scrim, not instead of it. `background` is a shorthand, so
-     setting a flat colour here dropped var(--scrim) entirely - and the scrim
-     is the only thing keeping light text legible over the day sky, which is
-     amber and bright. The tile went nearly unreadable at noon. */
+.lw-presence:empty { margin-top: 0; }
+.lw-presence.fading { opacity: 0; }
+.lw-presence-player {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px 3px 5px; font-size: 12px; color: var(--mc-text);
+  /* the same flat dark layer .lw-hero puts under its own scrim, under this
+     card's gradient instead - darker in every sky, not just the ones whose
+     colours happened to already read dark enough */
   background:
-    linear-gradient(0deg, rgba(217, 74, 61, 0.22), rgba(217, 74, 61, 0.22)),
-    var(--scrim);
+    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)),
+    linear-gradient(120deg,
+      color-mix(in srgb, var(--wx) 30%, transparent) 0%,
+      color-mix(in srgb, var(--wx) 6%, transparent) 100%);
+  border: 1px solid color-mix(in srgb, var(--wx) 55%, transparent);
+  box-shadow: 0 0 8px -3px var(--wx);
 }
-.lw-fact.down i { color: #f0a49c; }
+.lw-presence-player .bc-face {
+  border-color: color-mix(in srgb, var(--wx) 65%, var(--mc-shade));
+}
+
+/* the dots under the heroes, one per realm the card is cycling through -
+   both what says it is a carousel and how to drive it yourself, the same
+   dots a phone's own image gallery uses for exactly this */
+.lw-realms {
+  position: relative; z-index: 5;
+  display: flex; justify-content: center; gap: 5px; margin-top: 8px;
+}
+.lw-realm-dot {
+  width: 6px; height: 6px; background: rgba(255, 255, 255, 0.18);
+  transition: background .3s ease, transform .15s ease;
+  cursor: pointer;
+  /* six pixels is a fingertip's worth of nothing to aim at - the hit target
+     is bigger than the dot it is drawn around */
+  padding: 5px; margin: -5px; background-clip: content-box;
+}
+.lw-realm-dot:hover { transform: scale(1.3); }
+.lw-realm-dot.on { background: var(--wx); }
+
+/* the scene swapping realm: eased sideways out, swapped once offscreen, then
+   eased back in - see goToRealm. Everything else in the card (the sun, the
+   weather sheets, the sky hero) does not belong to any one realm and stays
+   exactly where it is through the switch. */
+.lw-scene-viewport {
+  position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none;
+}
+.lw-scene {
+  position: absolute; inset: 0;
+  transition: transform .38s ease, opacity .38s ease;
+  transform: translateX(0); opacity: 1;
+}
+.lw-scene.out { transform: translateX(-22px); opacity: 0; }
+.lw-scene.in  { transform: translateX(22px);  opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .lw-scene { transition: opacity .25s ease; }
+  .lw-scene.out, .lw-scene.in { transform: none; }
+}
+
+/* the weather hero's own text fades rather than jump-cutting a beat ahead of
+   the scenery behind it, which is still sliding when this update lands */
+#lw-realm-info { transition: opacity .2s ease; }
+#lw-realm-info.fading { opacity: 0; }
+
+/* Each realm's own colour, named rather than just implied by an accent
+   border - --rc names the realm itself (the weather hero's name line), --wx
+   is the weather reading beside it and is allowed to differ (Aether's own
+   weather still gets a blue that reads as its sky rather than gold, the
+   colour the overworld's clear weather would otherwise hand it). */
+.ls-world[data-realm="overworld"] { --rc: var(--mc-xp); }
+.ls-world[data-realm="twilight"]  { --rc: #b57bff; --wx: #b57bff; }
+.ls-world[data-realm="aether"]    { --rc: #7ec8ff; --wx: #7ec8ff; }
+
+/* Aether: bright and cloudy rather than whichever mood/weather background
+   the overworld's clock would otherwise hand it - there is no night this far
+   up, only more or less cloud. The scrim goes stronger to hold the light
+   text over a sky this pale. */
+.ls-world[data-realm="aether"] {
+  background:
+    radial-gradient(60% 70% at 80% 100%, rgba(160, 210, 255, 0.5), transparent 65%),
+    linear-gradient(165deg, #eef7ff 0%, #d3ecfb 55%, #b9def2 100%);
+  --scrim: rgba(12, 24, 36, 0.58);
+  --edge: rgba(255, 255, 255, 0.5);
+  --label: #4a6478;
+  --sub:   #38536a;
+}
+.ls-world[data-realm="aether"] .lw-clouds { opacity: .5; }
+.ls-world[data-realm="aether"][data-weather="rain"] .lw-clouds,
+.ls-world[data-realm="aether"][data-weather="storm"] .lw-clouds { opacity: 1; }
+
+/* Twilight Forest reuses the overworld's own tree and grass - see
+   realmScenery() - but with the mod's own dark-forest log and leaves for the
+   canopy, everything green pushed over to the violet this board already uses
+   for Twilight Forest elsewhere, and grown taller - the forest's canopy
+   towers, in game, and a tree the same size as the overworld's undersold
+   that entirely. The sky is its own too: a deep navy full of stars at any
+   hour, because the forest is dark under its own canopy regardless of what
+   time it actually is outside it. */
+.ls-world[data-realm="twilight"] {
+  background:
+    radial-gradient(1px 1px at 12% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 34% 62%, #d7c7ff, transparent),
+    radial-gradient(1px 1px at 58% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 76% 48%, #c9b6ff, transparent),
+    radial-gradient(1px 1px at 91% 27%, #fff, transparent),
+    radial-gradient(1px 1px at 47% 82%, #d7c7ff, transparent),
+    linear-gradient(165deg, #251a44 0%, #171230 55%, #0d0a20 100%);
+}
+/* three real trunks, one per tree - see TWILIGHT_LOGS in
+   tools/extract_tree_texture.py - all under the same tinted canopy */
+.ls-world[data-realm="twilight"] .lw-tree.log-canopy .lw-trunk {
+  background-image: url('/static/minecraft/icons/twilight_log_canopy.png');
+}
+.ls-world[data-realm="twilight"] .lw-tree.log-dark .lw-trunk {
+  background-image: url('/static/minecraft/icons/twilight_log_dark.png');
+}
+.ls-world[data-realm="twilight"] .lw-tree.log-mangrove .lw-trunk {
+  background-image: url('/static/minecraft/icons/twilight_log_mangrove.png');
+}
+.ls-world[data-realm="twilight"] .lw-canopy {
+  background-image: url('/static/minecraft/icons/twilight_leaves.png');
+}
+/* the ground's own tint, not a filter guessed sideways on the overworld's -
+   both are the real overlay-over-dirt composite tools/extract_tree_texture.py
+   builds, one in the game's green and one in Spooky Forest's actual orange */
+.ls-world .lw-ground.twilight {
+  background-image: url('/static/minecraft/icons/twilight_grass_side.png');
+}
+.ls-world .lw-flora.twilight .lw-prop.blade {
+  background-image: url('/static/minecraft/icons/twilight_grass_blade.png');
+}
+.ls-world .lw-flora.twilight .lw-prop.flower_poppy,
+.ls-world .lw-flora.twilight .lw-prop.flower_dandelion { display: none; }
+/* the near tree, full size and in front; the other two smaller and further
+   back, the way a forest actually reads instead of one planted specimen */
+.ls-world[data-realm="twilight"] .lw-tree {
+  transform: scale(1.3); transform-origin: bottom center;
+}
+.ls-world[data-realm="twilight"] .lw-tree.t2 {
+  right: 92px; transform: scale(1.05); transform-origin: bottom center;
+  opacity: .82;
+}
+.ls-world[data-realm="twilight"] .lw-tree.t3 {
+  right: 148px; transform: scale(.82); transform-origin: bottom center;
+  opacity: .6;
+}
+/* two more off the left edge instead of piling every tree into the same
+   right-anchored corner the front three cluster in - same "one ground line,
+   size and haze do the depth" reasoning as the overworld's own bg1/bg2 */
+.ls-world[data-realm="twilight"] .lw-tree.t4 {
+  left: 6%; right: auto; transform: scale(.66); transform-origin: bottom center;
+  opacity: .48;
+}
+.ls-world[data-realm="twilight"] .lw-tree.t5 {
+  left: 26%; right: auto; transform: scale(.5); transform-origin: bottom center;
+  opacity: .34;
+}
+.ls-world[data-realm="twilight"] .lw-tod { opacity: .45; }
+/* no sun under a canopy this dark - the corner glow is an overworld thing */
+.ls-world[data-realm="twilight"] .lw-sun { opacity: 0; }
+
+/* the weather hero's name line - the realm itself, in its own colour, ahead
+   of the weather reading rather than the other way round */
+.lw-realm-name {
+  font-size: 17px; color: var(--rc);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--rc) 65%, transparent);
+}
+
+/* fireflies drifting near the canopy - the one light this forest makes for
+   itself, and a giveaway that the darkness is the place, not the hour */
+.lw-firefly {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%; z-index: 1;
+  background: #eaff8a;
+  box-shadow: 0 0 4px 1.5px rgba(234, 255, 138, 0.9);
+  animation: lw-firefly-blink 2.4s ease-in-out infinite;
+}
+.lw-firefly.f1 { bottom: 96px; right: 96px; animation-delay: 0s; }
+.lw-firefly.f2 { bottom: 118px; right: 58px; animation-delay: .9s; }
+.lw-firefly.f3 { bottom: 84px; right: 40px; animation-delay: 1.6s; }
+.lw-firefly.f4 { bottom: 70px; right: 130px; animation-delay: .5s; }
+@keyframes lw-firefly-blink {
+  0%, 100% { opacity: .15; transform: translate(0, 0); }
+  40%      { opacity: 1;   transform: translate(2px, -3px); }
+  70%      { opacity: .5;  transform: translate(-2px, -1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lw-firefly { animation: none; opacity: .7; }
+}
+
+/* ── blocky clouds ────────────────────────────────────────────────────────
+   A Minecraft cloud is already a flat rectangle floating dead level, not a
+   soft puff - two stacked rectangles, the same construction as the tree and
+   the island, rather than the round radial-gradient ones the weather effects
+   use for rain. Square corners throughout, on purpose. */
+.lw-cloud {
+  position: absolute; z-index: 0; pointer-events: none;
+  filter: drop-shadow(1px 2px 0 rgba(120, 150, 180, 0.3));
+}
+.lw-cloud i { position: absolute; left: 0; background: #fbfeff; }
+.lw-cloud .a { top: 0; }
+.lw-cloud .b { top: -6px; }
+.lw-cloud.c1 { top: 12px; left: 42%; }
+.lw-cloud.c1 .a { width: 34px; height: 8px; }
+.lw-cloud.c1 .b { width: 18px; height: 7px; left: 8px; }
+.lw-cloud.c2 { top: 36px; left: 63%; }
+.lw-cloud.c2 .a { width: 24px; height: 7px; }
+.lw-cloud.c2 .b { width: 13px; height: 6px; left: 6px; }
+.lw-cloud.c3 { top: 6px; left: 80%; }
+.lw-cloud.c3 .a { width: 20px; height: 6px; }
+.lw-cloud.c3 .b { width: 10px; height: 5px; left: 5px; }
+.ls-world[data-weather="storm"] .lw-cloud i { background: #b9c2cc; }
+/* the overworld only gets these when it is actually clear - rain and storm
+   already have their own cloud cover from the weather effects above, and the
+   two together read as double cloud layers rather than one changing sky.
+   The Aether ignores this: it is cloudy regardless of its own weather. */
+.ls-world[data-realm="overworld"][data-weather="rain"] .lw-cloud,
+.ls-world[data-realm="overworld"][data-weather="storm"] .lw-cloud {
+  display: none;
+}
+
+/* ── the Aether's floating island ────────────────────────────────────────────
+   Stacked squares narrowing toward the bottom rather than a smoothly angled
+   silhouette - every block in the game is a cube, and a floating island is a
+   stepped pyramid of them, not a rounded chunk. A held piece of the mod's own
+   grass and holystone, with a few drops falling off its underside the way
+   water always seems to be dripping off the edge of one of these in game. */
+.lw-island {
+  position: absolute; bottom: 30px; right: 12px; z-index: 1;
+  width: 80px; height: 92px; pointer-events: none;
+  filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.35));
+}
+.lw-isle-band {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  background-image: url('/static/minecraft/icons/holystone.png');
+  background-size: 12px 12px; image-rendering: pixelated;
+}
+.lw-isle-band.top {
+  background-image: url('/static/minecraft/icons/aether_grass_top.png');
+  top: 0; width: 78px; height: 13px;
+}
+.lw-isle-band.s2 { top: 12px; width: 62px; height: 11px; }
+.lw-isle-band.s3 { top: 22px; width: 46px; height: 11px; }
+.lw-isle-band.s4 { top: 32px; width: 30px; height: 10px; }
+.lw-isle-band.s5 { top: 41px; width: 16px; height: 9px; }
+.ls-world[data-weather="storm"] .lw-isle-band { filter: brightness(.6); }
+
+/* the Aether's own tree, small and standing on the main island's own grass -
+   Golden Oak, one of the two trees the mod actually has, and gold before
+   anything here tints it, which is the colour this board already uses for
+   the Aether everywhere else. */
+.lw-aether-tree {
+  /* bottom matches .lw-island's own height exactly, so the trunk starts at
+     the very top of the grass cap rather than at the seam between the grass
+     band and the holystone underneath it, which read as "planted halfway
+     down the island" rather than standing on top of it */
+  position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%);
+  width: 34px; height: 40px; pointer-events: none; z-index: 1;
+}
+.lw-aether-trunk {
+  position: absolute; bottom: 0; left: 50%; width: 6px; height: 14px;
+  transform: translateX(-50%);
+  background-image: url('/static/minecraft/icons/aether_tree_log.png');
+  background-size: 6px 6px; image-rendering: pixelated;
+}
+.lw-aether-canopy {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  background-image: url('/static/minecraft/icons/aether_tree_leaves.png');
+  background-size: 7px 7px; image-rendering: pixelated;
+}
+.lw-aether-canopy.lower { bottom: 10px; width: 34px; height: 14px; }
+.lw-aether-canopy.upper { bottom: 20px; width: 20px; height: 12px; }
+.ls-world[data-weather="storm"] .lw-aether-tree { filter: brightness(.6); }
+
+/* smaller islands adrift further back - fewer blocks, and only the two
+   layers needed to still read as grass-on-stone at that size. Spread across
+   the open sky the narrow hero column now leaves clear, rather than crowded
+   into the one low strip that used to be the only part of the panel free of
+   the old full-width cards. */
+.lw-isle-far {
+  position: absolute; z-index: 0; opacity: .62;
+  background-image: url('/static/minecraft/icons/holystone.png');
+  background-size: 9px 9px; image-rendering: pixelated;
+  filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, 0.3));
+}
+.lw-isle-far::before {
+  content: ''; position: absolute; top: -7px; left: 0; right: 0; height: 7px;
+  background-image: url('/static/minecraft/icons/aether_grass_top.png');
+  background-size: 9px 9px; image-rendering: pixelated;
+}
+.lw-isle-far.f1 { bottom: 130px; left: 40%; width: 26px; height: 10px; }
+.lw-isle-far.f2 { bottom: 54px;  left: 56%; width: 17px; height: 7px; }
+.lw-isle-far.f3 { bottom: 150px; left: 68%; width: 20px; height: 8px; opacity: .45; }
+.ls-world[data-weather="storm"] .lw-isle-far { filter: brightness(.6) drop-shadow(1px 2px 0 rgba(0, 0, 0, 0.3)); }
+
+.lw-drip {
+  position: absolute; left: 40%; top: 0; width: 3px; height: 11px;
+  background: linear-gradient(#d3ecff, #6fa8e0);
+  border-radius: 0 0 3px 3px;
+  opacity: 0;
+  animation: lw-drip-fall 2.6s ease-in infinite;
+}
+.lw-drip.d2 { left: 50%; animation-delay: .8s; }
+.lw-drip.d3 { left: 60%; animation-delay: 1.7s; }
+@keyframes lw-drip-fall {
+  0%   { top: 48px; opacity: 0; transform: scaleY(.6); }
+  12%  { opacity: .95; transform: scaleY(1); }
+  75%  { top: 84px; opacity: .7; }
+  100% { top: 92px; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lw-drip { animation: none; opacity: .8; top: 60px; }
+}
+
+/* the season, folded into the weather card rather than a tile of its own -
+   still its own line and its own colour, so it stays noticeable rather than
+   disappearing into the weather reading above it */
+.lw-say-season {
+  display: inline-flex; margin-top: 4px; width: fit-content;
+  padding: 2px 7px; font-style: normal; font-size: 12px; font-weight: 600;
+  letter-spacing: .03em; color: var(--season);
+  background: color-mix(in srgb, var(--season) 20%, transparent);
+  border: 1px solid var(--season);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .ls-world::before, .ls-world::after,
@@ -1384,6 +1957,140 @@ body::after { display: none; }
      movement go - the lightning, the spatter, the drifting haze. */
   .lw-splash, .lw-mist, .lw-bolt { display: none; }
   .ls-world[data-weather="storm"]::before { opacity: 0; }
+}
+
+/* ── the year calendar ──────────────────────────────────────────────────────
+   Where the pack's own year stands, spelled out in full: which of the twelve
+   eight-day stretches is running, and the eleven either side of it so the
+   whole ninety-six days read at a glance. worldPanel below still carries the
+   one-line version - this is the one somebody actually reads a calendar for. */
+.ls-year {
+  position: relative;
+  /* a grid item's default min-width is auto, not 0 - without this, the
+     calendar's own nested grids (four seasons of three months of numbered
+     day cells) refused to shrink below their intrinsic width and dragged
+     the whole row wider than the viewport once the map moved in beside it,
+     forcing both of them to overflow off the right edge together */
+  min-width: 0;
+  margin: 8px 10px 0; padding: 10px 12px;
+  background: var(--mc-panel);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  --season: var(--mc-xp);
+}
+.ls-year[hidden] { display: none; }
+
+.ls-year[data-season="spring"] { --season: #8fdc6a; }
+.ls-year[data-season="summer"] { --season: #ffd24a; }
+.ls-year[data-season="autumn"] { --season: #e2803a; }
+.ls-year[data-season="winter"] { --season: #7fd4ff; }
+
+.yr-head { display: flex; align-items: center; gap: 12px; }
+.yr-icon {
+  flex: none; width: 44px; height: 44px;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
+}
+.yr-say { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.yr-say b {
+  font-size: 20px; line-height: 1.15; color: var(--mc-text);
+  text-shadow: 2px 2px #000;
+}
+.yr-say span { font-size: 13px; color: var(--mc-dim); }
+.yr-say em    { font-style: normal; font-size: 12px; color: var(--mc-faint); }
+.yr-say em:empty { display: none; }
+/* how much of the year is left, in days rather than a percentage - nobody
+   thinks "63% through the year" when they mean day 61 of 96 */
+.yr-remain {
+  margin-left: auto; flex: none; text-align: right;
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+.yr-remain b {
+  font-size: 24px; font-weight: 600; line-height: 1; color: var(--season);
+  text-shadow: 2px 2px #000;
+}
+.yr-remain i {
+  font-style: normal; font-size: 11px; color: var(--mc-faint);
+  letter-spacing: .04em;
+}
+
+.yr-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-top: 10px;
+}
+.yr-group {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 7px 6px 6px;
+  background: var(--mc-slot);
+  border-top: 3px solid var(--gc);
+}
+.yr-group.spring { --gc: #8fdc6a; }
+.yr-group.summer { --gc: #ffd24a; }
+.yr-group.autumn { --gc: #e2803a; }
+.yr-group.winter { --gc: #7fd4ff; }
+.yr-group-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  color: var(--gc); text-transform: uppercase;
+}
+.yr-months { display: flex; gap: 5px; }
+.yr-month {
+  flex: 1 1 0; min-width: 0; text-align: center;
+  padding: 5px 3px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.yr-month.past    { opacity: .58; }
+.yr-month.future  { opacity: .48; }
+.yr-month.active  {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 2px var(--gc), 0 0 8px -1px var(--gc);
+}
+.yr-m-name {
+  display: block; font-size: 10px; letter-spacing: .05em;
+  color: var(--mc-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.yr-month.active .yr-m-name { color: var(--mc-text); font-weight: 600; }
+
+/* real numbered date cells, laid out four to a row like a page off a real
+   calendar - a grid of squares with numbers in them reads as one; a row of
+   dots only ever reads as a progress bar */
+.yr-days {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 2px; margin-top: 5px;
+}
+.yr-day {
+  display: flex; align-items: center; justify-content: center;
+  /* no min-width: 0 here - that drops the aspect-ratio-derived minimum from
+     the grid's own track sizing, so the row height stopped tracking the
+     column width at all and every cell rendered twice as tall as it was
+     wide instead of square */
+  aspect-ratio: 1;
+  font-size: 9px; font-weight: 600; color: var(--mc-faint);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+/* a day that has happened, filled in with its month's own colour rather than
+   just dimmed - the same gesture as crossing a day off a paper calendar,
+   except the colour says which season it belonged to while it's at it */
+.yr-day.done {
+  color: #05070a; background: var(--gc);
+  opacity: .8; border-color: transparent;
+}
+/* today, circled the way a hand would mark it on a paper one - the one cell
+   in the whole grid that is not just a flat square */
+.yr-day.today {
+  color: #05070a; background: var(--mc-gold);
+  border-radius: 50%; border-color: transparent;
+  box-shadow: 0 0 0 2px var(--mc-panel), 0 0 0 3px var(--mc-gold), 0 0 6px 1px var(--mc-gold);
+}
+
+@media (max-width: 720px) {
+  .yr-strip { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .yr-strip { grid-template-columns: 1fr; }
+  .yr-remain b { font-size: 19px; }
 }
 
 .ls-bar {
@@ -1409,12 +2116,6 @@ body::after { display: none; }
 /* a folded section: see toggleSection() */
 .ls-sec.shut { display: none; }
 
-#ls-map {
-  height: 420px; max-height: 60vh; margin: 0 10px 10px; background: #0d0d10;
-  border: 2px solid var(--mc-shade);
-  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
-}
-#ls-map iframe { display: block; width: 100%; height: 100%; border: 0; }
 
 .ls-btn.sm { padding: 2px 9px; font-size: 13px; }
 /* the way out to the map's own page, which is the one that still works when
@@ -2637,14 +3338,7 @@ body::after { display: none; }
      inset seven, so on a narrow screen it sat visibly proud of the tiles
      directly under it */
   .ls-world { margin: 8px 7px 0; }
-
-  /* Three readings in a grid that fits two of them left the third alone in
-     its own row beside an empty half. They are short - a duration, a word,
-     a percentage - so three across fits and the row closes up. */
-  .lw-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
-  .lw-fact { padding: 5px 6px; }
-  .lw-fact i { font-size: 10px; }
-  .lw-fact b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+  .ls-year  { margin: 8px 7px 0; padding: 8px 9px; }
 
   /* The same orphan, one card down: COMBAT has five readings and the grid
      holds two a row, so DAMAGE TAKEN sat by itself with a hole beside it.
@@ -3530,11 +4224,63 @@ body::after { display: none; }
 .ls-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 322px;
-  gap: 8px; margin: 8px 10px 0; align-items: stretch;
+  gap: 8px; margin: 8px 10px 0;
+  /* the forecast card is short - a couple of readings and a fact row - next
+     to the activity heatmap, which is tall by nature. Stretching the forecast
+     to match used to leave it mostly empty colour with nothing in it */
+  align-items: start;
 }
 /* the world panel carried its own margin when it stood alone; the row owns
    the spacing now */
 .ls-top .ls-world { margin: 0; }
+
+/* the calendar and the map, side by side at the very top - the map matches
+   the calendar's own height (stretch, not start) rather than the forecast
+   row's short one, which is what the map used to get folded down to fit */
+.ls-calendar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 8px; margin: 8px 10px 0;
+  align-items: stretch;
+}
+.ls-calendar-row .ls-year { margin: 0; }
+
+/* the live map, still a glance rather than a section somebody has to go
+   open - full screen is one click away for when a glance is not enough */
+.ls-map-mini {
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.lm-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; font-size: 12px; color: var(--mc-dim);
+  border-bottom: 2px solid var(--mc-shade);
+}
+.lm-t { color: var(--mc-text); }
+.lm-full {
+  margin-left: auto; color: var(--mc-sky); text-decoration: none;
+  font-size: 11px; white-space: nowrap;
+}
+.lm-full:hover { text-decoration: underline; }
+.lm-body { position: relative; flex: 1; min-height: 0; }
+.lm-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* blacked out rather than left showing a dead or blocked frame - a server
+   that is down cannot draw a map either, and a map served over plain HTTP
+   never loads inside an HTTPS page at all, so both get told rather than left
+   to look like the embed is simply broken */
+.lm-overlay {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 12px; text-align: center;
+  background: rgba(5, 7, 10, 0.94);
+}
+.lm-overlay[hidden] { display: none; }
+.lm-overlay b { font-size: 13px; color: var(--mc-heart); }
+.lm-overlay span { font-size: 11px; color: var(--mc-dim); line-height: 1.4; }
+.lm-overlay a { color: var(--mc-sky); }
 
 .ls-rhythm {
   display: flex; flex-direction: column;
@@ -3716,7 +4462,10 @@ body::after { display: none; }
 /* below this the two panels stack, and the grid gets the full width back */
 @media (max-width: 900px) {
   .ls-top { grid-template-columns: 1fr; }
+  .ls-calendar-row { grid-template-columns: 1fr; }
+  .ls-map-mini { height: 260px; }
 }
 @media (max-width: 520px) {
   .ls-top { margin: 8px 7px 0; }
+  .ls-calendar-row { margin: 8px 7px 0; }
 }

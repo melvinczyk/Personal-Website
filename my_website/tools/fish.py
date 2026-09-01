@@ -57,6 +57,27 @@ WANTED = ('legendary',)
 # rather than a GUI sprite, so it comes out of the same walk as the rest.
 UNKNOWN = 'starcatcher:unknown_fish'
 
+# unusualfishmod hands out three of its legendaries as a spawn egg for the
+# live creature rather than a fish item or a bucket - the catch actually
+# spawns the thing in front of you. A spawn egg has no texture of its own to
+# walk to: it is vanilla's template_spawn_egg model, tinted from two colours
+# baked into the entity's own Java class rather than sitting in any resource
+# this script can read. Rather than leave three legendary slots blank, this
+# builds the same egg the game would, coloured from the one place those
+# colours are visible without decompiling anything: the entity's own skin.
+VANILLA_JAR = os.path.expanduser(
+    '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar')
+SPAWN_EGG_BASE    = 'assets/minecraft/textures/item/spawn_egg.png'
+SPAWN_EGG_OVERLAY = 'assets/minecraft/textures/item/spawn_egg_overlay.png'
+SPAWN_EGG_SKINS = {
+    'unusualfishmod:celestial_fish_spawn_egg':
+        'assets/unusualfishmod/textures/entity/celestial_fish.png',
+    'unusualfishmod:gnasher_spawn_egg':
+        'assets/unusualfishmod/textures/entity/gnasher.png',
+    'unusualfishmod:prawn_spawn_egg':
+        'assets/unusualfishmod/textures/entity/prawn.png',
+}
+
 
 def fish_files(paths):
     """Every fish definition in every jar: registry id -> (jar, entry).
@@ -100,7 +121,12 @@ def installed(paths):
                 if name not in zf.namelist():
                     continue
                 for line in zf.read(name).decode('utf-8', 'replace').splitlines():
-                    line = line.strip()
+                    # TOML comments run to the end of the line and are not
+                    # always stripped out of a mod's own template before it
+                    # ships - unusualfishmod's modId line still carries its
+                    # "#mandatory" straight off the example file, and left in
+                    # it reads as part of the id
+                    line = line.split('#', 1)[0].strip()
                     if line.startswith('modId'):
                         found.add(line.split('=')[1].strip().strip('"\' '))
     return found
@@ -141,6 +167,16 @@ def pretty(item_id):
                     for word in item_id.split(':')[-1].split('/')[-1].split('_'))
 
 
+def fish_name(item_id, label):
+    """The catch's own name, minus "Spawn Egg" for the three that hand out one.
+
+    The board is a board of creatures, not of items - "Celestial Fish" reads
+    as a catch the way "Celestial Fish Spawn Egg" reads as an inventory slot.
+    """
+    name = label.get(item_id) or pretty(item_id)
+    return name[:-len(' Spawn Egg')] if name.endswith(' Spawn Egg') else name
+
+
 def save_icon(ref, filename, px=64):
     """One item texture, squared off and written at a size a tile can use."""
     with zipfile.ZipFile(ref[0]) as zf:
@@ -152,6 +188,84 @@ def save_icon(ref, filename, px=64):
     if icon.width != px:
         icon = icon.resize((px, px), Image.NEAREST)
     icon.save(os.path.join(OUT, filename), optimize=True)
+    return filename
+
+
+def dominant_colours(image, n=2):
+    """The n most common opaque colours in an image, most common first.
+
+    Good enough to stand in for a spawn egg's own base/highlight colours
+    without reading the two constants out of the entity's class file: an
+    egg's base colour is usually most of the creature's own skin, and the
+    next colour that is not just a shade of the first is usually the marking
+    that would have been the highlight.
+    """
+    small = image.convert('RGBA').resize((32, 32))
+    counts = {}
+    for r, g, b, a in small.getdata():
+        if a < 128:
+            continue
+        # a mob skin is a UV-unwrapped atlas, and most of the canvas around
+        # the actual islands is blank white padding - left in, it outweighs
+        # every real colour on the creature and every egg comes out white
+        if r > 235 and g > 235 and b > 235:
+            continue
+        counts[(r, g, b)] = counts.get((r, g, b), 0) + 1
+    ranked = sorted(counts, key=counts.get, reverse=True)
+    picked = []
+    for colour in ranked:
+        # skip anything close to a colour already picked, or the palette
+        # comes back as five shades of the same body colour
+        if any(sum(abs(a - b) for a, b in zip(colour, kept)) < 90 for kept in picked):
+            continue
+        picked.append(colour)
+        if len(picked) == n:
+            break
+    while len(picked) < n:
+        picked.append(picked[-1] if picked else (150, 150, 150))
+    return picked
+
+
+def tint_layer(image, colour):
+    """A grayscale mask, multiplied by a flat colour - see extract_tree_texture.py."""
+    image = image.convert('RGBA')
+    alpha = image.getchannel('A')
+    gray = image.convert('L')
+    tinted = Image.merge('RGB', tuple(
+        gray.point(lambda v, c=c: round(v / 255 * c)) for c in colour))
+    tinted.putalpha(alpha)
+    return tinted
+
+
+def save_spawn_egg_icon(paths, skin_entry, filename, px=64):
+    """A spawn egg icon built the way the game builds one, coloured from the
+    creature's own skin rather than from the class file that really holds it.
+
+    Returns the filename, or None if either the entity skin or the vanilla
+    spawn egg textures could not be found.
+    """
+    skin_ref = None
+    for path in paths:
+        try:
+            with zipfile.ZipFile(path) as zf:
+                if skin_entry in zf.namelist():
+                    skin_ref = (path, skin_entry)
+                    break
+        except Exception:                            # noqa: BLE001
+            continue
+    if not skin_ref or not os.path.exists(VANILLA_JAR):
+        return None
+
+    with zipfile.ZipFile(skin_ref[0]) as zf:
+        skin = Image.open(io.BytesIO(zf.read(skin_ref[1])))
+    base_colour, spot_colour = dominant_colours(skin, 2)
+
+    with zipfile.ZipFile(VANILLA_JAR) as zf:
+        base = tint_layer(Image.open(io.BytesIO(zf.read(SPAWN_EGG_BASE))), base_colour)
+        overlay = tint_layer(Image.open(io.BytesIO(zf.read(SPAWN_EGG_OVERLAY))), spot_colour)
+    egg = Image.alpha_composite(base, overlay)
+    egg = egg.resize((px, px), Image.NEAREST)
+    egg.save(os.path.join(OUT, filename), optimize=True)
     return filename
 
 
@@ -188,10 +302,23 @@ def main():
             continue
 
         item = (spec.get('catch_info') or {}).get('item') or fish_id
-        found = icons.texture_of(item, models)
-        art = textures.get(icons.split(found)) if found else None
         key = fish_id.replace(':', '__').replace('/', '_')
-        if not art:
+
+        icon_file = None
+        if item in SPAWN_EGG_SKINS:
+            # checked ahead of the generic walk on purpose: every spawn egg's
+            # model chain resolves to vanilla's own plain, untinted
+            # item/spawn_egg texture (that IS the real "layer0" of
+            # item/template_spawn_egg), which is a valid find as far as
+            # texture_of is concerned but is the wrong icon for every egg -
+            # it carries no colour at all
+            icon_file = save_spawn_egg_icon(paths, SPAWN_EGG_SKINS[item], f'{key}.png')
+        else:
+            found = icons.texture_of(item, models)
+            art = textures.get(icons.split(found)) if found else None
+            if art:
+                icon_file = save_icon(art, f'{key}.png')
+        if not icon_file:
             iconless.append(fish_id)
             continue
 
@@ -200,10 +327,10 @@ def main():
             'key':    key,
             'id':     fish_id,
             'item':   item,
-            'name':   label.get(item) or pretty(item),
+            'name':   fish_name(item, label),
             'mod':    fish_id.split(':')[0],
             'rarity': (spec.get('rarity') or '').upper(),
-            'icon':   save_icon(art, f'{key}.png'),
+            'icon':   icon_file,
             # what an average one of these weighs in at, so a locked tile has
             # something to say about the fish beyond its name
             'size':   round(float(size.get('average_size_cm') or 0)),
