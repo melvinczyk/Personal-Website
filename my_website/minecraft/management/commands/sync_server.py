@@ -149,6 +149,12 @@ class Command(BaseCommand):
         clean = True
         if not opts["dry_run"]:
             clean = sync.verify(dest, cfg, log=self.stdout.write)
+            # Ask the live map whether there is a server behind it. It answers
+            # for the server itself where the export answers only for the mod
+            # writing it, and those two came apart once already - see
+            # puller.probe_map and live._server_up.
+            self.stdout.write(f"  map       "
+                              f"{'answered' if puller.probe_map(dest) else 'no answer'}")
             # what was played since the last sample, banked before anything
             # else can overwrite the counters we measured against
             seen, banked = activity.sample(dest)

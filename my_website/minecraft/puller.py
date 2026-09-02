@@ -14,12 +14,27 @@ import json
 import os
 import threading
 import time
+import urllib.error
+import urllib.request
 
 from django.conf import settings
 
 from . import activity, chat, sync
+from .live import MAP_STAMP
 
 DEFAULT_CONFIG = "mc_sync.json"
+
+# The live world map: a BlueMap render the game host serves on a port of its
+# own. It lives here rather than in views because it is now two things - the
+# frame the page embeds, and the only witness to the server being up that does
+# not go through the export. Addressed by number because the
+# servermap.minecraft.bz name it used to be reached by no longer resolves.
+MAP_URL = 'http://216.219.93.66:8100/'
+
+# How long to wait on the map. It answers in about a tenth of a second when it
+# is there at all, so past this it is not a slow map, it is one that is not
+# coming - and a board poll must never wait on a network.
+MAP_TIMEOUT = 5
 
 # How long a pull's results are treated as current. The server rewrites its
 # export once a minute, but the host's SFTP gateway is a panel service that
@@ -145,6 +160,72 @@ def refresh_chat(season):
     return dict(_chat_last)
 
 
+# ── is the server actually up? ─────────────────────────────────────────────
+# The map's own name for the world it is drawing, remembered between probes so
+# the usual case is one request. It changes when the world does - the id this
+# codebase was written against is two worlds out of date already - so it is
+# found rather than configured.
+_map_id = None
+
+
+def _fetch(url, timeout):
+    with urllib.request.urlopen(url, timeout=timeout) as res:
+        return res.read()
+
+
+def _map_names(timeout):
+    """Which worlds BlueMap is serving, out of its own settings."""
+    return json.loads(_fetch(MAP_URL + 'settings.json', timeout)
+                      .decode('utf-8')).get('maps') or []
+
+
+def _live_url(name):
+    return f'{MAP_URL}maps/{name}/live/players.json'
+
+
+def probe_map(dest_dir, timeout=MAP_TIMEOUT):
+    """Ask the live map whether there is a server behind it. Stamp it if so.
+
+    Deliberately not "is the map page reachable". BlueMap serves its index and
+    its settings as ordinary static files, with a Last-Modified and a day of
+    cache on them, and those keep being served by anything that can still read
+    the folder they are in. The live endpoint is a different animal: no cache,
+    no Last-Modified, generated per request out of the running server's own
+    player list. If that answers, there is a server answering.
+
+    Which is a thing the export cannot tell us. The mod that writes the export
+    can stop while the server carries on, and when it does the export goes
+    stale, its tps reads zero, and every reading we had said OFFLINE about a
+    server people were playing on.
+
+    Never raises: a map that cannot be reached is not knowing, and the caller
+    has other witnesses.
+    """
+    global _map_id
+    try:
+        if not _map_id:
+            _map_id = next(iter(_map_names(timeout)), None)
+        if not _map_id:
+            return False
+        try:
+            _fetch(_live_url(_map_id), timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+            # the world was renamed or re-rendered under us: ask once more
+            _map_id = next(iter(_map_names(timeout)), None)
+            if not _map_id:
+                return False
+            _fetch(_live_url(_map_id), timeout)
+    except Exception:                            # noqa: BLE001 - see docstring
+        return False
+    try:
+        open(os.path.join(dest_dir, MAP_STAMP), 'w').close()
+    except OSError:
+        pass                                     # a stamp is a nicety, never a fault
+    return True
+
+
 def config_path():
     return (os.environ.get("MC_SYNC_CONFIG")
             or os.path.join(str(settings.BASE_DIR), DEFAULT_CONFIG))
@@ -184,6 +265,9 @@ def _pull(season):
             activity.sample(dest_for(season))
         except Exception:                    # noqa: BLE001 - never fail a pull
             pass
+        # and ask the map, which answers for the server itself rather than for
+        # the mod that writes the export - see probe_map
+        probe_map(dest_for(season))
         _mark('ok', f'{got} fetched, {same} unchanged', fetched=got)
     except sync.ConfigError as exc:
         # An unconfigured checkout is the ordinary case, not a fault: say so

@@ -364,6 +364,17 @@ SERVER_WINDOW = 300
 # this only has to catch the worker itself being gone, not one slow poll.
 CHECK_WINDOW = 900
 
+# How recently the live map must have answered for that answer to still stand.
+# The worker probes it every couple of minutes, so this is three misses' worth
+# of slack: one probe that timed out is not a verdict on anything.
+MAP_WINDOW = 420
+
+# Where a map that answered is recorded, beside sync's own .checked. The name
+# lives here rather than with puller, which is what writes it, because puller
+# reaches this module through activity and the other direction would close the
+# circle. puller imports it, the way activity imports SERVER_WINDOW.
+MAP_STAMP = '.mapseen'
+
 
 def _kill_entries(record):
     """One player's boss_kills.json row, bosses and minibosses together.
@@ -1277,14 +1288,28 @@ def fish(season_path, faces=None):
     return out
 
 
-def _server_up(age, checked):
-    """Is the game server writing? Two states, ONLINE or OFFLINE - nothing
-    in between makes it to the page.
+def _server_up(age, checked, mapped=None):
+    """Is the game server up? Two states, ONLINE or OFFLINE - nothing in
+    between makes it to the page.
 
-    `age` is how old the export is now: the server rewrites it about once a
-    minute, so a fresh export is a server that is up, plainly. The question
-    is what a STALE export means, because there are two different reasons one
-    happens and they do not mean the same thing:
+    Two witnesses, and either one on its own is enough to say it is up:
+
+      * `age`, how old the export is. The server rewrites it about once a
+        minute, so a fresh export is a server that is up, plainly.
+      * `mapped`, how long ago the live map last answered. BlueMap runs
+        inside the server, and its live endpoint is generated per request out
+        of the running player list - so an answer from it is the server
+        itself answering. See puller.probe_map.
+
+    The map is here because the export alone has a failure mode that looks
+    exactly like a dead server and is not one: the mod that writes the export
+    can stop while the server carries on. It did - an export an hour and a
+    half stale, its tps reading zero, on a server people were playing on, and
+    every number the board had said OFFLINE about it.
+
+    With both witnesses silent there is still the question of what a stale
+    export means, because there are two reasons for one and they do not mean
+    the same thing:
 
       * we checked recently and the server had nothing new to say - that is
         the server actually down.
@@ -1300,17 +1325,23 @@ def _server_up(age, checked):
     it plainly was not, because the read it was going on was ours, not the
     server's.
     """
-    if age is None:
-        return {'online': None, 'lag': None, 'down': None}
-    fresh = age < SERVER_WINDOW
-    # stale and checked recently enough to trust that reading: down, in fact.
-    # stale but we have not looked in a while ourselves: not grounds to say
-    # so, so it reads online until a fresher check says otherwise
-    confirmed_down = (not fresh) and checked is not None and checked < CHECK_WINDOW
+    # nothing to go on at all: no export ever fetched and no map ever asked
+    if age is None and mapped is None:
+        return {'online': None, 'lag': None, 'mapped': None, 'down': None}
+    seen  = mapped is not None and mapped < MAP_WINDOW
+    fresh = age is not None and age < SERVER_WINDOW
+    # neither witness speaks for it, and we looked recently enough to trust
+    # that silence: down, in fact. Looked a while ago and it is not grounds
+    # to say so, so it reads online until a fresher check says otherwise.
+    confirmed_down = (not fresh and not seen
+                      and checked is not None and checked < CHECK_WINDOW)
     up = not confirmed_down
     return {
         'online': up,
         'lag': age,
+        # how long since the map last answered, so the page can say which
+        # witness it is going on when the two disagree
+        'mapped': mapped,
         # how long it has been dark, counted from the last thing it wrote.
         # None while it reads up, so the page has nothing to draw rather than
         # a zero that looks like a reading
@@ -1343,6 +1374,16 @@ def board(season_path):
     except OSError:
         checked = None
 
+    # And when the live map last answered, which is the other witness to the
+    # server being up - the one that keeps working while the mod writing the
+    # export has stopped. Touched by puller.probe_map, never here: a board
+    # poll must not wait on a network.
+    try:
+        mapped = int(time.time()
+                     - os.path.getmtime(os.path.join(data_dir, MAP_STAMP)))
+    except OSError:
+        mapped = None
+
     # whoever is standing in the world comes first, then the most recently gone
     order = sorted(players.values(),
                    key=lambda p: (not p['online'],
@@ -1366,9 +1407,10 @@ def board(season_path):
         'read':    stamped.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z') if stamped else '',
         'age':     age,
         'age_txt': _span(age) if age is not None else '',
-        'server':      _server_up(age, checked),
+        'server':      _server_up(age, checked, mapped),
         'checked':     checked,
         'checked_txt': _span(checked) if checked is not None else '',
+        'mapped':      mapped,
         'totals': {
             'online':  sum(1 for p in order if p['online']),
             'tracked': len(order),
