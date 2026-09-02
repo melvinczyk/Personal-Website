@@ -137,6 +137,16 @@ def main():
     save('grass_side.png', composite(dirt, tint(overlay, GRASS_TINT)))
     save('grass_blade.png', tint(images['grass_blade.png'], GRASS_TINT))
     save('tree_leaves.png', tint(images['tree_leaves.png'], FOLIAGE_TINT))
+
+    # The same four, left the grayscale the game ships them as. EclipticSeasons
+    # retints the world every solar term, and the board follows it - a page
+    # that multiplies one of these by the term's own colour is doing exactly
+    # what the game does, where a filter over a pre-tinted green would only be
+    # bending one season's colour into a shape that never quite fits.
+    save('grass_top_gray.png', images['grass_top.png'])
+    save('grass_blade_gray.png', images['grass_blade.png'])
+    save('tree_leaves_gray.png', images['tree_leaves.png'])
+    save('grass_side_gray.png', composite(dirt, overlay))
     for name in ('tree_log.png', 'dirt.png', 'flower_poppy.png', 'flower_dandelion.png'):
         save(name, images[name])
 

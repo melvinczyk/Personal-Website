@@ -66,10 +66,14 @@ REAL_WORLD = {
                               'clearLockedSeconds': 0}},
     'difficulty': 'HARD',
     'spawn': {'x': 0, 'y': 72, 'z': 0},
-    'season': {'season': 'AUTUMN', 'subSeason': 'EARLY_AUTUMN', 'tropicalSeason': 'MID_DRY',
-                'day': 48, 'yearProgress': 0.5018, 'cycleDurationTicks': 2304000,
-                'seasonDurationTicks': 576000, 'subSeasonDurationTicks': 192000,
-                'dayDurationTicks': 24000, 'subSeasonDaysLeft': 8},
+    # the solar-term calendar that replaced Serene Seasons outright - 24 named
+    # terms, two to a sub-season, each lasting lastingDaysOfEachTerm days
+    'season': {'enabled': True, 'season': 'autumn', 'subSeason': 'early_autumn',
+                'solarTerm': 'beginning_of_autumn', 'gregorianMonth': 'month_8',
+                'gregorianYear': 1, 'solarYear': 1, 'solarDays': 87,
+                'dayInTerm': 3, 'lastingDaysOfEachTerm': 7,
+                'termProgress': 0.43, 'daysUntilNextTerm': 4,
+                'hasLocalWeather': True},
     'invasions': {'invasionTime': 8064000, 'xpMultiplier': 0, 'active': None},
     'online': {'count': 0, 'max': 20, 'names': []},
     'dimensionDetail': [

@@ -1,0 +1,146 @@
+{
+ "beginning_of_spring": {
+  "grass": "#a0b461",
+  "leaf": "#8ea744",
+  "grass_mix": 0.32,
+  "leaf_mix": 0.32
+ },
+ "rain_water": {
+  "grass": "#98b85d",
+  "leaf": "#82a939",
+  "grass_mix": 0.16,
+  "leaf_mix": 0.16
+ },
+ "insects_awakening": {
+  "grass": "#91bd59",
+  "leaf": "#77ab2f",
+  "grass_mix": 0.0,
+  "leaf_mix": 0.0
+ },
+ "spring_equinox": {
+  "grass": "#91bd59",
+  "leaf": "#77ab2f",
+  "grass_mix": 0.0,
+  "leaf_mix": 0.0
+ },
+ "fresh_green": {
+  "grass": "#8ebc4d",
+  "leaf": "#78ad29",
+  "grass_mix": 0.16,
+  "leaf_mix": 0.16
+ },
+ "grain_rain": {
+  "grass": "#8bbb41",
+  "leaf": "#79af24",
+  "grass_mix": 0.32,
+  "leaf_mix": 0.32
+ },
+ "beginning_of_summer": {
+  "grass": "#88ba35",
+  "leaf": "#7ab11f",
+  "grass_mix": 0.48,
+  "leaf_mix": 0.48
+ },
+ "lesser_fullness": {
+  "grass": "#85b929",
+  "leaf": "#77ac2b",
+  "grass_mix": 0.64,
+  "leaf_mix": 0.1
+ },
+ "grain_in_ear": {
+  "grass": "#82b81c",
+  "leaf": "#78ad28",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.2
+ },
+ "summer_solstice": {
+  "grass": "#82b81c",
+  "leaf": "#79ae25",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.3
+ },
+ "lesser_heat": {
+  "grass": "#8fb224",
+  "leaf": "#7ab021",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.4
+ },
+ "greater_heat": {
+  "grass": "#9cac2c",
+  "leaf": "#99b523",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.25
+ },
+ "beginning_of_autumn": {
+  "grass": "#a9a634",
+  "leaf": "#bbbf17",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.5
+ },
+ "end_of_heat": {
+  "grass": "#b6a03c",
+  "leaf": "#ddc90b",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.75
+ },
+ "white_dew": {
+  "grass": "#c49a44",
+  "leaf": "#ffd400",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "autumnal_equinox": {
+  "grass": "#c49a44",
+  "leaf": "#ffd400",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "cold_dew": {
+  "grass": "#c19c4c",
+  "leaf": "#ffd400",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "first_frost": {
+  "grass": "#be9f54",
+  "leaf": "#f2c917",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "beginning_of_winter": {
+  "grass": "#bca15d",
+  "leaf": "#e6bf2e",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "light_snow": {
+  "grass": "#b9a465",
+  "leaf": "#d9b545",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "heavy_snow": {
+  "grass": "#b7a66d",
+  "leaf": "#cdab5c",
+  "grass_mix": 0.8,
+  "leaf_mix": 1.0
+ },
+ "winter_solstice": {
+  "grass": "#b7a66d",
+  "leaf": "#b2a265",
+  "grass_mix": 0.8,
+  "leaf_mix": 0.8
+ },
+ "lesser_cold": {
+  "grass": "#afab69",
+  "leaf": "#a6a45a",
+  "grass_mix": 0.64,
+  "leaf_mix": 0.64
+ },
+ "greater_cold": {
+  "grass": "#a8af65",
+  "leaf": "#9aa64f",
+  "grass_mix": 0.48,
+  "leaf_mix": 0.48
+ }
+}

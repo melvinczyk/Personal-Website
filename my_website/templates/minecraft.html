@@ -49,24 +49,41 @@
             </span>
           </div>
 
-          <!-- where in the pack's own year the server sits, spelled out in
-               full rather than the single line worldPanel gives it below - the
-               map rides along beside it, sized to match rather than squeezed
-               into the shorter forecast row below. -->
-          <div class="ls-calendar-row">
-            <div class="ls-year" id="ls-year"></div>
-            {% if map_url %}
-            <div class="ls-map-mini">
-              <div class="lm-head">
-                <span class="lm-t">World map</span>
-                <a class="lm-full" href="{{ map_home }}" target="_blank" rel="noopener">Full screen ↗</a>
-              </div>
-              <div class="lm-body">
-                <iframe class="lm-frame" src="{{ map_url }}" title="Live world map" loading="lazy"></iframe>
-                <div class="lm-overlay" id="lm-overlay" hidden></div>
-              </div>
+          <!-- Where in the pack's own year the server sits, and where in the
+               world it sits, one at a time. Side by side these two fought over
+               the same row: the calendar is twenty-four solar terms wide and
+               the map wants to be square, and neither had the width to be
+               worth looking at. Cycled instead, the way the forecast below
+               cycles its realms - each gets the whole row, and the row is only
+               as tall as whichever one is showing. -->
+          <div class="ls-deck" id="ls-deck">
+            <div class="ls-deck-tabs" role="tablist">
+              <button class="ls-deck-tab on" role="tab" aria-selected="true"
+                      data-panel="year" onclick="showDeck('year')">Year Calendar</button>
+              {% if map_url %}
+              <button class="ls-deck-tab" role="tab" aria-selected="false"
+                      data-panel="map" onclick="showDeck('map')">World Map</button>
+              {% endif %}
             </div>
-            {% endif %}
+            <div class="ls-deck-body">
+              <div class="ls-deck-panel on" data-panel="year" role="tabpanel">
+                <div class="ls-year" id="ls-year"></div>
+              </div>
+              {% if map_url %}
+              <div class="ls-deck-panel" data-panel="map" role="tabpanel">
+                <div class="ls-map-mini">
+                  <div class="lm-head">
+                    <span class="lm-t">World map</span>
+                    <a class="lm-full" href="{{ map_home }}" target="_blank" rel="noopener">Full screen ↗</a>
+                  </div>
+                  <div class="lm-body">
+                    <iframe class="lm-frame" src="{{ map_url }}" title="Live world map" loading="lazy"></iframe>
+                    <div class="lm-overlay" id="lm-overlay" hidden></div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
           </div>
 
           <!-- the server describing itself: what day it is in there, what the

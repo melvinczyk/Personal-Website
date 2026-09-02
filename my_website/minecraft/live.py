@@ -93,12 +93,44 @@ def _pretty(word):
     return ' '.join(part.capitalize() for part in str(word or '').split('_')) or ''
 
 
+def _percent(value, default=0):
+    """A 0-1 fraction as whole percent - _float's one decimal is ten steps."""
+    try:
+        return max(0, min(100, int(round(float(value) * 100))))
+    except (TypeError, ValueError):
+        return default
+
+
 # Serene Seasons' own order, which is also the order of its calendar faces:
 # the icon for a sub-season is the one at its place in this list.
 SUB_SEASONS = ('EARLY_SPRING', 'MID_SPRING', 'LATE_SPRING',
                'EARLY_SUMMER', 'MID_SUMMER', 'LATE_SUMMER',
                'EARLY_AUTUMN', 'MID_AUTUMN', 'LATE_AUTUMN',
                'EARLY_WINTER', 'MID_WINTER', 'LATE_WINTER')
+
+# The pack's new solar-term calendar: 24 terms, two to a sub-season and in the
+# same order as SUB_SEASONS above, so SOLAR_TERMS[2*i:2*i+2] is the pair that
+# falls inside SUB_SEASONS[i]. This replaced Serene Seasons outright rather
+# than sitting alongside it - there is no tick math left to do here, only
+# reading the two numbers (which term, how many days each one lasts) that the
+# server now works this out from itself.
+SOLAR_TERMS = (
+    'BEGINNING_OF_SPRING', 'RAIN_WATER', 'INSECTS_AWAKENING',
+    'SPRING_EQUINOX', 'FRESH_GREEN', 'GRAIN_RAIN',
+    'BEGINNING_OF_SUMMER', 'LESSER_FULLNESS', 'GRAIN_IN_EAR',
+    'SUMMER_SOLSTICE', 'LESSER_HEAT', 'GREATER_HEAT',
+    'BEGINNING_OF_AUTUMN', 'END_OF_HEAT', 'WHITE_DEW',
+    'AUTUMNAL_EQUINOX', 'COLD_DEW', 'FIRST_FROST',
+    'BEGINNING_OF_WINTER', 'LIGHT_SNOW', 'HEAVY_SNOW',
+    'WINTER_SOLSTICE', 'LESSER_COLD', 'GREATER_COLD',
+)
+
+# gregorianMonth arrives as 'MONTH_3' and similar - the real name behind the
+# number, for the one bit of this calendar a person already has a feel for
+MONTH_NAMES = {f'MONTH_{i}': name for i, name in enumerate((
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+), start=1)}
 
 # what the game means by a moon phase number, counting from the full moon
 MOONS = ('Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent',
@@ -179,9 +211,16 @@ def _world_state(raw):
     # where in the twelve the pack currently sits, and what comes after it
     sub = str(season.get('subSeason') or '').upper()
     place = SUB_SEASONS.index(sub) if sub in SUB_SEASONS else -1
-    # a year is however many days the pack's own cycle divides into
-    a_day = _int(season.get('dayDurationTicks'))
-    year_days = _int(_int(season.get('cycleDurationTicks')) / a_day) if a_day else 0
+    # a year is 24 solar terms, each as long as this pack's own calendar sets -
+    # lastingDaysOfEachTerm is a knob the pack can retune, not a constant, so
+    # every length here is worked out from it rather than assumed
+    term_days = _int(season.get('lastingDaysOfEachTerm'))
+    sub_days = term_days * 2
+    year_days = term_days * 24
+    solar_days = _int(season.get('solarDays'))
+    term = str(season.get('solarTerm') or '').upper()
+    term_place = SOLAR_TERMS.index(term) if term in SOLAR_TERMS else -1
+    month = MONTH_NAMES.get(str(season.get('gregorianMonth') or '').upper(), '')
     return {
         'day':      _int(time_.get('day')),
         'clock':    time_.get('clock') or '',
@@ -209,19 +248,31 @@ def _world_state(raw):
         'next_season': _pretty(SUB_SEASONS[(place + 1) % len(SUB_SEASONS)])
                        if place >= 0 else '',
         'year_days':  year_days,
-        # how many full years the world's own day count has run through. Read
-        # off time.day rather than season.day, which resets every year and so
-        # cannot say which one this is; floor division rather than _int's
-        # round, or day 1 of a fresh year would call itself the year before
-        'year_number': _int(time_.get('day')) // year_days + 1 if year_days else 0,
-        'tropical':   _pretty(season.get('tropicalSeason')),
-        'season_day': _int(season.get('day')),
-        'season_left': _int(season.get('subSeasonDaysLeft')),
+        # the pack now counts this itself - solarYear over a day count that
+        # resets every year and a division that would get it wrong
+        'year_number': _int(season.get('solarYear') or season.get('gregorianYear')),
+        'season_day': solar_days,
+        # days left in this sub-season, not just this solar term - the year
+        # calendar's own cells are one per sub-season, so this is what tells
+        # it how many of the current one are filled in
+        'season_left': (sub_days - (solar_days % sub_days)) if sub_days else 0,
         # how many days the current sub-season runs for, so a reader can be
-        # told "day 3 of 8" without the year calendar assuming every one of
+        # told "day 3 of 14" without the year calendar assuming every one of
         # the twelve is the same length it just happens to be in this pack
-        'sub_days':   _int(_int(season.get('subSeasonDurationTicks')) / a_day)
-                      if a_day else 0,
+        'sub_days':   sub_days,
+        # the finer calendar underneath the twelve sub-seasons - which of the
+        # 24 solar terms this is, how long each one runs, and the real month
+        # it falls in. -1 when the pack names a term this build has never
+        # heard of, the same convention sub_index already uses.
+        'solar_term':      _pretty(season.get('solarTerm')),
+        'term_index':      term_place,
+        'term_days':       term_days,
+        'day_in_term':     _int(season.get('dayInTerm')),
+        'days_until_term': _int(season.get('daysUntilNextTerm')),
+        # 0-1 through the current term. Not _float'd - that rounds to one
+        # decimal, which is ten steps for a bar the page draws in percent
+        'term_progress':   _percent(season.get('termProgress')),
+        'gregorian_month': month,
         # a phrase, not a number: Serene Seasons and vanilla weather both work
         # the same way, as one countdown to the next flip rather than a
         # calendar of days ahead - see _forecast

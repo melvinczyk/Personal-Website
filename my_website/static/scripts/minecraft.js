@@ -1930,6 +1930,10 @@ function bossBadges(p) {
 // anything drawn here - see tools/extract_world_icons.py - so what the panel
 // shows for a phase is the face a player sees in the sky for it.
 const WORLD_ICONS = '/static/minecraft/icons';
+// EclipticSeasons' own art, pulled out of the mod by
+// tools/extract_season_textures.py - the twenty-four solar term icons, the
+// particles it spawns each season, and the cover it lays on the ground
+const SEASON_ART = '/static/minecraft/seasons';
 
 // which sky the panel wears. Rain and thunder outrank the hour, because a
 // storm is what you would notice first looking out of a window.
@@ -2018,22 +2022,39 @@ const GROUND_PROPS = [
 ];
 
 // ── what drifts through the season ──────────────────────────────────────────
-// Real textures again rather than drawn dots: autumn's leaves are the same
-// tree_leaves.png the canopy above them is built out of, just hue-rotated
-// three different ways off its one green rather than baked into three
-// separate autumn-coloured files - and spring's petals are the ground's own
-// two flowers, adrift instead of rooted. Winter and summer stay pure CSS -
-// see the stylesheet - a falling square already reads as snow, and there is
-// no texture for "bright" to borrow.
-const AUTUMN_TINTS = [
-  'hue-rotate(-60deg) saturate(2.4)',                    // orange
-  'hue-rotate(-100deg) saturate(2) brightness(1.1)',     // red
-  'hue-rotate(-40deg) saturate(2.6) brightness(1.15)',   // gold
-];
+// EclipticSeasons spawns real particles for each of its seasons, and these are
+// those particles: its own sixteen fallen leaves, its eight flying blossoms
+// and three butterflies, its two fireflies, pulled straight out of the mod by
+// tools/extract_season_textures.py. Nothing here is a vanilla texture bent
+// into an approximation of them with a hue-rotate - the mod drew all of it
+// already, in the season it belongs to.
+//
+// Winter is the exception and is not in this table: the mod does not spawn a
+// snow *particle*, it draws snowfall as a full sheet over the world, which is
+// what .lw-snowfall does with the mod's own thin_snow/middle_snow textures.
+const SEASON_DRIFT = {
+  spring: {
+    cls: 'bloom',
+    imgs: [...Array(8).keys()].map(i => `${SEASON_ART}/blossom_${i}.png`)
+      .concat([0, 1, 2].map(i => `${SEASON_ART}/butterfly_${i}.png`)),
+    count: 90,
+  },
+  summer: {
+    cls: 'glow',
+    imgs: [0, 1].map(i => `${SEASON_ART}/firefly_${i}.png`),
+    count: 55,
+  },
+  autumn: {
+    cls: 'leaf',
+    imgs: [...Array(16).keys()].map(i => `${SEASON_ART}/leaf_${i}.png`),
+    count: 100,
+  },
+};
+
 // evenly spread across the width with a little jitter so it does not read as
 // a grid, rather than hand-placed - eight of anything looked sparse next to a
 // card this wide, so this is the generator that gets to be as full as it needs
-function driftSet(n, filters) {
+function driftSet(n, imgs) {
   const out = [];
   for (let i = 0; i < n; i++) {
     const left = Math.min(98, Math.max(0, (i / n) * 100 + (Math.random() * 9 - 4.5)));
@@ -2041,28 +2062,55 @@ function driftSet(n, filters) {
       left: Math.round(left * 10) / 10,
       delay: -(Math.random() * 9).toFixed(2),
       dur: (5.5 + Math.random() * 4.5).toFixed(2),
-      size: (6.5 + Math.random() * 6).toFixed(1),
-      filter: filters ? filters[i % filters.length] : null,
+      size: (7 + Math.random() * 6).toFixed(1),
+      img: imgs[i % imgs.length],
     });
   }
   return out;
 }
-const SEASON_FX = {
-  autumn: driftSet(100, AUTUMN_TINTS).map(p => ({ ...p, cls: 'lw-leaf' })),
-  spring: driftSet(100).map((p, i) => ({
-    ...p, cls: `lw-petal ${i % 2 ? 'flower_dandelion' : 'flower_poppy'}` })),
-};
+// built once per season rather than per redraw - the positions are random but
+// they should not reshuffle every time the card swaps realm and comes back
+const SEASON_FX = Object.fromEntries(Object.entries(SEASON_DRIFT).map(
+  ([season, set]) => [season, driftSet(set.count, set.imgs)
+    .map(p => ({ ...p, cls: `lw-drift ${set.cls}` }))]));
 
 function seasonFX(season) {
   const set = SEASON_FX[season];
   if (!set) return '';
   return set.map(p => `<i class="${p.cls}" style="left:${p.left}%; width:${
     p.size}px; height:${p.size}px; animation-delay:${p.delay}s; animation-duration:${
-    p.dur}s;${p.filter ? ` filter:${p.filter};` : ''}"></i>`).join('');
+    p.dur}s; background-image:url('${p.img}')"></i>`).join('');
 }
 
 function groundProps() {
   return GROUND_PROPS.map(p => `<i class="lw-prop ${p.kind}" style="left:${p.x}%"></i>`).join('');
+}
+
+// ── the cover the season lays over the grass ────────────────────────────────
+// EclipticSeasons' grass_block season definition swaps an overlay onto the
+// block itself through spring and summer - flowers for the six spring terms,
+// four-leaf clovers for the summer ones - and its models list six and seven
+// variants respectively, one picked per block. So these are not props to
+// stand up in the grass: each is a scatter of a few pixels drawn across a
+// whole block face, and drawn as a sprite at prop size it is just a smudge.
+// One tile per ground block, then, at the block's own size, with the variant
+// varying block to block the way the mod's own random model choice does.
+const COVER_BLOCK = 15;      // matches .lw-ground's background-size
+function groundCover(term) {
+  const season = term ? term.season : '';
+  const kind = season === 'spring' ? 'flower' : season === 'summer' ? 'clover' : '';
+  if (!kind) return '';
+  const variants = kind === 'flower' ? 6 : 7;
+  const tiles = [];
+  for (let i = 0; i < 64; i++) {
+    // deterministic rather than Math.random: the scatter should stay put when
+    // the card redraws, and only the season it belongs to should change it
+    if ((i * 7 + 3) % 3 === 0) continue;          // not every block is flowered
+    const n = kind === 'flower' ? (i * 5 + 2) % variants + 1 : (i * 5 + 2) % variants;
+    tiles.push(`<i style="left:${i * COVER_BLOCK}px; background-image:url('${
+      SEASON_ART}/${kind}_${n}.png')"></i>`);
+  }
+  return `<div class="lw-cover" aria-hidden="true">${tiles.join('')}</div>`;
 }
 
 // ── the year calendar ───────────────────────────────────────────────────────
@@ -2078,6 +2126,125 @@ const YEAR_MONTHS = [
 ];
 const YEAR_SEASON_NAMES = { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' };
 
+// ── the twenty-four solar terms ─────────────────────────────────────────────
+// The pack's seasons are EclipticSeasons, and this is its calendar rather than
+// a paraphrase of one: twenty-four named terms, two to a sub-season, so
+// SOLAR[2*i] and SOLAR[2*i+1] are the pair inside YEAR_MONTHS[i]. Fixed here
+// rather than sent down with the board, because which twenty-four exist and
+// what order they run in never changes - only which one the world is standing
+// on does, and that arrives as w.term_index.
+//
+// Everything in it comes out of the mod itself, pulled by
+// tools/extract_season_textures.py:
+//   name  - its own en_us name
+//   note  - its own one-line description of the term, verbatim
+//   grass - the colour the world's grass actually is during that term, worked
+//   leaf    out of TemperateSolarTermColors' tint and mix over vanilla's plains
+//           colours using the mod's own blend. This is why the scenery greens
+//           up through spring and browns off through autumn a term at a time
+//           instead of jumping four times a year: it is the same curve the
+//           game is drawing with.
+// The icon for term n is seasons/solar_NN.png, cut from the mod's own atlas.
+const SOLAR = [
+  { key: 'beginning_of_spring', name: 'Beginning of Spring', season: 'spring',
+    grass: '#a0b461', leaf: '#8ea744',
+    note: 'Spring coming back, all things awaken.' },
+  { key: 'rain_water', name: 'Rain Water', season: 'spring',
+    grass: '#98b85d', leaf: '#82a939',
+    note: 'Moisten with drizzle, grass loomed.' },
+  { key: 'insects_awakening', name: 'Insects Awakening', season: 'spring',
+    grass: '#91bd59', leaf: '#77ab2f',
+    note: 'Thunder rumbling, insects awaken.' },
+  { key: 'spring_equinox', name: 'Spring Equinox', season: 'spring',
+    grass: '#91bd59', leaf: '#77ab2f',
+    note: 'It\'s just as warm as it is cold. Day and night are as long as each other.' },
+  { key: 'fresh_green', name: 'Fresh Green', season: 'spring',
+    grass: '#8ebc4d', leaf: '#78ad29',
+    note: 'Swallows return, and pear blossoms wither.' },
+  { key: 'grain_rain', name: 'Grain Rain', season: 'spring',
+    grass: '#8bbb41', leaf: '#79af24',
+    note: 'It rains noiselessly, but cuckoo crows.' },
+  { key: 'beginning_of_summer', name: 'Beginning of Summer', season: 'summer',
+    grass: '#88ba35', leaf: '#7ab11f',
+    note: 'The last spring has gone and the summer is coming.' },
+  { key: 'lesser_fullness', name: 'Lesser Fullness', season: 'summer',
+    grass: '#85b929', leaf: '#77ac2b',
+    note: 'Crops are growing, maturing and waiting for the harvest.' },
+  { key: 'grain_in_ear', name: 'Grain in Ear', season: 'summer',
+    grass: '#82b81c', leaf: '#78ad28',
+    note: 'Winds graze the field. Insects chirp.' },
+  { key: 'summer_solstice', name: 'Summer Solstice', season: 'summer',
+    grass: '#82b81c', leaf: '#79ae25',
+    note: 'Oh, the longest day is coming.' },
+  { key: 'lesser_heat', name: 'Lesser Heat', season: 'summer',
+    grass: '#8fb224', leaf: '#7ab021',
+    note: 'The height of summer begins.' },
+  { key: 'greater_heat', name: 'Greater Heat', season: 'summer',
+    grass: '#9cac2c', leaf: '#99b523',
+    note: 'Sun shining, summer heat rises.' },
+  { key: 'beginning_of_autumn', name: 'Beginning of Autumn', season: 'autumn',
+    grass: '#a9a634', leaf: '#bbbf17',
+    note: 'The color of summer has faded.' },
+  { key: 'end_of_heat', name: 'End of Heat', season: 'autumn',
+    grass: '#b6a03c', leaf: '#ddc90b',
+    note: 'The summer heat has been swept away as the autumn rains are ready.' },
+  { key: 'white_dew', name: 'White Dew', season: 'autumn',
+    grass: '#c49a44', leaf: '#ffd400',
+    note: 'Cool winds graze. White dew gathers.' },
+  { key: 'autumnal_equinox', name: 'Autumnal Equinox', season: 'autumn',
+    grass: '#c49a44', leaf: '#ffd400',
+    note: 'The daytime decreases when the nighttime increases.' },
+  { key: 'cold_dew', name: 'Cold Dew', season: 'autumn',
+    grass: '#c19c4c', leaf: '#ffd400',
+    note: 'The aura of autumn is getting thicker and thicker.' },
+  { key: 'first_frost', name: 'First Frost', season: 'autumn',
+    grass: '#be9f54', leaf: '#f2c917',
+    note: 'The dew is frosting.' },
+  { key: 'beginning_of_winter', name: 'Beginning of Winter', season: 'winter',
+    grass: '#bca15d', leaf: '#e6bf2e',
+    note: 'Winds blowing, winter comes.' },
+  { key: 'light_snow', name: 'Light Snow', season: 'winter',
+    grass: '#b9a465', leaf: '#d9b545',
+    note: 'With the winter rain, the weather grows much colder.' },
+  { key: 'heavy_snow', name: 'Heavy Snow', season: 'winter',
+    grass: '#b7a66d', leaf: '#cdab5c',
+    note: 'Snow begins to fall and decorate the world.' },
+  { key: 'winter_solstice', name: 'Winter Solstice', season: 'winter',
+    grass: '#b7a66d', leaf: '#b2a265',
+    note: 'Shadows become longer. The endless long night comes.' },
+  { key: 'lesser_cold', name: 'Lesser Cold', season: 'winter',
+    grass: '#afab69', leaf: '#a6a45a',
+    note: 'Severe cold in the depth of winter.' },
+  { key: 'greater_cold', name: 'Greater Cold', season: 'winter',
+    grass: '#a8af65', leaf: '#9aa64f',
+    note: 'Winds died away, but icy coldness still.' },
+];
+const YEAR_TERMS = SOLAR.map(t => t.name);
+
+// the term the world is on, or null when the board has not said yet - the
+// same -1 convention sub_index uses for a name this build has never heard of
+function solarTerm(w) {
+  return w && w.term_index >= 0 ? SOLAR[w.term_index] || null : null;
+}
+
+// ── the calendar / map deck ─────────────────────────────────────────────────
+// Which of the two is up. No auto-rotation here, unlike the forecast's realms:
+// these are things somebody is reading rather than scenery going past, and a
+// calendar that slid away mid-count would be worse than one that never moved.
+function showDeck(panel) {
+  document.querySelectorAll('.ls-deck-tab').forEach(tab => {
+    const on = tab.dataset.panel === panel;
+    tab.classList.toggle('on', on);
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.ls-deck-panel').forEach(pane => {
+    pane.classList.toggle('on', pane.dataset.panel === panel);
+  });
+}
+function solarIcon(index) {
+  return `${SEASON_ART}/solar_${String(index).padStart(2, '0')}.png`;
+}
+
 function yearPanel(w) {
   const host = document.getElementById('ls-year');
   if (!host) return;
@@ -2090,10 +2257,12 @@ function yearPanel(w) {
   }
   host.hidden = false;
   host.dataset.season = (w.season || '').toLowerCase();
+  yearWorld = w;
 
   // the pack's own duration for the sub-season it is currently on, not a
   // guess divided evenly out of the year - see live.py's sub_days
   const perMonth = w.sub_days || Math.round(w.year_days / 12) || 8;
+  const termDays = w.term_days || Math.round(perMonth / 2) || 4;
   const today = w.season_day || 0;
 
   const months = YEAR_MONTHS.map((m, i) => {
@@ -2101,56 +2270,113 @@ function yearPanel(w) {
     const end = start + perMonth - 1;
     const state = i < w.sub_index ? 'past' : i > w.sub_index ? 'future' : 'active';
     // days elapsed in *this* stretch, from how many are left rather than from
-    // season.day counted against an assumed start - season.day's own count
-    // does not agree with which sub-season is named at its boundaries, and
-    // subSeasonDaysLeft is the number the pack actually stands behind
+    // season_day counted against an assumed start - season_day counts from
+    // the start of the year, not the start of the sub-season, and season_left
+    // is worked out from the solar term the pack actually stands on
     const dayInMonth = state === 'active'
       ? Math.max(1, perMonth - (w.season_left || 0) + 1) : 0;
-    // real date cells rather than a row of dots - a number is what makes a
-    // grid of squares read as a calendar page instead of a progress bar
-    const cells = Array.from({ length: perMonth }, (_, d) => {
-      const n = d + 1;
-      const cls = state === 'past' || (state === 'active' && n < dayInMonth) ? 'done'
-                : (state === 'active' && n === dayInMonth) ? 'today' : '';
-      return `<span class="yr-day${cls ? ` ${cls}` : ''}">${n}</span>`;
+    // each sub-season is two solar terms back to back - a month card here is
+    // really two mini calendars stacked, one per term, each keeping its own
+    // name rather than being folded into one flat row of days
+    const termGroups = [0, 1].map(ti => {
+      const index = i * 2 + ti;
+      const term = SOLAR[index];
+      const label = term ? term.name : '';
+      const current = state === 'active' && w.term_index === index;
+      // real date cells rather than a row of dots - a number is what makes a
+      // grid of squares read as a calendar page instead of a progress bar.
+      // One row per term: a solar term is the unit here, the way a week is the
+      // unit on a wall calendar, so the row should be exactly one of them.
+      const cells = Array.from({ length: termDays }, (_, d) => {
+        const n = ti * termDays + d + 1;
+        const cls = state === 'past' || (state === 'active' && n < dayInMonth) ? 'done'
+                  : (state === 'active' && n === dayInMonth) ? 'today' : '';
+        return `<span class="yr-day${cls ? ` ${cls}` : ''}">${n}</span>`;
+      }).join('');
+      return `
+        <div class="yr-term${current ? ' current' : ''}" title="${label}${
+          term ? ` — ${term.note}` : ''}">
+          <span class="yr-term-name"><i>${label}</i></span>
+          <div class="yr-days" style="grid-template-columns:repeat(${termDays},1fr)">${cells}</div>
+        </div>`;
     }).join('');
     return `
       <div class="yr-month ${state}" title="${m.label} ${YEAR_SEASON_NAMES[m.season]} · days ${start}-${end}">
         <span class="yr-m-name">${m.label}</span>
-        <div class="yr-days">${cells}</div>
+        ${termGroups}
       </div>`;
   });
 
-  const groups = ['spring', 'summer', 'autumn', 'winter'].map((season, gi) => `
-    <div class="yr-group ${season}">
-      <span class="yr-group-label">${YEAR_SEASON_NAMES[season]}</span>
-      <div class="yr-months">${months.slice(gi * 3, gi * 3 + 3).join('')}</div>
-    </div>`).join('');
+  // One season at a time by default, not all four: four abreast left every
+  // day cell and every solar term name too small to read, which is the whole
+  // reason the picker exists. It opens on the season the world is actually in,
+  // and "the whole year" is still there for anyone who wants the overview.
+  const seasons = ['spring', 'summer', 'autumn', 'winter'];
+  const live = (w.season || '').toLowerCase();
+  if (yearView === null) yearView = seasons.includes(live) ? live : 'all';
+  const shown = yearView === 'all' ? seasons : [yearView];
 
+  const groups = shown.map(season => {
+    const gi = seasons.indexOf(season);
+    return `
+    <div class="yr-group ${season}">
+      <span class="yr-group-label">${YEAR_SEASON_NAMES[season]}${
+        season === live ? ' <i class="yr-now">now</i>' : ''}</span>
+      <div class="yr-months">${months.slice(gi * 3, gi * 3 + 3).join('')}</div>
+    </div>`;
+  }).join('');
+
+  const picker = `
+    <select class="yr-pick" id="yr-pick" aria-label="Which season's calendar to show"
+            onchange="pickYearView(this.value)">
+      ${seasons.map(s => `<option value="${s}"${yearView === s ? ' selected' : ''}>${
+        YEAR_SEASON_NAMES[s]}${s === live ? ' (now)' : ''}</option>`).join('')}
+      <option value="all"${yearView === 'all' ? ' selected' : ''}>The whole year</option>
+    </select>`;
+
+  const term = solarTerm(w);
+  // the calendar keeps its own sub-season face - the mod's twenty-four solar
+  // term icons are the forecast card's business, this panel has always been
+  // the calendar and reads as one
   const leaf = w.sub_index >= 0
     ? `<img class="yr-icon" src="${WORLD_ICONS}/season_${
         String(w.sub_index).padStart(2, '0')}.png" alt="${w.sub_season}">`
-    : '';
-  const soon = w.season_left
-    ? `${w.season_left} day${w.season_left === 1 ? '' : 's'}${
-        w.next_season ? ` to ${w.next_season}` : ' left'}`
     : '';
   // in days, the way a year actually is one - not a percentage nobody thinks
   // in when they mean "day 48"
   const left = w.year_days ? Math.max(0, w.year_days - today) : null;
 
+  // Two lines and a number. Which sub-season it is, which solar term, how long
+  // until the next one and what month it falls in are all on the forecast
+  // card, and the grid below says the first two over again by which card it
+  // draws lit - so saying any of it a third time here only made the header
+  // long. What is left is the part nothing else carries: which year, which day
+  // of it, and how many are left.
   host.innerHTML = `
     <div class="yr-head">
       ${leaf}
       <div class="yr-say">
-        <b>${w.year_number ? `Year ${w.year_number}` : (w.sub_season || w.season || 'The Calendar')}</b>
-        <span>${w.sub_season || w.season}${w.season ? ` · Day ${today} of ${w.year_days}` : ''}</span>
-        <em>${soon}</em>
+        <b>${w.year_number ? `Year ${w.year_number}` : (w.season || 'The Calendar')}</b>
+        <span>${w.year_days ? `Day ${today} of ${w.year_days}` : ''}</span>
       </div>
+      ${picker}
       ${left !== null ? `<div class="yr-remain" title="${left} day${left === 1 ? '' : 's'} left in the year">
         <b>${left}</b><i>day${left === 1 ? '' : 's'} left</i></div>` : ''}
     </div>
-    <div class="yr-strip">${groups}</div>`;
+    <div class="yr-strip${yearView === 'all' ? ' all' : ''}">${groups}</div>`;
+}
+
+// which season's calendar is up. null until the first draw, which opens it on
+// whichever season the world is actually in - after that it is the reader's
+// choice and stays put across refreshes. yearWorld is the last set of readings
+// the panel was drawn from, so a change of season can redraw without waiting
+// for the next poll to come round.
+let yearView = null;
+let yearWorld = null;
+
+function pickYearView(value) {
+  yearView = value;
+  if (yearWorld) yearPanel(yearWorld);
 }
 
 // ── the forecast card's three realms ────────────────────────────────────────
@@ -2184,8 +2410,48 @@ function realmInfo(realm, w) {
   return `
     <b class="lw-realm-name">${realm.name}</b>
     <span>${realm.weather || '—'}</span>
-    <em>${realm.key === 'overworld' ? (realm.forecast || 'no forecast yet') : ''}</em>
-    ${realm.key === 'overworld' && (w.sub_season || w.season) ? `<i class="lw-say-season">${w.sub_season || w.season}</i>` : ''}`;
+    <em>${realm.key === 'overworld' ? (realm.forecast || 'no forecast yet') : ''}</em>`;
+}
+
+// ── the season, said in full ────────────────────────────────────────────────
+// The whole of where the year is, in the order a person actually reads it:
+// the term's own icon and name, the line the mod itself writes about that
+// term, then the three nested scales it sits inside - season, sub-season, and
+// how far through the term the world has got. Only the overworld has a season
+// at all, so the card stands down entirely in the other two realms rather
+// than showing a season that does not apply there.
+function seasonHero(realm, w) {
+  const term = solarTerm(w);
+  if (realm.key !== 'overworld' || !(term || w.season)) return '';
+  const season = (w.season || '').toLowerCase();
+  const pct = Math.max(0, Math.min(100, w.term_progress || 0));
+  return `
+    <div class="lw-season-card" data-season="${season}">
+      ${term ? `<img class="lw-term-icon" src="${solarIcon(w.term_index)}" alt="">` : ''}
+      <div class="lw-term-say">
+        <b>${term ? term.name : w.sub_season || w.season}</b>
+        ${term ? `<i class="lw-term-note">${term.note}</i>` : ''}
+        <div class="lw-term-scales">
+          <span class="sc season">${w.season || '—'}</span>
+          <span class="sc sub">${w.sub_season || ''}</span>
+          ${w.gregorian_month ? `<span class="sc month">${w.gregorian_month}</span>` : ''}
+        </div>
+        <div class="lw-term-bar" title="${pct}% through this solar term">
+          <i style="width:${pct}%"></i>
+        </div>
+        <!-- "day 3 of 7" already says there are four left; naming the term
+             those four lead to made the line twice as long to say it again -->
+        <span class="lw-term-left">${
+          w.day_in_term && w.term_days
+            ? `Day ${w.day_in_term} of ${w.term_days}`
+            : `Day ${w.season_day || 0} of ${w.year_days || 0}`}</span>
+      </div>
+    </div>`;
+}
+
+function nextTermName(index) {
+  const next = SOLAR[(index + 1) % SOLAR.length];
+  return next ? next.name : 'the next term';
 }
 
 // what the ground looks like in each realm - the sky and the weather effects
@@ -2218,7 +2484,7 @@ function hillBlock(extraClass) {
     </div>`;
 }
 
-function realmScenery(key) {
+function realmScenery(key, term) {
   if (key === 'aether') {
     // stacked squares narrowing toward the bottom, the same "real blocks"
     // reasoning as the tree - see the CSS for why this isn't one clipped shape.
@@ -2264,8 +2530,21 @@ function realmScenery(key) {
       ${hillBlock('h1')}${hillBlock('h2')}${hillBlock('h3')}
     </div>
     ${tree('bg2')}${tree('bg1')}${tree('')}
-    <div class="lw-ground" aria-hidden="true"></div>
+    <div class="lw-ground" aria-hidden="true">${groundCover(term)}</div>
     <div class="lw-flora" aria-hidden="true">${groundProps()}</div>`;
+}
+
+// The colour the world itself is this solar term, handed to the stylesheet.
+// The scenery's grass, leaves and tufts are the game's own grayscale textures
+// multiplied by these - which is what the game does too - so the ground and
+// the canopy shift a term at a time across the whole year instead of being
+// filtered into four fixed season looks. Only the overworld gets them: the
+// Twilight Forest and the Aether have their own colours and no season.
+function paintSeason(host, realm, term) {
+  const on = realm.key === 'overworld' && term;
+  host.style.setProperty('--grass', on ? term.grass : '');
+  host.style.setProperty('--leaf', on ? term.leaf : '');
+  host.dataset.term = on ? term.key : '';
 }
 
 function renderWorldPanel() {
@@ -2276,14 +2555,16 @@ function renderWorldPanel() {
   const realms = buildRealms(w);
   const realm = realms[realmIndex % realms.length];
   const wx = skyWeather({ weather: realm.weather });
+  const term = solarTerm(w);
 
   host.dataset.mood = skyMood(w);
   host.dataset.weather = wx;
-  // Serene Seasons is an overworld cycle - the falling leaves and snow it
+  // EclipticSeasons is an overworld cycle - the falling leaves and snow it
   // drives are wrong wherever else the card is showing, so they only run
   // when the overworld itself is the one on screen
   host.dataset.season = realm.key === 'overworld' ? (w.season || '').toLowerCase() : '';
   host.dataset.realm = realm.key;
+  paintSeason(host, realm, term);
   // continuous rather than the two-state jump cut of day/night - see
   // dayDarkness. Set as a variable rather than picked apart in CSS because
   // the curve itself only makes sense worked out from the raw tick, once,
@@ -2306,9 +2587,13 @@ function renderWorldPanel() {
   const weather = `
     <div class="lw-sun" aria-hidden="true"></div>
     <div class="lw-scene-viewport" aria-hidden="true">
-      <div class="lw-scene" id="lw-scene">${realmScenery(realm.key)}</div>
+      <div class="lw-scene" id="lw-scene">${realmScenery(realm.key, term)}</div>
     </div>
     <div class="lw-season-fx" id="lw-season-fx" aria-hidden="true">${seasonFX(host.dataset.season)}</div>
+    <!-- winter's snow is not a particle in this mod, it is a sheet drawn over
+         the world - two of the mod's own, at two depths, the same way the
+         rain sheets above work. Gated on data-season in the stylesheet. -->
+    <div class="lw-snowfall" aria-hidden="true"><i class="s1"></i><i class="s2"></i></div>
     <div class="lw-clouds" aria-hidden="true"></div>
     <div class="lw-weather" aria-hidden="true">
       <i class="lw-sheet far"></i>
@@ -2323,6 +2608,7 @@ function renderWorldPanel() {
     <div class="lw-tod" aria-hidden="true"></div>`;
 
   host.innerHTML = weather + `
+    <div class="lw-info">
     <div class="lw-heroes">
       <div class="lw-hero sky">
         <img class="lw-orb" src="${sky.src}" alt="${sky.alt}">
@@ -2337,11 +2623,13 @@ function renderWorldPanel() {
         <div class="lw-say" id="lw-realm-info">${realmInfo(realm, w)}</div>
       </div>
     </div>
+    <div class="lw-season-slot" id="lw-season-slot">${seasonHero(realm, w)}</div>
+    </div>
     <div class="lw-presence" id="lw-presence">${presenceStrip(realm, realmPlayers)}</div>
     ${realms.length > 1 ? `<div class="lw-realms">${
-      realms.map((r, i) => `<i class="lw-realm-dot${
-        i === realmIndex % realms.length ? ' on' : ''}" onclick="selectRealm(${i})"
-        title="${r.name}"></i>`).join('')
+      realms.map((r, i) => `<button class="lw-realm-btn${
+        i === realmIndex % realms.length ? ' on' : ''}" data-realm="${r.key}"
+        onclick="selectRealm(${i})">${r.name}</button>`).join('')
     }</div>` : ''}`;
 }
 
@@ -2372,7 +2660,7 @@ function goToRealm(newIndex) {
   if (presence) presence.classList.add('fading');
 
   setTimeout(() => {
-    scene.innerHTML = realmScenery(realm.key);
+    scene.innerHTML = realmScenery(realm.key, solarTerm(w));
     scene.classList.remove('out');
     scene.classList.add('in');
     // forces the 'in' starting position to actually paint before the very
@@ -2387,10 +2675,11 @@ function goToRealm(newIndex) {
 
     const wx = skyWeather({ weather: realm.weather });
     host.dataset.weather = wx;
-    // Serene Seasons is an overworld cycle - the falling leaves and snow it
+    // EclipticSeasons is an overworld cycle - the falling leaves and snow it
     // drives are wrong wherever else the card is showing
     host.dataset.season = realm.key === 'overworld' ? (w.season || '').toLowerCase() : '';
     host.dataset.realm = realm.key;
+    paintSeason(host, realm, solarTerm(w));
     // winter and summer are pure CSS, gated on data-season above and already
     // cut off by it - but autumn's leaves and spring's petals are real
     // elements dropped into the DOM once at build time, with no attribute
@@ -2403,11 +2692,15 @@ function goToRealm(newIndex) {
       info.innerHTML = realmInfo(realm, w);
       info.classList.remove('fading');
     }
+    // the season card belongs to the overworld alone, so it is rebuilt rather
+    // than relabelled - in the other two realms it renders to nothing at all
+    const slot = document.getElementById('lw-season-slot');
+    if (slot) slot.innerHTML = seasonHero(realm, w);
     if (presence) {
       presence.innerHTML = presenceStrip(realm, realmPlayers);
       presence.classList.remove('fading');
     }
-    document.querySelectorAll('.lw-realm-dot').forEach((dot, i) => {
+    document.querySelectorAll('.lw-realm-btn').forEach((dot, i) => {
       dot.classList.toggle('on', i === realmIndex);
     });
   }, REALM_SLIDE_MS);

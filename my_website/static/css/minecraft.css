@@ -989,11 +989,13 @@ body::after { display: none; }
      through and take the words with it. */
   --scrim: rgba(0, 0, 0, 0.34);
   --edge: rgba(255, 255, 255, 0.07);
-  /* The two quiet tones inside. Both are greys picked to sit on a dark panel,
-     and on the day sky they wash out, so a bright mood swaps them for warm
-     ones that hold against the amber coming through the scrim. */
-  --label: var(--mc-faint);
-  --sub:   var(--mc-dim);
+  /* The two quieter tones inside. Quieter than the headline, but not grey:
+     these sit over scenery rather than over a flat panel, and the greys they
+     used to be (--mc-faint especially) disappeared into the sky behind them
+     at every mood. Cool near-whites instead - still clearly secondary against
+     the white headline above them, still legible against a bright noon. */
+  --label: #b9c6d4;
+  --sub:   #dbe4ee;
 }
 .ls-world[hidden] { display: none; }
 
@@ -1010,8 +1012,10 @@ body::after { display: none; }
   --glow: rgba(255, 246, 190, 0.85);
   --scrim: rgba(10, 16, 22, 0.42);
   --edge: rgba(255, 244, 200, 0.2);
-  --label: var(--mc-faint);
-  --sub:   var(--mc-dim);
+  /* warmer against the amber coming through a noon scrim, and brighter still -
+     this is the mood the old greys washed out in worst */
+  --label: #e4dcc6;
+  --sub:   #fdf6e6;
 }
 /* Midnight: proper navy rather than the near-black it was, so the stars and
    the moon have something to sit in. */
@@ -1255,6 +1259,20 @@ body::after { display: none; }
   background: url('/static/minecraft/icons/tree_leaves.png');
   background-size: 22px 22px; image-rendering: pixelated;
 }
+/* ── the colour the world actually is this solar term ────────────────────────
+   Leaves and grass ship grayscale and are tinted at render time from the
+   biome's colormap; EclipticSeasons moves that colour every solar term, so
+   the overworld's canopy and ground do the same here. The grayscale master
+   multiplied by the term's own colour is the game's own operation, not an
+   approximation of it - which is why this replaces the sepia/hue-rotate
+   filters that used to stand in for autumn and spring. --leaf and --grass are
+   set per term by paintSeason(); with no term set the pre-tinted green
+   textures above are left exactly as they are. */
+.ls-world[data-realm="overworld"] .lw-canopy {
+  background-image: url('/static/minecraft/icons/tree_leaves_gray.png');
+  background-color: var(--leaf, #77ab2f);
+  background-blend-mode: multiply;
+}
 .lw-canopy.lower { bottom: 44px; width: 128px; height: 52px; }
 .lw-canopy.upper { bottom: 84px; width: 74px; height: 48px; }
 .ls-world[data-weather="storm"] .lw-tree { filter: brightness(.55); }
@@ -1277,40 +1295,69 @@ body::after { display: none; }
 .lw-prop.blade            { background-image: url('/static/minecraft/icons/grass_blade.png'); }
 .lw-prop.flower_poppy     { background-image: url('/static/minecraft/icons/flower_poppy.png'); }
 .lw-prop.flower_dandelion { background-image: url('/static/minecraft/icons/flower_dandelion.png'); }
+/* The mod's own seasonal cover, one tile per ground block - see groundCover()
+   in the script. These are block-face overlays, a scatter of a few pixels
+   across a whole 16x16, so they are laid over the grass at the block's own
+   size rather than shrunk into a prop, which only ever rendered as a smudge.
+   Already coloured in the mod's files, so unlike the grass they are not
+   tinted. Sits on the top face of the block, not down its dirt side. */
+.lw-cover { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.lw-cover i {
+  position: absolute; top: 0; width: 15px; height: 15px;
+  background-repeat: no-repeat; background-size: 15px 15px;
+  image-rendering: pixelated;
+}
+
+/* the ground and its tufts follow the same per-term colour as the canopy - the
+   same grayscale-times-tint the game does. The side face is dirt below a
+   grass fringe, so only the fringe should take the tint: the grayscale master
+   keeps the dirt where it is and the multiply lands on the green rows. */
+.ls-world[data-realm="overworld"] .lw-ground {
+  background-image: url('/static/minecraft/icons/grass_side_gray.png');
+  background-color: var(--grass, #91bd59);
+  background-blend-mode: multiply;
+}
+.ls-world[data-realm="overworld"] .lw-prop.blade {
+  background-image: url('/static/minecraft/icons/grass_blade_gray.png');
+  background-color: var(--grass, #91bd59);
+  background-blend-mode: multiply;
+}
+.ls-world[data-realm="overworld"] .lw-hill .hb.top {
+  background-image: url('/static/minecraft/icons/grass_top_gray.png');
+  background-color: var(--grass, #91bd59);
+  background-blend-mode: multiply;
+}
 .ls-world[data-weather="storm"] .lw-ground,
 .ls-world[data-weather="storm"] .lw-flora { filter: brightness(.55); }
 
-/* winter caps the same block in snow rather than green - the real texture
-   again, not a white overlay drawn over the summer one - and nothing is
-   blooming under it, so the scattered flowers and tufts stand down instead
-   of looking planted in a snowbank */
-.ls-world[data-season="winter"] .lw-ground {
-  background-image: url('/static/minecraft/icons/grass_snow_side.png');
+/* Winter is the one season the tint above cannot carry on its own: the world
+   is not a colder green under snow, it is under snow. Both of these are
+   EclipticSeasons' own textures - the snow layer it lays over a grass block,
+   and the one it lays over leaves - drawn on top of the tinted block rather
+   than replacing it, which is how the mod stacks them too. Nothing is
+   blooming under it either, so the ground cover stands down. */
+.ls-world[data-season="winter"] .lw-ground::after,
+.ls-world[data-season="winter"] .lw-canopy::after {
+  content: ''; position: absolute; inset: 0;
+  image-rendering: pixelated; pointer-events: none;
+}
+.ls-world[data-season="winter"] .lw-ground { position: absolute; }
+.ls-world[data-season="winter"] .lw-ground::after {
+  background: url('/static/minecraft/seasons/snow_overlay.png');
+  background-size: 15px 15px;
+  /* the snow layer sits on top of the block, not down its face */
+  bottom: auto; height: 6px;
+}
+.ls-world[data-season="winter"] .lw-canopy::after {
+  background: url('/static/minecraft/seasons/snow_leaves.png');
+  background-size: 22px 22px;
 }
 .ls-world[data-season="winter"] .lw-flora { display: none; }
-/* and the canopy above it goes with it - the same leaves, just bleached the
-   way frost does it rather than swapped for a separate white texture */
-.ls-world[data-season="winter"] .lw-canopy {
-  filter: grayscale(1) brightness(2.1) contrast(.92);
-}
 
-/* autumn turns the canopy, the ground and the grass tufts all sepia rather
-   than swapping any of them for a separate brown texture - the leaves
-   overhead and the ones that have already come down and covered the grass
-   are the same colour for the same reason */
-.ls-world[data-season="autumn"] .lw-canopy,
-.ls-world[data-season="autumn"] .lw-ground,
-.ls-world[data-season="autumn"] .lw-prop.blade {
-  filter: sepia(1) saturate(2.6) brightness(.82) hue-rotate(-8deg);
-}
-
-/* spring turns the same canopy to blossom instead - the ground itself is
-   already right for spring and stays green, only the tree overhead changes,
-   the way a real flowering tree is the one thing that visibly changes while
-   the grass under it does not */
-.ls-world[data-season="spring"] .lw-canopy {
-  filter: hue-rotate(245deg) saturate(1.5) brightness(1.35);
-}
+/* Autumn and spring need no filter any more: --grass and --leaf already carry
+   the mod's own colour for every one of the twenty-four terms, so the canopy
+   turning gold through White Dew and greening back through Fresh Green is the
+   real curve rather than a season-wide sepia standing in for it. */
 
 /* ── the hills behind everything else ────────────────────────────────────────
    Not a smooth dome - there is no such block in this game. A hill here is
@@ -1351,9 +1398,9 @@ body::after { display: none; }
 .lw-hill.h3 .hb.b3  { display: none; }
 .lw-hill.h3 .hb.top { bottom: 19px; width: 46px;  height: 10px; }
 
+/* the hilltops already take --grass with everything else, so only winter still
+   needs a hand here - snow over the horizon is white, not tinted grass */
 .ls-world[data-season="winter"] .lw-hill { filter: grayscale(1) brightness(1.7); }
-.ls-world[data-season="autumn"] .lw-hill { filter: sepia(1) saturate(1.8) brightness(.85); }
-.ls-world[data-season="spring"] .lw-hill { filter: saturate(1.3) brightness(1.08); }
 
 /* two more of the same tree, smaller and fainter further back - the same
    "a real forest, not one planted specimen" reasoning the Twilight Forest
@@ -1381,25 +1428,8 @@ body::after { display: none; }
    elements built off the game's own textures instead - see .lw-season-fx
    and seasonFX() in the script - so each one can fall, sway and spin on its
    own path rather than all sharing one tiled drift. */
-.ls-world[data-season="winter"]::after {
-  opacity: .9;
-  background-image:
-    radial-gradient(3.2px 3.2px at 12% 8%,  #fff, transparent),
-    radial-gradient(2px 2px     at 38% 22%, #e8f4ff, transparent),
-    radial-gradient(3.6px 3.6px at 63% 6%,  #fff, transparent),
-    radial-gradient(2.2px 2.2px at 84% 30%, #dbeaff, transparent),
-    radial-gradient(3px 3px     at 26% 54%, #fff, transparent),
-    radial-gradient(2px 2px     at 72% 66%, #e8f4ff, transparent),
-    radial-gradient(2.8px 2.8px at 50% 38%, #fff, transparent),
-    radial-gradient(1.8px 1.8px at 6% 78%,  #dbeaff, transparent),
-    radial-gradient(3.4px 3.4px at 92% 84%, #fff, transparent),
-    radial-gradient(2.4px 2.4px at 45% 92%, #fff, transparent),
-    radial-gradient(2px 2px     at 15% 40%, #e8f4ff, transparent),
-    radial-gradient(3px 3px     at 96% 50%, #fff, transparent);
-  background-size: 130px 110px;
-  filter: blur(.2px);
-  animation: lw-fall 6.5s linear infinite;
-}
+/* winter's snow used to be a dozen drawn dots on a loop here; it is the mod's
+   own snowfall sheets now - see .lw-snowfall - so this only keeps the haze */
 /* the air itself catches the light, not just the sun's own corner glow -
    a faint frost haze the snow falls through rather than a bare card behind it */
 .ls-world[data-season="winter"] { --winter-haze: rgba(210, 230, 255, .10); }
@@ -1436,31 +1466,32 @@ body::after { display: none; }
   to   { background-position: 22px -14px, -18px 10px, 14px 12px, -12px -10px, 0 0, 0 0; }
 }
 
-/* ── the leaves and the petals ───────────────────────────────────────────────
-   Real sprites, each on its own fall so the drift never looks like one tiled
-   sheet repeating - see seasonFX() in the script for the numbers each one is
-   given. Leaves borrow the canopy's own texture and just hue-rotate it three
-   different ways; petals are the ground's own two flowers, come loose. */
+/* ── what the season puts in the air ─────────────────────────────────────────
+   EclipticSeasons' own particles, each on its own fall so the drift never
+   looks like one tiled sheet repeating - see seasonFX() in the script for the
+   numbers each one is given, and tools/extract_season_textures.py for where
+   the sprites come from. Autumn drops the mod's sixteen fallen leaves, spring
+   its flying blossoms and butterflies, summer its fireflies. None of them is a
+   vanilla texture hue-rotated into position: the mod drew all of them. */
 .lw-season-fx {
   position: absolute; inset: 0; z-index: 4; pointer-events: none;
   overflow: hidden;
 }
-.lw-leaf, .lw-petal {
+.lw-drift {
   position: absolute; top: -8%; width: 9px; height: 9px;
   background-repeat: no-repeat; background-size: contain;
   image-rendering: pixelated;
   animation-timing-function: linear; animation-iteration-count: infinite;
 }
-.lw-leaf {
-  background-image: url('/static/minecraft/icons/tree_leaves.png');
-  animation-name: lw-leaf-fall;
+.lw-drift.leaf  { animation-name: lw-leaf-fall; }
+.lw-drift.bloom { animation-name: lw-petal-fall; }
+/* fireflies do not fall - they wander up out of the grass and blink out, so
+   they run their own drift and carry their own light with them */
+.lw-drift.glow {
+  top: auto; bottom: -6%;
+  animation-name: lw-firefly-rise;
+  filter: drop-shadow(0 0 4px rgba(190, 255, 120, 0.85));
 }
-.lw-petal {
-  width: 7px; height: 7px;
-  animation-name: lw-petal-fall;
-}
-.lw-petal.flower_poppy     { background-image: url('/static/minecraft/icons/flower_poppy.png'); }
-.lw-petal.flower_dandelion { background-image: url('/static/minecraft/icons/flower_dandelion.png'); }
 
 @keyframes lw-leaf-fall {
   0%   { top: -8%;  transform: translateX(0)     rotate(0deg);   opacity: 0; }
@@ -1477,6 +1508,44 @@ body::after { display: none; }
   65%  { transform: translateX(8px)   rotate(-220deg); }
   90%  { opacity: .8; }
   100% { top: 108%; transform: translateX(-5px)  rotate(-320deg); opacity: 0; }
+}
+@keyframes lw-firefly-rise {
+  0%   { bottom: -6%; transform: translateX(0);    opacity: 0; }
+  15%  { opacity: .95; }
+  40%  { transform: translateX(9px); opacity: .35; }
+  55%  { opacity: .9; }
+  75%  { transform: translateX(-7px); opacity: .3; }
+  100% { bottom: 82%; transform: translateX(4px);  opacity: 0; }
+}
+
+/* ── winter's snowfall ───────────────────────────────────────────────────────
+   The mod does not spawn a snow particle: it draws snowfall as a sheet over
+   the world, and these are the two sheets it draws - thin behind, middle in
+   front - scrolling at different speeds so the fall has depth. Same idea as
+   the rain sheets, same source, and only ever visible in winter. */
+.lw-snowfall {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  overflow: hidden; opacity: 0; transition: opacity .4s ease;
+}
+.ls-world[data-season="winter"] .lw-snowfall { opacity: 1; }
+.lw-snowfall i {
+  position: absolute; inset: -20% 0 -20%;
+  background-repeat: repeat; image-rendering: pixelated;
+  animation: lw-snow-drop linear infinite;
+}
+.lw-snowfall .s1 {
+  background-image: url('/static/minecraft/seasons/snow_thin.png');
+  background-size: 96px 220px; opacity: .55;
+  animation-duration: 5.5s;
+}
+.lw-snowfall .s2 {
+  background-image: url('/static/minecraft/seasons/snow_middle.png');
+  background-size: 150px 300px; opacity: .8;
+  animation-duration: 3.2s;
+}
+@keyframes lw-snow-drop {
+  from { transform: translate3d(0, -18%, 0); }
+  to   { transform: translate3d(-8px, 18%, 0); }
 }
 /* The bloom, on the same seven seconds as the bolt and a beat wider than it,
    so the sky is already lit when the shape appears and stays lit a moment
@@ -1578,6 +1647,77 @@ body::after { display: none; }
   filter: drop-shadow(0 0 9px var(--glow));
 }
 
+/* ── the solar term, said in full ────────────────────────────────────────────
+   The overworld's own card, under the day and the weather: which of the mod's
+   twenty-four terms the world is standing on, in its own icon and its own
+   words, then the scales it nests inside - season, sub-season, month - and how
+   far through the term it has got. The other two realms have no season, so the
+   slot renders to nothing there rather than showing one that does not apply. */
+/* the day and the weather stack on the left, the season stands beside them
+   rather than under them - stacked, it pushed the whole card taller than the
+   scenery behind it had any reason to be */
+.lw-info {
+  position: relative; z-index: 5;
+  display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap;
+}
+.lw-info .lw-heroes { z-index: auto; }
+.lw-season-slot { min-width: 0; flex: 1 1 210px; max-width: 260px; }
+.lw-season-card {
+  display: flex; align-items: flex-start; gap: 10px; min-width: 0;
+  padding: 9px 11px;
+  background: linear-gradient(rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.34)), var(--scrim);
+  border: 2px solid var(--edge);
+  border-left: 2px solid var(--sc, var(--mc-gold));
+  box-shadow: 0 0 12px -4px var(--sc, var(--mc-gold));
+}
+/* the mod's own colour for each season - dark green, red, gold and blue are
+   the four it files its own solar terms under, lifted toward the readable end
+   for a dark panel rather than used at chat-colour value */
+.lw-season-card[data-season="spring"] { --sc: #8fdc6a; }
+.lw-season-card[data-season="summer"] { --sc: #ff8b6a; }
+.lw-season-card[data-season="autumn"] { --sc: #ffb43a; }
+.lw-season-card[data-season="winter"] { --sc: #8fb4ff; }
+
+.lw-term-icon {
+  flex: none; width: 38px; height: 38px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--sc) 55%, transparent));
+}
+.lw-term-say { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.lw-term-say > b {
+  font-size: 16px; color: var(--sc, var(--mc-text)); line-height: 1.15;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+}
+/* the mod's own line about the term - the one piece of this panel that is
+   writing rather than a reading, so it gets to look like writing */
+.lw-term-note {
+  font-style: italic; font-size: 12px; line-height: 1.4;
+  color: #f2f6fb;
+}
+.lw-term-scales { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.lw-term-scales .sc {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 7px; color: #f2f6fb;
+  background: rgba(6, 9, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.lw-term-scales .sc:empty { display: none; }
+.lw-term-scales .sc.season {
+  color: #05070a; background: var(--sc); border-color: transparent; font-weight: 700;
+}
+.lw-term-bar {
+  height: 5px; margin-top: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lw-term-bar i {
+  display: block; height: 100%;
+  background: var(--sc, var(--mc-gold));
+  box-shadow: 0 0 6px -1px var(--sc, var(--mc-gold));
+}
+.lw-term-left { font-size: 11.5px; font-weight: 600; color: #e8eef6; }
+
 /* a blocky little glyph rather than a photo of a sky, coloured by whichever
    of clear/rain/storm is actually happening */
 .lw-wicon {
@@ -1594,8 +1734,8 @@ body::after { display: none; }
   text-shadow: 2px 2px #000;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.lw-say span { font-size: 13px; color: var(--sub); }
-.lw-say em    { font-style: normal; font-size: 12px; color: var(--label); }
+.lw-say span { font-size: 14.5px; color: var(--sub); }
+.lw-say em    { font-style: normal; font-size: 13px; color: var(--label); }
 .lw-say em:empty { display: none; }
 /* the overworld's own forecast countdown - the one reading here that only
    ever means anything for the overworld, since neither Twilight Forest nor
@@ -1648,20 +1788,40 @@ body::after { display: none; }
 /* the dots under the heroes, one per realm the card is cycling through -
    both what says it is a carousel and how to drive it yourself, the same
    dots a phone's own image gallery uses for exactly this */
+/* Which realm the card is showing, and the way to change it. These were six
+   faint pixels at 18% white over a moving sky: not visible against the
+   scenery, and nothing about them said they could be clicked or what they
+   would do. Named buttons instead - each in its own realm's colour, the
+   current one filled in - so the control says what it is and where it goes. */
 .lw-realms {
   position: relative; z-index: 5;
-  display: flex; justify-content: center; gap: 5px; margin-top: 8px;
+  display: flex; justify-content: center; flex-wrap: wrap;
+  gap: 6px; margin-top: 9px;
 }
-.lw-realm-dot {
-  width: 6px; height: 6px; background: rgba(255, 255, 255, 0.18);
-  transition: background .3s ease, transform .15s ease;
-  cursor: pointer;
-  /* six pixels is a fingertip's worth of nothing to aim at - the hit target
-     is bigger than the dot it is drawn around */
-  padding: 5px; margin: -5px; background-clip: content-box;
+.lw-realm-btn {
+  font: inherit; font-size: 11.5px; font-weight: 600; letter-spacing: .03em;
+  padding: 5px 12px; cursor: pointer; white-space: nowrap;
+  color: #f2f6fb;
+  /* a solid dark plate under it, not the sky - over a bright noon or a storm
+     the label has to stay readable either way */
+  background: rgba(6, 9, 14, 0.82);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
-.lw-realm-dot:hover { transform: scale(1.3); }
-.lw-realm-dot.on { background: var(--wx); }
+.lw-realm-btn:hover {
+  border-color: var(--rb, #fff);
+  background: rgba(6, 9, 14, 0.94);
+}
+.lw-realm-btn:focus-visible { outline: 2px solid var(--rb, #fff); outline-offset: 2px; }
+.lw-realm-btn.on {
+  color: #05070a; background: var(--rb, #fff);
+  border-color: var(--rb, #fff);
+  box-shadow: 0 0 12px -3px var(--rb, #fff);
+}
+/* each realm's own colour, the same three the card names them in */
+.lw-realm-btn[data-realm="overworld"] { --rb: #7fe07f; }
+.lw-realm-btn[data-realm="twilight"]  { --rb: #b57bff; }
+.lw-realm-btn[data-realm="aether"]    { --rb: #8fd8ff; }
 
 /* the scene swapping realm: eased sideways out, swapped once offscreen, then
    eased back in - see goToRealm. Everything else in the card (the sun, the
@@ -1704,10 +1864,14 @@ body::after { display: none; }
   background:
     radial-gradient(60% 70% at 80% 100%, rgba(160, 210, 255, 0.5), transparent 65%),
     linear-gradient(165deg, #eef7ff 0%, #d3ecfb 55%, #b9def2 100%);
-  --scrim: rgba(12, 24, 36, 0.58);
+  /* The cards here are dark plates like everywhere else, so the text on them
+     is light like everywhere else. These used to be slate blues - a dark-text
+     palette for a light sky - which is right for text ON the sky and wrong
+     for text on the card in front of it, and left the Aether the one realm
+     whose readings could not be read. The scrim goes deeper instead, which is
+     what actually holds light text over a sky this pale. */
+  --scrim: rgba(8, 16, 26, 0.74);
   --edge: rgba(255, 255, 255, 0.5);
-  --label: #4a6478;
-  --sub:   #38536a;
 }
 .ls-world[data-realm="aether"] .lw-clouds { opacity: .5; }
 .ls-world[data-realm="aether"][data-weather="rain"] .lw-clouds,
@@ -1936,16 +2100,8 @@ body::after { display: none; }
   .lw-drip { animation: none; opacity: .8; top: 60px; }
 }
 
-/* the season, folded into the weather card rather than a tile of its own -
-   still its own line and its own colour, so it stays noticeable rather than
-   disappearing into the weather reading above it */
-.lw-say-season {
-  display: inline-flex; margin-top: 4px; width: fit-content;
-  padding: 2px 7px; font-style: normal; font-size: 12px; font-weight: 600;
-  letter-spacing: .03em; color: var(--season);
-  background: color-mix(in srgb, var(--season) 20%, transparent);
-  border: 1px solid var(--season);
-}
+/* the one-line season badge that used to hang off the weather card is gone -
+   the solar term has a card of its own beside it now, see .lw-season-card */
 
 @media (prefers-reduced-motion: reduce) {
   .ls-world::before, .ls-world::after,
@@ -1991,14 +2147,19 @@ body::after { display: none; }
   image-rendering: pixelated;
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
 }
-.yr-say { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+/* two lines, both big enough to read across the room - the detail that used to
+   crowd in under them is on the forecast card and in the grid below */
+.yr-say { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .yr-say b {
-  font-size: 20px; line-height: 1.15; color: var(--mc-text);
+  font-size: 26px; line-height: 1.1; color: var(--mc-text);
   text-shadow: 2px 2px #000;
 }
-.yr-say span { font-size: 13px; color: var(--mc-dim); }
-.yr-say em    { font-style: normal; font-size: 12px; color: var(--mc-faint); }
-.yr-say em:empty { display: none; }
+.yr-say span { font-size: 15px; color: #dbe4ee; }
+.yr-say span:empty { display: none; }
+/* the solar term underneath the sub-season - its own line so "Beginning of
+   Autumn" reads as a name, not a suffix tacked onto the season line above it */
+.yr-term-now { font-style: normal; font-size: 11px; color: var(--mc-gold); opacity: .85; }
+.yr-term-now b { color: var(--mc-faint); font-weight: 400; opacity: .7; }
 /* how much of the year is left, in days rather than a percentage - nobody
    thinks "63% through the year" when they mean day 61 of 96 */
 .yr-remain {
@@ -2010,13 +2171,55 @@ body::after { display: none; }
   text-shadow: 2px 2px #000;
 }
 .yr-remain i {
-  font-style: normal; font-size: 11px; color: var(--mc-faint);
+  font-style: normal; font-size: 11px; color: #b9c6d4;
   letter-spacing: .04em;
 }
 
+/* One season at a time, filling the panel - the picker in the header chooses
+   which, and it opens on the one the world is actually in. Four abreast is
+   still available as "the whole year", and that is the only case that needs
+   columns at all: it drops from four to two to one as the room runs out.
+   Sized against the deck's own width rather than the viewport's, since the
+   panel is a good 250px narrower than the window it sits in - a viewport
+   breakpoint put four columns in a space that only fitted two and every track
+   grew to its content instead, which is the overflow this section was rebuilt
+   to stop. minmax(0, 1fr) for the same reason .ls-year needs min-width: 0: an
+   auto minimum is a track that refuses to shrink. */
 .yr-strip {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: minmax(0, 1fr);
   gap: 8px; margin-top: 10px;
+}
+@container (min-width: 660px) {
+  .yr-strip.all { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (min-width: 1300px) {
+  .yr-strip.all { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* with the whole panel to itself, a season's own cells get big enough to
+   actually read the numbers and the term names off */
+.yr-strip:not(.all) .yr-day { font-size: 12px; }
+.yr-strip:not(.all) .yr-term-name { font-size: 10px; }
+.yr-strip:not(.all) .yr-m-name { font-size: 12px; }
+.yr-strip:not(.all) .yr-group-label { font-size: 12px; }
+
+/* the picker itself - a real select, styled to match the panel rather than
+   left as the browser's own chrome sitting on a Minecraft console */
+.yr-pick {
+  margin-left: auto; flex: none;
+  font: inherit; font-size: 11px; letter-spacing: .03em;
+  padding: 4px 8px; cursor: pointer;
+  color: var(--mc-text); background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.yr-pick:hover { border-color: var(--season); }
+.yr-pick:focus-visible { outline: 2px solid var(--season); outline-offset: 1px; }
+/* the season the world is really in, marked in the header of its own card so
+   the picker's "(now)" is not the only place it is said */
+.yr-now {
+  font-style: normal; font-size: 9px; letter-spacing: .06em;
+  margin-left: 6px; padding: 1px 5px;
+  color: #05070a; background: var(--gc); font-weight: 700;
 }
 .yr-group {
   display: flex; flex-direction: column; gap: 6px;
@@ -2039,8 +2242,10 @@ body::after { display: none; }
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.yr-month.past    { opacity: .58; }
-.yr-month.future  { opacity: .48; }
+/* dimmed enough to say "not now", not so dim the term names in them stop
+   being readable - the whole point of the picker is being able to read them */
+.yr-month.past    { opacity: .82; }
+.yr-month.future  { opacity: .76; }
 .yr-month.active  {
   opacity: 1;
   background: rgba(255, 255, 255, 0.05);
@@ -2048,16 +2253,42 @@ body::after { display: none; }
 }
 .yr-m-name {
   display: block; font-size: 10px; letter-spacing: .05em;
-  color: var(--mc-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #dbe4ee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .yr-month.active .yr-m-name { color: var(--mc-text); font-weight: 600; }
 
-/* real numbered date cells, laid out four to a row like a page off a real
+/* Each sub-season is two solar terms, and each term gets its own row - the
+   term is the unit of this calendar the way a week is the unit of a wall one,
+   so a row is exactly one of them (the script sets the column count from the
+   pack's own lastingDaysOfEachTerm rather than assuming seven). The name and
+   the mod's own icon are what make "day 3 of 14" also readable as "day 3 of
+   Beginning of Autumn". */
+.yr-term { margin-top: 6px; }
+.yr-term-name {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 8.5px; letter-spacing: .02em;
+  text-transform: uppercase; color: #a9b8c9; opacity: .95;
+  margin-bottom: 3px;
+}
+.yr-term-name i {
+  font-style: normal; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.yr-term-icon {
+  flex: none; width: 13px; height: 13px;
+  image-rendering: pixelated; opacity: .8;
+}
+.yr-term.current .yr-term-name { color: var(--gc); opacity: 1; font-weight: 700; }
+.yr-term.current .yr-term-icon {
+  opacity: 1; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gc) 60%, transparent));
+}
+
+/* real numbered date cells, one row per solar term like a page off a real
    calendar - a grid of squares with numbers in them reads as one; a row of
    dots only ever reads as a progress bar */
 .yr-days {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 2px; margin-top: 5px;
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
 }
 .yr-day {
   display: flex; align-items: center; justify-content: center;
@@ -2066,7 +2297,7 @@ body::after { display: none; }
      column width at all and every cell rendered twice as tall as it was
      wide instead of square */
   aspect-ratio: 1;
-  font-size: 9px; font-weight: 600; color: var(--mc-faint);
+  font-size: 10px; font-weight: 600; color: #c6d2e0;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -2085,12 +2316,14 @@ body::after { display: none; }
   box-shadow: 0 0 0 2px var(--mc-panel), 0 0 0 3px var(--mc-gold), 0 0 6px 1px var(--mc-gold);
 }
 
-@media (max-width: 720px) {
-  .yr-strip { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-  .yr-strip { grid-template-columns: 1fr; }
+/* how many seasons sit abreast is the container's call now - see .yr-strip.
+   These are the pieces that still answer to the window itself. */
+@media (max-width: 680px) {
   .yr-remain b { font-size: 19px; }
+}
+@media (max-width: 520px) {
+  .yr-day { font-size: 8px; }
+  .yr-term-name { font-size: 7.5px; }
 }
 
 .ls-bar {
@@ -4237,13 +4470,45 @@ body::after { display: none; }
 /* the calendar and the map, side by side at the very top - the map matches
    the calendar's own height (stretch, not start) rather than the forecast
    row's short one, which is what the map used to get folded down to fit */
-.ls-calendar-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 8px; margin: 8px 10px 0;
-  align-items: stretch;
+/* ── the calendar and the map, one at a time ─────────────────────────────────
+   These used to share a row, and neither fitted in it: the calendar is a year
+   of twenty-four solar terms and wants every pixel of width it can get, the
+   map wants to be square, and the pair of them together overflowed the row
+   into each other. Cycled instead - the same idea as the forecast's realms,
+   with named tabs rather than dots because these are two different things to
+   read rather than three views of one. Whichever is showing gets the full
+   width, and nothing has to be squeezed into half of it. */
+.ls-deck { margin: 8px 10px 0; min-width: 0; }
+.ls-deck-tabs { display: flex; gap: 4px; margin-bottom: -2px; }
+.ls-deck-tab {
+  font: inherit; font-size: 11px; letter-spacing: .04em;
+  padding: 5px 12px; cursor: pointer;
+  color: var(--mc-dim); background: rgba(0, 0, 0, 0.35);
+  border: 2px solid var(--mc-shade); border-bottom: 0;
 }
-.ls-calendar-row .ls-year { margin: 0; }
+.ls-deck-tab:hover { color: var(--mc-text); }
+.ls-deck-tab.on {
+  color: var(--mc-text); font-weight: 600;
+  background: var(--mc-panel);
+  box-shadow: inset 0 2px 0 var(--mc-gold);
+}
+/* the calendar inside sizes its season columns against this, not against the
+   window - see .yr-strip's @container rules */
+.ls-deck-body { position: relative; min-width: 0; container-type: inline-size; }
+/* display rather than opacity: the hidden panel should take no height at all,
+   so the row is as tall as whichever one is up. The map's iframe keeps its
+   load either way - display:none does not unload it, so switching back does
+   not re-fetch the tiles. */
+.ls-deck-panel { display: none; min-width: 0; }
+.ls-deck-panel.on { display: block; animation: ls-deck-in .28s ease both; }
+@keyframes ls-deck-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+.ls-deck .ls-year { margin: 0; }
+/* the map gets a real size now that it has the row to itself, rather than the
+   280px column it used to be folded into */
+.ls-deck .ls-map-mini { height: 420px; }
 
 /* the live map, still a glance rather than a section somebody has to go
    open - full screen is one click away for when a glance is not enough */
@@ -4462,10 +4727,9 @@ body::after { display: none; }
 /* below this the two panels stack, and the grid gets the full width back */
 @media (max-width: 900px) {
   .ls-top { grid-template-columns: 1fr; }
-  .ls-calendar-row { grid-template-columns: 1fr; }
-  .ls-map-mini { height: 260px; }
+  .ls-deck .ls-map-mini { height: 300px; }
 }
 @media (max-width: 520px) {
   .ls-top { margin: 8px 7px 0; }
-  .ls-calendar-row { margin: 8px 7px 0; }
+  .ls-deck { margin: 8px 7px 0; }
 }
