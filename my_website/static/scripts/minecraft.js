@@ -2087,29 +2087,83 @@ function groundProps() {
 }
 
 // ── the cover the season lays over the grass ────────────────────────────────
-// EclipticSeasons' grass_block season definition swaps an overlay onto the
-// block itself through spring and summer - flowers for the six spring terms,
-// four-leaf clovers for the summer ones - and its models list six and seven
-// variants respectively, one picked per block. So these are not props to
-// stand up in the grass: each is a scatter of a few pixels drawn across a
-// whole block face, and drawn as a sprite at prop size it is just a smudge.
-// One tile per ground block, then, at the block's own size, with the variant
-// varying block to block the way the mod's own random model choice does.
+// EclipticSeasons swaps an overlay model onto the grass block itself, and its
+// own season_definitions/grass_block.json is the schedule for it. Two things
+// in that file this used to get wrong, both by reading the season instead of
+// the solar term:
+//
+//   * the boundaries are not the season's. Clovers do not stop when summer
+//     does - they run one term into autumn, through Beginning of Autumn - and
+//     Beginning of Summer is a transition term listing both models at once,
+//     flowers still going out as the clovers come in.
+//   * the density. Every one of those variant lists ends in an air model with
+//     an enormous weight: six flowers against air weighted 224, seven clovers
+//     against air weighted 504. So a flower lands on about one block in forty
+//     and a clover on about one in seventy. This drew one on two blocks in
+//     three, which is not a scattering of flowers, it is a meadow.
+//
+// The scatter itself is one tile per ground block at the block's own size,
+// because these are not props standing up in the grass: each is a few pixels
+// drawn across a whole block face, and shrunk to prop size it is a smudge.
 const COVER_BLOCK = 15;      // matches .lw-ground's background-size
+const COVER_TILES = 64;      // enough blocks to cross the widest card
+
+// straight out of the mod's own variant lists: how many models, and the
+// weight of the air that is drawn instead of them
+const COVER_KINDS = {
+  flower: { variants: 6, first: 1, air: 224 },
+  clover: { variants: 7, first: 0, air: 504 },
+};
+
+// Those weights are a per-block chance, and a player standing in the world
+// sees thousands of blocks at once - a couple of hundred clovers in view at
+// any moment. This strip is sixty-four blocks. Copied literally onto it the
+// odds draw nothing at all through most of summer, which is not what the mod
+// looks like either; what has to carry across is the impression, and the
+// proportion between the two covers - a clover about half as likely as a
+// flower. So the mod's odds keep their ratio and are lifted by this much to
+// stand in for the ground a player can actually see at once. Set it to 1 for
+// the mod's literal per-block chance.
+const COVER_DENSITY = 5;
+
+// grass_block.json's slices, by solar term ordinal. Beginning of Summer is
+// the one term holding both, which is what its transition_models means.
+function coverKinds(term) {
+  if (!term) return [];
+  const n = SOLAR.findIndex(t => t === term || t.key === term.key);
+  if (n < 0) return [];
+  if (n <= 5) return ['flower'];                       // the six spring terms
+  if (n === 6) return ['flower', 'clover'];            // beginning_of_summer
+  if (n <= 12) return ['clover'];                      // through beginning_of_autumn
+  return [];                                           // end_of_heat onward: bare
+}
+
+// A hash rather than Math.random, so the scatter stays put when the card
+// redraws and only the term it belongs to moves it. Mixed well enough that
+// the one-in-forty test does not fall into a stripe the way a modulo on the
+// index does.
+function coverNoise(i, salt) {
+  let h = (i + 1) * 374761393 + salt * 668265263;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
 function groundCover(term) {
-  const season = term ? term.season : '';
-  const kind = season === 'spring' ? 'flower' : season === 'summer' ? 'clover' : '';
-  if (!kind) return '';
-  const variants = kind === 'flower' ? 6 : 7;
+  const kinds = coverKinds(term);
+  if (!kinds.length) return '';
   const tiles = [];
-  for (let i = 0; i < 64; i++) {
-    // deterministic rather than Math.random: the scatter should stay put when
-    // the card redraws, and only the season it belongs to should change it
-    if ((i * 7 + 3) % 3 === 0) continue;          // not every block is flowered
-    const n = kind === 'flower' ? (i * 5 + 2) % variants + 1 : (i * 5 + 2) % variants;
-    tiles.push(`<i style="left:${i * COVER_BLOCK}px; background-image:url('${
-      SEASON_ART}/${kind}_${n}.png')"></i>`);
+  for (const [salt, kind] of kinds.entries()) {
+    const { variants, first, air } = COVER_KINDS[kind];
+    // the mod's own odds: variants against variants + air - see COVER_DENSITY
+    const odds = Math.min(1, variants / (variants + air) * COVER_DENSITY);
+    for (let i = 0; i < COVER_TILES; i++) {
+      if (coverNoise(i, salt + 1) >= odds) continue;
+      const n = first + Math.floor(coverNoise(i, salt + 9) * variants);
+      tiles.push(`<i style="left:${i * COVER_BLOCK}px; background-image:url('${
+        SEASON_ART}/${kind}_${n}.png')"></i>`);
+    }
   }
+  if (!tiles.length) return '';
   return `<div class="lw-cover" aria-hidden="true">${tiles.join('')}</div>`;
 }
 
