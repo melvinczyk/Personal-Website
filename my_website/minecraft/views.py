@@ -28,9 +28,9 @@ LIVE_SEASON = 5
 # the live stage rather than on a disc: the finished seasons are gone off the
 # server and there is nothing left of them to render. The fragment is a camera
 # position, so the embed opens over the base instead of the middle of an ocean.
-# Addressed by number because the servermap.minecraft.bz name it used to be
-# reached by no longer resolves anywhere.
-LIVE_MAP      = 'http://216.219.93.66:8100/'
+# The address itself lives in puller, which now asks the same map whether the
+# server is up.
+LIVE_MAP      = puller.MAP_URL
 LIVE_MAP_VIEW = '#server_v3:189:0:87:1500:0:0:0:0:perspective'
 
 # Edit season descriptions here

@@ -45,18 +45,29 @@ of the server's day is only useful in the timezone of the person looking at it.
 
 import json
 import os
+import time
 from datetime import datetime, timedelta, timezone
 
 from . import sync
-from .live import SERVER_WINDOW
+from . import live
 
 WORLD = 'world_data.json'
 LOG = 'activity.json'
 
-# How stale the export may be before the server counts as down: live.SERVER_WINDOW,
-# the same 300 seconds behind the ONLINE/OFFLINE badge at the top of the page.
-# Imported rather than repeated - two definitions of "down" on one page will
-# eventually disagree in front of somebody.
+# Whether the server is down is not decided here. live._server_up decides it,
+# and this asks that rather than testing the export's age itself.
+#
+# It used to test the age, which was the same rule the badge used at the time.
+# The badge has since learned a second witness - the live map, which BlueMap
+# generates per request from inside the running server - because the export has
+# a failure mode that looks exactly like a dead server and is not one: the mod
+# that writes it can stop while the server carries on. That happened, and the
+# board called a server people were playing on OFFLINE for an hour and a half.
+#
+# Had this kept its own copy of the rule, the grid would have gone on painting
+# red through exactly that case while the badge above it said ONLINE - which is
+# the thing the comment that used to sit here warned about, in the file it
+# warned about it in.
 
 # Downtime under this in a given hour is not drawn at all. A modded server
 # restart is a couple of minutes and happens on purpose; painting the grid red
@@ -219,7 +230,26 @@ def sample(data_dir, world=None):
         return _sample(data_dir, world, players)
 
 
-def _downtime(log, updated, looked):
+def _verdict(data_dir, updated, looked):
+    """The board's own reading of whether the server is up, at this moment.
+
+    Built from the same three witnesses board() uses: how old the export is,
+    how long since our sync last looked, and how long since the live map last
+    answered. The two stamps are files on disk, so this costs no network.
+    """
+    age = (looked - updated).total_seconds() if updated else None
+    now = time.time()
+
+    def since(name):
+        try:
+            return int(now - os.path.getmtime(os.path.join(data_dir, name)))
+        except OSError:
+            return None
+
+    return live._server_up(age, since(sync.STAMP), since(live.MAP_STAMP))
+
+
+def _downtime(log, data_dir, updated, looked):
     """Bank whatever the server has been down for since we last accounted.
 
     Measured from the export's own timestamp against the wall clock, not from
@@ -239,7 +269,11 @@ def _downtime(log, updated, looked):
     """
     if updated is None or looked is None:
         return 0.0
-    if (looked - updated).total_seconds() <= SERVER_WINDOW:
+    # `down` is None whenever the board reads the server as up - including the
+    # case where the export is stale but the map still answers, and the case
+    # where our own sync has gone quiet and a stale export is not evidence of
+    # anything. Only a confirmed outage is banked.
+    if _verdict(data_dir, updated, looked).get('down') is None:
         # Writing normally: nothing owed. The ledger catches up to the export's
         # own timestamp rather than to now, because that is the last moment the
         # server is known to have been alive - anything after it is not yet
@@ -284,7 +318,7 @@ def _sample(data_dir, world, players):
     # stopped writing produces the same export every time we look, which is
     # what that return is for - so anything measured after it would never see
     # an outage at all.
-    _downtime(log, now, datetime.now(timezone.utc))
+    _downtime(log, data_dir, now, datetime.now(timezone.utc))
 
     # the same export twice is not a new sample: the counters in it have not
     # moved, and treating it as one would bank a window with nothing in it
