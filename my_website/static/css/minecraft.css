@@ -1309,13 +1309,40 @@ body::after { display: none; }
 }
 
 /* the ground and its tufts follow the same per-term colour as the canopy - the
-   same grayscale-times-tint the game does. The side face is dirt below a
-   grass fringe, so only the fringe should take the tint: the grayscale master
-   keeps the dirt where it is and the multiply lands on the green rows. */
+   same grayscale-times-tint the game does.
+
+   The side face cannot be done that way, though, and used to be: it was one
+   grayscale master of the whole face multiplied by the tint, which turns the
+   dirt green along with the fringe and draws the ground as a flat green
+   strip. A grayscale dirt times a green is a green dirt; there is no shade of
+   grey that comes out brown.
+
+   The game does not tint the side face at all. It draws the plain dirt-and-
+   fringe texture and then composites grass_block_side_overlay over it - a
+   texture that is transparent everywhere except the fringe - tinted by the
+   biome colour. So that is what happens here: dirt underneath, and one
+   pseudo-element carrying the overlay, masked by its own alpha so the tint
+   can only ever land on the rows the game puts grass on. */
 .ls-world[data-realm="overworld"] .lw-ground {
-  background-image: url('/static/minecraft/icons/grass_side_gray.png');
+  background-image: url('/static/minecraft/icons/dirt.png');
+  background-color: transparent;
+  background-blend-mode: normal;
+}
+.ls-world[data-realm="overworld"] .lw-ground::before {
+  content: ''; position: absolute; inset: 0;
+  pointer-events: none;
+  /* the image multiplied by the tint gives the fringe its shading; the mask,
+     from the same file, keeps every transparent pixel transparent so the dirt
+     below shows through untouched */
+  background-image: url('/static/minecraft/icons/grass_side_overlay.png');
   background-color: var(--grass, #91bd59);
   background-blend-mode: multiply;
+  background-size: 15px 15px;
+  -webkit-mask-image: url('/static/minecraft/icons/grass_side_overlay.png');
+  mask-image: url('/static/minecraft/icons/grass_side_overlay.png');
+  -webkit-mask-size: 15px 15px;
+  mask-size: 15px 15px;
+  image-rendering: pixelated;
 }
 .ls-world[data-realm="overworld"] .lw-prop.blade {
   background-image: url('/static/minecraft/icons/grass_blade_gray.png');
