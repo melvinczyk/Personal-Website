@@ -101,10 +101,21 @@
           <div class="ls-bar">
             <span class="lb-t">Players</span>
             <button class="ls-btn sm" data-sec="sec-players" onclick="toggleSection('sec-players')">Hide</button>
-            <span class="lb-r" id="ls-count">—</span>
+            <span class="lb-r" id="ls-count">...</span>
           </div>
           <div class="ls-sec" id="sec-players">
             <div class="ls-grid" id="ls-list"></div>
+          </div>
+
+          <!-- The planner. Not one more folded bar in the stack: everything
+               else on this page reports what the server did, and this is the
+               one part of it you do something with, so it stands apart. -->
+          <div class="ls-plan-wrap">
+            <div class="ls-plan" id="ls-plan"></div>
+            <button class="sk-open-btn" id="sk-open-btn" onclick="planOpen()">
+              <span class="sk-open-glow" aria-hidden="true"></span>
+              <span class="sk-open-title">SKILLTREE</span>
+            </button>
           </div>
 
           <div class="ls-bar boss">
@@ -112,7 +123,7 @@
             <button class="ls-btn sm" data-sec="sec-bosses" onclick="toggleSection('sec-bosses')">Hide</button>
             <label class="ls-only"><input type="checkbox" id="ls-beaten" checked
                    onchange="filterBosses()"> beaten only</label>
-            <span class="lb-r" id="ls-boss-count">—</span>
+            <span class="lb-r" id="ls-boss-count">...</span>
           </div>
           <div class="ls-sec" id="sec-bosses">
             <div class="ls-bosses" id="ls-bosses"></div>
@@ -123,7 +134,7 @@
             <button class="ls-btn sm" data-sec="sec-minibosses" onclick="toggleSection('sec-minibosses')">Hide</button>
             <label class="ls-only"><input type="checkbox" id="ls-mini-beaten" checked
                    onchange="filterBosses()"> beaten only</label>
-            <span class="lb-r" id="ls-mini-count">—</span>
+            <span class="lb-r" id="ls-mini-count">...</span>
           </div>
           <div class="ls-sec" id="sec-minibosses">
             <div class="ls-bosses mini" id="ls-minibosses"></div>
@@ -169,7 +180,7 @@
         </div>
 
         <div class="disc-info">
-          <div class="disc-title" id="disc-title">—</div>
+          <div class="disc-title" id="disc-title">...</div>
           <div class="disc-desc" id="disc-desc"></div>
           <div class="disc-meters">
             <div class="ps-row">
@@ -316,6 +327,8 @@ const HOME_URL = "{% url 'index' %}";
 const LIVE_URL = "{% url 'minecraft-live' %}";
 const CHAT_URL = "{% url 'minecraft-chat' %}";
 const ACTIVITY_URL = "{% url 'minecraft-activity' %}";
+const HISTORY_URL = "{% url 'minecraft-history' %}";
+const TREE_URL = "{% url 'minecraft-tree' %}";
 const LIVE_BOARD = {{ live_json|safe }};
 
 const SEASONS = [

@@ -663,6 +663,8 @@ function livePanel(p) {
     ${hunting}
     ${fieldguide}
     ${fishing}
+    ${skillSection(L)}
+    ${historySection(L.name)}
     <div class="live-when">SERVER READ ${localMoment(L.recorded)}</div>
   </div>`;
 }
@@ -2349,7 +2351,7 @@ function yearPanel(w) {
       }).join('');
       return `
         <div class="yr-term${current ? ' current' : ''}" title="${label}${
-          term ? ` — ${term.note}` : ''}">
+          term ? `. ${term.note}` : ''}">
           <span class="yr-term-name"><i>${label}</i></span>
           <div class="yr-days" style="grid-template-columns:repeat(${termDays},1fr)">${cells}</div>
         </div>`;
@@ -2463,7 +2465,7 @@ function buildRealms(w) {
 function realmInfo(realm, w) {
   return `
     <b class="lw-realm-name">${realm.name}</b>
-    <span>${realm.weather || '—'}</span>
+    <span>${realm.weather || '...'}</span>
     <em>${realm.key === 'overworld' ? (realm.forecast || 'no forecast yet') : ''}</em>`;
 }
 
@@ -2486,7 +2488,7 @@ function seasonHero(realm, w) {
         <b>${term ? term.name : w.sub_season || w.season}</b>
         ${term ? `<i class="lw-term-note">${term.note}</i>` : ''}
         <div class="lw-term-scales">
-          <span class="sc season">${w.season || '—'}</span>
+          <span class="sc season">${w.season || '...'}</span>
           <span class="sc sub">${w.sub_season || ''}</span>
           ${w.gregorian_month ? `<span class="sc month">${w.gregorian_month}</span>` : ''}
         </div>
@@ -2601,7 +2603,48 @@ function paintSeason(host, realm, term) {
   host.dataset.term = on ? term.key : '';
 }
 
-function renderWorldPanel() {
+// The forecast rotates through the realms, and the realms are not the same
+// height: the overworld carries a season and a calendar the Aether has no
+// equivalent of, so it drew nearly three hundred pixels taller and the whole
+// page below it jumped every time the card turned over.
+//
+// Locked to the tallest of them rather than to a number typed in here, so it
+// survives a realm gaining a reading and survives being read at any width.
+// Measured by drawing each realm once, which happens on mount and on a resize
+// and never while anybody is looking at it.
+let worldFloor = 0;
+let worldFloorAt = 0;
+
+function lockWorldHeight() {
+  const host = document.getElementById('ls-world');
+  if (!host || !realmWorld) return;
+  const realms = buildRealms(realmWorld);
+  if (realms.length < 2) return;
+  const was = realmIndex;
+  host.style.minHeight = '';
+  let tallest = 0;
+  for (let i = 0; i < realms.length; i++) {
+    realmIndex = i;
+    renderWorldPanel(true);
+    tallest = Math.max(tallest, host.getBoundingClientRect().height);
+  }
+  realmIndex = was;
+  renderWorldPanel(true);
+  worldFloor = Math.ceil(tallest);
+  worldFloorAt = window.innerWidth;
+  host.style.minHeight = `${worldFloor}px`;
+}
+
+window.addEventListener('resize', () => {
+  // a width change is a different set of heights, so the floor is remeasured
+  // rather than carried over from a layout that no longer applies
+  if (Math.abs(window.innerWidth - worldFloorAt) > 40) {
+    clearTimeout(lockWorldHeight.timer);
+    lockWorldHeight.timer = setTimeout(lockWorldHeight, 200);
+  }
+});
+
+function renderWorldPanel(measuring) {
   const host = document.getElementById('ls-world');
   const w = realmWorld;
   if (!host || !w || !Object.keys(w).length) return;
@@ -2611,6 +2654,9 @@ function renderWorldPanel() {
   const wx = skyWeather({ weather: realm.weather });
   const term = solarTerm(w);
 
+  // hold whatever floor the last measurement found, so a realm with less in
+  // it than the tallest leaves the space rather than closing it up
+  if (!measuring && worldFloor) host.style.minHeight = `${worldFloor}px`;
   host.dataset.mood = skyMood(w);
   host.dataset.weather = wx;
   // EclipticSeasons is an overworld cycle - the falling leaves and snow it
@@ -2798,6 +2844,11 @@ function worldPanel(w) {
   host.hidden = false;
   realmWorld = w;
   renderWorldPanel();
+  // find the tallest realm once the panel is in the document, so the card
+  // stops shoving the page every time it turns over - see lockWorldHeight.
+  // On a timeout rather than a frame: a tab in the background is not given
+  // frames, and it would come back to the foreground still jumping.
+  if (!worldFloor) setTimeout(lockWorldHeight, 0);
 
   // one clock for every load of the page, cycling whichever realms this
   // world actually has weather for - a card with only the overworld to show
@@ -3004,6 +3055,10 @@ function toggleLive(uuid) {
     card.classList.toggle('open', card.id === `pc-${liveOpen}`);
   }
   drawDrawer(liveBoard);
+  // The history is its own feed on its own clock and lives inside this card,
+  // so opening one is what asks for it. Fetched once and kept: it is the same
+  // log for every player, and drawDrawer redraws from it when it lands.
+  if (liveOpen) loadHistory();
 
   // a model is rendered at a fixed canvas size, so each state gets its own
   // render rather than one bitmap stretched or shrunk over the other's box
@@ -3473,6 +3528,1293 @@ function rhythmDayValue(who, mode) {
   return rows[mode] || 0;
 }
 
+// ── what each player's numbers have been doing ──────────────────────────────
+//
+// Two readings off history.py, which samples the export every couple of
+// minutes because the export itself carries no history at all - see that
+// module for why this starts empty and only grows forwards.
+//
+//   * TRAVEL is a counter, so what is drawn is the difference between days:
+//     how far somebody went yesterday, split by how they went. Stacked,
+//     because the split is the point - the same two thousand blocks read very
+//     differently as a sprint, a boat trip, or a long fall.
+//   * LEVELS are not counters. Health and armour are whatever they happen to
+//     be, so what is drawn is the value through time, with health carrying
+//     the low it reached in each hour as well as where it ended. The low is
+//     the reading that matters: an hourly last would show somebody who was on
+//     one heart at 3am and healed by 4am as having had a quiet night.
+const HISTORY_EVERY = 120;      // seconds; it moves on the sync's clock
+const TRAVEL_NAMES = {
+  walk: 'walked', sprint: 'sprinted', swim: 'swum', boat: 'by boat',
+  climb: 'climbed', crouch: 'crouched', fall: 'fallen', horse: 'on horseback',
+  elytra: 'by elytra', minecart: 'by minecart',
+};
+
+let historyBoard = null;
+let historyBusy = false;
+let historyDue = HISTORY_EVERY;
+
+function historySpan(n) {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${Math.round(n)}`;
+}
+
+// '2026-09-03' -> a local Date. Built by hand rather than handed to Date(),
+// which reads a bare date as UTC and would shift every bar by a timezone.
+function historyDay(key) {
+  const [y, m, d] = String(key).split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+// One day's blocks by kind, for one player. Not summed across the roster any
+// more: this lives inside a player's own card, and two people's days are not
+// one day.
+function travelRow(day, who) {
+  return (day.who || {})[who] || {};
+}
+
+// How far back these two may look. The same ladder the boss chart offers,
+// plus the half-day at the bottom: travel is banked hourly as well as daily,
+// so a twelve-hour window has something finer than a day to draw with.
+const HISTORY_RANGES = [
+  ['12h', 432e5], ['1 day', 864e5], ['1 week', 6048e5],
+  ['1 month', 2592e6], ['1 year', 31536e6], ['max', Infinity],
+];
+// Anything this wide or narrower is drawn hour by hour; wider is drawn day by
+// day. A month of hourly bars is seven hundred slivers nobody can point at.
+const HOURLY_UNDER = 1728e5;          // two days
+
+const HISTORY_RANGE = {};             // player -> ms
+const HISTORY_POINTS = {};            // player -> the buckets, for the probe
+
+function historyRange(who) {
+  return HISTORY_RANGE[who] ?? 6048e5;
+}
+
+function setHistoryRange(who, ms) {
+  HISTORY_RANGE[who] = ms === 'Infinity' ? Infinity : Number(ms);
+  if (liveBoard) drawDrawer(liveBoard);
+}
+
+// '2026-09-02T18' or '2026-09-02' -> ms. Both are UTC, and handing either to
+// Date() reads it as local on some engines and UTC on others.
+function historyAt(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return Date.UTC(y, m - 1, +key.slice(8, 10),
+                  key.length > 10 ? +key.slice(11, 13) : 0);
+}
+
+// The travel buckets inside the window, at whichever grain the window calls
+// for. Hours come off the same series the levels do; days off the long record.
+function travelBuckets(board, who, span) {
+  const now = Date.now();
+  const hourly = span <= HOURLY_UNDER;
+  const seeded = board.seeded || '';
+
+  if (hourly) {
+    return (board.levels[who] || [])
+      .filter(row => row.m && historyAt(row.at) >= now - span)
+      .map(row => ({
+        at: historyAt(row.at), key: row.at, moved: row.m, hourly: true,
+        fake: seeded && row.at.slice(0, 10) <= seeded,
+      }));
+  }
+  return (board.travel || [])
+    .filter(day => span === Infinity || historyAt(day.day) >= now - span)
+    .map(day => ({
+      at: historyAt(day.day), key: day.day, moved: travelRow(day, who),
+      hourly: false, fake: seeded && day.day <= seeded,
+    }))
+    .filter(b => Object.keys(b.moved).length);
+}
+
+// The readout under a chart: which bucket the pointer is nearest, and what
+// was in it. Nearest along the x rather than by straight distance, for the
+// reason probeChart gives - the bars have wildly different heights and a
+// diagonal measure keeps snapping to whichever one is tallest.
+function probeHistory(event, who, kind) {
+  const pts = (HISTORY_POINTS[who] || {})[kind];
+  const svg = event.currentTarget;
+  const box = document.querySelector(`.hs-probe[data-who="${who}"][data-kind="${kind}"]`);
+  if (!pts || !pts.length || !box) return;
+
+  const rect = svg.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * svg.viewBox.baseVal.width;
+  let near = pts[0];
+  for (const pt of pts) if (Math.abs(pt.x - x) < Math.abs(near.x - x)) near = pt;
+
+  box.innerHTML = near.html;
+  box.classList.add('on');
+  const line = svg.querySelector('.hs-cursor');
+  if (line) { line.setAttribute('x1', near.x); line.setAttribute('x2', near.x);
+              line.style.opacity = 1; }
+  const dot = svg.querySelector('.hs-cursor-dot');
+  if (dot && near.y !== undefined) {
+    dot.setAttribute('cx', near.x); dot.setAttribute('cy', near.y);
+    dot.style.opacity = 1;
+  }
+}
+
+function unprobeHistory(who, kind) {
+  const box = document.querySelector(`.hs-probe[data-who="${who}"][data-kind="${kind}"]`);
+  const svg = document.querySelector(`.hs-svg[data-who="${who}"][data-kind="${kind}"]`);
+  if (box) box.classList.remove('on');
+  if (svg) {
+    const line = svg.querySelector('.hs-cursor');
+    const dot = svg.querySelector('.hs-cursor-dot');
+    if (line) line.style.opacity = 0;
+    if (dot) dot.style.opacity = 0;
+  }
+}
+
+function historyMoment(at, hourly) {
+  return new Date(at).toLocaleString(undefined, hourly
+    ? { month: 'short', day: 'numeric', hour: 'numeric' }
+    : { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function rangePicker(who, span) {
+  return `<select class="hs-range" aria-label="How far back to look"
+      onchange="setHistoryRange('${who}', this.value)">
+      ${HISTORY_RANGES.map(([name, ms]) => `<option value="${ms}"${
+        ms === span ? ' selected' : ''}>${name}</option>`).join('')}
+    </select>`;
+}
+
+// Blocks per bucket for one player, stacked by how the ground got covered.
+// Days before `seeded` are simulated rather than sampled - see
+// tools/seed_history.py - and are drawn faded, because a chart that cannot
+// tell you which of its bars it made up is worse than no chart.
+function travelChart(board, who, span) {
+  const rows = travelBuckets(board, who, span);
+  const totals = rows.map(r => Object.values(r.moved).reduce((a, b) => a + b, 0));
+  if (!rows.length || !totals.some(Boolean)) return '';
+  const peak = Math.max(1, ...totals);
+  const hourly = rows[0].hourly;
+
+  const W = 892, H = 190, L = 44, R = 10, T = 12, B = 26;
+  const plotW = W - L - R, plotH = H - T - B;
+  const step = plotW / rows.length;
+  const barW = Math.max(2, Math.min(34, step - Math.min(4, step * 0.25)));
+
+  const points = [];
+  const bars = rows.map((row, i) => {
+    const mid = L + step * (i + 0.5);
+    let base = T + plotH;
+    const total = totals[i];
+    const seg = (board.kinds || []).map(kind => {
+      const blocks = row.moved[kind] || 0;
+      if (blocks <= 0) return '';
+      const high = (blocks / peak) * plotH;
+      base -= high;
+      return `<rect class="hs-seg${row.fake ? ' fake' : ''}" data-kind="${kind}"
+        x="${(mid - barW / 2).toFixed(1)}" y="${base.toFixed(1)}"
+        width="${barW.toFixed(1)}" height="${high.toFixed(1)}"/>`;
+    }).join('');
+    // what the probe says about this bucket, built here where the numbers are
+    const parts = (board.kinds || []).filter(k => (row.moved[k] || 0) > 0)
+      .sort((a, b) => row.moved[b] - row.moved[a])
+      .map(k => `<span class="hs-part"><i data-kind="${k}"></i>${
+        TRAVEL_NAMES[k] || k}<b>${historySpan(row.moved[k])}</b></span>`).join('');
+    points.push({
+      x: +mid.toFixed(1), y: +base.toFixed(1),
+      html: `<b>${historyMoment(row.at, hourly)}</b>
+        <em>${historySpan(total)} blocks${row.fake ? ' · simulated' : ''}</em>
+        <span class="hs-parts">${parts}</span>`,
+    });
+    return seg;
+  }).join('');
+
+  (HISTORY_POINTS[who] = HISTORY_POINTS[who] || {}).travel = points;
+
+  const every = Math.ceil(rows.length / 6);
+  const ticks = rows.map((row, i) => i % every ? '' :
+    `<text class="hs-tick" x="${(L + step * (i + 0.5)).toFixed(1)}" y="${H - 8}"
+      text-anchor="middle">${new Date(row.at).toLocaleString(undefined, hourly
+        ? { hour: 'numeric' } : { month: 'short', day: 'numeric' })}</text>`).join('');
+
+  const rungs = [];
+  for (let n = 1; n <= 2; n++) {
+    const y = T + plotH - (n / 2) * plotH;
+    rungs.push(`<line class="hs-grid" x1="${L}" y1="${y.toFixed(1)}" x2="${W - R}"
+      y2="${y.toFixed(1)}"/><text class="hs-gridlabel" x="${L - 7}"
+      y="${(y + 3.5).toFixed(1)}" text-anchor="end">${historySpan(peak * n / 2)}</text>`);
+  }
+
+  const legend = (board.kinds || []).filter(kind =>
+    rows.some(r => (r.moved[kind] || 0) > 0)).map(kind =>
+    `<span class="hs-key"><i data-kind="${kind}"></i>${TRAVEL_NAMES[kind] || kind}</span>`
+  ).join('');
+
+  const far = totals.reduce((a, b) => a + b, 0);
+  return `
+    <div class="hs-chart">
+      <div class="hs-cap"><b>DISTANCE COVERED</b><em>${historySpan(far)} blocks over ${
+        rows.length} ${hourly ? 'hour' : 'day'}${rows.length === 1 ? '' : 's'}</em>
+        ${rangePicker(who, span)}</div>
+      <svg class="hs-svg" data-who="${who}" data-kind="travel"
+           viewBox="0 0 ${W} ${H}" role="img"
+           onmousemove="probeHistory(event, '${who}', 'travel')"
+           onmouseleave="unprobeHistory('${who}', 'travel')"
+           aria-label="Blocks travelled per ${hourly ? 'hour' : 'day'}, split by how">
+        <line class="hs-axis" x1="${L}" y1="${T + plotH}" x2="${W - R}" y2="${T + plotH}"/>
+        ${rungs.join('')}${bars}
+        <line class="hs-cursor" y1="${T}" y2="${T + plotH}" style="opacity:0"/>
+        ${ticks}
+      </svg>
+      <div class="hs-probe" data-who="${who}" data-kind="travel"></div>
+      <div class="hs-keys">${legend}</div>
+    </div>`;
+}
+
+// Health and armour through time. Not stacked and not on one pair of axes: a
+// health in hearts and an armour in armour points are different units, and
+// drawing them against one scale would say something neither of them means.
+// Two strips sharing an x instead.
+function levelChart(board, who, span) {
+  const now = Date.now();
+  const series = (board.levels[who] || [])
+    .filter(row => span === Infinity || historyAt(row.at) >= now - span);
+  if (series.length < 2) return '';
+  const seeded = board.seeded || '';
+
+  const W = 892, L = 44, R = 10, T = 10, ROW = 66, GAP = 14, B = 24;
+  const plotW = W - L - R;
+  const H = T + ROW * 2 + GAP + B;
+  const at = row => historyAt(row.at);
+  const from = at(series[0]), to = Math.max(at(series[series.length - 1]), from + 1);
+  const px = t => L + ((t - from) / (to - from)) * plotW;
+  const edge = seeded ? px(historyAt(`${seeded}T23`)) : 0;
+
+  const hpTop = Math.max(1, ...series.map(r => r.hpmax ?? r.hp ?? 1));
+  const armTop = Math.max(1, ...series.map(r => r.armor ?? 0)) * 1.15;
+  const tops = { hp: hpTop, armor: armTop };
+
+  // Each strip scales to its own ceiling, and health's is the max health
+  // rather than the highest reading - a bar that fills on full health and
+  // empties as somebody is hurt is the reading people already know, where a
+  // self-scaling one would draw a scratch as a crisis.
+  const strip = (key, label, band) => {
+    const top = tops[key];
+    const base = T + (key === 'hp' ? 0 : ROW + GAP);
+    const y = v => base + ROW - Math.max(0, Math.min(1, v / top)) * ROW;
+    const line = series.map((row, i) =>
+      `${i ? 'L' : 'M'}${px(at(row)).toFixed(1)},${y(row[key] ?? 0).toFixed(1)}`).join('');
+    const shade = band ? (() => {
+      const up = series.map(r => `${px(at(r)).toFixed(1)},${y(r[`${key}hi`] ?? r[key] ?? 0).toFixed(1)}`);
+      const down = series.slice().reverse().map(r =>
+        `${px(at(r)).toFixed(1)},${y(r[`${key}lo`] ?? r[key] ?? 0).toFixed(1)}`);
+      return `<polygon class="hs-band" points="${up.concat(down).join(' ')}"/>`;
+    })() : '';
+    const last = series[series.length - 1];
+    return `
+      <g class="hs-strip" data-key="${key}">
+        <line class="hs-axis" x1="${L}" y1="${base + ROW}" x2="${W - R}" y2="${base + ROW}"/>
+        <line class="hs-grid" x1="${L}" y1="${base}" x2="${W - R}" y2="${base}"/>
+        <text class="hs-gridlabel" x="${L - 7}" y="${base + 4}" text-anchor="end">${
+          Math.round(top)}</text>
+        ${shade}<path class="hs-line" d="${line}"/>
+        <text class="hs-striplabel" x="${L}" y="${base - 2}">${label}</text>
+        <text class="hs-now" x="${W - R}" y="${base - 2}" text-anchor="end">${
+          Math.round(last[key] ?? 0)}${band && last[`${key}lo`] !== undefined
+            ? ` · low ${Math.round(last[`${key}lo`])}` : ''}</text>
+      </g>`;
+  };
+
+  (HISTORY_POINTS[who] = HISTORY_POINTS[who] || {}).levels = series.map(row => ({
+    x: +px(at(row)).toFixed(1),
+    y: +(T + ROW - Math.max(0, Math.min(1, (row.hp ?? 0) / hpTop)) * ROW).toFixed(1),
+    html: `<b>${historyMoment(at(row), true)}</b>
+      <em>${row.hp ?? '?'}/${row.hpmax ?? '?'} health${
+        row.hplo !== undefined ? ` · low ${row.hplo}` : ''}</em>
+      <span class="hs-parts"><span class="hs-part armour">armour<b>${
+        Math.round(row.armor ?? 0)}</b></span>${
+        row.food !== undefined ? `<span class="hs-part">food<b>${
+          Math.round(row.food)}</b></span>` : ''}${
+        row.level !== undefined ? `<span class="hs-part">level<b>${
+          Math.round(row.level)}</b></span>` : ''}${
+        seeded && row.at.slice(0, 10) <= seeded
+          ? '<span class="hs-part">simulated</span>' : ''}</span>`,
+  }));
+
+  const label = ms => new Date(ms).toLocaleString(undefined,
+    (to - from) > 864e5 ? { month: 'short', day: 'numeric' }
+                        : { hour: 'numeric', minute: '2-digit' });
+
+  return `
+    <div class="hs-chart">
+      <div class="hs-cap"><b>HEALTH &amp; ARMOUR</b><em>${series.length} hour${
+        series.length === 1 ? '' : 's'} on record</em></div>
+      <svg class="hs-svg" data-who="${who}" data-kind="levels"
+           viewBox="0 0 ${W} ${H}" role="img"
+           onmousemove="probeHistory(event, '${who}', 'levels')"
+           onmouseleave="unprobeHistory('${who}', 'levels')"
+           aria-label="Health and armour over time">
+        ${edge > L && edge < W - R ? `<rect class="hs-fake" x="${L}" y="${T}" width="${
+          (edge - L).toFixed(1)}" height="${(ROW * 2 + GAP).toFixed(1)}"/>
+          <line class="hs-edge" x1="${edge.toFixed(1)}" y1="${T}"
+            x2="${edge.toFixed(1)}" y2="${T + ROW * 2 + GAP}"/>` : ''}
+        ${strip('hp', 'HEALTH', true)}
+        ${strip('armor', 'ARMOUR', false)}
+        <line class="hs-cursor" y1="${T}" y2="${T + ROW * 2 + GAP}" style="opacity:0"/>
+        <circle class="hs-cursor-dot" r="4" style="opacity:0"/>
+        <text class="hs-tick" x="${L}" y="${H - 7}">${label(from)}</text>
+        <text class="hs-tick" x="${W - R}" y="${H - 7}" text-anchor="end">now</text>
+      </svg>
+      <div class="hs-probe" data-who="${who}" data-kind="levels"></div>
+    </div>`;
+}
+
+// The whole block, as it sits inside one player's own card. Empty string when
+// there is nothing yet for this player, so the card simply does not grow a
+// section rather than growing an empty one.
+function historySection(who) {
+  const board = historyBoard;
+  if (!board) return '';
+  const span = historyRange(who);
+  const travel = travelChart(board, who, span);
+  const levels = levelChart(board, who, span);
+  if (!travel && !levels) {
+    // a window with nothing in it is a real answer, and a different one from
+    // having no history at all - say which
+    return (board.levels[who] || []).length || board.totals[who] ? `
+      <div class="live-history" data-key="history">
+        <div class="lb-head"><span>HISTORY</span></div>
+        <div class="hs-chart">
+          <div class="hs-cap"><b>NOTHING IN THIS WINDOW</b><em>they were not
+            about</em>${rangePicker(who, span)}</div>
+        </div>
+      </div>` : '';
+  }
+  return `
+    <div class="live-history" data-key="history">
+      <div class="lb-head"><span>HISTORY</span><b>${
+        board.days || 0} DAY${board.days === 1 ? '' : 'S'} ON RECORD</b></div>
+      ${travel}${levels}
+    </div>`;
+}
+
+async function loadHistory(force) {
+  if (historyBusy || (historyBoard && !force)) return;
+  historyBusy = true;
+  historyDue = HISTORY_EVERY;
+  try {
+    const res = await fetch(HISTORY_URL, { headers: { 'X-Requested-With': 'fetch' } });
+    if (!res.ok) throw new Error(res.status);
+    historyBoard = await res.json();
+    // The charts live inside a player's own card, so there is nothing to
+    // redraw unless one is open - and redrawing an open one is the whole
+    // point of fetching this on a clock rather than once.
+    const open = document.querySelector('.pcard.open');
+    if (open && liveBoard) drawDrawer(liveBoard);
+  } catch (err) {
+    /* no history is a section that does not appear, which is the same thing
+       the page shows before the sampler has anything to say */
+  } finally {
+    historyBusy = false;
+  }
+}
+
+// ── the passive skill tree ──────────────────────────────────────────────────
+//
+// The real tree, at the mod's own coordinates. Every node in Passive Skill
+// Tree ships as data - where it sits, how big it draws, which icon it wears
+// and what it connects to - so tools/extract_skilltree.py lifts all of it out
+// of the jar and this draws it rather than drawing a diagram of it. Six
+// classes radiating from the middle, 588 nodes, 669 connections.
+//
+// What the export gives is only which of them a player holds. So the whole
+// tree is drawn dim and the ones they took are lit, which is the reading:
+// where somebody went, against everywhere they could have.
+const SKILL_URL = '/static/minecraft/skilltree';
+const SKILL_ICONS = `${SKILL_URL}/icons`;
+
+// The classes, each arm in a colour of its own so a build is legible as a
+// shape before a word of it is read. Six come with the mod; Runekiller is the
+// pack's own, added with the in-game editor and living in the server's
+// datapack rather than the jar - see tools/extract_skilltree.py.
+const SKILL_CLASS = {
+  miner:      { name: 'Miner',      hue: '#c9d1d9' },
+  enchanter:  { name: 'Enchanter',  hue: '#b23cff' },
+  hunter:     { name: 'Hunter',     hue: '#9ede4a' },
+  alchemist:  { name: 'Alchemist',  hue: '#4aa8e0' },
+  blacksmith: { name: 'Blacksmith', hue: '#e0a24a' },
+  cook:       { name: 'Cook',       hue: '#e6484b' },
+  runekiller: { name: 'Runekiller', hue: '#42e0c8' },
+};
+
+// How much further apart than the mod draws them. Its own layout is built for
+// a window you scroll around at one zoom; this shows the whole tree at once,
+// and at that size the tiles were touching.
+const SKILL_SPREAD = 1.45;
+
+let skillTree = null;
+let skillBusy = false;
+const SKILL_VIEW = {};          // player -> {x, y, k} pan and zoom
+
+async function loadSkillTree() {
+  if (skillTree || skillBusy) return;
+  skillBusy = true;
+  try {
+    // through the view rather than at the file, so it comes back stamped
+    // with its own mtime and a re-extracted tree is never served from a cache
+    // holding the old one
+    const res = await fetch(TREE_URL);
+    if (!res.ok) throw new Error(res.status);
+    skillTree = await res.json();
+    // The mod packs its nodes tight - it draws them at 16 screen pixels on a
+    // screen you scroll, where this draws the whole thing at once. Spread the
+    // coordinates and leave the sizes alone, so the tiles keep their weight
+    // and gain room between them. Done once, here, so the renderer, the
+    // hit-test and the class focus cannot disagree about where anything is.
+    for (const n of Object.values(skillTree.nodes)) {
+      n.x = +(n.x * SKILL_SPREAD).toFixed(1);
+      n.y = +(n.y * SKILL_SPREAD).toFixed(1);
+    }
+    if (liveBoard && document.querySelector('.pcard.open')) drawDrawer(liveBoard);
+  } catch (err) {
+    /* no tree is a section that does not appear */
+  } finally {
+    skillBusy = false;
+  }
+}
+
+function skillView(who) {
+  return SKILL_VIEW[who] || (SKILL_VIEW[who] = { x: 0, y: 0, k: 1 });
+}
+
+// Pan and zoom are applied to one group rather than by redrawing: the tree is
+// 1257 SVG elements and rebuilding it on every mouse move would be an absurd
+// way to spend a frame.
+// Icons are hidden below this. A 16-pixel sprite drawn at a third of its size
+// is three pixels of mush, and six hundred of them are three pixels of mush
+// the browser composites on every frame of a pan.
+const SKILL_ICON_ZOOM = 1.5;
+
+function skillMove(who) {
+  const view = skillView(who);
+  const svg = document.querySelector(`.sk-svg[data-who="${who}"]`);
+  if (!svg) return;
+  const g = svg.querySelector('.sk-pan');
+  if (g) g.setAttribute('transform',
+    `translate(${view.x.toFixed(1)} ${view.y.toFixed(1)}) scale(${view.k.toFixed(3)})`);
+  svg.classList.toggle('close', view.k >= SKILL_ICON_ZOOM);
+}
+
+function skillZoom(event, who, by) {
+  if (event) event.preventDefault();
+  const view = skillView(who);
+  const was = view.k;
+  // The floor is 1, which is the whole tree in the frame. Below that there is
+  // nothing to see: the viewBox already fits every node, so zooming out
+  // further only shrinks it into the middle of an empty square.
+  view.k = Math.max(1, Math.min(5, view.k * (by || (event.deltaY < 0 ? 1.12 : 0.89))));
+  // zoom toward the pointer rather than the origin, or the thing somebody is
+  // leaning in to look at slides out from under them
+  const svg = document.querySelector(`.sk-svg[data-who="${who}"]`);
+  if (svg && event && event.clientX !== undefined) {
+    // where the pointer is in the svg's own space, taken off the matrix for
+    // the reason skillAt gives
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = event.clientX;
+      pt.y = event.clientY;
+      const { x: px, y: py } = pt.matrixTransform(ctm.inverse());
+      view.x = px - (px - view.x) * (view.k / was);
+      view.y = py - (py - view.y) * (view.k / was);
+    }
+  }
+  skillMove(who);
+}
+
+// Two fingers on the tree. There is no wheel on a phone, and the plus and
+// minus buttons are a poor way to cross a tree this size - pinching is what
+// anybody will try first.
+const SKILL_PINCH = new Map();      // pointerId -> {x, y}
+
+function skillPinch(event, who) {
+  const svg = event.currentTarget;
+  SKILL_PINCH.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (SKILL_PINCH.size !== 2) return false;
+
+  const [a, b] = [...SKILL_PINCH.values()];
+  const gap = Math.hypot(a.x - b.x, a.y - b.y);
+  const view = skillView(who);
+  const start = { gap, k: view.k, x: view.x, y: view.y,
+                  mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+  svg.dataset.dragged = '1';        // a pinch is never a pick
+
+  const move = e => {
+    if (!SKILL_PINCH.has(e.pointerId)) return;
+    SKILL_PINCH.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (SKILL_PINCH.size !== 2) return;
+    const [p, q] = [...SKILL_PINCH.values()];
+    const now = Math.hypot(p.x - q.x, p.y - q.y);
+    if (!start.gap || !now) return;
+    const was = view.k;
+    view.k = Math.max(1, Math.min(5, start.k * (now / start.gap)));
+    // hold the point between the fingers still, the way a map does
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = start.mid.x; pt.y = start.mid.y;
+      const { x: mx, y: my } = pt.matrixTransform(ctm.inverse());
+      view.x = mx - (mx - view.x) * (view.k / was);
+      view.y = my - (my - view.y) * (view.k / was);
+    }
+    skillMove(who);
+  };
+  const up = e => {
+    SKILL_PINCH.delete(e.pointerId);
+    if (SKILL_PINCH.size) return;
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+  return true;
+}
+
+function skillDrag(event, who) {
+  // a second finger turns a drag into a pinch
+  if (skillPinch(event, who)) return;
+  if (SKILL_PINCH.size > 1) return;
+  // stops the press being read as the start of a text selection, which is
+  // what painted the whole panel in the highlight colour on every drag
+  event.preventDefault();
+  const svg = event.currentTarget;
+  const view = skillView(who);
+  // how many svg units one screen pixel is, off the matrix rather than off
+  // the element's width - see skillAt
+  const ctm = svg.getScreenCTM();
+  const scale = ctm ? 1 / ctm.a : svg.viewBox.baseVal.width / svg.getBoundingClientRect().width;
+  const from = { x: event.clientX, y: event.clientY, vx: view.x, vy: view.y };
+  svg.classList.add('dragging');
+  unskillHover(who);
+  // one transform write per frame rather than one per pointer event, which on
+  // a trackpad is three or four times as many
+  let queued = null;
+  const move = e => {
+    queued = e;
+    if (queued.rafd) return;
+    queued.rafd = true;
+    requestAnimationFrame(() => {
+      view.x = from.vx + (queued.clientX - from.x) * scale;
+      view.y = from.vy + (queued.clientY - from.y) * scale;
+      skillMove(who);
+    });
+  };
+  const up = e => {
+    SKILL_PINCH.delete(e && e.pointerId);
+    // a pointerup that moved is a pan, not a pick - see skillPick. The floor
+    // is wider on a touch screen, where a finger never lifts off exactly
+    // where it landed.
+    const slop = e && e.pointerType === 'touch' ? 10 : 3;
+    if (Math.abs(view.x - from.vx) + Math.abs(view.y - from.vy) > slop) {
+      svg.dataset.dragged = '1';
+    }
+    svg.classList.remove('dragging');
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+}
+
+function skillReset(who) {
+  SKILL_VIEW[who] = { x: 0, y: 0, k: 1 };
+  skillMove(who);
+  for (const chip of document.querySelectorAll(`.sk-chip[data-who="${who}"]`)) {
+    chip.classList.remove('on');
+  }
+}
+
+// Centre on one class's arm, which is what somebody actually wants when a
+// build is two classes out of six and the rest is 400 nodes of nothing.
+function skillFocus(who, cls) {
+  const kids = Object.values(skillTree.nodes).filter(n => n.c === cls);
+  if (!kids.length) return;
+  const mx = kids.reduce((a, n) => a + n.x, 0) / kids.length;
+  const my = kids.reduce((a, n) => a + n.y, 0) / kids.length;
+  const view = skillView(who);
+  view.k = 1.9;
+  view.x = -mx * view.k;
+  view.y = -my * view.k;
+  skillMove(who);
+  for (const chip of document.querySelectorAll(`.sk-chip[data-who="${who}"]`)) {
+    chip.classList.toggle('on', chip.dataset.cls === cls);
+  }
+}
+
+// Which node the pointer is over, found by arithmetic rather than by asking
+// the DOM. Six hundred and eighty-six elements with their own hover handlers
+// is six hundred and eighty-six hit-tests the browser runs on every mouse
+// move over the tree; this is one pass over a flat array and it does not
+// care that most of the tree is drawn as three paths.
+function skillAt(event, who) {
+  const svg = document.querySelector(`.sk-svg[data-who="${who}"]`);
+  if (!svg || !skillTree) return null;
+  const g = svg.querySelector('.sk-pan');
+  if (!g) return null;
+  // Straight through the matrix the browser is already drawing with, rather
+  // than by re-deriving it from the element's width. Deriving it was wrong:
+  // a viewBox meets its element rather than filling it, so the moment
+  // max-height stopped the box being square the tree was letterboxed and
+  // every reading was off by the size of the bars.
+  const ctm = g.getScreenCTM();
+  if (!ctm) return null;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  const { x, y } = pt.matrixTransform(ctm.inverse());
+  let best = null, near = Infinity;
+  for (const [id, n] of Object.entries(skillTree.nodes)) {
+    const half = n.s / 2 + 1;
+    if (Math.abs(n.x - x) > half || Math.abs(n.y - y) > half) continue;
+    const d = Math.abs(n.x - x) + Math.abs(n.y - y);
+    if (d < near) { near = d; best = [id, n]; }
+  }
+  return best;
+}
+
+function skillHover(event, who) {
+  const box = document.querySelector(`.sk-tip[data-who="${who}"]`);
+  const mark = document.querySelector(`.sk-svg[data-who="${who}"] .sk-mark`);
+  if (!box) return;
+  const found = skillAt(event, who);
+  if (!found) {
+    box.classList.remove('on');
+    if (mark) mark.setAttribute('opacity', 0);
+    return;
+  }
+  const [id, node] = found;
+  const held = (SKILL_HELD[who] || new Set()).has(id);
+  // what it actually does, worded by tools/extract_skilltree.py out of the
+  // mod's own bonus data - a name alone tells you nothing about whether a
+  // node is worth a point
+  const does = (node.b || []).map(([text]) =>
+    `<span class="sk-does">${text}</span>`).join('') ||
+    '<span class="sk-does none">a way through, no bonus of its own</span>';
+  // what a tap will do next, which is not the same on a finger as on a mouse.
+  // Taken off the event rather than off a media query: a laptop with a touch
+  // screen answers yes to both, and what matters is which one is being used
+  // right now.
+  const touch = event.pointerType === 'touch';
+  // On a finger the readout only ever appears because a tap asked for it, so
+  // the next tap is always the one that commits.
+  const call = held
+    ? (touch ? 'taken, tap again to refund' : 'taken, click to refund')
+    : (touch ? 'tap again to take' : 'click to take');
+  box.innerHTML = `<b>${node.n}</b><em>${SKILL_CLASS[node.c]?.name || node.c} ·
+    ${node.g}</em>${does}<span class="sk-state${held ? ' has' : ''}">${call}</span>`;
+  box.classList.add('on');
+  if (mark) {
+    const half = node.s / 2 + 2;
+    mark.setAttribute('x', (node.x - half).toFixed(1));
+    mark.setAttribute('y', (node.y - half).toFixed(1));
+    mark.setAttribute('width', half * 2);
+    mark.setAttribute('height', half * 2);
+    mark.setAttribute('opacity', 1);
+  }
+}
+
+// Which nodes each player holds, so the hover does not have to be told twice.
+const SKILL_HELD = {};
+
+// One path holding many squares. Six hundred dim nodes as six hundred <rect>
+// elements is six hundred things the browser re-rasterises every frame of a
+// pan; as five paths - one per grade, so the CSS can still tell them apart -
+// it is five.
+function skillPlates(list) {
+  return list.map(n => {
+    const h = n.s / 2;
+    return `M${(n.x - h).toFixed(1)} ${(n.y - h).toFixed(1)}h${n.s}v${n.s}h${-n.s}z`;
+  }).join('');
+}
+
+// What the mod lets you take next, worked out the way it does: a class node
+// is a way in and needs nothing, and everything else has to touch something
+// you already hold. Six classes' worth of arms all radiate from the middle,
+// so a build is a walk outward from wherever you started - and the gateways
+// are the nodes that let that walk cross into somebody else's arm.
+function skillOpen(mine) {
+  const nodes = skillTree.nodes;
+  const open = new Set();
+  for (const [id, n] of Object.entries(nodes)) {
+    if (mine.has(id)) continue;
+    if (n.start) { open.add(id); continue; }
+  }
+  for (const [a, b] of skillTree.edges) {
+    if (mine.has(a) && !mine.has(b)) open.add(b);
+    if (mine.has(b) && !mine.has(a)) open.add(a);
+  }
+  return open;
+}
+
+// The layers a pick can change, built apart from the ones it cannot so that
+// planPaint can replace just these three.
+function skillLayers(who, held, plan) {
+  const mine = new Set(held);
+  const nodes = skillTree.nodes;
+  const open = plan ? skillOpen(mine) : new Set();
+
+  const dimEdges = [], litEdges = [];
+  for (const [a, b, long] of skillTree.edges) {
+    const A = nodes[a], B = nodes[b];
+    if (!A || !B) continue;
+    if (mine.has(a) && mine.has(b)) litEdges.push([A, B, long]);
+    else dimEdges.push(`M${A.x} ${A.y}L${B.x} ${B.y}`);
+  }
+
+  const byGrade = {};
+  const lit = [], next = [];
+  for (const [id, n] of Object.entries(nodes)) {
+    if (mine.has(id)) lit.push([id, n]);
+    else if (open.has(id)) next.push([id, n]);
+    else (byGrade[n.g] = byGrade[n.g] || []).push(n);
+  }
+
+  const openNodes = next.map(([, n]) => {
+    const h = n.s / 2 + 1.5;
+    return `<rect class="sk-open ${n.g}" x="${(n.x - h).toFixed(1)}"
+      y="${(n.y - h).toFixed(1)}" width="${(h * 2).toFixed(1)}"
+      height="${(h * 2).toFixed(1)}" style="--arm:${SKILL_CLASS[n.c]?.hue || '#888'}"/>`;
+  }).join('');
+
+  const litLines = litEdges.map(([A, B, long]) =>
+    `<line class="sk-edge on${long ? ' long' : ''}" x1="${A.x}" y1="${A.y}"
+      x2="${B.x}" y2="${B.y}" style="--arm:${SKILL_CLASS[A.c]?.hue || '#888'}"/>`).join('');
+
+  const order = { lesser: 0, notable: 1, gateway: 2, keystone: 3, class: 4 };
+  const litNodes = lit
+    .sort((a, b) => (order[a[1].g] || 0) - (order[b[1].g] || 0))
+    .map(([, n]) => {
+      const h = n.s / 2, size = n.s * 0.72;
+      return `<g class="sk-node ${n.g} has" style="--arm:${SKILL_CLASS[n.c]?.hue || '#888'}">
+        <rect class="sk-plate" x="${(n.x - h).toFixed(1)}" y="${(n.y - h).toFixed(1)}"
+          width="${n.s}" height="${n.s}"/>
+        ${n.i ? `<image class="sk-icon" href="${SKILL_ICONS}/${n.i}"
+          x="${(n.x - size / 2).toFixed(1)}" y="${(n.y - size / 2).toFixed(1)}"
+          width="${size.toFixed(1)}" height="${size.toFixed(1)}"/>` : ''}
+      </g>`;
+    }).join('');
+
+  return {
+    dimEdges: dimEdges.join(''),
+    dimPlates: Object.entries(byGrade).map(([grade, list]) =>
+      `<path class="sk-dim ${grade}" d="${skillPlates(list)}"/>`).join(''),
+    live: `${openNodes}${litLines}${litNodes}`,
+  };
+}
+
+function skillTreeChart(who, held, plan) {
+  if (!skillTree) return '';
+  SKILL_HELD[who] = new Set(held);
+  const nodes = skillTree.nodes;
+  const built = skillLayers(who, held, plan);
+  // half the widest the tree gets, plus a node's width so nothing on the rim
+  // is clipped at rest
+  const R = Math.ceil(Math.max(...Object.values(nodes).flatMap(
+    n => [Math.abs(n.x), Math.abs(n.y)])) + 30);
+  const W = R * 2, H = R * 2;
+
+  // Every icon in the tree, built once and never rebuilt: this is the layer
+  // that costs, and nothing a pick does can change it.
+  const dimIcons = Object.values(nodes).filter(n => n.i).map(n => {
+    const size = n.s * 0.72, h = size / 2;
+    return `<image href="${SKILL_ICONS}/${n.i}" x="${(n.x - h).toFixed(1)}"
+      y="${(n.y - h).toFixed(1)}" width="${size.toFixed(1)}" height="${size.toFixed(1)}"/>`;
+  }).join('');
+
+  const chips = (skillTree.classes || []).map(cls => {
+    const took = held.filter(id => (nodes[id] || {}).c === cls).length;
+    return `<button type="button" class="sk-chip${took ? ' took' : ''}"
+      data-who="${who}" data-cls="${cls}" style="--arm:${SKILL_CLASS[cls]?.hue}"
+      onclick="event.stopPropagation();skillFocus('${who}','${cls}')"
+      >${SKILL_CLASS[cls]?.name || cls}${took ? `<em>${took}</em>` : ''}</button>`;
+  }).join('');
+
+  return `
+    <div class="sk-wrap">
+      <div class="sk-bar">${chips}
+        <span class="sk-zooms">
+          <button type="button" class="sk-btn" onclick="event.stopPropagation();skillZoom(null,'${who}',1.3)">+</button>
+          <button type="button" class="sk-btn" onclick="event.stopPropagation();skillZoom(null,'${who}',0.77)">&minus;</button>
+          <button type="button" class="sk-btn" onclick="event.stopPropagation();skillReset('${who}')">fit</button>
+        </span>
+      </div>
+      <div class="sk-stage">
+        <svg class="sk-svg${plan ? ' plan' : ''}" data-who="${who}"
+             viewBox="${-R} ${-R} ${W} ${H}"
+             ${plan ? `onpointerup="skillPick(event, '${who}')"` : ''}
+             onpointerdown="skillDrag(event, '${who}')"
+             onpointermove="skillHover(event, '${who}')"
+             onwheel="skillZoom(event, '${who}')"
+             onmouseleave="unskillHover('${who}')"
+             role="img" aria-label="Passive skill tree, ${held.length} of ${
+               Object.keys(nodes).length} taken">
+          <g class="sk-pan">
+            <path class="sk-dimedge" d="${built.dimEdges}"/>
+            <g class="sk-plates">${built.dimPlates}</g>
+            <g class="sk-dimicons">${dimIcons}</g>
+            <g class="sk-live">${built.live}</g>
+            <rect class="sk-mark" opacity="0" x="0" y="0" width="0" height="0"/>
+          </g>
+        </svg>
+        <div class="sk-tip" data-who="${who}"></div>
+      </div>
+    </div>`;
+}
+
+function unskillHover(who) {
+  const box = document.querySelector(`.sk-tip[data-who="${who}"]`);
+  const mark = document.querySelector(`.sk-svg[data-who="${who}"] .sk-mark`);
+  if (box) box.classList.remove('on');
+  if (mark) mark.setAttribute('opacity', 0);
+}
+
+// ── the planner ─────────────────────────────────────────────────────────────
+// The skill tree, with the points to spend on it. The pack caps a character
+// at 130 (skilltree-common.toml, "Maximum skill points"), one per node, and a
+// node can only be taken if it touches something already taken, so a build is
+// a route rather than a shopping list. This enforces the same thing.
+const PLAN = '__plan';
+// The pack's own cap, read out of its config by the extractor. Kept as a
+// fallback here for a tree.json extracted before that was carried.
+const PLAN_FALLBACK = 130;
+function planMax() { return (skillTree && skillTree.max) || PLAN_FALLBACK; }
+let planHeld = [];
+
+// A build is somebody's work, so it survives the tab closing. Kept in this
+// browser rather than on the server: it is a what-if about a character that
+// may not exist, and it belongs to whoever is doodling it.
+const PLAN_KEY = 'pstPlan';
+
+// Nothing is written until the stored build has been read back. Without this
+// the first draw saves an empty plan over a real one, and the refresh that
+// was meant to be harmless is the thing that destroys it - which is exactly
+// what happened when the tree was already loaded and the restore never ran.
+let planReady = false;
+let planUndo = null;
+
+function planSave() {
+  if (!planReady) return;
+  try {
+    localStorage.setItem(PLAN_KEY, JSON.stringify(planHeld));
+  } catch (e) {
+    // a private window, or storage turned off. The build still works for as
+    // long as the tab is open; it just will not outlive it.
+    planSave.broken = true;
+  }
+}
+
+function planLoad() {
+  if (planReady || !skillTree) return;
+  try {
+    const was = JSON.parse(localStorage.getItem(PLAN_KEY) || '[]');
+    if (Array.isArray(was)) {
+      // a node that is no longer in the tree is dropped rather than drawn as
+      // a hole: the pack edits this tree and ids come and go
+      planHeld = was.filter(id => skillTree.nodes[id]);
+    }
+  } catch (e) {
+    /* an unreadable build is an empty one, not a broken page */
+  }
+  planReady = true;
+}
+
+// The two ways to lose a build that are not a refresh: clearing it, and
+// loading somebody else's over the top. Both keep the last one so it is one
+// press to get back, rather than a confirmation box on every use.
+function planStash() {
+  planUndo = planHeld.length ? planHeld.slice() : null;
+}
+
+function planBack() {
+  if (!planUndo) return;
+  planHeld = planUndo;
+  planUndo = null;
+  planSave();
+  planDraw();
+}
+
+// Taking one is easy. Giving one back is not: dropping a node from the middle
+// of a route would leave everything past it hanging off nothing, which the
+// mod would never have let you build. So a node can only be given back when
+// what remains still reaches a class node - checked by walking it.
+function planConnected(without) {
+  const kept = new Set(planHeld.filter(id => id !== without));
+  const starts = [...kept].filter(id => skillTree.nodes[id]?.start);
+  if (!starts.length) return kept.size === 0;
+  const near = {};
+  for (const [a, b] of skillTree.edges) {
+    if (!kept.has(a) || !kept.has(b)) continue;
+    (near[a] = near[a] || []).push(b);
+    (near[b] = near[b] || []).push(a);
+  }
+  const seen = new Set(starts), queue = [...starts];
+  while (queue.length) {
+    for (const other of near[queue.pop()] || []) {
+      if (!seen.has(other)) { seen.add(other); queue.push(other); }
+    }
+  }
+  return seen.size === kept.size;
+}
+
+// Which node a finger has asked about but not yet committed to. There is no
+// hover on a touch screen, so without this a tap would both show what a node
+// does and spend a point on it, and nobody could look before they leapt.
+let skillPeek = null;
+
+function skillPick(event, who) {
+  if (who !== PLAN) return;
+  // a press that ended a drag is not a pick
+  const svg = event.currentTarget;
+  if (svg.dataset.dragged === '1') { svg.dataset.dragged = ''; return; }
+  const found = skillAt(event, who);
+  if (!found) { skillPeek = null; return; }
+  const [id, node] = found;
+
+  // On a finger: the first tap reads the node, the second one takes it.
+  if (event.pointerType === 'touch' && skillPeek !== id) {
+    skillPeek = id;
+    skillHover(event, who);
+    return;
+  }
+  skillPeek = null;
+  const has = planHeld.includes(id);
+
+  if (has) {
+    if (!planConnected(id)) return planSay('that one is holding up the rest');
+    planHeld = planHeld.filter(x => x !== id);
+  } else {
+    if (planHeld.length >= planMax()) return planSay(`${planMax()} points is the lot`);
+    if (!node.start && !skillOpen(new Set(planHeld)).has(id)) {
+      return planSay('nothing you have reaches that yet');
+    }
+    planHeld.push(id);
+  }
+  planSave();
+  planPaint();
+}
+
+function planSay(text) {
+  const box = document.getElementById('sk-note');
+  if (!box) return;
+  box.textContent = text;
+  box.classList.add('on');
+  clearTimeout(planSay.timer);
+  planSay.timer = setTimeout(() => box.classList.remove('on'), 2200);
+}
+
+// Everything the route adds up to. Bonuses that are the same thing said
+// twice - eight nodes of +2 Armour - are one line of +16, which is the only
+// form in which a build of a hundred points can be read at all.
+function planTally(held) {
+  const sums = new Map();
+  for (const id of held) {
+    for (const [, key, value, pct] of (skillTree.nodes[id]?.b || [])) {
+      if (!key) continue;                    // not a thing worth adding up
+      const row = sums.get(key) || { n: 0, pct, from: 0 };
+      row.n += value;
+      row.from += 1;
+      sums.set(key, row);
+    }
+  }
+  return [...sums.entries()]
+    .sort((a, b) => b[1].from - a[1].from || a[0].localeCompare(b[0]))
+    .map(([key, row]) => ({
+      name: key.replace(/%$/, ''),
+      // a percentage bonus is additive in this mod, so eight lots of 5% is
+      // 40% rather than 1.05 to the eighth
+      value: row.pct ? `+${(+(row.n * 100).toFixed(2))}%`
+                     : `+${+row.n.toFixed(2)}`,
+      from: row.from,
+    }));
+}
+
+// What each point costs, and what a build costs all told. The curve is the
+// whole story of the tree: the first point is 187 experience and the last is
+// over four million, so a hundred and thirty points is not a hundred and
+// thirty choices, it is a dozen and then a very long climb.
+// The game's own experience curve, inverted. Minecraft charges L*L+6L to
+// reach level 16, then a steeper piece to 31 and a steeper one after that, so
+// turning an amount of experience back into a level takes the matching root
+// of whichever piece it lands in.
+//
+// Worth doing because the pack plainly wrote this curve in levels and the
+// config only stores what it costs: every entry comes back an exact whole
+// number. The first point is level 11, the fiftieth is level 60, the last is
+// level 2000. Nobody thinks in 17,677,220 experience.
+function mcLevel(xp) {
+  if (xp <= 352) return Math.sqrt(xp + 9) - 3;
+  if (xp <= 1507) return 8.1 + Math.sqrt(0.4 * (xp - 195.975));
+  return 18.0555556 + Math.sqrt((2 / 9) * (xp - 752.9861111));
+}
+
+function planCostChart(spent) {
+  const raw = (skillTree && skillTree.costs) || [];
+  if (raw.length < 2) return '';
+  const cap = planMax();
+  // The config's array is CUMULATIVE: entry N is the total experience you
+  // must have banked to hold N points, not what the Nth costs on its own.
+  // In levels, because that is plainly the unit it was written in - every
+  // entry comes back a whole number.
+  const levels = raw.map(xp => Math.round(mcLevel(xp)));
+  const most = levels[levels.length - 1];
+
+  // LINEAR, not log. The shape is the whole point of this curve: flat for
+  // sixty points, then a takeoff, then a shoulder easing into the cap. A log
+  // axis irons that S into a smooth rise and draws the same picture a chart
+  // of raw experience would - which is the one thing it must not look like.
+  const W = 892, H = 250, L = 52, R = 12, T = 14, B = 40;
+  const plotW = W - L - R, plotH = H - T - B;
+  const px = i => L + (i / (levels.length - 1)) * plotW;
+  const py = v => T + plotH - (v / most) * plotH;
+
+  // Where the curve changes character, found in the data rather than typed
+  // in: the ramp starts at the first point that costs more than one level,
+  // and the shoulder starts where the climb per point stops getting steeper.
+  const step = levels.map((v, i) => i ? v - levels[i - 1] : v);
+  const ramp = Math.max(1, step.findIndex((d, i) => i && d > 1));
+  let peak = ramp;
+  for (let i = ramp; i < step.length; i++) if (step[i] >= step[peak]) peak = i;
+
+  const line = (from, to, cls) => {
+    const pts = [];
+    for (let i = from; i <= to && i < levels.length; i++) {
+      pts.push(`${px(i).toFixed(1)},${py(levels[i]).toFixed(1)}`);
+    }
+    return pts.length > 1
+      ? `<polyline class="sk-lv ${cls}" points="${pts.join(' ')}"/>` : '';
+  };
+
+  // round hundreds up the side, however high the cap happens to be
+  const gap = most > 1200 ? 500 : most > 400 ? 200 : 50;
+  const rungs = [];
+  for (let v = 0; v <= most; v += gap) {
+    const y = py(v).toFixed(1);
+    rungs.push(`<line class="sk-cost-grid" x1="${L}" y1="${y}" x2="${W - R}" y2="${y}"/>
+      <text class="sk-cost-gridlabel" x="${L - 8}" y="${(+y + 3.5).toFixed(1)}"
+        text-anchor="end">${v.toLocaleString()}</text>`);
+  }
+
+  const mark = i => `<line class="sk-lv-mark" x1="${px(i).toFixed(1)}" y1="${T}"
+      x2="${px(i).toFixed(1)}" y2="${T + plotH}"/>
+    <text class="sk-lv-marktext" x="${(px(i) + 4).toFixed(1)}" y="${T + 11}">#${i + 1}</text>`;
+
+  const ticks = [0, Math.round(cap / 3), Math.round(cap * 2 / 3), cap - 1]
+    .filter((n, k, all) => all.indexOf(n) === k)
+    .map(n => `<text class="sk-cost-marklabel" x="${px(n).toFixed(1)}" y="${H - 20}"
+      text-anchor="middle">#${n + 1}</text>
+      <text class="sk-cost-marksub" x="${px(n).toFixed(1)}" y="${H - 8}"
+        text-anchor="middle">lv ${levels[n].toLocaleString()}</text>`).join('');
+
+  const here = spent ? levels[Math.min(spent, levels.length) - 1] : 0;
+
+  return `
+    <div class="sk-cost-wrap">
+      <div class="sk-cost-head">
+        <b>PLAYER LEVEL PER POINT</b>
+        <u>level ${most.toLocaleString()} for all ${cap}</u>
+      </div>
+      <svg class="sk-cost-svg" viewBox="0 0 ${W} ${H}" role="img"
+           aria-label="Player level required for each skill point">
+        <defs>
+          <linearGradient id="sk-cost-fade" x1="0" y1="0" x2="0" y2="1">
+            <stop class="sk-cost-stop-top" offset="0%"/>
+            <stop class="sk-cost-stop-bot" offset="100%"/>
+          </linearGradient>
+        </defs>
+        ${rungs.join('')}
+        <polygon class="sk-cost-area" points="${levels.map((v, i) =>
+          `${px(i).toFixed(1)},${py(v).toFixed(1)}`).join(' ')} ${
+          W - R},${T + plotH} ${L},${T + plotH}"/>
+        ${mark(ramp)}${mark(peak)}
+        ${line(0, ramp, 'flat')}
+        ${line(ramp, peak, 'ramp')}
+        ${line(peak, levels.length - 1, 'shoulder')}
+        ${spent ? `<circle class="sk-cost-here"
+          cx="${px(Math.min(spent, levels.length) - 1).toFixed(1)}"
+          cy="${py(here).toFixed(1)}" r="5"/>` : ''}
+        ${ticks}
+      </svg>
+    </div>`;
+}
+
+function planClear() {
+  planStash();
+  planHeld = [];
+  planSave();
+  planDraw();
+}
+
+function planCopy(name) {
+  const player = (liveBoard.players || []).find(p => p.name === name);
+  if (!player || !player.skills) return;
+  planStash();
+  planHeld = player.skills.list.filter(id => skillTree.nodes[id]);
+  planSave();
+  planDraw();
+  planSay(`loaded ${name}'s build`);
+}
+
+// Redraw the parts of the tree a pick can change, and nothing else. The six
+// hundred dim icons are the expensive layer and a pick never alters them -
+// a node that has just been taken draws its own icon over the top - so they
+// are built once and left alone. That is the difference between a pick that
+// lands instantly and one that rebuilds fourteen hundred elements first.
+function planPaint() {
+  const svg = document.querySelector(`.sk-svg[data-who="${PLAN}"]`);
+  if (!svg || !skillTree) return planDraw();
+  const built = skillLayers(PLAN, planHeld, true);
+  svg.querySelector('.sk-dimedge').setAttribute('d', built.dimEdges);
+  svg.querySelector('.sk-plates').innerHTML = built.dimPlates;
+  svg.querySelector('.sk-live').innerHTML = built.live;
+  SKILL_HELD[PLAN] = new Set(planHeld);
+  planHead();
+}
+
+// the numbers above the tree, which change on every pick
+function planHead() {
+  const spent = planHeld.length;
+  const points = document.querySelector('#ls-plan .sk-points');
+  const meter = document.querySelector('#ls-plan .sk-meter i');
+  const say = document.querySelector('#ls-plan .sk-plan-say');
+  const tally = document.querySelector('#ls-plan .sk-tally-list');
+  if (points) {
+    points.classList.toggle('full', spent >= planMax());
+    points.querySelector('b').textContent = spent;
+  }
+  if (meter) meter.style.width = `${spent / planMax() * 100}%`;
+  const byClass = {};
+  for (const id of planHeld) {
+    const c = skillTree.nodes[id].c;
+    byClass[c] = (byClass[c] || 0) + 1;
+  }
+  if (say) {
+    say.innerHTML = (Object.entries(byClass).sort((a, b) => b[1] - a[1])
+      .map(([c, n]) => `<span class="sk-class" style="--arm:${SKILL_CLASS[c]?.hue}">${
+        SKILL_CLASS[c]?.name || c}<b>${n}</b></span>`).join('')
+      || '<span class="sk-hint">click a class node in the middle to begin</span>')
+      + '<span class="sk-note" id="sk-note"></span>';
+  }
+  // the undo only exists while there is something to go back to
+  const undo = document.querySelector('#ls-plan .sk-btn.undo');
+  if (undo) undo.hidden = !planUndo;
+  // and the one case worth saying out loud: a browser that will not keep it
+  const kept = document.querySelector('#ls-plan .sk-kept');
+  if (kept) {
+    kept.textContent = planSave.broken
+      ? 'this browser will not save your build' : 'saved in this browser';
+    kept.classList.toggle('warn', !!planSave.broken);
+  }
+  const slot = document.querySelector('#ls-plan .sk-cost-slot');
+  if (slot) slot.innerHTML = planCostChart(spent);
+  if (tally) {
+    const rows = planTally(planHeld);
+    tally.innerHTML = rows.length
+      ? rows.map(r => `<span class="sk-sum"><i>${r.name}</i><b>${r.value}</b>${
+          r.from > 1 ? `<u>${r.from} nodes</u>` : ''}</span>`).join('')
+      : '<span class="sk-hint">nothing taken yet</span>';
+  }
+}
+
+// Opened on demand rather than folded away by default: the tree is a quarter
+// of a megabyte and fourteen hundred elements, and nothing should pay for it
+// until somebody wants to plan something.
+function planOpen() {
+  const wrap = document.querySelector('.ls-plan-wrap');
+  if (!wrap) return;
+  wrap.classList.add('on');
+  planDraw();
+  requestAnimationFrame(() =>
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+}
+
+function planShut() {
+  const wrap = document.querySelector('.ls-plan-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('on');
+  // the tree is fourteen hundred elements; closing should actually put them
+  // down rather than only hide them
+  const host = document.getElementById('ls-plan');
+  if (host) host.innerHTML = '';
+  wrap.scrollIntoView({ block: 'nearest' });
+}
+
+function planDraw() {
+  const host = document.getElementById('ls-plan');
+  if (!host) return;
+  if (!skillTree) {
+    loadSkillTree().then(() => { if (skillTree) planDraw(); });
+    host.innerHTML = '<div class="sk-loading">reading the tree…</div>';
+    return;
+  }
+  // whichever way the tree got here - a player card opened first, or this
+  // panel - the stored build is read back before anything is drawn or saved
+  planLoad();
+  const view = SKILL_VIEW[PLAN];
+  const spent = planHeld.length;
+  const took = (liveBoard.players || []).filter(p => p.skills);
+
+  host.innerHTML = `
+    <div class="sk-plan-head">
+      <span class="sk-plan-title">SKILLTREE</span>
+      <em class="sk-kept"></em>
+      <button type="button" class="sk-close" onclick="planShut()"
+              aria-label="Close the skill tree">CLOSE</button>
+    </div>
+    <div class="sk-plan-bar">
+      <span class="sk-points${spent >= planMax() ? ' full' : ''}">
+        <b>${spent}</b><i>/ ${planMax()} points</i></span>
+      <span class="sk-meter"><i style="width:${spent / planMax() * 100}%"></i></span>
+      <span class="sk-loads">${took.map(p => `<button type="button" class="sk-btn"
+        onclick="planCopy('${p.name}')"><i>load</i>${p.name}</button>`).join('')}
+        <button type="button" class="sk-btn warn" onclick="planClear()">clear</button>
+        <button type="button" class="sk-btn undo" onclick="planBack()">undo</button>
+      </span>
+    </div>
+    <div class="sk-plan-say"></div>
+    <div class="sk-plan-body">
+      ${skillTreeChart(PLAN, planHeld, true)}
+      <div class="sk-tally">
+        <div class="sk-tally-head">WHAT IT ADDS UP TO</div>
+        <div class="sk-tally-list"></div>
+      </div>
+    </div>
+    <div class="sk-cost-slot"></div>`;
+  planHead();
+  if (view) { SKILL_VIEW[PLAN] = view; skillMove(PLAN); }
+}
+
+function skillSection(player) {
+  const S = player.skills;
+  if (!S) return '';
+  if (!skillTree) {
+    loadSkillTree();
+    return `<div class="live-skills" data-key="skills">
+      <div class="lb-head"><span>SKILL TREE</span><b>${S.learned} TAKEN</b></div>
+      <div class="sk-loading">reading the tree…</div></div>`;
+  }
+  const chosen = S.classes.map(c => SKILL_CLASS[c]?.name || c).join(' + ');
+  return `
+    <div class="live-skills" data-key="skills">
+      <div class="lb-head"><span>SKILL TREE</span><b>${S.learned} OF ${
+        Object.keys(skillTree.nodes).length}</b></div>
+      <div class="sk-say">
+        <span class="sk-chosen">${chosen || 'no class yet'}</span>
+        ${S.points ? `<em>${S.points} unspent</em>` : ''}
+        ${S.resets ? `<em>${S.resets} reset${S.resets === 1 ? '' : 's'}</em>` : ''}
+      </div>
+      ${skillTreeChart(player.name, S.list)}
+    </div>`;
+}
+
 // ── the three grids ─────────────────────────────────────────────────────────
 // Each returns the cells, the peak to scale the heat against, and what to put
 // under them as a ruler.
@@ -3842,6 +5184,9 @@ function bootLive() {
     if (--chatDue <= 0) pollChat();
     // the grid re-reads its own log on its own clock
     if (--rhythmDue <= 0) loadRhythm(true);
+    // the history moves on the sync's clock too, and only matters while a
+    // player's card is open to draw it into
+    if (--historyDue <= 0 && document.querySelector('.pcard.open')) loadHistory(true);
     liveTick();
     tickCharts();
   }, 1000);

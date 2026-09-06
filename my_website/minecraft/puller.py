@@ -19,7 +19,7 @@ import urllib.request
 
 from django.conf import settings
 
-from . import activity, chat, sync
+from . import activity, chat, history, sync
 from .live import MAP_STAMP
 
 DEFAULT_CONFIG = "mc_sync.json"
@@ -263,6 +263,13 @@ def _pull(season):
         # taken every time we have a fresh export in hand - see activity.py
         try:
             activity.sample(dest_for(season))
+        except Exception:                    # noqa: BLE001 - never fail a pull
+            pass
+        # and the per-player history, which is the same idea one level down:
+        # what each of their numbers was, banked so there is a curve behind
+        # them later. Nothing the export carries has one - see history.py
+        try:
+            history.sample(dest_for(season))
         except Exception:                    # noqa: BLE001 - never fail a pull
             pass
         # and ask the map, which answers for the server itself rather than for

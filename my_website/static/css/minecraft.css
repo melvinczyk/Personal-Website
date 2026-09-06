@@ -2353,6 +2353,535 @@ body::after { display: none; }
   .yr-term-name { font-size: 7.5px; }
 }
 
+/* ── player history ─────────────────────────────────────────────────────────
+   Two charts off history.py. Same slot furniture as everything else on this
+   panel: a dark plate, a two-pixel bevel, and the boss chart's own axis
+   greys, so a second kind of chart on the page does not read as a second
+   design. */
+/* It sits inside a player's own card, as one more section beside ACTIVITY and
+   COMBAT, so it takes their furniture rather than bringing its own. */
+.live-history { display: flex; flex-direction: column; gap: 6px; }
+.live-history .lb-head { margin-bottom: 0; }
+
+.hs-chart {
+  margin-bottom: 8px; padding: 8px;
+  background: #0c0c10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.hs-cap { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+/* how far back to look, in the same slot furniture the boss chart's own
+   picker wears - it is the same control answering the same question */
+.hs-range {
+  margin-left: auto; padding: 1px 5px; font: inherit; font-size: 11px;
+  color: var(--mc-text); background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.hs-range:focus { outline: none; border-color: var(--mc-xp); }
+.hs-cap b { font-size: 13px; font-weight: 600; color: var(--mc-text); }
+.hs-cap em { font-style: normal; font-size: 11px; color: var(--mc-faint); }
+.hs-svg { display: block; width: 100%; height: auto; }
+.hs-axis { stroke: rgba(255,255,255,0.22); stroke-width: 1; }
+.hs-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.hs-gridlabel { fill: var(--mc-faint); font-size: 11px; }
+.hs-tick { fill: var(--mc-faint); font-size: 11px; }
+.hs-striplabel { fill: var(--mc-faint); font-size: 10px; letter-spacing: .1em; }
+.hs-now { fill: var(--hs, var(--mc-text)); font-size: 11px; }
+
+/* Ten ways to cross the ground, and the colours are the game's own reading of
+   each: water blue, lava-less stone grey for climbing, the red of a fall. Not
+   a generated ramp - a ramp would put swimming and sprinting next to each
+   other in the legend and leave them indistinguishable on the bar. */
+.hs-seg { stroke: rgba(0,0,0,0.35); stroke-width: 0.5; }
+.hs-seg[data-kind="walk"],     .hs-key i[data-kind="walk"], .hs-part i[data-kind="walk"]     { fill: #6a9b3a; background: #6a9b3a; }
+.hs-seg[data-kind="sprint"],   .hs-key i[data-kind="sprint"], .hs-part i[data-kind="sprint"]   { fill: #9ede4a; background: #9ede4a; }
+.hs-seg[data-kind="swim"],     .hs-key i[data-kind="swim"], .hs-part i[data-kind="swim"]     { fill: #4aa8e0; background: #4aa8e0; }
+.hs-seg[data-kind="boat"],     .hs-key i[data-kind="boat"], .hs-part i[data-kind="boat"]     { fill: #b07a3c; background: #b07a3c; }
+.hs-seg[data-kind="climb"],    .hs-key i[data-kind="climb"], .hs-part i[data-kind="climb"]    { fill: #8a97a8; background: #8a97a8; }
+.hs-seg[data-kind="crouch"],   .hs-key i[data-kind="crouch"], .hs-part i[data-kind="crouch"]   { fill: #9a6fd0; background: #9a6fd0; }
+.hs-seg[data-kind="fall"],     .hs-key i[data-kind="fall"], .hs-part i[data-kind="fall"]     { fill: #d94a3d; background: #d94a3d; }
+.hs-seg[data-kind="horse"],    .hs-key i[data-kind="horse"], .hs-part i[data-kind="horse"]    { fill: #e0a24a; background: #e0a24a; }
+.hs-seg[data-kind="elytra"],   .hs-key i[data-kind="elytra"], .hs-part i[data-kind="elytra"]   { fill: #6fe0ee; background: #6fe0ee; }
+.hs-seg[data-kind="minecart"], .hs-key i[data-kind="minecart"], .hs-part i[data-kind="minecart"] { fill: #c9d1d9; background: #c9d1d9; }
+
+/* ── the probe ───────────────────────────────────────────────────────────────
+   A rule down the chart at whichever bucket the pointer is nearest, and a
+   line under it saying what was in that one. The bars are stacked ten deep
+   and a tooltip per segment would be a hundred and forty of them; one
+   readout naming the whole bucket is the thing somebody actually wants. */
+.hs-cursor { stroke: rgba(255,255,255,0.35); stroke-width: 1; stroke-dasharray: 3 3; }
+.hs-cursor-dot { fill: #0c0c10; stroke: var(--mc-heart); stroke-width: 2.5; }
+.hs-probe {
+  display: none; margin-top: 5px; padding: 5px 7px;
+  font-size: 11px; line-height: 1.5; color: var(--mc-dim);
+  background: rgba(0,0,0,0.45);
+  border-left: 3px solid var(--mc-xp);
+}
+.hs-probe.on { display: block; }
+.hs-probe b { color: var(--mc-text); font-weight: 600; }
+.hs-probe em { font-style: normal; margin-left: 8px; color: var(--mc-gold); }
+.hs-parts { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; }
+.hs-part { display: inline-flex; align-items: center; gap: 4px; }
+.hs-part i { width: 8px; height: 8px; flex: none; }
+.hs-part b { margin-left: 2px; color: var(--mc-text); }
+.hs-part.armour b { color: var(--mc-sky); }
+
+.hs-keys { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.hs-key {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--mc-dim);
+}
+.hs-key i { width: 9px; height: 9px; flex: none; }
+
+/* Health is the heart red the page already reads as health, armour the
+   diamond blue it already reads as armour. Set per strip rather than passed
+   in, so the two charts cannot drift from the meters above them. */
+.hs-strip[data-key="hp"]    { --hs: var(--mc-heart); }
+.hs-strip[data-key="armor"] { --hs: var(--mc-sky); }
+.hs-line {
+  fill: none; stroke: var(--hs, var(--mc-xp)); stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+/* how far health swung between two samples, which the line through the
+   samples cannot show */
+.hs-band { fill: var(--hs, var(--mc-xp)); opacity: .18; }
+
+/* ── what is real and what is not ────────────────────────────────────────────
+   The record starts the day the sampler was switched on, so the days before
+   it are simulated - see tools/seed_history.py. They are drawn faded and
+   hatched, and the levels behind a marked edge, because a chart that cannot
+   tell you which of its bars it made up is worse than no chart at all. */
+.hs-seg.fake { opacity: .38; }
+.hs-fake {
+  fill: rgba(255, 255, 255, 0.03);
+}
+.hs-edge {
+  stroke: rgba(255, 210, 74, 0.45); stroke-width: 1; stroke-dasharray: 3 3;
+}
+/* The levels over that ground are dimmed by the plate under them rather than
+   per-point: a dashed line through a health chart would read as missing data
+   instead of as invented data. */
+
+@media (max-width: 560px) {
+  .hs-chart { padding: 6px; }
+  .hs-keys { gap: 3px 8px; }
+  .hs-key { font-size: 10px; }
+}
+
+/* ── the passive skill tree ──────────────────────────────────────────────────
+   The mod's own tree at the mod's own coordinates: six classes radiating from
+   a shared middle, 588 nodes and 669 connections. Drawn whole and dim, with
+   what a player actually took lit up - the reading is where somebody went
+   against everywhere they could have gone, and half of that is the negative
+   space. */
+.live-skills { display: flex; flex-direction: column; gap: 6px; }
+.live-skills .lb-head { margin-bottom: 0; }
+.sk-loading { padding: 10px; font-size: 12px; color: var(--mc-faint); }
+
+.sk-say { display: flex; align-items: baseline; gap: 8px; font-size: 12px; }
+.sk-chosen { color: var(--mc-gold); text-shadow: 0 0 6px rgba(255,210,74,0.3); }
+.sk-say em { font-style: normal; color: var(--mc-faint); }
+
+.sk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.sk-chip {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  padding: 2px 7px; font: inherit; font-size: 11px; cursor: pointer;
+  color: var(--mc-faint); background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+/* a class they actually went into wears its own arm's colour; one they never
+   touched stays grey, so the bar says the build before the tree does */
+.sk-chip.took { color: var(--arm); border-color: color-mix(in srgb, var(--arm) 45%, transparent); }
+.sk-chip em { font-style: normal; color: var(--mc-text); }
+.sk-chip:hover { color: var(--mc-text); }
+.sk-chip.on { background: color-mix(in srgb, var(--arm) 22%, transparent); }
+.sk-zooms { margin-left: auto; display: flex; gap: 3px; }
+.sk-btn {
+  padding: 2px 7px; font: inherit; font-size: 11px; cursor: pointer;
+  color: var(--mc-dim); background: #0d0d10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.sk-btn:hover { color: var(--mc-text); }
+
+.sk-stage {
+  position: relative; overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  /* a lit middle falling off to black at the rim, which is where the tree's
+     own six arms end - the ground does half the work of saying that the
+     centre is where everything starts from */
+  background:
+    radial-gradient(58% 58% at 50% 50%, rgba(120,140,255,0.09), transparent 70%),
+    radial-gradient(90% 90% at 50% 50%, #191b28, #08080c 78%);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+/* Big. It is a tree of seven hundred nodes and the whole point is reading a
+   route through it, which cannot be done in a postage stamp. Square, because
+   the tree itself is, and tall enough to be worth panning around. */
+/* Square, and left square. A viewBox meets its element rather than filling
+   it, so a max-height that stopped this being 1:1 letterboxed the tree - and
+   everything that reads a pointer position has to know about those bars. */
+.sk-svg {
+  display: block; width: 100%; height: auto; aspect-ratio: 1 / 1;
+  min-height: 380px;
+  cursor: grab; touch-action: none;
+  /* Dragging a tree is dragging, not selecting. Without this the browser
+     reads a press-and-move over an SVG as "select everything under it" and
+     paints the whole panel in the highlight colour. */
+  -webkit-user-select: none; user-select: none;
+}
+.sk-svg.dragging { cursor: grabbing; }
+/* the group that moves. Promoted to its own layer so a pan is a composite
+   rather than a repaint of fifteen hundred shapes. */
+.sk-pan { will-change: transform; }
+
+/* ── the tree nobody took ────────────────────────────────────────────────────
+   Drawn as four paths rather than as fifteen hundred elements - one for every
+   connection, one per grade for the nodes. Nothing here is interactive: the
+   hover is worked out in script from the coordinates, which is one pass over
+   an array instead of seven hundred hit-tests per mouse move. */
+.sk-dimedge {
+  fill: none; stroke: rgba(150,165,220,0.22); stroke-width: 1.2;
+}
+/* The grades, told apart by weight rather than by colour - colour belongs to
+   the arm a node is on, and spending it on rank as well would leave a build
+   unreadable. A lesser skill is a faint tile, a keystone is a heavy one. */
+.sk-dim { fill: #23263180; stroke: rgba(165,180,230,0.34); stroke-width: 1.1; }
+.sk-dim.notable  { fill: #2a2e42; stroke: rgba(180,195,245,0.5); stroke-width: 1.4; }
+.sk-dim.keystone { fill: #333854; stroke: rgba(200,215,255,0.66); stroke-width: 1.8; }
+.sk-dim.class    { fill: #3b4166; stroke: rgba(225,232,255,0.8); stroke-width: 2; }
+.sk-dim.gateway  { fill: #24333c; stroke: rgba(120,220,200,0.7);
+                   stroke-width: 1.6; stroke-dasharray: 3 2; }
+
+/* Every icon in the tree, in one group that is not drawn at all until the
+   view is close enough for a sixteen-pixel sprite to be worth compositing. */
+.sk-dimicons { display: none; opacity: .3; image-rendering: pixelated; }
+.sk-svg.close .sk-dimicons { display: block; }
+
+/* ── what they took ──────────────────────────────────────────────────────────
+   Sixty-odd nodes and sixty-odd connections, so these can afford to be real
+   elements. No drop-shadow on any of them: an SVG filter is re-run on every
+   frame of a pan, and a hundred of them is what made this crawl. The glow is
+   a second, wider, translucent stroke instead - the same look for free. */
+.sk-edge.on {
+  stroke: var(--arm); stroke-width: 2.2; opacity: .9;
+  paint-order: stroke;
+}
+.sk-edge.on.long { stroke-dasharray: 4 4; }
+
+.sk-plate {
+  fill: color-mix(in srgb, var(--arm) 32%, #12121a);
+  stroke: var(--arm); stroke-width: 1.6;
+}
+.sk-icon { image-rendering: pixelated; }
+/* the bigger grades read louder by weight rather than by glow */
+.sk-node.has.notable .sk-plate  { stroke-width: 2; }
+.sk-node.has.keystone .sk-plate,
+.sk-node.has.class .sk-plate {
+  stroke-width: 2.4;
+  fill: color-mix(in srgb, var(--arm) 46%, #12121a);
+}
+
+/* where the pointer is, moved rather than rebuilt */
+.sk-mark {
+  fill: none; stroke: #fff; stroke-width: 1.5; pointer-events: none;
+}
+
+/* ── the planner ─────────────────────────────────────────────────────────────
+   Everything a click could reach next, ringed in its own arm's colour. Only
+   ever a few dozen at a time, so these can afford to be real elements and to
+   breathe - and the breathing is the invitation. */
+.sk-open {
+  fill: none; stroke: var(--arm); stroke-width: 1.4; opacity: .55;
+  animation: sk-beckon 2.2s ease-in-out infinite;
+}
+@keyframes sk-beckon {
+  0%, 100% { opacity: .28; }
+  50%      { opacity: .8; }
+}
+@media (prefers-reduced-motion: reduce) { .sk-open { animation: none; } }
+.sk-svg.plan { cursor: pointer; }
+.sk-svg.plan.dragging { cursor: grabbing; }
+
+/* ── the planning section ────────────────────────────────────────────────────
+   Everything else on this page reports what the server did. This is the one
+   part of it you do something with, so it does not sit in the stack of folded
+   grey bars with the rest - it is a plate of its own with its own way in. */
+.ls-plan-wrap { margin: 8px 10px; }
+.ls-plan { display: none; }
+.ls-plan-wrap.on .ls-plan { display: block; }
+.ls-plan-wrap.on .sk-open-btn { display: none; }
+
+/* Nothing else on this page is arcane. Every other panel is an inventory slot
+   or a stone plate, because everything else is a record of what happened; this
+   is the one place you make something up, so it gets the tree's own violet and
+   a corner-cut frame nothing else on the page wears. */
+.sk-open-btn, .ls-plan {
+  --ink: #8f9bf0;
+  position: relative;
+  background:
+    linear-gradient(135deg, transparent 0 13px, #14161f 13px) top left,
+    linear-gradient(-135deg, transparent 0 13px, #14161f 13px) top right,
+    linear-gradient(45deg, transparent 0 13px, #14161f 13px) bottom left,
+    linear-gradient(-45deg, transparent 0 13px, #14161f 13px) bottom right;
+  background-size: 51% 51%;
+  background-repeat: no-repeat;
+  border: 0;
+}
+/* the frame, drawn inside the cut corners rather than as a border */
+.sk-open-btn::before, .ls-plan::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px,
+    100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%,
+    0 calc(100% - 13px), 0 13px);
+}
+
+/* The one thing on this page you press to make something rather than to read
+   something, so it is allowed to want pressing: the tree's own violet, a
+   light that sweeps across it, and a constellation behind the word. */
+.sk-open-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 20px 18px; font: inherit;
+  cursor: pointer; color: var(--mc-text); overflow: hidden;
+}
+/* the nodes, scattered behind the word the way they are in the tree itself */
+.sk-open-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(2px 2px at 12% 30%, var(--ink), transparent),
+    radial-gradient(2px 2px at 22% 68%, var(--ink), transparent),
+    radial-gradient(2px 2px at 34% 22%, var(--ink), transparent),
+    radial-gradient(2px 2px at 44% 74%, var(--ink), transparent),
+    radial-gradient(2px 2px at 58% 34%, var(--ink), transparent),
+    radial-gradient(2px 2px at 68% 70%, var(--ink), transparent),
+    radial-gradient(2px 2px at 79% 28%, var(--ink), transparent),
+    radial-gradient(2px 2px at 89% 62%, var(--ink), transparent),
+    radial-gradient(58% 150% at 50% 50%,
+      color-mix(in srgb, var(--ink) 20%, transparent), transparent 70%);
+  opacity: .5;
+}
+/* a light crossing it, the way the first-blood badge sweeps */
+.sk-open-btn::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%,
+    color-mix(in srgb, var(--ink) 34%, transparent) 50%, transparent 60%);
+  transform: translateX(-130%);
+  animation: sk-sweep 5s ease-in-out infinite;
+}
+@keyframes sk-sweep {
+  0%, 62%   { transform: translateX(-130%); }
+  88%, 100% { transform: translateX(130%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-open-btn::after { animation: none; opacity: 0; }
+}
+.sk-open-btn:hover { --ink: #c3caff; }
+.sk-open-btn:hover .sk-open-glow { opacity: .85; }
+
+.sk-open-title {
+  position: relative; z-index: 1;
+  font-size: 30px; letter-spacing: 8px; color: #eef0ff;
+  text-shadow:
+    0 0 6px var(--ink),
+    0 0 18px color-mix(in srgb, var(--ink) 70%, transparent),
+    0 0 40px color-mix(in srgb, var(--ink) 45%, transparent),
+    3px 3px #000;
+}
+.sk-plan-title {
+  position: relative; z-index: 1;
+  font-size: 20px; letter-spacing: 3px; color: var(--ink);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--ink) 45%, transparent), 2px 2px #000;
+}
+
+.ls-plan { padding: 14px 16px; }
+.sk-plan-head {
+  position: relative; display: flex; align-items: baseline; gap: 10px;
+  padding-bottom: 8px; margin-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 26%, transparent);
+}
+.sk-plan-head em { font-style: normal; font-size: 11px; color: var(--mc-faint); }
+.sk-close {
+  margin-left: auto; padding: 3px 12px; font: inherit; font-size: 12px;
+  letter-spacing: 1.2px; cursor: pointer; color: var(--mc-dim);
+  background: rgba(0,0,0,0.4);
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.sk-close:hover { color: #fff; border-color: var(--ink); }
+.sk-plan-bar, .sk-plan-say, .sk-plan-body { position: relative; z-index: 1; }
+
+/* the tree and its running total, side by side where there is room */
+.sk-plan-body { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.sk-plan-body .sk-wrap { flex: 1 1 460px; min-width: 0; }
+.sk-tally {
+  flex: 1 1 210px; min-width: 190px; align-self: stretch;
+  padding: 8px; background: #0c0c10;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.sk-tally-head {
+  font-size: 11px; letter-spacing: 1.4px; color: #8f9bf0;
+  padding-bottom: 5px; margin-bottom: 6px;
+  border-bottom: 1px solid rgba(143,155,240,0.3);
+}
+.sk-tally-list { display: flex; flex-direction: column; gap: 2px; max-height: 60vh;
+                 overflow-y: auto; }
+/* One line per thing the build gives, however many nodes said it. Eight nodes
+   of +2 Armour is +16 Armour and one line, which is the only form a build of
+   a hundred points can be read in at all. */
+.sk-sum {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 2px 0; font-size: 12px; line-height: 1.4;
+}
+.sk-sum i { font-style: normal; color: var(--mc-dim); flex: 1; min-width: 0; }
+.sk-sum b { color: var(--mc-xp); font-weight: 600; white-space: nowrap; }
+.sk-sum u { text-decoration: none; font-size: 10px; color: var(--mc-faint); }
+
+/* ── what a point costs ──────────────────────────────────────────────────────
+   The pack's own level-up curve, one bar a point, drawn on a log scale
+   because the last point costs twenty thousand times the first and a linear
+   chart would be a hundred bars flat on the floor. The bars already bought
+   are lit, so the chart doubles as a progress meter. */
+.sk-cost-wrap {
+  margin-top: 8px; padding: 8px 10px 6px;
+  background: #0c0c10;
+  border: 1px solid color-mix(in srgb, var(--ink, #8f9bf0) 22%, transparent);
+}
+.sk-cost-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.sk-cost-head b { font-size: 11px; letter-spacing: 1.4px; color: #8f9bf0; }
+.sk-cost-head em { font-style: normal; font-size: 11px; color: var(--mc-dim); }
+.sk-cost-head u { text-decoration: none; margin-left: auto; font-size: 10px;
+                  color: var(--mc-faint); }
+.sk-cost-svg { display: block; width: 100%; height: auto; }
+.sk-cost-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.sk-cost-gridlabel, .sk-cost-axis, .sk-cost-marksub {
+  fill: var(--mc-faint); font-size: 11px;
+}
+.sk-cost-marklabel { fill: var(--mc-dim); font-size: 11px; }
+.sk-cost-stop-top { stop-color: #8f9bf0; stop-opacity: 0.3; }
+.sk-cost-stop-bot { stop-color: #8f9bf0; stop-opacity: 0; }
+.sk-cost-area { fill: url(#sk-cost-fade); }
+/* Three stretches, three colours, because the curve changes character twice
+   and the whole reason to draw it is that those two moments exist. */
+.sk-lv {
+  fill: none; stroke-width: 2.6;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+.sk-lv.flat     { stroke: #8a94b8; }
+.sk-lv.ramp     { stroke: #e0a24a; }
+.sk-lv.shoulder { stroke: #a97bff; }
+.sk-lv-mark { stroke: rgba(255,255,255,0.16); stroke-width: 1; stroke-dasharray: 3 3; }
+.sk-lv-marktext { fill: var(--mc-faint); font-size: 10px; }
+
+.sk-cost-here { fill: #0c0c10; stroke: #cdd4ff; stroke-width: 2.5; }
+.sk-cost-dot { fill: #0c0c10; stroke: #8f9bf0; stroke-width: 2; }
+
+/* what a node does, in its own tooltip */
+.sk-does {
+  display: block; margin-top: 3px; color: var(--mc-xp); font-size: 11px;
+}
+.sk-does.none { color: var(--mc-faint); font-style: italic; }
+.sk-plan-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0; }
+.sk-points { display: flex; align-items: baseline; gap: 4px; }
+.sk-points b { font-size: 20px; color: var(--mc-gold); text-shadow: 2px 2px #000; }
+.sk-points i { font-style: normal; font-size: 12px; color: var(--mc-faint); }
+.sk-points.full b { color: var(--mc-heart); }
+.sk-meter {
+  flex: 1 1 120px; min-width: 90px; height: 8px; padding: 0;
+  background: rgba(0,0,0,0.55); border: 1px solid rgba(0,0,0,0.7);
+}
+.sk-meter i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--mc-xp), var(--mc-gold));
+}
+.sk-btn.warn { color: var(--mc-heart); }
+.sk-btn.undo { color: var(--mc-gold); }
+.sk-btn[hidden] { display: none; }
+.sk-kept { font-style: normal; font-size: 10px; color: var(--mc-faint); }
+.sk-kept.warn { color: var(--mc-gold); }
+.sk-btn i { font-style: normal; color: var(--mc-faint); margin-right: 4px; }
+.sk-loads { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.sk-plan-say { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+               min-height: 18px; margin-bottom: 6px; font-size: 12px; }
+.sk-class { display: inline-flex; align-items: baseline; gap: 4px; color: var(--arm); }
+.sk-class b { color: var(--mc-text); }
+.sk-hint { color: var(--mc-faint); }
+/* why a click did nothing, said only when one does */
+.sk-note { margin-left: auto; color: var(--mc-gold); opacity: 0; transition: opacity .2s; }
+.sk-note.on { opacity: 1; }
+
+.sk-tip {
+  display: none; position: absolute; left: 6px; bottom: 6px; max-width: 70%;
+  padding: 5px 8px; font-size: 11px; line-height: 1.5;
+  background: rgba(8,8,12,0.92);
+  border: 1px solid rgba(255,255,255,0.16);
+  pointer-events: none;
+}
+.sk-tip.on { display: block; }
+.sk-tip b { display: block; color: var(--mc-text); font-weight: 600; }
+.sk-tip em { font-style: normal; color: var(--mc-faint); }
+.sk-state { display: block; margin-top: 2px; color: var(--mc-faint); }
+.sk-state.has { color: var(--mc-xp); }
+
+/* ── on a phone ──────────────────────────────────────────────────────────────
+   The tree is the one thing on this page you drive rather than read, so the
+   controls need to be thumb-sized and the tree itself needs the width. */
+@media (max-width: 700px) {
+  .ls-plan-wrap { margin: 8px 7px; }
+  .ls-plan { padding: 10px 9px; }
+  .sk-open-btn { padding: 16px 12px; }
+  .sk-open-title { font-size: 22px; letter-spacing: 5px; }
+
+  /* the tally goes under the tree rather than beside it, and stops being a
+     tall column of its own */
+  .sk-plan-body { display: block; }
+  .sk-tally { margin-top: 8px; }
+  .sk-tally-list { max-height: none; }
+
+  /* Taller than it is wide. A phone is a tall window and the tree is round:
+     squaring it to the width throws away half the screen. */
+  .sk-svg { aspect-ratio: 3 / 4; min-height: 0; }
+
+  /* Everything you press, big enough to press. The class chips scroll across
+     rather than wrapping into four rows above a chart nobody can see. */
+  .sk-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px;
+            scrollbar-width: none; }
+  .sk-bar::-webkit-scrollbar { display: none; }
+  .sk-chip, .sk-btn, .sk-close {
+    flex: none; min-height: 34px; padding: 6px 11px; font-size: 12px;
+  }
+  .sk-zooms { position: sticky; right: 0; background: var(--mc-panel);
+              padding-left: 4px; }
+  .sk-plan-bar { gap: 5px; }
+  /* one scrolling line rather than four stacked rows of "load somebody" */
+  .sk-loads {
+    flex: 1 1 100%; order: 8; flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .sk-loads::-webkit-scrollbar { display: none; }
+  .sk-loads .sk-btn { flex: none; }
+  /* the word "load" four times over is four times nothing */
+  .sk-btn i { display: none; }
+  .sk-points b { font-size: 18px; }
+  .sk-meter { flex-basis: 100%; order: 9; }
+
+  /* the readout sits over the tree, so it must not swallow it */
+  .sk-tip { max-width: calc(100% - 12px); font-size: 12px; }
+  .sk-cost-head { flex-wrap: wrap; gap: 4px 8px; }
+  .sk-cost-head u { margin-left: 0; }
+}
+
+@media (pointer: coarse) {
+  /* a finger is not a pointer: there is no hover to show a tooltip with, so
+     the readout has to survive the tap that opened it */
+  .sk-tip { pointer-events: none; }
+  .sk-chip, .sk-btn, .sk-close { min-height: 38px; }
+}
+
 .ls-bar {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px; font-size: 14px; color: var(--mc-dim);

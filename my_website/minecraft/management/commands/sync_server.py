@@ -38,7 +38,7 @@ import time
 
 from django.core.management.base import BaseCommand, CommandError
 
-from minecraft import activity, chat, puller, sync
+from minecraft import activity, chat, history, puller, sync
 
 # What a failing host is asked at instead: doubling from whichever interval
 # was due, up to this. A server down for the night is asked twice a minute for
@@ -162,6 +162,13 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f"  activity  {banked / 3600:.1f} player-hours "
                     f"across {seen} players")
+            # what each player's own numbers were, banked the same way. It
+            # only ever grows forwards, so a run that skips it is a gap
+            # nothing can fill in later - see history.py
+            watched, moved = history.sample(dest)
+            if moved:
+                self.stdout.write(
+                    f"  history   {moved} counters moved across {watched} players")
 
         summary = f"{got} fetched, {same} unchanged, {missing} missing"
         if skipped:
@@ -315,10 +322,23 @@ class Command(BaseCommand):
         # poll in between has nothing to do with it.
         if not sync.verify(dest, cfg, log=self.stdout.write):
             self._log("  a fetched file is not valid JSON", err=True)
+
+        # The live map, which answers for the server itself where the export
+        # answers only for the mod that writes it. This is the tick that runs
+        # in production, so a probe missing from here is a probe that never
+        # happens - see puller.probe_map and live._server_up.
+        if not puller.probe_map(dest):
+            self._log("  map       no answer")
+
         seen, banked = activity.sample(dest)
         if banked:
             self._log(f"  activity  {banked / 3600:.1f} player-hours "
                       f"across {seen} players")
+        # and the per-player history. It only grows forwards, so a tick that
+        # skips it is a gap nothing can fill in later - see history.py
+        watched, moved = history.sample(dest)
+        if moved:
+            self._log(f"  history   {moved} counters across {watched} players")
         return True
 
     def _explore(self, sftp, root, depth):

@@ -2,10 +2,11 @@ import json
 import os
 from datetime import datetime
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.conf import settings
 
 from . import activity as activity_data
+from . import history as history_data
 from . import chat as chat_data
 from . import live as live_data
 from . import puller
@@ -260,6 +261,40 @@ def activity_feed(request):
     key = f'season{LIVE_SEASON}'
     return JsonResponse(
         activity_data.board(os.path.join(MINECRAFT_ROOT, key, 'data')))
+
+
+def skill_tree(request):
+    """The tree itself, redirected to a URL that carries its own mtime.
+
+    It is a static file and a big one, so it wants caching hard - but a
+    re-extracted tree served from a browser cache holding the old one is how
+    a new field silently does not exist. The same stamp trick every model and
+    icon on this page already uses, applied to the one file that is fetched
+    by script rather than named in the markup.
+    """
+    path = os.path.join(MINECRAFT_ROOT, 'skilltree', 'tree.json')
+    try:
+        stamp = int(os.path.getmtime(path))
+    except OSError:
+        stamp = 0
+    return redirect(f'/static/minecraft/skilltree/tree.json?v={stamp}')
+
+
+def history_feed(request):
+    """What each player's own numbers have been doing, day by day.
+
+    Its own endpoint for activity_feed's reason: it changes on the sync's
+    clock rather than the page's, so it is fetched when the section is opened
+    rather than ridden along on the board's poll. Bigger than the activity
+    feed too - a row per player per day plus an hourly gauge series - which is
+    a second reason not to put it on something polled every minute.
+    """
+    if not LIVE_SEASON:
+        return JsonResponse({'live': False}, status=404)
+
+    key = f'season{LIVE_SEASON}'
+    return JsonResponse(
+        history_data.board(os.path.join(MINECRAFT_ROOT, key, 'data')))
 
 
 def guide(request):

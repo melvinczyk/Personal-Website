@@ -526,6 +526,29 @@ def _realm(dimension):
     return 'other'
 
 
+def _skills(raw):
+    """One player's Passive Skill Tree, as the export gives it.
+
+    Nothing is looked up here. The tree itself is static and served as its own
+    file, so all the board carries is which nodes this player holds - the ids,
+    which classes they committed to, and the count per class.
+    """
+    if not isinstance(raw, dict):
+        return None
+    taken = [str(k) for k in (raw.get('list') or []) if k]
+    if not taken:
+        return None
+    by_class = {str(k): _int(v) for k, v in (raw.get('byClass') or {}).items()}
+    return {
+        'learned':  _int(raw.get('learned')) or len(taken),
+        'points':   _int(raw.get('points')),
+        'classes':  [str(c) for c in (raw.get('classes') or [])],
+        'by_class': dict(sorted(by_class.items(), key=lambda kv: -kv[1])),
+        'list':     taken,
+        'resets':   _int(raw.get('treeReset')),
+    }
+
+
 def _fieldguide(raw):
     """One player's fieldguide_counts.json entry, in the units the card wants.
 
@@ -1058,6 +1081,12 @@ def load(season_path):
             # either alone is a list, and together they are a playstyle.
             'hunted':      _mob_tally(raw, 'killed'),
             'nemeses':     _mob_tally(raw, 'killedBy'),
+            # what they have taken out of the Passive Skill Tree. The export
+            # gives the ids and nothing else; where each one sits and what it
+            # is called comes off the mod's own data - see
+            # tools/extract_skilltree.py - so the page can draw the real tree
+            # rather than a list of names.
+            'skills':      _skills(raw.get('skills')),
             'fieldguide':  _fieldguide(field),
             'fishing':     _fish(rod, covers),
             'recorded':    _moment(raw.get('recorded') or updated),
