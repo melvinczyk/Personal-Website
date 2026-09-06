@@ -252,6 +252,13 @@ def _world_state(raw):
         # resets every year and a division that would get it wrong
         'year_number': _int(season.get('solarYear') or season.get('gregorianYear')),
         'season_day': solar_days,
+        # The world is usually older than its seasonal calendar: the mod
+        # counts from when seasons were switched on, and retuning the year's
+        # length restarts that count. So day 429 of the world can honestly be
+        # day 97 of year 1, and the page has to be able to say why rather
+        # than showing two day counts that cannot both be right.
+        'seasons_from': (_int(time_.get('day')) - solar_days)
+                        if solar_days and _int(time_.get('day')) > solar_days else 0,
         # days left in this sub-season, not just this solar term - the year
         # calendar's own cells are one per sub-season, so this is what tells
         # it how many of the current one are filled in
@@ -524,6 +531,30 @@ def _realm(dimension):
         if any(mark in where for mark in marks):
             return realm
     return 'other'
+
+
+@lru_cache(maxsize=1)
+def _skill_costs(stamp):
+    """The experience each skill point needs, out of the extracted tree.
+
+    Sent with the board so a player card can say how far off their next point
+    is without fetching tree.json - a hundred and fifty numbers against a
+    quarter of a megabyte of nodes and connections that only the planner
+    needs. Keyed on the file's mtime so a re-extracted tree is picked up.
+    """
+    try:
+        with open(os.path.join(_STATIC, 'skilltree', 'tree.json')) as fh:
+            return json.load(fh).get('costs') or []
+    except (OSError, ValueError):
+        return []
+
+
+def skill_costs():
+    path = os.path.join(_STATIC, 'skilltree', 'tree.json')
+    try:
+        return _skill_costs(int(os.path.getmtime(path)))
+    except OSError:
+        return []
 
 
 def _skills(raw):
@@ -1480,6 +1511,8 @@ def board(season_path):
         # what the export says about the world itself rather than the people
         # standing in it
         'world':   _world_state(raw.get('world')),
+        # what a skill point costs, in experience, per point - see skill_costs
+        'skill_costs': skill_costs(),
         # the silhouette a fish nobody has landed is drawn as, sent once
         # rather than repeated on every tile that needs it
         'fish_unknown': f'{FISH_URL}/unknown.png?v={_stamp(FISH_DIR, "unknown.png")}',

@@ -2492,6 +2492,79 @@ body::after { display: none; }
 .sk-chosen { color: var(--mc-gold); text-shadow: 0 0 6px rgba(255,210,74,0.3); }
 .sk-say em { font-style: normal; color: var(--mc-faint); }
 
+/* How far off the next point is, in the unit the game counts in. The bar is
+   how much of that level requirement they have climbed, not a fraction of
+   one level: the mod takes the whole cost out of your experience, so the
+   climb starts again from wherever it left them. */
+.sk-next {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px;
+  padding: 5px 8px; margin-bottom: 6px; font-size: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border-left: 3px solid var(--mc-gold);
+}
+.sk-next b { color: var(--mc-gold); font-weight: 600; }
+.sk-next em { font-style: normal; color: var(--mc-faint); font-size: 11px; }
+.sk-next-bar {
+  flex: 1 1 100%; height: 5px; padding: 0;
+  background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(0, 0, 0, 0.6);
+}
+.sk-next-bar i {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--mc-xp), var(--mc-gold));
+}
+/* nothing to climb: they can spend right now */
+.sk-next.ready { border-left-color: var(--mc-xp); }
+.sk-next.ready b { color: var(--mc-xp); }
+.sk-next.done { border-left-color: var(--mc-sky); color: var(--mc-sky); }
+
+/* ── the climb to the next point ─────────────────────────────────────────────
+   The number first and large. This started as a twelve-pixel line above the
+   class chips and was missed entirely, which is fair: it is the one thing on
+   this card somebody actually wants off it, and it was the smallest text in
+   the section. */
+.sk-climb {
+  margin-bottom: 8px; padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(255,210,74,0.07), rgba(0,0,0,0.3));
+  border: 2px solid var(--mc-shade);
+  border-left: 3px solid var(--mc-gold);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.sk-climb-say { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
+.sk-climb-say b {
+  font-size: 34px; line-height: 1; color: var(--mc-gold);
+  text-shadow: 0 0 12px rgba(255,210,74,0.35), 2px 2px #000;
+}
+.sk-climb-say span { font-size: 15px; color: var(--mc-text); }
+.sk-climb-say em {
+  margin-left: auto; font-style: normal; font-size: 11px; color: var(--mc-faint);
+}
+.sk-climb.ready { border-left-color: var(--mc-xp);
+  background: linear-gradient(180deg, rgba(123,197,24,0.09), rgba(0,0,0,0.3)); }
+.sk-climb.ready .sk-climb-say b { color: var(--mc-xp);
+  font-size: 26px; text-shadow: 0 0 12px rgba(123,197,24,0.4), 2px 2px #000; }
+
+.sk-climb-svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+/* the whole curve dim, the part they have already climbed lit */
+.sk-climb-curve {
+  fill: none; stroke: #4a5180; stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
+}
+.sk-climb-curve.done { stroke: var(--mc-gold); stroke-width: 2.6; }
+/* the gap itself, drawn as the distance it is */
+.sk-climb-line {
+  stroke: var(--mc-gold); stroke-width: 2; stroke-dasharray: 4 3; opacity: .8;
+}
+.sk-climb-now { fill: #0c0c10; stroke: var(--mc-text); stroke-width: 2; }
+.sk-climb-goal { fill: #0c0c10; stroke: var(--mc-gold); stroke-width: 2.5; }
+.sk-climb-goaltext { fill: var(--mc-gold); font-size: 12px; }
+
+@media (max-width: 700px) {
+  .sk-need b { font-size: 26px; }
+  .sk-need em { margin-left: 0; flex: 1 1 100%; }
+  .sk-climb-say b { font-size: 27px; }
+  .sk-climb-say em { margin-left: 0; flex: 1 1 100%; }
+}
+
 .sk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
 .sk-chip {
   display: inline-flex; align-items: baseline; gap: 4px;
@@ -2764,6 +2837,21 @@ body::after { display: none; }
 .sk-cost-head em { font-style: normal; font-size: 11px; color: var(--mc-dim); }
 .sk-cost-head u { text-decoration: none; margin-left: auto; font-size: 10px;
                   color: var(--mc-faint); }
+/* The one figure a reader wants off this chart, said before the chart. */
+.sk-need {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px;
+  padding: 4px 0 6px;
+}
+.sk-need b {
+  font-size: 32px; line-height: 1; color: #aeb8ff;
+  text-shadow: 0 0 12px rgba(143,155,240,0.4), 2px 2px #000;
+}
+.sk-need span { font-size: 14px; color: var(--mc-text); }
+.sk-need em { margin-left: auto; font-style: normal; font-size: 11px;
+              color: var(--mc-faint); }
+.sk-need.done b { color: var(--mc-xp); }
+.sk-cost-next { fill: #0c0c10; stroke: #aeb8ff; stroke-width: 2.5; }
+
 .sk-cost-svg { display: block; width: 100%; height: auto; }
 .sk-cost-grid { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
 .sk-cost-gridlabel, .sk-cost-axis, .sk-cost-marksub {

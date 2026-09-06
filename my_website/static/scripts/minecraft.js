@@ -2415,8 +2415,9 @@ function yearPanel(w) {
     <div class="yr-head">
       ${leaf}
       <div class="yr-say">
-        <b>${w.year_number ? `Year ${w.year_number}` : (w.season || 'The Calendar')}</b>
-        <span>${w.year_days ? `Day ${today} of ${w.year_days}` : ''}</span>
+        <b>${w.year_number ? `Season year ${w.year_number}` : (w.season || 'The Calendar')}</b>
+        <span>${w.year_days ? `Day ${today} of ${w.year_days}` : ''}${
+          w.seasons_from ? ` · from world day ${w.seasons_from}` : ''}</span>
       </div>
       ${picker}
       ${left !== null ? `<div class="yr-remain" title="${left} day${left === 1 ? '' : 's'} left in the year">
@@ -2716,7 +2717,9 @@ function renderWorldPanel(measuring) {
       <div class="lw-hero sky">
         <img class="lw-orb" src="${sky.src}" alt="${sky.alt}">
         <div class="lw-say">
-          <b>Day ${w.day}</b>
+          <b title="World day ${w.day}${w.seasons_from
+            ? `. The seasonal calendar started on world day ${w.seasons_from}.` : ''}"
+             >Day ${w.day}</b>
           <span>${to12Hour(w.clock)}</span>
           <em>${phase}${!w.daylight && w.moon_name ? ` · ${w.moon_name}` : ''}</em>
         </div>
@@ -4619,11 +4622,27 @@ function planCostChart(spent) {
 
   const here = spent ? levels[Math.min(spent, levels.length) - 1] : 0;
 
+  // The number the whole chart exists to give: what the next point costs.
+  // Said large, above the curve, because a reader scanning this wants one
+  // figure off it and everything else is context for that figure.
+  const need = spent < levels.length ? levels[spent] : null;
+  const at = spent ? levels[Math.min(spent, levels.length) - 1] : 0;
+
   return `
     <div class="sk-cost-wrap">
       <div class="sk-cost-head">
         <b>PLAYER LEVEL PER POINT</b>
         <u>level ${most.toLocaleString()} for all ${cap}</u>
+      </div>
+      <div class="sk-need${need ? '' : ' done'}">
+        <b>${need ? need.toLocaleString() : most.toLocaleString()}</b>
+        <span>${need
+          ? `is the level for point ${spent + 1}`
+          : `is the level for all ${cap} points`}</span>
+        <em>${spent
+          ? `${spent} point${spent === 1 ? '' : 's'} placed, level ${at.toLocaleString()}${
+              need ? ` · the next costs ${(need - at).toLocaleString()} more` : ''}`
+          : 'nothing placed yet'}</em>
       </div>
       <svg class="sk-cost-svg" viewBox="0 0 ${W} ${H}" role="img"
            aria-label="Player level required for each skill point">
@@ -4644,6 +4663,11 @@ function planCostChart(spent) {
         ${spent ? `<circle class="sk-cost-here"
           cx="${px(Math.min(spent, levels.length) - 1).toFixed(1)}"
           cy="${py(here).toFixed(1)}" r="5"/>` : ''}
+        ${need ? `<line class="sk-climb-line" x1="${px(spent).toFixed(1)}"
+          y1="${py(at).toFixed(1)}" x2="${px(spent).toFixed(1)}"
+          y2="${py(need).toFixed(1)}"/>
+          <circle class="sk-cost-next" cx="${px(spent).toFixed(1)}"
+            cy="${py(need).toFixed(1)}" r="4"/>` : ''}
         ${ticks}
       </svg>
     </div>`;
@@ -4795,26 +4819,134 @@ function planDraw() {
   if (view) { SKILL_VIEW[PLAN] = view; skillMove(PLAN); }
 }
 
+// How far this player is from their next point.
+//
+// The mod takes the whole cost out of your total experience when you trade
+// for a point, so what stands between somebody and their next one is the
+// level they have to climb back to - not a fraction of one. The table is
+// experience, so it goes through the game's own curve to come out in levels,
+// which is the only unit anybody counts in.
+function skillNext(player, S) {
+  const costs = (skillTree && skillTree.costs) || [];
+  const held = S.learned + (S.points || 0);   // spent and unspent both count
+  if (!costs.length) return '';
+  if (held >= costs.length) {
+    return `<div class="sk-next done">every point taken</div>`;
+  }
+  const at = Math.round(mcLevel(costs[held]));
+  const now = Math.max(0, Math.round(player.level || 0));
+  const togo = at - now;
+  // Their level is only as fresh as the last export, so this is what it was
+  // when the server last looked rather than what it is this second.
+  if (togo <= 0) {
+    return `<div class="sk-next ready">
+      <b>point ${held + 1} is affordable</b>
+      <em>needs level ${at.toLocaleString()}, they were level ${now.toLocaleString()}</em>
+    </div>`;
+  }
+  return `<div class="sk-next">
+    <b>${togo.toLocaleString()} level${togo === 1 ? '' : 's'} to point ${held + 1}</b>
+    <em>level ${now.toLocaleString()} now, needs ${at.toLocaleString()}</em>
+    <span class="sk-next-bar"><i style="width:${
+      Math.max(2, Math.min(100, now / at * 100)).toFixed(1)}%"></i></span>
+  </div>`;
+}
+
+// The climb to their next point, drawn. The line is the same one the planner
+// shows - what player level each point costs - with this player's position on
+// it and the gap called out big enough to read from across the card, which
+// the one-line version above it was not.
+function skillClimb(player, S) {
+  // Off the board rather than out of tree.json: a hundred and fifty numbers
+  // ride along with every poll, where the tree is a quarter of a megabyte and
+  // is now only fetched when somebody opens the planner.
+  const costs = liveBoard.skill_costs || [];
+  const held = S.learned + (S.points || 0);
+  if (costs.length < 2 || held >= costs.length) {
+    return costs.length && held >= costs.length
+      ? '<div class="sk-climb ready"><div class="sk-climb-say"><b>DONE</b><span>every point taken</span></div></div>'
+      : '';
+  }
+
+  const levels = costs.map(xp => Math.round(mcLevel(xp)));
+  const most = levels[levels.length - 1];
+  const at = levels[held];
+  const now = Math.max(0, Math.round(player.level || 0));
+  const togo = at - now;
+
+  const W = 892, H = 210, L = 46, R = 12, T = 40, B = 30;
+  const plotW = W - L - R, plotH = H - T - B;
+  const px = i => L + (i / (levels.length - 1)) * plotW;
+  const py = v => T + plotH - (Math.min(v, most) / most) * plotH;
+
+  const line = levels.map((v, i) => `${px(i).toFixed(1)},${py(v).toFixed(1)}`);
+  // the stretch they have already paid for, over the whole curve
+  const done = line.slice(0, Math.max(2, held + 1));
+
+  const gap = most > 1200 ? 500 : most > 400 ? 200 : 50;
+  const rungs = [];
+  for (let v = 0; v <= most; v += gap) {
+    const y = py(v).toFixed(1);
+    rungs.push(`<line class="sk-cost-grid" x1="${L}" y1="${y}" x2="${W - R}" y2="${y}"/>
+      <text class="sk-cost-gridlabel" x="${L - 8}" y="${(+y + 3.5).toFixed(1)}"
+        text-anchor="end">${v.toLocaleString()}</text>`);
+  }
+
+  const hereX = px(held), hereY = py(at), nowY = py(Math.min(now, most));
+  // the climb itself: from where they are to where the point is
+  const climb = togo > 0 ? `
+    <line class="sk-climb-line" x1="${hereX.toFixed(1)}" y1="${nowY.toFixed(1)}"
+      x2="${hereX.toFixed(1)}" y2="${hereY.toFixed(1)}"/>
+    <circle class="sk-climb-now" cx="${hereX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="4"/>` : '';
+
+  return `
+    <div class="sk-climb${togo <= 0 ? ' ready' : ''}">
+      <div class="sk-climb-say">
+        <b>${togo > 0 ? togo.toLocaleString() : 'READY'}</b>
+        <span>${togo > 0
+          ? `level${togo === 1 ? '' : 's'} to point ${held + 1}`
+          : `point ${held + 1} is affordable`}</span>
+        <em>level ${now.toLocaleString()} now, point ${held + 1} needs ${at.toLocaleString()}</em>
+      </div>
+      <svg class="sk-climb-svg" viewBox="0 0 ${W} ${H}" role="img"
+           aria-label="${togo > 0 ? togo + ' levels' : 'nothing'} to their next skill point">
+        ${rungs.join('')}
+        <polyline class="sk-climb-curve" points="${line.join(' ')}"/>
+        <polyline class="sk-climb-curve done" points="${done.join(' ')}"/>
+        ${climb}
+        <circle class="sk-climb-goal" cx="${hereX.toFixed(1)}" cy="${hereY.toFixed(1)}" r="5"/>
+        <text class="sk-climb-goaltext" x="${(hereX + 9).toFixed(1)}"
+          y="${(hereY + 4).toFixed(1)}">point ${held + 1} · level ${at.toLocaleString()}</text>
+        <text class="sk-cost-marklabel" x="${L}" y="${H - 8}">point 1</text>
+        <text class="sk-cost-marklabel" x="${W - R}" y="${H - 8}" text-anchor="end">${
+          levels.length}</text>
+      </svg>
+    </div>`;
+}
+
+// Where this player is on the climb, and nothing else. The tree, the class
+// counts and every other detail live in the planner below, which can be
+// panned and read properly - a second copy per card was six hundred and
+// eighty-six more elements every time somebody opened one, to show the same
+// picture smaller.
+//
+// What is left is the one thing that is only true of this player: how far
+// they are from their next point.
 function skillSection(player) {
   const S = player.skills;
   if (!S) return '';
-  if (!skillTree) {
-    loadSkillTree();
-    return `<div class="live-skills" data-key="skills">
-      <div class="lb-head"><span>SKILL TREE</span><b>${S.learned} TAKEN</b></div>
-      <div class="sk-loading">reading the tree…</div></div>`;
-  }
   const chosen = S.classes.map(c => SKILL_CLASS[c]?.name || c).join(' + ');
+  const cap = (liveBoard.skill_costs || []).length;
   return `
     <div class="live-skills" data-key="skills">
-      <div class="lb-head"><span>SKILL TREE</span><b>${S.learned} OF ${
-        Object.keys(skillTree.nodes).length}</b></div>
+      <div class="lb-head"><span>SKILL TREE</span><b>${S.learned}${
+        cap ? ` OF ${cap}` : ''} POINTS</b></div>
       <div class="sk-say">
         <span class="sk-chosen">${chosen || 'no class yet'}</span>
         ${S.points ? `<em>${S.points} unspent</em>` : ''}
         ${S.resets ? `<em>${S.resets} reset${S.resets === 1 ? '' : 's'}</em>` : ''}
       </div>
-      ${skillTreeChart(player.name, S.list)}
+      ${skillClimb(player, S)}
     </div>`;
 }
 
