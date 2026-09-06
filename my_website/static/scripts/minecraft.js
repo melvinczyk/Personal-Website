@@ -1322,7 +1322,10 @@ function killChart(boss, faces) {
       run.n === 1 ? '' : 's'} in a row</title>
       ${skin ? `<svg class="bkc-headart" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
            width="${FACE}" height="${FACE}" viewBox="8 8 8 8">
-           <image href="${skin}" x="0" y="0" width="64" height="64"/></svg>`
+           <image href="${skin}" x="0" y="0" width="64" height="64"/>
+           <!-- the hat layer, which lives at (40,8) on the sheet: shifted
+                thirty-two left so it lands over the head in this window -->
+           <image href="${skin}" x="-32" y="0" width="64" height="64"/></svg>`
         : `<rect class="bkc-headnone" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
              width="${FACE}" height="${FACE}"/>`}
       <rect class="bkc-headedge" x="${left.toFixed(1)}" y="${top.toFixed(1)}"
@@ -4774,6 +4777,39 @@ function planShut() {
   wrap.scrollIntoView({ block: 'nearest' });
 }
 
+// A player, as a thing you press. "load melvin0czyk" told you nothing about
+// what you were about to load - these carry the face the rest of the board
+// knows them by, what they have spent, and a bar of their build split by
+// class, so the shape of somebody's character is legible before you open it.
+function planTab(p) {
+  const S = p.skills;
+  const cap = (liveBoard.skill_costs || []).length;
+  const held = S.learned + (S.points || 0);
+  // the arms they went into, widest first, as one bar
+  const rows = Object.entries(S.by_class || {}).sort((a, b) => b[1] - a[1]);
+  const total = rows.reduce((a, [, n]) => a + n, 0) || 1;
+  const bar = rows.map(([c, n]) => `<i style="--arm:${
+    SKILL_CLASS[c]?.hue || '#8a97a8'};width:${(n / total * 100).toFixed(1)}%"></i>`).join('');
+  // the class they committed to is the one that colours the chip
+  const main = S.classes[0] || (rows[0] || [])[0];
+  const on = planHeld.length === S.list.length
+    && S.list.every(id => planHeld.includes(id));
+
+  return `<button type="button" class="sk-tab${on ? ' on' : ''}"
+      style="--arm:${SKILL_CLASS[main]?.hue || '#8a97a8'}"
+      onclick="planCopy('${p.name}')"
+      title="${p.name}: ${S.learned} points${cap ? ` of ${cap}` : ''}${
+        S.classes.length ? `, ${S.classes.map(c => SKILL_CLASS[c]?.name || c).join(' and ')}` : ''}">
+      <i class="sk-tab-face${p.online ? ' on' : ''}"${
+        p.skin ? ` style="--skin:url('${p.skin}')"` : ''}></i>
+      <span class="sk-tab-say">
+        <b>${p.name}</b>
+        <em>${held} point${held === 1 ? '' : 's'}</em>
+      </span>
+      <span class="sk-tab-bar">${bar}</span>
+    </button>`;
+}
+
 function planDraw() {
   const host = document.getElementById('ls-plan');
   if (!host) return;
@@ -4800,8 +4836,7 @@ function planDraw() {
       <span class="sk-points${spent >= planMax() ? ' full' : ''}">
         <b>${spent}</b><i>/ ${planMax()} points</i></span>
       <span class="sk-meter"><i style="width:${spent / planMax() * 100}%"></i></span>
-      <span class="sk-loads">${took.map(p => `<button type="button" class="sk-btn"
-        onclick="planCopy('${p.name}')"><i>load</i>${p.name}</button>`).join('')}
+      <span class="sk-loads">${took.map(planTab).join('')}
         <button type="button" class="sk-btn warn" onclick="planClear()">clear</button>
         <button type="button" class="sk-btn undo" onclick="planBack()">undo</button>
       </span>

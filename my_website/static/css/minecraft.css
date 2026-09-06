@@ -2900,7 +2900,50 @@ body::after { display: none; }
 .sk-kept { font-style: normal; font-size: 10px; color: var(--mc-faint); }
 .sk-kept.warn { color: var(--mc-gold); }
 .sk-btn i { font-style: normal; color: var(--mc-faint); margin-right: 4px; }
-.sk-loads { display: flex; flex-wrap: wrap; gap: 4px; }
+.sk-loads { display: flex; flex-wrap: wrap; align-items: stretch; gap: 4px; }
+
+/* ── a player, as a thing you press ──────────────────────────────────────────
+   Their face, their points, and their build split by class along the bottom.
+   The chip takes the colour of the class they committed to, so a row of these
+   reads as four different characters rather than four identical buttons with
+   different words on them. */
+.sk-tab {
+  position: relative; display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px 7px 5px; font: inherit; cursor: pointer;
+  color: var(--mc-text); text-align: left;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--arm) 13%, #14161f), #0f1118);
+  border: 2px solid var(--mc-shade);
+  border-left: 3px solid var(--arm);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.sk-tab:hover { background: linear-gradient(180deg,
+  color-mix(in srgb, var(--arm) 24%, #191c26), #14161f); }
+/* the build currently loaded wears its own colour outright */
+.sk-tab.on {
+  border-color: var(--arm);
+  box-shadow: inset 0 0 12px -4px var(--arm);
+}
+.sk-tab-face { --face: 22px; }
+/* a green edge on whoever is in the world right now, the same tell the
+   player cards upstairs use */
+.sk-tab-face.on { border-color: var(--mc-xp); }
+.sk-tab-say { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sk-tab-say b {
+  font-weight: normal; font-size: 12px; line-height: 1.1; color: var(--mc-text);
+  max-width: 128px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sk-tab-say em { font-style: normal; font-size: 10px; color: var(--mc-faint); }
+/* what they built, as a stripe: one segment per class, widest first */
+.sk-tab-bar {
+  position: absolute; left: 3px; right: 0; bottom: 0; height: 3px;
+  display: flex; overflow: hidden;
+}
+.sk-tab-bar i { display: block; height: 100%; background: var(--arm); }
+
+@media (max-width: 700px) {
+  .sk-tab-say b { max-width: 92px; }
+}
 
 .sk-plan-say { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
                min-height: 18px; margin-bottom: 6px; font-size: 12px; }
@@ -3495,9 +3538,28 @@ body::after { display: none; }
   display: flex; align-items: center; gap: 4px; max-width: 100%;
   font-size: 12px; color: var(--mc-dim);
 }
-.bc-face {
-  width: 14px; height: 14px; flex: none; background-image: var(--skin);
-  background-size: 112px 112px; background-position: -14px -14px;
+/* ── a player's head ─────────────────────────────────────────────────────────
+   A Minecraft skin carries two faces: the head itself at (8,8) and the hat
+   layer over it at (40,8), which is where the glasses, the hair and half of
+   what makes a skin recognisable actually live. Drawing only the first left
+   everyone slightly wrong, so both are cropped out of the same sheet and the
+   hat is listed first, because the first background is the one on top.
+
+   Every size is worked out from --face rather than typed in twice. It has to
+   be: the sheet is scaled eight heads wide and the crop offset moves with it,
+   so a rule that changed the width and left the rest alone slid the crop off
+   the face - which .bcf-part was quietly doing. */
+.bc-face, .sk-tab-face, .bkc-probe i {
+  /* the default lives in the fallback rather than in a declaration of its
+     own, so a variant setting --face wins wherever it happens to sit in the
+     file - this rule is below some of them and above others */
+  width: var(--face, 14px); height: var(--face, 14px); flex: none;
+  background-image: var(--skin), var(--skin);
+  background-size: calc(var(--face, 14px) * 8) calc(var(--face, 14px) * 8);
+  background-position:
+    calc(var(--face, 14px) * -5) calc(var(--face, 14px) * -1),
+    calc(var(--face, 14px) * -1) calc(var(--face, 14px) * -1);
+  background-repeat: no-repeat;
   image-rendering: pixelated; border: 1px solid var(--mc-shade);
 }
 /* a card is barely a hundred pixels wide and a Minecraft name can run to
@@ -3778,12 +3840,7 @@ body::after { display: none; }
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
 }
 .bkc-probe.on { display: flex; }
-.bkc-probe i {
-  width: 18px; height: 18px; flex: none; align-self: center;
-  background-image: var(--skin); background-size: 144px 144px;
-  background-position: -18px -18px; image-rendering: pixelated;
-  border: 1px solid var(--mc-shade);
-}
+.bkc-probe i { --face: 18px; align-self: center; }
 .bkc-probe i.none { background: #23232b; }
 
 
@@ -3815,10 +3872,7 @@ body::after { display: none; }
    name plate rather than a mark beside a name. The sheet is 64 wide and the
    head 8 of it, so the scale and the offset move together or the crop slides
    off the face. */
-.bcf-head .bc-face {
-  width: 18px; height: 18px;
-  background-size: 144px 144px; background-position: -18px -18px;
-}
+.bcf-head .bc-face { --face: 18px; }
 .bcf-head b { font-weight: normal; font-size: 15px; color: var(--mc-xp); }
 .bcf-head em {
   margin-left: auto; font-style: normal; font-size: 12px; color: var(--mc-dim);
@@ -3947,7 +4001,7 @@ body::after { display: none; }
    share keeps the space without a face in it, so the names below it stay in
    the same column rather than stepping left for the one row that is not a
    player. */
-.bcf-part .bc-face { width: 15px; height: 15px; }
+.bcf-part .bc-face { --face: 15px; }
 .bcf-noface { width: 15px; height: 15px; flex: none; }
 .bcf-pname {
   flex: 1 1 88px; min-width: 76px;
