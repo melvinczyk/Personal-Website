@@ -67,6 +67,7 @@ PRETTY = {
     'crit_chance': 'Crit Chance', 'crit_damage': 'Crit Damage',
     'life_steal': 'Life Steal', 'overheal': 'Overheal',
     'armor_pierce': 'Armour Pierce', 'prot_pierce': 'Protection Pierce',
+    'armor_shred': 'Armour Shred', 'current_hp_damage': 'Current Health Damage',
     'exp_per_minute': 'Experience per Minute', 'blocking': 'Blocking',
     'evasion': 'Evasion', 'stealth': 'Stealth', 'regeneration': 'Regeneration',
 }
@@ -85,21 +86,72 @@ def _pct(value):
 
 
 def _num(value):
+    """Two decimals is right for +1.5 Protection Pierce and wrong for the
+    small scaling bonuses: life steal per point of missing health is 0.0015,
+    and rounded to two places it reads as +0, as though the skill did
+    nothing. Keep going until something survives the rounding.
+    """
+    if value and abs(value) < 0.01:
+        return f'{round(value, 6):g}'
     return f'{round(value, 2):g}'
 
 
+# The pack's own item tags. These matter: the Runekiller is gated entirely on
+# gear the player did not craft, and the tags list the exact items. Read as
+# "a weapon" the class reads like every other one, which is the opposite of
+# what it is.
+TAGS = {
+    'skilltree:uncraftable_weapons': 'uncraftable weapon',
+    'skilltree:uncraftable_armor': 'uncraftable armour',
+    'skilltree:uncraftable_helmets': 'uncraftable helmet',
+    'skilltree:uncraftable_chestplates': 'uncraftable chestplate',
+    'skilltree:uncraftable_leggings': 'uncraftable leggings',
+    'skilltree:uncraftable_boots': 'uncraftable boots',
+    'forge:curios/jewelry': 'jewellery',
+    'curios:ring': 'ring',
+    'curios:necklace': 'necklace',
+    'curios:quiver': 'quiver',
+}
+
+# Things that take no article and no plural, so "a food" and "armours" do not
+# turn up in a tooltip.
+MASS = ('food', 'armour', 'jewellery', 'leggings', 'potions')
+
+
+def _a(what):
+    """'weapon' -> 'a weapon', 'uncraftable armour' -> 'uncraftable armour'."""
+    if not what or what.endswith('s') or what.split()[-1] in MASS:
+        return what
+    return ('an ' if what[0] in 'aeiou' else 'a ') + what
+
+
+def _plural(what):
+    if not what or what.endswith('s') or what.split()[-1] in MASS:
+        return what
+    return what + 's'
+
+
 def _gear(cond):
-    """'weapon' / 'pickaxe' / 'any' out of an item condition."""
+    """'weapon' / 'pickaxe' / 'uncraftable helmet' out of an item condition.
+
+    Bare, with no article: the callers word it differently - holding one,
+    wearing one, crafting several - so each adds its own.
+    """
     kind = str((cond or {}).get('type', '')).split(':')[-1]
     if kind == 'equipment_type':
         what = str(cond.get('equipment_type', '')).replace('_', ' ')
-        return '' if what in ('', 'any') else what
+        return '' if what in ('', 'any') else what.replace('armor', 'armour')
     if kind == 'potion':
         return 'potions'
     if kind == 'food':
         return 'food'
     if kind == 'tag':
-        return _name(cond.get('tag')).lower()
+        # the field is tag_id; reading 'tag' silently returned nothing, so
+        # every tagged condition rendered as its bare fallback
+        tag = str(cond.get('tag_id') or cond.get('tag') or '')
+        return TAGS.get(tag, _name(tag).lower())
+    if kind == 'enchanted':
+        return 'enchanted item'
     return kind.replace('_', ' ') if kind not in ('', 'none') else ''
 
 
@@ -114,13 +166,13 @@ def _when(bonus, *keys):
         if kind == 'equipment_type' or kind in ('potion', 'food', 'tag'):
             what = _gear(cond)
             if what:
-                said.append(f'with {what}' if key == 'item_condition' else what)
+                said.append(f'with {_a(what)}' if key == 'item_condition' else what)
         elif kind == 'has_item_in_hand':
             what = _gear(cond.get('item_condition'))
-            said.append(f'while holding {what}' if what else 'while holding a weapon')
+            said.append(f'while holding {_a(what)}' if what else 'while holding a weapon')
         elif kind == 'has_item_equipped':
             what = _gear(cond.get('item_condition'))
-            said.append(f'while wearing {what}' if what else 'while equipped')
+            said.append(f'while wearing {_a(what)}' if what else 'while equipped')
         elif kind == 'has_gems':
             said.append('while socketed')
         elif kind == 'health_percentage':
@@ -140,6 +192,20 @@ def _when(bonus, *keys):
         else:
             said.append(kind.replace('_', ' '))
     return ', '.join(dict.fromkeys(said))
+
+
+def _undouble(per, when):
+    """Drop a condition that only repeats what the scaling clause just said."""
+    kept = []
+    for clause in when.split(', '):
+        head, _, what = clause.partition(' ')
+        if head == 'while':
+            what = clause.split(' ', 2)[2] if clause.count(' ') > 1 else ''
+            bare = re.sub(r'^an? ', '', what)
+            if bare and bare in per:
+                continue
+        kept.append(clause)
+    return ', '.join(kept)
 
 
 def _per(bonus):
@@ -168,6 +234,9 @@ def _per(bonus):
         if kind == 'enchants_levels':
             what = _gear(mult.get('item_condition'))
             return f'per enchantment level on your {what}' if what else 'per enchantment level'
+        if kind == 'missing_health_percentage':
+            divisor = float(mult.get('divisor') or 1)
+            return f'per {_num(divisor)}% of health missing'
         if kind == 'food_level':
             return 'per point of hunger'
         if kind == 'effect_amount':
@@ -186,6 +255,8 @@ def bonus_line(bonus):
     per = _per(bonus)
     when = _when(bonus, 'player_condition', 'item_condition',
                  'damage_condition', 'target_condition')
+    if per and when:
+        when = _undouble(per, when)
     tail = (f' {per}' if per else '') + (f' {when}' if when else '')
     # a bonus that scales off something else is not a fixed number, so it is
     # not a thing a build can add up into one line
@@ -249,14 +320,68 @@ def bonus_line(bonus):
         return f'unlocks {_name(bonus.get("recipe_id"))}', None, 0, False
 
     if kind == 'crafted_item_bonus':
-        inner = bonus.get('item_bonus') or {}
-        what = _name(inner.get('type'))
-        amount = float(inner.get('multiplier') or inner.get('amount') or 0)
-        made = _when(bonus, 'item_condition') or 'crafted items'
-        return (f'+{_pct(amount)} {what} on {made}', f'{what} (crafted)%',
-                amount, True)
+        return _crafted(bonus)
 
     return kind.replace('_', ' '), None, 0, False
+
+
+# Which field carries the number, because it is not the same one twice, and
+# whether that number is a fraction or a count. Reading 'multiplier or amount'
+# off all of them found neither on most and printed every one as +0%.
+CRAFTED = {
+    'potion_duration':      ('multiplier', 'Potion Duration', True),
+    'food_saturation':      ('multiplier', 'Food Saturation', True),
+    'food_healing':         ('amount',     'Food Healing',    True),
+    'durability':           ('chance',     'Durability',      True),
+    'quiver_capacity':      ('chance',     'Quiver Capacity', False),
+    'sockets':              ('amount',     'Sockets',         False),
+}
+
+
+def _verb(subject, stem):
+    """'crafted potions give', but 'crafted armour gives'."""
+    return stem if subject.endswith('s') else stem + 's'
+
+
+def _crafted(bonus):
+    """A bonus the player puts onto the things they make, not onto themselves."""
+    inner = bonus.get('item_bonus') or {}
+    kind = str(inner.get('type', '')).split(':')[-1]
+    made = 'crafted ' + (_plural(_gear(bonus.get('item_condition'))) or 'items')
+
+    # the item carries a whole skill bonus of its own, so read that one
+    if kind == 'skill_bonus':
+        text, key, value, pct = bonus_line(inner.get('skill_bonus') or {})
+        # the tally strips a trailing % to get the label, so the % stays last
+        if key:
+            key = key[:-1] + ' (crafted)%' if key.endswith('%') else key + ' (crafted)'
+        return f'{made} {_verb(made, "give")} {text}', key, value, pct
+
+    if kind == 'potion_amplification':
+        chance = float(inner.get('chance') or 0)
+        return (f'{_pct(chance)} chance to amplify {made}',
+                'Potion Amplification (crafted)%', chance, True)
+
+    if kind == 'food_effect':
+        effect = _name(inner.get('effect'))
+        level = int(inner.get('amplifier') or 0) + 1
+        secs = round(float(inner.get('duration') or 0) / 20)
+        return (f'{made} {_verb(made, "grant")} {effect} {level} for {secs}s',
+                None, 0, False)
+
+    if kind in CRAFTED:
+        field, label, pct = CRAFTED[kind]
+        amount = float(inner.get(field) or 0)
+        # operation 0 is a flat add even where the field is called a chance
+        if pct and not inner.get('operation') and kind == 'quiver_capacity':
+            pct = False
+        shown = _pct(amount) if pct else _num(amount)
+        if kind == 'sockets':
+            label = 'socket' if amount == 1 else 'sockets'
+        return (f'+{shown} {label} on {made}', f'{label} (crafted)' + ('%' if pct else ''),
+                amount, pct)
+
+    return f'{_name(inner.get("type")) or "a bonus"} on {made}', None, 0, False
 
 
 def skill_costs():

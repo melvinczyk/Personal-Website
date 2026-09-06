@@ -3385,6 +3385,23 @@ function bootChat() {
 // answer is the one in the timezone of whoever is looking.
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// getDay() numbers in the order the week grid draws them. Monday first,
+// because the totals under the grid count ISO weeks: two things in one panel
+// disagreeing about which week it is would be worse than either choice alone.
+const WEEK_ROWS = [1, 2, 3, 4, 5, 6, 0];
+
+// Monday 00:00 of the week the reader is in, in the reader's own zone. The
+// buckets are stored in UTC and shifted here, so where the week starts is a
+// question only the browser can answer.
+function rhythmWeekStart(now) {
+  const start = now ? new Date(now) : new Date();
+  start.setHours(0, 0, 0, 0);
+  // getDay() calls Sunday 0, but an ISO week ends on Sunday rather than
+  // beginning there, so Sunday is six days in and not none
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  return start;
+}
+
 // How often the grid re-reads its log. The endpoint reads a file rather than
 // the game host, so this costs the server nothing - and the panel is the one
 // thing on the page that is *about* time passing, which makes a copy frozen
@@ -3430,23 +3447,26 @@ function rhythmValue(bucket, mode) {
   return (who[mode] || {}).s || 0;
 }
 
-// the grid, in the reader's own week: 7 rows of 24
-function rhythmGrid(hours, mode) {
+// the grid, in the reader's own week: 7 rows of 24. `from` is the earliest
+// bucket that counts, which is how the week view shows this week rather than
+// every week the log holds.
+function rhythmGrid(hours, mode, from) {
   const grid = DAYS.map(() => new Array(24).fill(0));
   const seen = DAYS.map(() => Array.from({ length: 24 }, () => new Set()));
-  // downtime summed across every week that fed this cell, and how many hours
-  // that was, so the band is drawn against the time the cell actually covers
+  // downtime in the hour this cell covers, and how long that is, so the band
+  // is drawn against the time the cell actually stands for
   const down = DAYS.map(() => new Array(24).fill(0));
   const span = DAYS.map(() => new Array(24).fill(0));
   for (const [key, bucket] of Object.entries(hours || {})) {
     const when = rhythmHour(key);
     if (!when) continue;
+    if (from && when < from) continue;
     const day = when.getDay(), hour = when.getHours();
     down[day][hour] += (bucket && bucket.down) || 0;
     span[day][hour] += 3600;
     const value = rhythmValue(bucket, mode);
-    // `together` is a headcount, and a headcount does not add up across four
-    // Tuesdays: the cell takes the best that week ever managed, not the sum
+    // `together` is a headcount, and a headcount is not a thing to add up:
+    // the cell takes the most that were ever on at once, not the sum
     if (mode === 'together') {
       grid[day][hour] = Math.max(grid[day][hour], value);
     } else {
@@ -5036,27 +5056,60 @@ function rhythmDayGrid(board) {
            empty: 'nothing played in the last day' };
 }
 
-// The week as a habit: every Tuesday 8pm that has ever been recorded, in one
-// square. This is the view the whole feature was built for.
+// This week, hour by hour: Monday at the top, filling in as the week goes.
+//
+// It used to fold every week the log held into one seven-by-twenty-four
+// square - the week as a habit, every Tuesday 8pm ever recorded in one cell.
+// That never resets, so the turn of a week is invisible in it: Monday morning
+// still shows last Monday until this one writes over the top. What the grid is
+// asked for is how this week is going, so it starts empty on Monday and the
+// rest of the week is drawn as not yet rather than as quiet. Nothing is
+// dropped - the month view and the totals below still count everything.
 function rhythmWeekGrid(board) {
-  const { grid, seen, down, span } = rhythmGrid(board.hours, rhythmMode);
+  const start = rhythmWeekStart();
+  const { grid, seen, down, span } = rhythmGrid(board.hours, rhythmMode, start);
   const peak = Math.max(...grid.flat(), 0);
-  const cells = grid.map((row, day) => `
+  // the hour we are standing in, which is the last one with anything in it
+  const edge = new Date();
+  edge.setMinutes(0, 0, 0);
+  // and the hour the log itself begins, so the first week on a new season
+  // says the hours before it started were unrecorded rather than quiet
+  const born = board.since ? new Date(board.since) : null;
+
+  const cells = WEEK_ROWS.map((day, index) => {
+    const midnight = new Date(start);
+    midnight.setDate(midnight.getDate() + index);
+    return `
     <div class="rh-row">
       <i class="rh-day">${DAYS[day][0]}</i>
-      ${row.map((value, hour) => `<span class="rh-cell"
+      ${grid[day].map((value, hour) => {
+        const when = new Date(midnight);
+        when.setHours(hour);
+        // hours the week has not reached. Blank rather than empty: an evening
+        // that has not happened is not an evening nobody played
+        if (when > edge) return '<span class="rh-cell ahead"></span>';
+        if (born && when.getTime() + 3600000 <= born.getTime()) {
+          return `<span class="rh-cell void"
+            data-t="${DAYS[day]} ${rhythmClock(hour)} · nothing recorded"
+            onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"></span>`;
+        }
+        return `<span class="rh-cell${
+            when.getTime() === edge.getTime() ? ' today' : ''}"
           style="--heat:${rhythmHeat(value, peak).toFixed(3)};${
             rhythmDownAttr(down[day][hour], span[day][hour])}"
           data-t="${DAYS[day]} ${rhythmClock(hour)} · ${
             rhythmReading(value, seen[day][hour])}${
             rhythmDownSay(down[day][hour])}"
           onmouseenter="rhythmSay(this)" onmouseleave="rhythmSay(null)"
-          ></span>`).join('')}
-    </div>`).join('');
+          ></span>`;
+      }).join('')}
+    </div>`;
+  }).join('');
   // a grid where the only thing that happened was an outage still has
   // something to draw, so the peak alone must not decide it is empty
   const worst = Math.max(...down.flat(), 0);
-  return { cells, peak, worst, ruler: true, indent: true };
+  return { cells, peak, worst, ruler: true, indent: true,
+           empty: 'nothing played yet this week' };
 }
 
 // A square per day, laid out as a calendar: weekday columns, weeks running
@@ -5181,7 +5234,7 @@ function rhythmPanel(board) {
       ${scales}
     </div>`;
 
-  if (!drawn.peak && !drawn.worst) {
+  if (!drawn.peak && !drawn.worst && rhythmScale !== 'week') {
     host.innerHTML = `${head}${picker}
       <div class="rh-empty"><span>${drawn.empty
         || 'nothing recorded yet &mdash; the game keeps no history of when it was'
@@ -5211,7 +5264,10 @@ function rhythmPanel(board) {
 // is currently drawn, in that scale's own units
 function rhythmPeakOf(drawn) {
   if (!drawn.peak) {
-    return drawn.worst ? `server down ${rhythmSpan(drawn.worst)}` : '';
+    if (drawn.worst) return `server down ${rhythmSpan(drawn.worst)}`;
+    // the week grid is drawn even with nothing in it, so this line is the
+    // only thing left to say why it is blank
+    return drawn.empty || '';
   }
   const what = rhythmMode === 'together'
     ? `${drawn.peak} player${drawn.peak === 1 ? '' : 's'} at once`
@@ -5219,7 +5275,7 @@ function rhythmPeakOf(drawn) {
   // the day grid is a rolling twenty-four hours, not a calendar day, so it
   // does not get to say "today"
   const when = rhythmScale === 'day' ? 'busiest hour since yesterday'
-    : rhythmScale === 'month' ? 'biggest day' : 'busiest hour';
+    : rhythmScale === 'month' ? 'biggest day' : 'busiest hour this week';
   return `${when}: ${what}`;
 }
 
