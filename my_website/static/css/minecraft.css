@@ -2938,7 +2938,11 @@ body::after { display: none; }
   content-visibility: auto;
 }
 .bcard { contain-intrinsic-size: auto 190px; }
-.masonry-item { content-visibility: auto; contain-intrinsic-size: auto 180px; }
+/* NOT content-visibility. This gallery is a multi-column masonry, and the
+   column balancer needs the real height of every tile to place it - skipping
+   the layout of the off-screen ones pinned all of them to the placeholder
+   size and the images inside never laid out at all. The tiles are lazy-loaded
+   images, which is where the weight was anyway. */
 .pcard { contain-intrinsic-size: auto 210px; }
 .fcard { contain-intrinsic-size: auto 150px; }
 /* An open card is being read, so it is never skipped: content-visibility on

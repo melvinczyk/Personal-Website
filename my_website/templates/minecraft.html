@@ -342,7 +342,7 @@ const SEASONS = [
     "roster": {{ season.roster_json|safe }},
     "screenshots": [
       {% for item in season.screenshots %}
-      { "type": "img", "url": "{{ item.url }}", "thumb": "{{ item.thumb }}", "view": "{{ item.view }}", "label": "{{ item.label|escapejs }}" }{% if not forloop.last %},{% endif %}
+      { "type": "img", "url": "{{ item.url }}", "thumb": "{{ item.thumb }}", "view": "{{ item.view }}", "w": {{ item.w|default:0 }}, "h": {{ item.h|default:0 }}, "label": "{{ item.label|escapejs }}" }{% if not forloop.last %},{% endif %}
       {% endfor %}
     ],
     "videos": [

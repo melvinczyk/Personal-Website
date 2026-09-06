@@ -1,4 +1,5 @@
 import json
+from functools import lru_cache
 import os
 from datetime import datetime
 from django.http import JsonResponse
@@ -71,6 +72,23 @@ def _derivative(season_path, url_prefix, kind, stem):
     return None
 
 
+@lru_cache(maxsize=None)
+def _thumb_sizes(season_path):
+    """Every thumbnail's width and height, from the table beside them.
+
+    The gallery has to know these before the images arrive. Its tiles are
+    lazy-loaded into a column layout, and an image with no declared size
+    gives its tile no height - so the column collapses, nothing is ever near
+    enough to the viewport to trigger a load, and the gallery stays empty for
+    good. Read once per season rather than stat-ing six hundred files.
+    """
+    try:
+        with open(os.path.join(season_path, '_web', 'sizes.json')) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
 def parse_screenshot_date(filename):
     name = os.path.splitext(filename)[0]
     try:
@@ -130,11 +148,15 @@ def portal(request):
                 stem = os.path.splitext(filename)[0]
                 small = _derivative(season_path, url_prefix, 'thumb', stem)
                 big = _derivative(season_path, url_prefix, 'view', stem)
+                w, h = (_thumb_sizes(season_path).get(stem) or (0, 0))[:2] or (0, 0)
                 screenshots.append({
                     'filename': filename,
                     'url':      url,
                     'thumb':    small or big or url,
                     'view':     big or url,
+                    # so a tile has a height before its image lands
+                    'w':        w,
+                    'h':        h,
                     'label':    filename,
                     'date':     parse_screenshot_date(filename),
                 })

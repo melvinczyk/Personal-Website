@@ -21,6 +21,7 @@ they are the archive, and a derivative that is wrong should be rebuildable
 from them rather than being all that is left.
 """
 
+import json
 import os
 import sys
 
@@ -48,6 +49,13 @@ def build(season, force=False):
     folder = os.path.join(ROOT, season)
     made = skipped = 0
     saved = 0
+    # Every thumbnail's size, written out beside them. The gallery needs it
+    # before the image arrives: the tiles are lazy-loaded and the grid is a
+    # column layout, so without a declared size every tile collapses to a
+    # couple of pixels - and once the whole column has collapsed the browser
+    # never decides a lazy image is near the viewport, so none of them ever
+    # load. A deadlock that looks exactly like a broken gallery.
+    sizes = {}
     for name in sorted(os.listdir(folder)):
         stem, ext = os.path.splitext(name)
         if ext.lower() not in KINDS or stem.startswith('logo'):
@@ -70,12 +78,30 @@ def build(season, force=False):
                     art = art.convert('RGB')
                     art.thumbnail((edge, edge), Image.LANCZOS)
                     art.save(target, 'WEBP', quality=quality, method=4)
+                    if kind == 'thumb':
+                        sizes[stem] = list(art.size)
             except Exception as exc:                  # noqa: BLE001
                 print(f'  {name}: {type(exc).__name__} {exc}')
                 continue
             made += 1
             if kind == 'view':
                 saved += was - os.path.getsize(target)
+
+    # a skipped file still has to be in the table, so anything already built
+    # is measured off the file rather than left out
+    web = os.path.join(folder, OUT)
+    if os.path.isdir(os.path.join(web, 'thumb')):
+        for thumb in sorted(os.listdir(os.path.join(web, 'thumb'))):
+            stem = os.path.splitext(thumb)[0]
+            if stem in sizes:
+                continue
+            try:
+                with Image.open(os.path.join(web, 'thumb', thumb)) as art:
+                    sizes[stem] = list(art.size)
+            except Exception:                         # noqa: BLE001
+                pass
+        with open(os.path.join(web, 'sizes.json'), 'w') as fh:
+            json.dump(sizes, fh, separators=(',', ':'))
     return made, skipped, saved
 
 
