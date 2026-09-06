@@ -312,11 +312,20 @@ html, body { height: 100%; overflow: hidden; }
   border: 1px solid rgba(0,255,204,0.25); transition: border-color .15s, box-shadow .15s;
 }
 .masonry-item:hover { border-color: var(--mgs-cyan); box-shadow: 0 0 16px rgba(0,255,204,0.28); }
+/* Dimmed by something painted over it rather than by a filter on the image.
+   A filter is a compositor pass per element and there are a hundred tiles in
+   this grid; an overlay is one paint the browser was doing anyway. */
 .masonry-item img {
   width: 100%; height: auto; display: block;
-  filter: brightness(.8) saturate(.85); transition: filter .2s, transform .3s;
+  transition: transform .3s;
 }
-.masonry-item:hover img { filter: brightness(1) saturate(1); transform: scale(1.04); }
+.masonry-item::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: rgba(8, 10, 14, 0.28);
+  transition: opacity .2s;
+}
+.masonry-item:hover::after { opacity: 0; }
+.masonry-item:hover img { transform: scale(1.04); }
 .masonry-overlay { position: absolute; inset: 0; opacity: 0; transition: opacity .15s; display: flex; align-items: flex-end; }
 .masonry-item:hover .masonry-overlay { opacity: 1; }
 .masonry-label {
@@ -2918,6 +2927,23 @@ body::after { display: none; }
 .ls-grid, .ls-bosses {
   display: grid; gap: 4px; padding: 0 10px 10px;
 }
+/* ── the off-screen half of the page ─────────────────────────────────────────
+   A hundred and twenty boss cards, sixty player and fish tiles, and a chat
+   log: eighteen thousand elements, of which a screenful is ever visible. This
+   tells the browser it may skip layout and paint for a card that is not on
+   screen, and the intrinsic size stops the scrollbar jumping while it does.
+   A card that scrolls into view is laid out then, which is work that had to
+   happen anyway - it just stops happening for the ninety that will not. */
+.bcard, .pcard, .fcard {
+  content-visibility: auto;
+}
+.bcard { contain-intrinsic-size: auto 190px; }
+.masonry-item { content-visibility: auto; contain-intrinsic-size: auto 180px; }
+.pcard { contain-intrinsic-size: auto 210px; }
+.fcard { contain-intrinsic-size: auto 150px; }
+/* An open card is being read, so it is never skipped: content-visibility on
+   something mid-animation is what makes it flicker. */
+.bcard.open, .pcard.open { content-visibility: visible; }
 .ls-grid   { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
 .ls-bosses { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
 /* the miniboss grid is the same slot, just smaller and quieter: a rank below
@@ -3238,10 +3264,13 @@ body::after { display: none; }
   [data-tip]::before { content: none; }
 }
 
+/* No drop-shadow. These are twenty pixels across and there are three hundred
+   of them on a board, and a CSS filter is a compositor pass apiece: the whole
+   page's style recalculation was costing fourteen milliseconds, most of it
+   here, for a shadow nobody can see at this size. */
 .badge-flag {
   width: 15px; height: 14px; flex-shrink: 0;
   image-rendering: pixelated; shape-rendering: crispEdges;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.7));
 }
 .badge-flag .px-b { fill: var(--mc-first); }
 .badge-flag .px-h { fill: #ffcf8f; }
@@ -3250,7 +3279,6 @@ body::after { display: none; }
 .badge-star {
   width: 22px; height: 20px; flex-shrink: 0;   /* 11:10, matching the source art */
   image-rendering: pixelated; shape-rendering: crispEdges;
-  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.7));
 }
 .px-o { fill: var(--px-o); }
 .px-b { fill: var(--px-b); }
@@ -3266,10 +3294,15 @@ body::after { display: none; }
 .pc-badge.t2, .lb-star.t2, .bc-star.t2, .lb-row.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
 /* tier 3, Apex Boss — red, glowing */
 .pc-badge.t3, .lb-star.t3, .bc-star.t3, .lb-row.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
-.pc-badge.t3 .badge-star, .lb-star.t3 .badge-star, .bc-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
+/* Only where somebody is looking. This used to animate a filter on every
+   apex star on the board at once - fifty of them, each its own compositor
+   pass, sixty times a second - to make a badge an inch wide shimmer. */
+.pcard.open .pc-badge.t3 .badge-star,
+.bcard.open .bc-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
 /* tier 4 — reserved for the next boss above apex: rainbow, animated */
 .pc-badge.t4, .lb-star.t4, .bc-star.t4, .lb-row.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
-.pc-badge.t4 .badge-star, .lb-star.t4 .badge-star, .bc-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
+.pcard.open .pc-badge.t4 .badge-star,
+.bcard.open .bc-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
 /* miniboss — grey, regardless of the tier it's tagged with */
 .pc-badge.mini, .lb-star.mini, .bc-star.mini, .lb-row.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
 
@@ -4437,10 +4470,7 @@ body::after { display: none; }
 /* The flag rides with the name rather than being spread away from it by the
    row's space-between: the auto margin eats the slack that would otherwise
    land between the two, so the pair sits left and the count stays right. */
-.lb-first {
-  flex: none; display: flex; margin-right: auto;
-  filter: drop-shadow(0 0 4px rgba(255,138,43,0.6));
-}
+.lb-first { flex: none; display: flex; margin-right: auto; }
 .lb-first .badge-flag { width: 12px; height: 11px; }
 /* the count of them, in the BOSSES heading beside the kills and assists */
 .lb-head-first { font-style: normal; color: var(--mc-first); }

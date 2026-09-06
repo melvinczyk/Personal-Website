@@ -749,7 +749,7 @@ function renderMedia() {
   shots.innerHTML = s.screenshots.length ? `<div class="masonry-grid">${s.screenshots.map((it, i) => `
     <div class="masonry-item" onclick="openLightbox('screenshots', ${i})">
       <span class="icon x tile-x"></span>
-      <img src="${it.url}" alt="${it.label}" loading="lazy">
+      <img src="${it.thumb || it.url}" alt="${it.label}" loading="lazy" decoding="async">
       <div class="masonry-overlay"><div class="masonry-label">${it.label}</div></div>
     </div>`).join('')}</div>`
     : '<div class="empty-msg">// no screenshots on this disc</div>';
@@ -810,7 +810,9 @@ function renderLightbox() {
 
   if (item.type === 'img') {
     const img = document.createElement('img');
-    img.src = item.url;
+    // the 1920px copy, not the original: the lightbox is a window on a screen
+    // and the originals run to thirteen megabytes apiece
+    img.src = item.view || item.url;
     img.alt = item.label;
     wrap.appendChild(img);
   } else {

@@ -31,3 +31,17 @@ known_hosts
 # The rest is re-fetched within a couple of minutes of the worker starting, so
 # a fresh clone shows an empty board until the first sync and then fills in.
 my_website/static/minecraft/season5/data/
+
+# The season screenshots, in their original form. They are Minecraft
+# screenshots straight off disk - 1.3 GB of them, some thirteen megabytes
+# apiece - and nothing on the site loads one any more: tools/web_images.py
+# builds a 480px thumbnail and a 1920px view of each, and those are what the
+# gallery, the hero and the lightbox all use.
+#
+# Kept on the machine that has them, out of the deploy. The _web folder is
+# tracked, because that is what the site actually serves.
+my_website/static/minecraft/season[0-9]/*.png
+my_website/static/minecraft/season[0-9]/*.jpg
+my_website/static/minecraft/season[0-9]/*.jpeg
+# the logos are small and are the fallback when no webp exists
+!my_website/static/minecraft/season[0-9]/logo.*

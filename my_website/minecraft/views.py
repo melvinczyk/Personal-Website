@@ -63,6 +63,14 @@ IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 VIDEO_EXTS = {'.mp4', '.webm', '.mov'}
 
 
+def _derivative(season_path, url_prefix, kind, stem):
+    """The URL of a web-sized copy, if tools/web_images.py has built one."""
+    name = f'{stem}.webp'
+    if os.path.isfile(os.path.join(season_path, '_web', kind, name)):
+        return f'{url_prefix}/_web/{kind}/{name}'
+    return None
+
+
 def parse_screenshot_date(filename):
     name = os.path.splitext(filename)[0]
     try:
@@ -96,7 +104,10 @@ def portal(request):
         url_prefix  = f'/static/minecraft/{season_dir}'
 
         logo_file = next(
-            (f for f in ('logo.gif', 'logo.png', 'logo.jpg', 'logo.webp')
+            # WebP first: season 4's logo is 39 frames of animation and the
+            # GIF of it is two megabytes, against six hundred kilobytes for
+            # the same thing at the size it is actually drawn
+            (f for f in ('logo.webp', 'logo.png', 'logo.jpg', 'logo.gif')
              if os.path.isfile(os.path.join(season_path, f))),
             None
         )
@@ -111,9 +122,19 @@ def portal(request):
             url = f'{url_prefix}/{filename}'
 
             if ext in IMAGE_EXTS:
+                # A web-sized copy where tools/web_images.py has made one, and
+                # the original where it has not. The originals are Minecraft
+                # screenshots straight off disk - some are thirteen megabytes -
+                # and putting one of those behind the header was most of what
+                # the page weighed.
+                stem = os.path.splitext(filename)[0]
+                small = _derivative(season_path, url_prefix, 'thumb', stem)
+                big = _derivative(season_path, url_prefix, 'view', stem)
                 screenshots.append({
                     'filename': filename,
                     'url':      url,
+                    'thumb':    small or big or url,
+                    'view':     big or url,
                     'label':    filename,
                     'date':     parse_screenshot_date(filename),
                 })
@@ -129,9 +150,11 @@ def portal(request):
         roster = season_roster(season_path)
 
         hero_name = SEASON_HEROES.get(season_num)
-        hero = next((x['url'] for x in screenshots if x['filename'] == hero_name), None)
+        # the hero is a background image the size of the header, never the
+        # full-resolution original
+        hero = next((x['view'] for x in screenshots if x['filename'] == hero_name), None)
         if hero is None and screenshots:
-            hero = screenshots[len(screenshots) // 2]['url']
+            hero = screenshots[len(screenshots) // 2]['view']
 
         entry = {
             'number':           season_num,
