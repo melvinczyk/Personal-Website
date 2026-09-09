@@ -212,7 +212,22 @@ def portal(request):
         'map_url':  LIVE_MAP + LIVE_MAP_VIEW if live and LIVE_MAP else None,
         'map_home': LIVE_MAP,
         'forge_stamp': _forge_stamp(),
+        'ench_stamp': _stamp_for('enchanting.json'),
     })
+
+
+def _stamp_for(filename):
+    """The mtime of one of the apotheosis data files, as a cache buster.
+
+    Same job as _forge_stamp below, for the enchanting panel's own file. Both
+    are fetched by script rather than named in the markup, so neither picks up
+    the ?t= every other asset on the page carries.
+    """
+    try:
+        return int(os.path.getmtime(
+            os.path.join(MINECRAFT_ROOT, 'apotheosis', filename)))
+    except OSError:
+        return 0
 
 
 def _forge_stamp():

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:crossbow",
+    "apotheosis:other_tome",
+    "supplementaries:slingshot",
+    "opposing_force:tesla_cannon",
+    "$minecraft:trident",
+    "$minecraft:bow"
+  ],
+  "incompatible": [
+    "opposing_force:kickback",
+    "wkcr:herbicide"
+  ]
+}

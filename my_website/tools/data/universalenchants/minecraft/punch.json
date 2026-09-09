@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:bow",
+    "apotheosis:bow_tome",
+    "aether:golden_dart_shooter",
+    "aether:poison_dart_shooter",
+    "aether:enchanted_dart_shooter",
+    "ancient_aether:aeronautic_dart_shooter",
+    "cataclysm:cursed_bow",
+    "$minecraft:crossbow"
+  ],
+  "incompatible": [
+    "wkcr:herbicide"
+  ]
+}

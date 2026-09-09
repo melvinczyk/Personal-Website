@@ -689,6 +689,145 @@ function gearChip(slot, item) {
   </span>`;
 }
 
+// ── movement ────────────────────────────────────────────────────────────────
+//
+// Everything on this page that moves under script goes through here, so the
+// two ways movement can be unwanted are handled once: the reader's
+// reduced-motion setting, and a browser with no Web Animations API.
+//
+// The rule these follow is that an animation is *added* to something already
+// on screen and readable without it. Nothing here is a CSS keyframe fading in
+// from opacity 0 with a `backwards` fill, because that makes an element's
+// visibility depend on the animation clock actually running - and a throttled
+// background tab, or any surface that has paused rendering, does not run it.
+// Driven from script the resting state is the visible one, and the setTimeout
+// backstop below guarantees the end state on the wall clock even if the
+// animation timeline never advances at all.
+
+const MC_REDUCED = window.matchMedia
+  && window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function mcMotion(el, frames, options) {
+  if (!el || !el.animate || (MC_REDUCED && MC_REDUCED.matches)) return null;
+  let anim;
+  try {
+    anim = el.animate(frames, options);
+  } catch (error) {
+    return null;                        // an old browser, and no harm done
+  }
+  const life = (options.delay || 0) + (options.duration || 0) + 250;
+  if (Number.isFinite(life)) {
+    setTimeout(() => {
+      try { if (anim.playState !== 'finished') anim.finish(); } catch (e) { /* gone */ }
+    }, life);
+  }
+  return anim;
+}
+
+/* Cards arriving as they are scrolled to, rather than a hundred and twenty of
+   them all fading at once on load.
+
+   The grids here are long - a hundred and twenty bosses, sixty fish - and
+   almost all of it is off screen, which is the whole reason those cards carry
+   content-visibility. Staggering the lot on build would animate ninety things
+   nobody is looking at. So the reveal rides an observer the same way the mob
+   models do: a card fades up the first time it comes near the viewport, and
+   the stagger runs across whatever came into view together rather than across
+   the whole grid.
+
+   `reveal` is set as a dataset flag rather than a class so a re-filter (which
+   toggles .hidden on the same cards) cannot make a card play its entrance a
+   second time. */
+let mcRevealWatcher = null;
+
+function mcRevealReset() {
+  if (mcRevealWatcher) mcRevealWatcher.disconnect();
+  mcRevealWatcher = null;
+}
+
+function mcReveal(selector, root) {
+  const cards = (root || document).querySelectorAll(selector);
+  if (!cards.length) return;
+  if (MC_REDUCED && MC_REDUCED.matches) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  if (!mcRevealWatcher) {
+    // one batch of arrivals is staggered together; the counter resets whenever
+    // the observer has been quiet, so a card scrolled to on its own does not
+    // inherit a long delay from a screenful that landed a minute ago
+    let seen = 0, last = 0;
+    mcRevealWatcher = new IntersectionObserver(entries => {
+      const now = Date.now();
+      if (now - last > 400) seen = 0;
+      last = now;
+      for (const entry of entries) {
+        const card = entry.target;
+        /* Unobserve only what actually arrived. An observer's first callback
+           reports every target it was given, the off-screen ones included
+           with isIntersecting false - dropping those on that first pass is
+           how a card a hundred rows down ends up never animating at all. */
+        if (!entry.isIntersecting) continue;
+        mcRevealWatcher.unobserve(card);
+        if (card.dataset.reveal) continue;
+        card.dataset.reveal = '1';
+        mcMotion(card,
+          [{ opacity: 0, transform: 'translateY(8px)' },
+           { opacity: 1, transform: 'none' }],
+          { duration: 320, delay: Math.min(seen++, 14) * 26, easing: 'cubic-bezier(.2,.7,.3,1)' });
+      }
+    }, { root: document.getElementById('stage'), rootMargin: '60px' });
+  }
+  for (const card of cards) {
+    if (!card.dataset.reveal) mcRevealWatcher.observe(card);
+  }
+}
+
+/* FLIP: a card that moves and grows, animated from where it was.
+
+   An open card leaves its place in the grid for the head of the section and
+   goes from a hundred-and-twenty-pixel tile to a full-width record. Both of
+   those are layout - grid-column, order, padding - and layout cannot be
+   transitioned, which is why this used to be a hard cut with the record
+   simply appearing somewhere else on screen.
+
+   So: measure the card, let the class change happen, measure it again, and
+   play the difference as a transform from the old box to the new one. The
+   layout has already settled by the time anything is drawn, so nothing here
+   can leave the card in the wrong place - the animation is only the trip. */
+function mcFlip(card, apply) {
+  if (!card || (MC_REDUCED && MC_REDUCED.matches) || !card.animate) {
+    apply();
+    return;
+  }
+  const first = card.getBoundingClientRect();
+  apply();
+  const last = card.getBoundingClientRect();
+  if (!first.width || !last.width) return;
+
+  const dx = first.left - last.left;
+  const dy = first.top - last.top;
+  const sx = first.width / last.width;
+  const sy = first.height / last.height;
+  // a card that did not actually move is not worth a frame
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1
+      && Math.abs(sx - 1) < 0.01 && Math.abs(sy - 1) < 0.01) return;
+
+  mcMotion(card, [
+    { transformOrigin: 'top left',
+      transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+    { transformOrigin: 'top left', transform: 'none' },
+  ], { duration: 340, easing: 'cubic-bezier(.2,.75,.3,1)' });
+}
+
+/* The half of an opened card that was not there before - the record, the
+   fight history - brought up after the card has finished travelling, so the
+   two movements read as one gesture rather than racing each other. */
+function mcRevealPanel(panel) {
+  mcMotion(panel,
+    [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+    { duration: 300, delay: 90, easing: 'cubic-bezier(.2,.7,.3,1)' });
+}
+
 // Clicking the highlighted disc loads it; any other disc moves the rail first.
 function discClick(i) {
   if (i === discIdx) { toggleMedia(); return; }
@@ -1716,6 +1855,9 @@ function buildLive(board) {
   }
   filterBosses();
   filterFish();
+  // the grids were just rebuilt, so nothing in them has played its entrance
+  mcRevealReset();
+  mcReveal('.pcard, .bcard, .fcard');
 }
 
 // The list can be cut down to the ones already felled. A card that is filtered
@@ -2944,16 +3086,31 @@ function updateLive(board) {
   worldPanel(board.world);
   mapPanel(board.server);
 
-  const tile = (label, value, hot) =>
-    `<span class="ls-tile${hot ? ' hot' : ''}"><i>${label}</i><b>${value}</b></span>`;
+  /* The season's readings, as the dashboard's headline row.
+     These were six flat slots with a grey label and a number, which is the
+     one thing on this page that looked like a spreadsheet - and one of the
+     six was the legendary fish, which already has a whole shelf of its own
+     further down and did not need a second scoreboard.
+     Five now, each in the colour that reading already means on this page,
+     with the number given the size it deserves and a bar under the three
+     that are a fraction of something. */
+  const tile = (key, label, value, opts) => {
+    const o = opts || {};
+    const pct = o.of ? Math.max(0, Math.min(100, 100 * o.now / o.of)) : null;
+    return `<span class="ls-tile ${key}${o.hot ? ' hot' : ''}">
+        <b>${value}</b><i>${label}</i>
+        ${pct === null ? '' : `<u style="--fill:${pct.toFixed(1)}%"></u>`}
+      </span>`;
+  };
 
   document.getElementById('ls-tiles').innerHTML =
-    tile('online', `${T.online}/${T.tracked}`, T.online > 0) +
-    tile('played', T.played) +
-    tile('deaths', compact(T.deaths)) +
-    tile('mob kills', compact(T.kills)) +
-    tile('bosses', `${T.bosses}/${T.boss_all}`, T.bosses > 0) +
-    tile('legendary fish', `${T.fish}/${T.fish_all}`, T.fish > 0);
+    tile('online', 'online now', `${T.online}<em>/${T.tracked}</em>`,
+         { hot: T.online > 0, now: T.online, of: T.tracked }) +
+    tile('played', 'time played', T.played) +
+    tile('kills', 'mob kills', compact(T.kills)) +
+    tile('deaths', 'deaths', compact(T.deaths)) +
+    tile('bosses', 'bosses killed', `${T.bosses}<em>/${T.boss_all}</em>`,
+         { hot: T.bosses > 0, now: T.bosses, of: T.boss_all });
 
   document.getElementById('ls-count').textContent =
     `${T.online} of ${T.tracked} online`;
@@ -3034,9 +3191,14 @@ function toggleBoss(key) {
   // a fight left stretched out inside a card nobody can see is a row that
   // opens on its own the next time that card does
   if (previous !== bossOpen && fightOpen) toggleFight(fightOpen);
-  for (const c of document.querySelectorAll('.bcard')) {
-    c.classList.toggle('open', c.id === `bc-${bossOpen}`);
-  }
+  // the card travels from its place in the run to the head of the section and
+  // grows on the way; FLIP plays that trip rather than cutting to the end of it
+  mcFlip(card, () => {
+    for (const c of document.querySelectorAll('.bcard')) {
+      c.classList.toggle('open', c.id === `bc-${bossOpen}`);
+    }
+  });
+  if (bossOpen) mcRevealPanel(card.querySelector('.bc-fights'));
   // the model is rebuilt at each state's own canvas size rather than just
   // resized in CSS, so the open card's bigger stage gets a model actually
   // rendered for it instead of a small canvas stretched blurry over it
@@ -3060,10 +3222,15 @@ function toggleBoss(key) {
 function toggleLive(uuid) {
   const previous = liveOpen;
   liveOpen = liveOpen === uuid ? null : uuid;
-  for (const card of document.querySelectorAll('.pcard')) {
-    card.classList.toggle('open', card.id === `pc-${liveOpen}`);
-  }
+  const clicked = document.getElementById(`pc-${uuid}`);
+  // the same trip the boss card makes, and for the same reason
+  mcFlip(clicked, () => {
+    for (const card of document.querySelectorAll('.pcard')) {
+      card.classList.toggle('open', card.id === `pc-${liveOpen}`);
+    }
+  });
   drawDrawer(liveBoard);
+  if (liveOpen && clicked) mcRevealPanel(clicked.querySelector('.pc-panel'));
   // The history is its own feed on its own clock and lives inside this card,
   // so opening one is what asks for it. Fetched once and kept: it is the same
   // log for every player, and drawDrawer redraws from it when it lands.
@@ -4778,7 +4945,9 @@ function planHead() {
 // of a megabyte and fourteen hundred elements, and nothing should pay for it
 // until somebody wants to plan something.
 function planOpen() {
-  const wrap = document.querySelector('.ls-plan-wrap');
+  // by id: the forge's wrapper carries the same class, and a bare
+  // querySelector would be one markup reorder away from opening the wrong one
+  const wrap = document.getElementById('sk-wrap');
   if (!wrap) return;
   wrap.classList.add('on');
   planDraw();
@@ -4787,7 +4956,7 @@ function planOpen() {
 }
 
 function planShut() {
-  const wrap = document.querySelector('.ls-plan-wrap');
+  const wrap = document.getElementById('sk-wrap');
   if (!wrap) return;
   wrap.classList.remove('on');
   // the tree is fourteen hundred elements; closing should actually put them

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:shield",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "apotheosis:bane_of_illagers",
+    "minecraft:bane_of_arthropods",
+    "minecraft:smite",
+    "minecraft:sharpness"
+  ]
+}

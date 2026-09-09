@@ -17,7 +17,14 @@
 .fg-wrap.on .fg-panel { display: block; }
 .fg-panel > * { position: relative; z-index: 1; }
 .fg-panel .sk-plan-head em { flex: 1 1 auto; }
-.fg-stage { font-family: 'Minecraft', 'MGS1 Codec', monospace; }
+/* The forge's own colour, hot iron, kept here rather than borrowed from the
+   frame's --ink so this stylesheet stands on its own: everything below that
+   wants to look lit reaches for it. */
+.fg-stage {
+  font-family: 'Minecraft', 'MGS1 Codec', monospace;
+  --fg-ink: #ff8a1f;
+  --fg-ink-lit: #ffb257;
+}
 .fg-loading { margin: 0; padding: 18px 2px; font-size: 14px; color: var(--mc-faint); }
 
 /* ── tabs ─────────────────────────────────────────────────────────────────── */
@@ -31,17 +38,77 @@
   border-top-color: var(--mc-lit); border-left-color: var(--mc-lit);
 }
 .fg-tab:hover { color: var(--mc-text); background: #2b2b33; }
-.fg-tab.active { color: var(--mc-gold); border-bottom-color: var(--mc-gold); }
+.fg-tab.active { color: var(--fg-ink-lit); border-bottom-color: var(--fg-ink); }
 
 /* ── the controls ─────────────────────────────────────────────────────────── */
 
 .fg-controls {
-  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px;
+  display: flex; flex-direction: column; gap: 10px;
   padding: 10px 12px; margin-bottom: 10px;
   background: var(--mc-slot);
   border: 2px solid var(--mc-lit);
   border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
 }
+.fg-picks { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+
+/* Two ways in, as a switch. Gear of your own is what this page is nearly
+   always opened for - the pack's endgame armour is from mods Apotheosis has
+   never heard of and reforges anyway - so it is a door rather than the last
+   entry in a select of seventy. */
+.fg-modes { display: flex; gap: 4px; }
+.fg-mode {
+  flex: 1 1 0; min-width: 0; cursor: pointer; font: inherit; text-align: left;
+  padding: 7px 12px; color: var(--mc-dim);
+  background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  border-left: 3px solid var(--mc-shade);
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.fg-mode b { display: block; font-weight: normal; font-size: 13.5px; }
+.fg-mode i {
+  display: block; margin-top: 1px; font-style: normal; font-size: 10.5px;
+  letter-spacing: .04em; color: var(--mc-faint);
+}
+.fg-mode:hover { color: var(--mc-text); background: #24242c; }
+.fg-mode.on {
+  color: #ffd9ad; border-left-color: var(--fg-ink, #ff8a1f);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--fg-ink, #ff8a1f) 16%, transparent), transparent 70%);
+}
+.fg-mode.on i { color: color-mix(in srgb, var(--fg-ink, #ff8a1f) 62%, #fff); }
+
+/* the vanilla picker is only meaningful in vanilla mode; it collapses rather
+   than sitting there greyed out and taking the row's width with it */
+.fg-vanilla-field {
+  overflow: hidden; max-width: 420px;
+  transition: max-width .28s ease, opacity .18s ease, margin .28s ease;
+}
+.fg-vanilla-field.off {
+  max-width: 0; opacity: 0; margin-right: -10px; pointer-events: none;
+}
+
+/* Filling four numbers in from memory is the tax on describing your own
+   piece, so the vanilla tier of the same slot is one press away to start
+   from and edit. */
+.fg-presets {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  flex-basis: 100%;
+}
+.fg-presets-lead {
+  font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+  margin-right: 2px;
+}
+.fg-preset {
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  font: inherit; font-size: 11.5px; padding: 3px 8px 3px 5px;
+  color: var(--mc-dim); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  transition: color .15s ease, background .15s ease, transform .15s ease;
+}
+.fg-preset:hover {
+  color: var(--mc-text); background: #2b2b33; transform: translateY(-1px);
+}
+.fg-preset:active { transform: translateY(0); }
 .fg-field { display: flex; flex-direction: column; gap: 3px; position: relative; }
 .fg-field > span {
   font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
@@ -55,14 +122,35 @@
 .fg-field select:hover { border-color: var(--mc-lit); }
 .fg-field select option { color: var(--mc-text); background: #16161a; }
 
+/* The one button here that does something rather than sets something, so it
+   is the one thing wearing the forge's own heat. The strike is a light
+   crossing it on press, which is the feedback the old flat swap never gave:
+   three new offers appear and nothing on screen said they were new. */
 .fg-roll {
+  position: relative; overflow: hidden;
   font-family: inherit; font-size: 13px; letter-spacing: .08em; cursor: pointer;
-  padding: 6px 18px; color: #16161a; background: var(--mc-gold);
-  border: 2px solid var(--mc-shade);
-  border-top-color: #ffe89a; border-left-color: #ffe89a;
+  padding: 6px 20px; color: #1a0f04; background: var(--fg-ink);
+  border: 2px solid #8a3a06;
+  border-top-color: #ffd08a; border-left-color: #ffd08a;
+  transition: background .15s ease, box-shadow .2s ease;
 }
-.fg-roll:hover { background: #ffe276; }
-.fg-roll:active { border-top-color: var(--mc-shade); border-left-color: var(--mc-shade); }
+.fg-roll > span { position: relative; z-index: 1; }
+.fg-roll:hover {
+  background: var(--fg-ink-lit);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--fg-ink) 55%, transparent);
+}
+.fg-roll:active { border-top-color: #8a3a06; border-left-color: #8a3a06; }
+.fg-roll::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 38%, #fff8e6 50%, transparent 62%);
+  transform: translateX(-130%); opacity: .85;
+}
+.fg-roll.spun::after { animation: fg-strike .5s ease-out; }
+@keyframes fg-strike {
+  from { transform: translateX(-130%); }
+  to   { transform: translateX(130%); }
+}
+@media (prefers-reduced-motion: reduce) { .fg-roll.spun::after { animation: none; } }
 
 /* Gear of your own. Folded away until the custom piece is the one selected,
    because it is four more controls in a row that already has three. */
@@ -86,7 +174,7 @@
 /* The third column, where the tooltip used to leave a gap. Each socket is a
    picker whose options carry the effect, over a face showing the chosen gem. */
 .fg-socket-col {
-  padding: 9px 11px; box-sizing: border-box; min-width: 0; flex: 1 1 auto;
+  padding: 9px 11px; box-sizing: border-box; min-width: 0;
   background: var(--mc-slot);
   border: 2px solid var(--mc-lit);
   border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
@@ -119,7 +207,7 @@
   background: radial-gradient(70% 70% at 50% 50%,
     color-mix(in srgb, var(--tier) 34%, transparent) 0%, #0f0f13 74%);
 }
-.fg-socket-well .fg-icon { width: 26px; height: 26px; }
+.fg-socket-well .fg-icon { width: 32px; height: 32px; }
 /* an empty socket is a hole, not a labelled box: the picker beside it has
    already said everything there is to say about it */
 .fg-socket:not(.full) .fg-socket-well {
@@ -171,9 +259,13 @@
    different heights was what left the ragged gaps - the table is a fixed 352
    pixels and cannot give any of it back, so everything that sizes with it
    goes under it, and the result takes the whole of the rest. */
+/* Table, sockets, result. The sockets were under the table in the same fixed
+   352-pixel column, which made the panel hundreds of pixels taller for three
+   cards that fit perfectly well beside it - and left the strip next to the
+   table empty while they did. Beside it they cost no height at all. */
 .fg-body {
   display: grid; gap: 12px; align-items: start;
-  grid-template-columns: 352px minmax(300px, 1fr);
+  grid-template-columns: 352px minmax(210px, 0.8fr) minmax(280px, 1.3fr);
 }
 .fg-make { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .fg-result {
@@ -188,12 +280,52 @@
   display: flex; align-items: center; justify-content: center;
 }
 .fg-slot .fg-icon { width: 32px; height: 32px; }
+/* The cost, in the slot that holds it. There is no separate cost box any
+   more: pick a tier and a row and these are the numbers, so they are worth
+   catching the eye when they change. */
 .fg-slot b {
   position: absolute; right: -2px; bottom: -3px;
   font-size: 13px; font-weight: normal; color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
 }
+.fg-slot b.tick { animation: fg-tick .34s ease-out; }
+@keyframes fg-tick {
+  0%   { transform: translateY(-3px) scale(1.35); color: var(--fg-ink-lit); }
+  100% { transform: none; color: #fff; }
+}
+@media (prefers-reduced-motion: reduce) { .fg-slot b.tick { animation: none; } }
+/* Every size here is a whole multiple of sixteen, and that is not fussiness.
+   These are 16x16 sprites drawn with image-rendering: pixelated, and at a
+   fractional scale that filter has to double some source rows and not others
+   - so an eighteen-pixel box makes a sixteen-pixel sprite visibly lopsided,
+   which is exactly what "the icons look stretched" is. 16, 32, 48, 64. */
 .fg-icon { image-rendering: pixelated; display: block; }
-.fg-icon.sm { width: 18px; height: 18px; }
+.fg-icon.sm { width: 16px; height: 16px; }
+
+/* Animated textures, run the way the game runs them.
+
+   Fifteen of these move in-game - gem dust, the Mythic and Ancient materials,
+   and the six gems whose whole character is that they are lit - and the page
+   showed frame one of each and called it done. The extractor now bakes each
+   mcmeta down to a constant-rate filmstrip: the playback order expanded, the
+   repeats written out, the interpolated cross-fades blended in Pillow. So all
+   that is left here is to walk down it.
+
+   jump-none is the point of the timing function: --frames positions need
+   --steps = frames-1 jumps, and the default `end` behaviour would land on
+   frames-1 distinct tiles and never show the last one. */
+.fg-icon.anim {
+  background-repeat: no-repeat;
+  background-size: 100% calc(var(--frames) * 100%);
+  background-position: 0 0;
+  animation: fg-film var(--dur, 1s) steps(var(--steps), jump-none) infinite;
+}
+@keyframes fg-film {
+  from { background-position-y: 0%; }
+  to   { background-position-y: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fg-icon.anim { animation: none; }
+}
 
 /* the three offers: one is the roll you are looking at, the other two are
    what the same seed would have given on the second and third row */
@@ -239,22 +371,6 @@
   text-shadow: 1px 1px #fff;
 }
 
-/* ── costs, under the table ───────────────────────────────────────────────── */
-
-.fg-costs {
-  padding: 9px 11px; box-sizing: border-box;
-  background: var(--mc-slot); border-left: 4px solid var(--mc-gold);
-}
-.fg-costs h4 {
-  margin: 0 0 6px; font-size: 11px; font-weight: normal; letter-spacing: .06em;
-  color: var(--mc-gold);
-}
-.fg-cost {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12.5px; line-height: 1.65; color: var(--mc-dim);
-}
-.fg-cost.lv { color: var(--mc-xp); }
-
 /* ── the result: the game's own tooltip, then the numbers behind it ───────── */
 
 .fg-tipbox {
@@ -270,12 +386,16 @@
   border: 2px solid var(--mc-lit);
   border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
 }
+/* This block was set at eleven and twelve-and-a-half pixels in a pixel font,
+   which is small enough that "Armor Toughness" and the number beside it were
+   genuinely hard to read - and it is the half of the result panel you are
+   actually comparing rolls with. Given the size of the tooltip beside it. */
 .fg-stats h4 {
-  margin: 0 0 6px; padding-bottom: 5px;
-  font-size: 11px; font-weight: normal; letter-spacing: .06em;
-  color: var(--mc-faint); border-bottom: 1px solid rgba(255,255,255,.08);
+  margin: 0 0 7px; padding-bottom: 6px;
+  font-size: 13px; font-weight: normal; letter-spacing: .06em;
+  color: var(--mc-dim); border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.fg-stat { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 1.8; }
+.fg-stat { display: flex; align-items: baseline; gap: 10px; font-size: 15px; line-height: 1.75; }
 .fg-stat i { font-style: normal; color: var(--mc-dim); flex: 1 1 auto; }
 /* the base value, struck through where the roll moved it, so both numbers
    stay readable rather than one quietly replacing the other */
@@ -284,7 +404,7 @@
 .fg-stat b.up { color: #7bd66a; }
 .fg-stat b.down { color: #d97a6a; }
 .fg-statnote {
-  margin: 7px 0 0; font-size: 10.5px; line-height: 1.5; font-style: italic;
+  margin: 8px 0 0; font-size: 12px; line-height: 1.55; font-style: italic;
   color: var(--mc-faint);
 }
 
@@ -327,7 +447,7 @@
   margin-bottom: -2px;
 }
 .fg-sub:hover { color: var(--mc-text); }
-.fg-sub.active { color: var(--mc-gold); border-bottom-color: var(--mc-gold); }
+.fg-sub.active { color: var(--fg-ink-lit); border-bottom-color: var(--fg-ink); }
 
 /* ── the toolbar every view carries ──────────────────────────────────────── */
 
@@ -379,7 +499,7 @@
     color-mix(in srgb, var(--tier) 26%, transparent) 0%, transparent 72%);
 }
 .gc-stage .fg-icon {
-  width: 44px; height: 44px;
+  width: 48px; height: 48px;
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--tier) 55%, transparent));
 }
 .gc-foot {
@@ -417,7 +537,7 @@
               0 8px 30px -12px color-mix(in srgb, var(--tier) 70%, transparent);
 }
 .gcard.open .gc-stage { grid-area: 1 / 1; min-height: 120px; }
-.gcard.open .gc-stage .fg-icon { width: 72px; height: 72px; }
+.gcard.open .gc-stage .fg-icon { width: 64px; height: 64px; }
 .gcard.open .gc-foot {
   grid-area: 2 / 1; align-self: start;
   padding: 0; background: none; border: 0;
@@ -466,39 +586,94 @@
    of them legibly. The toolbar asks which tier you care about, and that tier
    gets the width the other five were taking. */
 
+/* Every card used to carry its name, its suffix, a sentence of value and one
+   chip per category it fits - twelve of them, reading "Bow Crossbow Pickaxe
+   Shovel Heavy Weapon Helmet Chestplate..." under every general affix. Eighty
+   of those is a wall of grey words with the one number you came for as the
+   smallest thing on it.
+   Now: the value is the headline, the name labels it, the twelve chips fold
+   into at most five family names, and the tier ladder is a press away. */
+
 .fg-afx-list {
-  display: grid; gap: 4px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: grid; gap: 4px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
-/* Coloured by the tier it first appears at, not by whether it is a stat or an
-   ability: the kind is a filter you set once, the tier is the reason you would
-   reforge again. */
+/* The staggered entrance is run from script with element.animate() rather
+   than from a keyframe here, deliberately. A CSS animation that fades in from
+   opacity 0 needs `backwards` fill to stay hidden through its delay, and that
+   makes the card's *visibility* depend on the animation clock actually
+   running - which is exactly what a throttled background tab, or any surface
+   that pauses the document timeline, does not guarantee. Driven from script
+   the animation is purely additive: the card's resting state is visible, and
+   if the animation never runs nothing is lost but the movement. */
 .fg-afx {
-  padding: 8px 11px; background: var(--mc-slot);
+  background: var(--mc-slot);
   border: 1px solid var(--mc-shade);
   border-left: 3px solid var(--kind, var(--mc-faint));
+  transition: border-color .18s ease, background .18s ease;
+}
+.fg-afx:hover { background: #26262e; }
+
+.fg-afx-head {
+  display: block; width: 100%; box-sizing: border-box; text-align: left;
+  font: inherit; cursor: pointer; padding: 8px 11px;
+  background: none; border: 0; color: inherit;
 }
 .fg-afx-name {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
-  font-size: 14px; line-height: 1.3;
+  font-size: 12px; line-height: 1.25;
 }
-.fg-afx-name b { font-weight: normal; color: var(--mc-text); }
-.fg-afx-name i { font-style: normal; font-size: 12px; color: var(--mc-faint); }
+.fg-afx-name b { font-weight: normal; color: var(--mc-dim); }
+.fg-afx-name i { font-style: normal; font-size: 11px; color: var(--mc-faint); }
+/* the reading, and the reason the card exists: given the weight the name used
+   to have, because "+18% attack damage" is what you are scanning for */
 .fg-afx-value {
-  margin-top: 3px; font-size: 12.5px; line-height: 1.5; color: var(--kind);
+  display: block; margin-top: 3px; font-size: 14px; line-height: 1.4;
+  color: var(--kind, var(--mc-text));
 }
-.fg-afx-fits { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
-.fg-afx-fits .chip {
+.fg-afx-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-top: 6px;
+}
+.fg-afx-meta .chip, .fg-afx-all .chip {
   padding: 1px 6px; font-size: 10px; color: var(--mc-faint);
   background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
 }
-.fg-afx-fits .chip.all { color: var(--mc-dim); }
+.fg-afx-meta .chip.all { color: var(--mc-dim); }
 /* the tier gate, said in words as well as by the stripe down the side: a
    colour on its own is not a reading for anyone who cannot separate the six */
-.fg-afx-fits .chip.from {
+.fg-afx-meta .chip.from {
   background: color-mix(in srgb, currentColor 14%, transparent);
   border-color: color-mix(in srgb, currentColor 34%, transparent);
 }
+.fg-afx-caret {
+  margin-left: auto; font-size: 10px; color: var(--mc-faint);
+  transition: transform .22s ease, color .18s ease;
+}
+.fg-afx:hover .fg-afx-caret { color: var(--mc-dim); }
+.fg-afx.open { border-color: color-mix(in srgb, var(--kind) 45%, transparent); }
+.fg-afx.open .fg-afx-caret { transform: rotate(180deg); color: var(--kind); }
+
+/* What it rolls at each of the six tiers - the question the shut card cannot
+   answer, and the one that decides whether reforging again is worth it. The
+   open sweep is scripted too, for the same reason as the entrance. */
+.fg-afx-detail { padding: 0 11px 9px; overflow: hidden; }
+.fg-afx-ladder { border-top: 1px solid rgba(255,255,255,.08); padding-top: 6px; }
+.fg-afx-rung {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px;
+  padding: 2px 5px; font-size: 11.5px; line-height: 1.45;
+  border-left: 2px solid transparent;
+}
+/* the tier the toolbar is filtered to, marked so the ladder is read relative
+   to where you already are rather than from the bottom every time */
+.fg-afx-rung.here {
+  border-left-color: var(--tier);
+  background: color-mix(in srgb, var(--tier) 11%, transparent);
+}
+.fg-afx-rung i { font-style: normal; }
+.fg-afx-rung span { color: var(--mc-dim); min-width: 0; overflow-wrap: anywhere; }
+.fg-afx-rung span.off { color: var(--mc-faint); }
+.fg-afx-all { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; }
+
 
 /* ── tiers and costs ─────────────────────────────────────────────────────── */
 
@@ -578,7 +753,13 @@
 
 /* the sockets drop under the pair before the table does: they are the shortest
    column, and the table has a fixed width it cannot give any of back */
-@media (max-width: 1050px) {
+@media (max-width: 1240px) {
+  /* the result needs more width than the sockets do, so it drops to its own
+     row first and the table keeps its neighbour */
+  .fg-body { grid-template-columns: 352px minmax(200px, 1fr); }
+  .fg-result { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
   .fg-body { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -603,9 +784,10 @@
   .fg-count { margin-left: 0; }
   .fg-gems { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
   .gc-stage { min-height: 62px; }
-  .gc-stage .fg-icon { width: 36px; height: 36px; }
+  .gc-stage .fg-icon { width: 32px; height: 32px; }
   .gc-name { font-size: 12px; }
   .fg-afx-list { grid-template-columns: minmax(0, 1fr); }
+  .fg-afx-value { font-size: 13px; }
   .fg-tiers { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .fg-cut-step { min-width: 0; flex: 1 1 100%; }
 }
@@ -620,6 +802,19 @@
   .fg-custom input { width: 100%; box-sizing: border-box; }
   .fg-custom-nums > .fg-field { flex: 1 1 30%; }
   .fg-panel { padding: 10px 9px; }
+  /* the collapsing vanilla picker has to give up its max-width here or it
+     caps the full-width field the rule above just made */
+  .fg-vanilla-field { max-width: 100%; }
+  .fg-roll { flex: 1 1 100%; }
+}
+
+/* Under this the two doors stop being a row: side by side they are two lines
+   of ten-point type in half a phone each. */
+@media (max-width: 560px) {
+  .fg-modes { flex-direction: column; }
+  .fg-mode { flex: 1 1 auto; }
+  .fg-afx-rung { grid-template-columns: 62px minmax(0, 1fr); gap: 6px; }
+  .fg-presets-lead { flex-basis: 100%; }
 }
 
 /* 176 game pixels at 2x is 352, and a 375-pixel phone has around 300 of usable

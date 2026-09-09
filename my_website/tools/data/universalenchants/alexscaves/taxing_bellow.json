@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:magic_conch",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "minecraft:mending",
+    "minecraft:unbreaking"
+  ]
+}

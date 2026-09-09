@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:more_critters_deadly_side",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "more_critters:lovely_side"
+  ]
+}

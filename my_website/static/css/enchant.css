@@ -1,0 +1,660 @@
+/* The Arcane Table: a panel of the portal, the third of the workshop's three.
+   It leans on minecraft.css for the --mc-* tokens, the Minecraft face and the
+   frame it shares with the skill tree and the forge, so the three read as a
+   set rather than as three separate ideas.
+
+   Its colour is lapis - the one thing you actually spend at an enchanting
+   table, and the one arcane blue the page was not already using. The tree is
+   violet, the forge is hot iron, this is lapis. */
+
+.en-panel { display: none; padding: 14px 16px; }
+.en-wrap.on .en-panel { display: block; }
+.en-panel > * { position: relative; z-index: 1; }
+.en-stage {
+  font-family: 'Minecraft', 'MGS1 Codec', monospace;
+  --en-ink: #a855f7;
+  --en-lit: #d8b4fe;
+  /* one colour per stat, used everywhere the stat appears so a reading is the
+     same colour in the meter, on a shelf card and in a recipe's requirement */
+  --st-e: #7fd6ff;      /* eterna - the level ceiling */
+  --st-q: #ffb454;      /* quanta - variance, and therefore risk */
+  --st-a: #c88bff;      /* arcana - rarity */
+  --st-r: #6fe0a0;      /* rectification - the safety net */
+  --st-c: #ffe27a;      /* clues - what you get to see */
+}
+/* The panel is as wide as the page; its content is not. Left-locked, a build
+   and a window sat in the corner of a very wide box with nothing beside them.
+   Capped and centred instead, so the whole thing reads as one object however
+   wide the screen is. */
+.en-stage > * { max-width: 1180px; margin-left: auto; margin-right: auto; }
+
+.en-loading { margin: 0; padding: 18px 2px; font-size: 14px; color: var(--mc-faint); }
+
+/* ── tabs ─────────────────────────────────────────────────────────────────── */
+
+.en-tabs { display: flex; gap: 2px; margin-bottom: 10px; }
+.en-tab {
+  font-family: inherit; font-size: 13px; cursor: pointer; padding: 5px 16px;
+  color: var(--mc-dim);
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-top-color: var(--mc-lit); border-left-color: var(--mc-lit);
+}
+.en-tab:hover { color: var(--mc-text); background: #2b2b33; }
+.en-tab.active { color: var(--en-lit); border-bottom-color: var(--en-ink); }
+
+.en-subnav {
+  display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 10px;
+  border-bottom: 2px solid var(--mc-shade);
+}
+.en-sub {
+  font-family: inherit; font-size: 13px; cursor: pointer;
+  padding: 5px 14px; color: var(--mc-faint);
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.en-sub:hover { color: var(--mc-text); }
+.en-sub.active { color: var(--en-lit); border-bottom-color: var(--en-ink); }
+
+/* ── the build, in three dimensions ───────────────────────────────────────────
+   Real cubes at a fixed camera rather than a drawing of them.
+
+   The world is rotated once - 60 degrees back and 45 around, the angle
+   Minecraft's own item renders use - and every block inside it is three
+   divs carrying that block's actual top and side textures, placed in 3D. The
+   browser decides which face is in front of which, which is the whole reason
+   to do it this way: nothing here has to sort by depth when the build
+   changes, and it cannot get that sorting wrong.
+
+   The camera does not move. This is a diagram you read, not a scene you fly
+   around, and a fixed angle keeps every build comparable with every other. */
+
+.en-top {
+  display: grid; gap: 12px; align-items: start; margin-bottom: 10px;
+  grid-template-columns: minmax(0, 1fr) 352px;
+}
+.en-stage-box {
+  padding: 10px; box-sizing: border-box; min-width: 0;
+  background:
+    radial-gradient(80% 70% at 50% 30%,
+      color-mix(in srgb, var(--en-ink) 14%, transparent), transparent 72%),
+    #0d1119;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.en-iso {
+  position: relative; height: 400px; overflow: hidden;
+  perspective: none;
+}
+.en-iso-world {
+  position: absolute; left: 50%; top: 58%;
+  transform-style: preserve-3d;
+  /* the fixed camera, and the only place the angle is set */
+  transform: rotateX(60deg) rotateZ(-45deg);
+}
+.en-cube {
+  position: absolute; transform-style: preserve-3d;
+  /* --half is set from script alongside the cube's size, so the face offsets
+     below track the cube size instead of being a number typed twice. They were
+     typed twice, the cube grew, and the lid ended up hanging over the walls. */
+  --half: 23px;
+}
+.en-cube .f {
+  position: absolute; inset: 0;
+  background-size: 100% 100%; image-rendering: pixelated;
+  /* an edge on every face, so two dark blocks against each other still read
+     as two blocks rather than one shape */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35);
+  /* No backface culling. Which two walls face the camera is the browser's
+     business, and hiding the ones pointing away is what made blocks show
+     their empty insides. */
+}
+/* The walls, all four built the same way, and the reason they are.
+
+   This world is Z-up: the container is rotated so that a child's local Z axis
+   points at the sky. CSS's own cube recipe assumes Y-up, and that is what put
+   a texture on its side - rotateY(90deg) makes a wall whose *normal* is right
+   but whose texture runs along the world's horizontal, which reads as the
+   image turned a quarter turn.
+
+   So every wall starts with the same rotateX(-90deg), the one that maps the
+   texture's own down-direction onto world down. After that the four walls
+   differ only by a spin about the vertical, which cannot tip a texture over. */
+.en-cube .top { transform: translateZ(var(--half)); }
+.en-cube .w-s { transform: rotateX(-90deg) translateZ(var(--half)); }
+.en-cube .w-e { transform: rotateX(-90deg) rotateY(90deg) translateZ(var(--half)); }
+.en-cube .w-n { transform: rotateX(-90deg) rotateY(180deg) translateZ(var(--half)); }
+.en-cube .w-w { transform: rotateX(-90deg) rotateY(270deg) translateZ(var(--half)); }
+/* the fixed camera means the same two walls are always lit the same way */
+.en-cube .w-n, .en-cube .w-w { filter: brightness(.8); }
+.en-cube .w-s, .en-cube .w-e { filter: brightness(.95); }
+
+/* an empty socket is a wire box you can put something in, not a block */
+.en-cube.ghost .f {
+  background-image: none !important;
+  background: color-mix(in srgb, var(--en-ink) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--en-ink) 50%, transparent);
+  box-sizing: border-box; filter: none !important;
+}
+.en-cube.ghost { opacity: .7; transition: opacity .15s ease; }
+.en-cube.ghost:hover { opacity: 1; }
+.en-cube.ghost:hover .f {
+  background: color-mix(in srgb, var(--en-lit) 28%, transparent);
+  border-color: var(--en-lit);
+}
+.en-slot-cube { cursor: pointer; }
+.en-slot-cube:not(.ghost):hover .f { filter: brightness(1.4); }
+/* the floor is scenery, not a slot */
+.en-cube-floor .f { filter: brightness(.78); }
+.en-cube-floor .w-n, .en-cube-floor .w-w { filter: brightness(.62); }
+.en-cube-floor .w-s, .en-cube-floor .w-e { filter: brightness(.72); }
+
+.en-iso-legend {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px;
+  margin-top: 6px; font-size: 11px; color: var(--mc-faint);
+}
+.en-iso-legend span { color: var(--en-lit); }
+.en-iso-legend em { margin-left: auto; font-style: normal; }
+
+/* ── the working area ─────────────────────────────────────────────────────────
+   The build and the things you change it with, side by side. Scrolling to a
+   palette, picking a block, and scrolling back to place it is three moves for
+   one decision; the palette lives beside the build instead, so picking and
+   placing are one glance apart. */
+
+/* One centred column, not a build pinned left with a palette pinned right.
+   The console this panel lives in is about six hundred pixels wide whatever
+   the browser is, and splitting that into a main column and a sidebar left
+   the build in three hundred of them, hard against the left edge. Everything
+   stacks and centres now, and the palette is a strip under the build rather
+   than a column beside it. */
+.en-work { display: block; margin-bottom: 10px; }
+.en-main { min-width: 0; }
+
+/* the five readings, across the top of the build they come from */
+.en-statbar {
+  display: grid; gap: 4px; margin-bottom: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.en-pill {
+  --lit: var(--mc-dim);
+  padding: 6px 9px 7px; min-width: 0;
+  background: var(--mc-slot);
+  border: 1px solid var(--mc-shade);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lit) 75%, transparent);
+}
+.en-pill.e { --lit: var(--st-e); }
+.en-pill.q { --lit: var(--st-q); }
+.en-pill.a { --lit: var(--st-a); }
+.en-pill.r { --lit: var(--st-r); }
+.en-pill.c { --lit: var(--st-c); }
+.en-pill-top { display: flex; align-items: baseline; gap: 6px; }
+.en-pill-top i {
+  font-style: normal; font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+}
+.en-pill-top b {
+  margin-left: auto; font-weight: 600; font-size: 18px; color: var(--lit);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--lit) 40%, transparent);
+}
+.en-pill-note {
+  display: block; margin-top: 4px; font-size: 10px; color: var(--mc-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.en-stage-box {
+  padding: 0; box-sizing: border-box; min-width: 0;
+  /* Not near-black. The enchanting table's sides are luma 37 and obsidian is
+     14; against a background of 15 they disappeared entirely and the table's
+     bright red lid looked like it was floating in mid-air with nothing under
+     it. The ground is lifted so dark blocks have something to be dark
+     against. */
+  background:
+    radial-gradient(70% 60% at 50% 44%,
+      color-mix(in srgb, var(--en-ink) 20%, transparent), transparent 72%),
+    #232a3a;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+/* Sized to the build rather than to a round number: a five-by-five ring two
+   high is about 330 tall on screen at this cube size, and the rest was empty
+   sky nobody asked for. */
+/* Sized and scaled to the build itself. A five-wide ring two high is about
+   300 across at this cube size and the box was 330 tall with the ring sitting
+   in the middle of it, so most of what you were looking at was empty sky. The
+   scale pushes the build out to the edges of its own box instead. */
+.en-iso {
+  position: relative; height: 286px; overflow: hidden;
+  touch-action: manipulation;
+}
+.en-iso-world {
+  /* dead centre of the box, both ways. It sat at 58% down, which put the
+     build's feet sixteen pixels through the floor of its own frame and left
+     thirty spare above it. */
+  position: absolute; left: 50%; top: 50%;
+  transform-style: preserve-3d;
+  /* scale3d, not scale. A plain scale() is scale3d(k, k, 1) - it stretches
+     the footprint and leaves Z alone, so every block keeps its height while
+     its base grows and the whole build renders as flattened slabs. That is
+     what "the geometry is wrong" was: the cubes were not cubes. */
+  transform: rotateX(60deg) rotateZ(-45deg) scale3d(1.24, 1.24, 1.24);
+}
+
+/* The small controls the side window is built from. These used to live in a
+   toolbar above the build; the toolbar is gone and they came with it, so they
+   are defined here where they are now used. */
+.en-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.en-field > span {
+  font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+  font-weight: normal;
+}
+.en-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.en-preset {
+  font: inherit; font-size: 12px; cursor: pointer; padding: 4px 11px;
+  color: var(--mc-dim); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  transition: color .15s ease, background .15s ease, transform .15s ease;
+}
+.en-preset:hover {
+  color: var(--en-lit); background: #24303f; transform: translateY(-1px);
+}
+.en-preset.clear:hover { color: #ffb3b3; background: #34222a; }
+
+/* the stat chips, shared by the side window's brush list */
+.st {
+  --lit: var(--mc-faint);
+  display: inline-flex; align-items: baseline; gap: 3px;
+  padding: 1px 5px; font-style: normal; font-size: 10px;
+  color: var(--lit);
+  background: color-mix(in srgb, var(--lit) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lit) 30%, transparent);
+}
+.st.e   { --lit: var(--st-e); }
+.st.q   { --lit: var(--st-q); }
+.st.a   { --lit: var(--st-a); }
+.st.r   { --lit: var(--st-r); }
+.st.c   { --lit: var(--st-c); }
+.st.cap { --lit: #9aa6b8; }
+.st.neg { --lit: var(--mc-heart); }
+.st.treasure { --lit: #ffd24a; }
+
+/* the meters, shared by the stat pills and the odds bars */
+.en-meter {
+  height: 4px; margin-top: 6px; background: rgba(255, 255, 255, .07);
+  overflow: hidden;
+}
+.en-meter span {
+  display: block; height: 100%; background: var(--lit, var(--en-ink));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--lit, var(--en-ink)) 55%, transparent);
+  transition: width .45s cubic-bezier(.2, .7, .3, 1);
+}
+.en-meter span.neg { background: var(--mc-heart); box-shadow: none; }
+
+/* ── the side window ──────────────────────────────────────────────────────── */
+
+.en-side {
+  display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; margin-top: 8px;
+  padding: 9px; box-sizing: border-box;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.en-side > .en-presets, .en-side > .en-modes { flex: 0 0 auto; }
+.en-side .en-field { flex: 1 1 108px; }
+.en-side .en-field select, .en-side .en-field input {
+  font-family: inherit; font-size: 12px; padding: 4px 6px; width: 100%;
+  box-sizing: border-box;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.en-side .en-field input:disabled { color: var(--mc-faint); }
+.en-side .en-presets { gap: 4px; }
+.en-side .en-preset { padding: 3px 8px; font-size: 11px; }
+
+/* place or remove, because a phone has no shift key */
+.en-modes { display: flex; gap: 3px; }
+.en-mode {
+  flex: 1 1 0; font: inherit; font-size: 12px; cursor: pointer; padding: 5px 8px;
+  color: var(--mc-dim); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  transition: color .15s ease, background .15s ease;
+}
+.en-mode.sm { font-size: 11px; padding: 4px 6px; }
+.en-mode.on {
+  color: #0c1118; background: var(--en-lit); border-color: var(--en-ink);
+}
+
+/* the brushes, as a list you scroll inside rather than a grid you scroll past */
+.en-brushes {
+  display: grid; gap: 2px; flex: 1 1 100%;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  max-height: 188px; overflow-y: auto; overscroll-behavior: contain;
+  padding-right: 2px;
+}
+.en-brush {
+  display: flex; align-items: center; gap: 7px; text-align: left;
+  font: inherit; cursor: pointer; padding: 4px 6px;
+  color: var(--mc-dim); background: var(--mc-panel);
+  border: 1px solid transparent; border-left: 3px solid transparent;
+  transition: background .14s ease, border-color .14s ease;
+}
+.en-brush:hover { background: #262b35; }
+.en-brush.on {
+  border-left-color: var(--en-ink);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--en-ink) 22%, transparent), transparent 78%);
+}
+.en-brush-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.en-brush-words b {
+  font-weight: normal; font-size: 11.5px; color: var(--mc-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.en-brush-stats { display: flex; flex-wrap: wrap; gap: 2px; }
+.en-brush-stats .st { padding: 0 4px; font-size: 9.5px; }
+.en-brush u {
+  margin-left: auto; text-decoration: none; font-size: 12px; color: var(--en-lit);
+}
+
+/* ── casting ──────────────────────────────────────────────────────────────── */
+
+.en-cast {
+  display: block;
+  padding: 11px 13px 13px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.en-cast-gui { min-width: 0; }
+.en-cast-out { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.en-gui { image-rendering: pixelated; user-select: none; }
+.en-gui-win { position: relative; }
+
+/* The three bars Apotheosis draws under the offers. They are not in vanilla's
+   sheet, so they are built rather than blitted - the same panel grey, the same
+   sunken border the game's own widgets wear, and the mod's own three colours. */
+.en-gui-stats {
+  padding: 6px 8px 8px; box-sizing: border-box; width: 100%;
+  background: #c6c6c6;
+  border-left: 4px solid #c6c6c6; border-right: 4px solid #c6c6c6;
+  border-bottom: 4px solid #555;
+  box-shadow: inset 2px 0 0 #fff, inset -2px 0 0 #8b8b8b;
+}
+.en-gbar {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.en-gbar:last-child { margin-bottom: 0; }
+.en-gbar i {
+  font-family: 'Minecraft', monospace; font-style: normal; font-size: 15px;
+  color: var(--lit); text-shadow: 1px 1px 0 rgba(0, 0, 0, .35);
+}
+.en-gtrack {
+  height: 11px; background: #2b2b2b;
+  box-shadow: inset 1px 1px 0 #101010, inset -1px -1px 0 #4a4a4a;
+}
+.en-gtrack span {
+  display: block; height: 100%;
+  background: var(--lit);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .28);
+  transition: width .45s cubic-bezier(.2, .8, .3, 1);
+}
+.en-blit { position: absolute; image-rendering: pixelated; background-repeat: no-repeat; }
+/* the book the table keeps open above its slots */
+.en-gbook { position: absolute; z-index: 3; width: 40px; height: 40px; }
+.en-gbook .en-icon { width: 40px; height: 40px; }
+
+/* the two things the table takes, sitting in its own slots */
+.en-gslot {
+  position: absolute; z-index: 3; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.en-gslot .en-icon { width: 32px; height: 32px; }
+.en-gslot b {
+  position: absolute; right: -2px; bottom: -3px;
+  font-family: 'Minecraft', monospace; font-size: 13px; font-weight: normal;
+  color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
+}
+.en-row { cursor: pointer; }
+.en-row:hover { filter: brightness(1.2); }
+.en-row.dead { cursor: default; filter: none; }
+.en-orb { z-index: 2; pointer-events: none; }
+.en-label {
+  position: absolute; z-index: 4;
+  font-family: 'Minecraft', monospace; font-size: 14px; line-height: 1;
+  white-space: nowrap; pointer-events: none; color: #404040;
+}
+.en-lapis { font-size: 12px; color: #3e3e3e; }
+.en-need {
+  font-size: 12px; transform: translateX(-100%); color: #80ff20;
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000;
+}
+
+/* What you are enchanting, as the things themselves.
+
+   This was a select in the side panel - the control you change most often, in
+   the place you would look last. A row of items you can recognise needs no
+   label and no hunting, and the one you pick is drawn into the table's own
+   item slot below, which is where it sits in game. */
+.en-picker {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 4px; margin-bottom: 8px;
+}
+.en-pick {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; padding: 0; cursor: pointer;
+  background: var(--mc-panel);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  transition: background .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+.en-pick:hover { background: #2b3240; transform: translateY(-2px); }
+.en-pick.on {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--en-ink) 34%, transparent), transparent 70%), var(--mc-panel);
+  box-shadow: inset 0 0 0 2px var(--en-lit),
+              0 0 14px -4px color-mix(in srgb, var(--en-ink) 90%, transparent);
+}
+.en-pick .en-icon { width: 32px; height: 32px; }
+.en-pick-any {
+  font-family: 'Minecraft', monospace; font-size: 22px; color: var(--mc-faint);
+}
+.en-pick.on .en-pick-any { color: var(--en-lit); }
+
+/* the custom piece's own two numbers, shown only when it is the one picked */
+.en-custom { display: none; gap: 10px; margin-bottom: 8px; }
+.en-custom.on { display: flex; flex-wrap: wrap; justify-content: center; }
+.en-custom select, .en-custom input {
+  font-family: inherit; font-size: 12px; padding: 4px 6px; min-width: 120px;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+
+/* the window and the odds, side by side, so neither leaves a hole */
+.en-cast-row {
+  display: grid; gap: 12px; align-items: stretch; justify-content: center;
+  grid-template-columns: 352px minmax(240px, 1fr);
+}
+
+/* the one button here that does something rather than sets something */
+.en-roll {
+  position: relative; overflow: hidden; display: block; width: 100%; max-width: 352px;
+  margin-top: 8px; box-sizing: border-box;
+  font-family: inherit; font-size: 14px; letter-spacing: .08em; cursor: pointer;
+  padding: 8px 20px; color: #0c1118; background: var(--en-lit);
+  border: 2px solid #17466e;
+  border-top-color: #cfe9ff; border-left-color: #cfe9ff;
+  transition: background .15s ease, box-shadow .2s ease;
+}
+.en-roll > span { position: relative; z-index: 1; }
+.en-roll:hover:not(:disabled) {
+  background: #a4dbff;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--en-ink) 60%, transparent);
+}
+.en-roll:disabled { opacity: .4; cursor: default; }
+
+.en-result {
+  padding: 9px 11px; min-height: 66px; box-sizing: border-box;
+  background: #100010f2; border: 2px solid #2d0a63; outline: 1px solid #100010;
+}
+.en-result-head {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 6px;
+  padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.en-result-head b { font-weight: normal; font-size: 13px; color: var(--mc-text); }
+.en-result-head em {
+  margin-left: auto; font-style: normal; font-size: 11px; color: var(--st-q);
+}
+.en-got {
+  --lit: var(--mc-dim);
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 13.5px; line-height: 1.7;
+}
+.en-got b { font-weight: normal; color: var(--lit); }
+.en-got i { font-style: normal; color: var(--mc-faint); }
+.en-got.r-common    { --lit: #b6b6c0; }
+.en-got.r-uncommon  { --lit: #6fe0a0; }
+.en-got.r-rare      { --lit: #79c2ff; }
+.en-got.r-very_rare { --lit: #c88bff; }
+.en-none { margin: 6px 0 0; font-size: 13px; color: var(--mc-faint); }
+
+/* the odds, with nothing written on them */
+.en-oddbars {
+  display: flex; flex-direction: column; gap: 3px;
+  flex: 1 1 auto; min-height: 0;
+  max-height: 268px; overflow-y: auto; overscroll-behavior: contain;
+  padding-right: 2px;
+}
+/* an enchantment whose curve was assumed rather than read gets a mark and a
+   quieter name - it is in the draw, but it is not the same kind of fact */
+.en-oddbar.guess i { color: var(--mc-faint); }
+.en-oddbar.guess i::after {
+  content: '·'; margin-left: 5px; color: var(--st-q); font-weight: 700;
+}
+.en-oddbar {
+  --lit: var(--mc-dim);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 90px) 34px;
+  align-items: center; gap: 9px; font-size: 11.5px;
+}
+.en-oddbar i {
+  font-style: normal; color: var(--mc-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.en-oddbar b { font-weight: normal; text-align: right; color: var(--lit); }
+.en-oddbar .en-meter { margin-top: 0; height: 8px; }
+.en-oddbar .en-meter span {
+  width: 0;
+  transition: width .55s cubic-bezier(.2, .8, .3, 1);
+}
+.en-oddbar.r-common    { --lit: #b6b6c0; }
+.en-oddbar.r-uncommon  { --lit: #6fe0a0; }
+.en-oddbar.r-rare      { --lit: #79c2ff; }
+.en-oddbar.r-very_rare { --lit: #c88bff; }
+
+/* ── narrower ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1080px) {
+  .en-cast-gui { display: flex; flex-direction: column; align-items: center; }
+}
+/* the window is a fixed 352 of game texture and the odds want about 250 more,
+   so the pair only has to stack once the panel is under about seven hundred -
+   well past where it used to give up */
+@media (max-width: 700px) {
+  .en-cast-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 620px) {
+  .en-statbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .en-iso { height: 260px; }
+  .en-oddbar { grid-template-columns: minmax(0, 1fr) 34px; }
+  .en-oddbar .en-meter { display: none; }
+}
+@media (max-width: 420px) {
+  .en-cast-gui { --en-shrink: .84; }
+  .en-gui, .en-roll {
+    transform: scale(var(--en-shrink)); transform-origin: top left;
+  }
+  .en-cast-gui { margin-bottom: calc((var(--en-shrink) - 1) * 200px); }
+}
+
+/* ── the catalog toolbar ──────────────────────────────────────────────────── */
+
+.en-toolbar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px;
+  padding: 9px 11px; margin-bottom: 10px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.en-tool { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.en-tool > span { font-size: 10px; letter-spacing: .06em; color: var(--mc-faint); }
+.en-tool select, .en-tool input {
+  font-family: inherit; font-size: 13px; padding: 5px 8px;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.en-tool select { cursor: pointer; min-width: 150px; }
+.en-tool input { min-width: 170px; }
+.en-tool select option { color: var(--mc-text); background: #16161a; }
+.en-count { margin-left: auto; align-self: center; font-size: 11px; color: var(--mc-faint); }
+
+/* ── enchantments ─────────────────────────────────────────────────────────── */
+/* The max level is the reading. Everything Apotheosis does to an enchantment
+   is invisible in game until you have already spent the levels, so the number
+   leads and the name labels it - the same shape the affix list settled on. */
+
+.en-ench-list {
+  display: grid; gap: 4px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+}
+.en-ench {
+  --lit: var(--mc-faint);
+  padding: 8px 11px 9px; background: var(--mc-slot);
+  border: 1px solid var(--mc-shade);
+  border-left: 3px solid var(--lit);
+  transition: background .18s ease;
+}
+.en-ench:hover { background: #26262e; }
+.en-ench.r-common    { --lit: #b6b6c0; }
+.en-ench.r-uncommon  { --lit: #6fe0a0; }
+.en-ench.r-rare      { --lit: #79c2ff; }
+.en-ench.r-very_rare { --lit: #c88bff; }
+.en-ench-top { display: flex; align-items: baseline; gap: 10px; }
+.en-ench-name { font-weight: normal; font-size: 14px; color: var(--mc-text); }
+.en-ench-lv {
+  margin-left: auto; display: flex; align-items: baseline; gap: 4px;
+}
+.en-ench-lv b {
+  font-weight: 600; font-size: 19px; color: var(--lit);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--lit) 35%, transparent);
+}
+.en-ench-lv i { font-style: normal; font-size: 10px; color: var(--mc-faint); }
+.en-ench-meta { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.en-ench-meta .chip {
+  padding: 1px 6px; font-size: 10px; color: var(--mc-faint);
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .07);
+}
+.en-ench-meta .chip.rarity {
+  color: var(--lit);
+  background: color-mix(in srgb, var(--lit) 13%, transparent);
+  border-color: color-mix(in srgb, var(--lit) 32%, transparent);
+}
+.en-ench-meta .chip.warn { color: #ffc07a; border-color: rgba(255, 180, 84, .3); }
+.en-ench-meta .chip.mod { margin-left: auto; color: var(--mc-faint); }
+
+/* ── icons ────────────────────────────────────────────────────────────────── */
+/* Whole multiples of the 16px source art only - the same rule the forge's
+   icons follow, and for the same reason: a fractional scale under
+   image-rendering: pixelated visibly warps the sprite. */
+.en-icon { image-rendering: pixelated; display: block; width: 32px; height: 32px; }
+.en-icon.sm { width: 16px; height: 16px; }
+.en-icon.anim {
+  background-repeat: no-repeat;
+  background-size: 100% calc(var(--frames) * 100%);
+  background-position: 0 0;
+  animation: en-film var(--dur, 1s) steps(var(--steps), jump-none) infinite;
+}
+@keyframes en-film {
+  from { background-position-y: 0%; }
+  to   { background-position-y: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .en-icon.anim { animation: none; } }
+

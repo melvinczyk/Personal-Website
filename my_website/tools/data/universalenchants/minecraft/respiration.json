@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:armor_head",
+    "apotheosis:helmet_tome",
+    "mutantmonsters:mutant_skeleton_skull",
+    "lost_aether_content:swetty_mask",
+    "$minecraft:universal_enchants_horse_armor"
+  ],
+  "incompatible": [
+    "wkcr:herbicide"
+  ]
+}

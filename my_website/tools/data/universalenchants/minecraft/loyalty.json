@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:trident",
+    "apotheosis:other_tome",
+    "supplementaries:slingshot",
+    "cataclysm:coral_spear",
+    "cataclysm:coral_bardiche",
+    "legendary_monsters:resurrected_javelin"
+  ],
+  "incompatible": [
+    "wkcr:herbicide",
+    "minecraft:riptide"
+  ]
+}

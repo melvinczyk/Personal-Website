@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:dreadbow",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": []
+}

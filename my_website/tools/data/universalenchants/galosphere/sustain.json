@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:saltbound_tablet",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": []
+}

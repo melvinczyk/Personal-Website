@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:digger",
+    "minecraft:shears",
+    "apotheosis:pickaxe_tome",
+    "twilightforest:block_and_chain",
+    "cuisinedelight:cuisine_skillet",
+    "legendary_monsters:withered_scythe",
+    "legendary_monsters:anchor_handle"
+  ],
+  "incompatible": [
+    "wkcr:herbicide",
+    "apotheosis:miners_fervor"
+  ]
+}

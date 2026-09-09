@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:raygun",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "alexscaves:x_ray"
+  ]
+}

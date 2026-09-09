@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
 <link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
 <link rel="stylesheet" href="{% static 'css/forge.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% static 'css/enchant.css' %}?t={% now 'U' %}">
 <link rel="stylesheet" href="{% static 'css/guide.css' %}?t={% now 'U' %}">
 </head>
 <body>
@@ -41,7 +42,6 @@
             <img class="ls-logo" src="{% static 'minecraft/season' %}{{ live.number }}/{{ live.logo_file }}" alt="{{ live.name }}">
             {% endif %}
             <span class="ls-name">{{ live.name }}</span>
-            <span class="ls-sub">Season {{ live.number }}, in progress</span>
             <span class="ls-status" id="ls-status"></span>
             <span class="ls-updown" id="ls-updown"></span>
             <a class="ls-btn rainbow guide-cta" href="{% url 'minecraft-guide' %}">Modpack Guide</a>
@@ -50,6 +50,15 @@
             </span>
           </div>
 
+          <!-- ── the dashboard ───────────────────────────────────────────
+               Everything above the rosters answers one question - what is the
+               server doing - and it used to be four loose blocks stacked in
+               the same margin as the folding sections below, so there was no
+               seam between "the state of the world" and "the list of players".
+               Boxed together under one head it reads as an instrument panel:
+               the calendar and map, the sky and the week's rhythm, and the
+               season's five readings across the foot of it. -->
+          <section class="ls-dash" id="ls-dash">
           <!-- Where in the pack's own year the server sits, and where in the
                world it sits, one at a time. Side by side these two fought over
                the same row: the calendar is twenty-four solar terms wide and
@@ -97,7 +106,80 @@
             <div class="ls-rhythm" id="ls-rhythm"></div>
           </div>
 
-          <div class="ls-tiles" id="ls-tiles"></div>
+            <div class="ls-tiles" id="ls-tiles"></div>
+          </section>
+
+          <!-- ── the two things you make something with ──────────────────
+               These are not readings and they do not fold, which is why they
+               sat so badly among the sections that are and do: collapse the
+               rosters and the pair of them were left hanging in the middle of
+               nothing. They belong together and they belong here, directly
+               under the dashboard - the instruments above, the workshop
+               below, and then the lists. Side by side, because they are two
+               of the same kind of thing. -->
+          <div class="ls-shop">
+            <div class="ls-shop-head"><span class="shop-t">WORKSHOP</span></div>
+            <div class="ls-shop-row">
+
+              <div class="ls-plan-wrap" id="sk-wrap">
+                <button class="sk-open-btn" id="sk-open-btn" onclick="planOpen()">
+                  <span class="sk-open-glow" aria-hidden="true"></span>
+                  <span class="sk-open-title">SKILLTREE</span>
+                </button>
+                <div class="ls-plan" id="ls-plan"></div>
+              </div>
+
+              <!-- The tree's sibling: the other thing on this page you make
+                   something with rather than read, so it gets the same frame
+                   and the same sweep in a colour of its own, and opens in
+                   place the same way. Shut, it has fetched nothing - the
+                   forge's data file is a hundred kilobytes of affix curves
+                   and gem tables, which is a lot to spend on everyone who
+                   came for the screenshots. -->
+              <div class="ls-plan-wrap fg-wrap" id="fg-wrap">
+                <button class="sk-open-btn fg-open" onclick="forgeOpen()">
+                  <span class="sk-open-glow" aria-hidden="true"></span>
+                  <span class="sk-open-title">APOTHIC FORGE</span>
+                </button>
+                <div class="fg-panel" id="sec-forge"
+                     data-root="{% static 'minecraft/apotheosis/' %}"
+                     data-stamp="{{ forge_stamp }}">
+                  <div class="sk-plan-head">
+                    <span class="sk-plan-title">APOTHIC FORGE</span>
+                    <button type="button" class="sk-close" onclick="forgeShut()"
+                            aria-label="Close the forge">CLOSE</button>
+                  </div>
+                  <div class="fg-stage" id="fg-stage">
+                    <p class="fg-loading">Reading the pack's data files…</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- The third of the three. Reforging rolls the affixes on a
+                   piece, the tree plans what the player themselves can do,
+                   and this is the other half of gearing up: what the table
+                   will offer, and what it takes to make it offer more. -->
+              <div class="ls-plan-wrap en-wrap" id="en-wrap">
+                <button class="sk-open-btn en-open" onclick="enchOpen()">
+                  <span class="sk-open-glow" aria-hidden="true"></span>
+                  <span class="sk-open-title">ENCHANTING</span>
+                </button>
+                <div class="en-panel" id="sec-ench"
+                     data-root="{% static 'minecraft/apotheosis/' %}"
+                     data-stamp="{{ ench_stamp }}">
+                  <div class="sk-plan-head">
+                    <span class="sk-plan-title">ENCHANTING</span>
+                    <button type="button" class="sk-close" onclick="enchShut()"
+                            aria-label="Close the enchanting panel">CLOSE</button>
+                  </div>
+                  <div class="en-stage" id="ench-stage">
+                    <p class="en-loading">Reading the pack's data files…</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
 
           <div class="ls-bar">
             <span class="lb-t">Players</span>
@@ -107,47 +189,6 @@
           <div class="ls-sec" id="sec-players">
             <div class="ls-grid" id="ls-list"></div>
           </div>
-
-          <!-- The planner. Not one more folded bar in the stack: everything
-               else on this page reports what the server did, and this is the
-               one part of it you do something with, so it stands apart. -->
-          <div class="ls-plan-wrap">
-            <div class="ls-plan" id="ls-plan"></div>
-            <button class="sk-open-btn" id="sk-open-btn" onclick="planOpen()">
-              <span class="sk-open-glow" aria-hidden="true"></span>
-              <span class="sk-open-title">SKILLTREE</span>
-            </button>
-          </div>
-
-          <!-- The tree's sibling: the other thing on this page you make
-               something with rather than read, so it gets the same frame and
-               the same sweep in a colour of its own, and opens in place the
-               same way. Shut, it has fetched nothing - the forge's data file
-               is a hundred kilobytes of affix curves and gem tables, which is
-               a lot to spend on everyone who came for the screenshots. -->
-          <div class="ls-plan-wrap fg-wrap" id="fg-wrap">
-            <button class="sk-open-btn fg-open" onclick="forgeOpen()">
-              <span class="sk-open-glow" aria-hidden="true"></span>
-              <span class="fg-open-stack">
-                <span class="sk-open-title">APOTHIC FORGE</span>
-                <span class="fg-open-sub">reforging &amp; gem socketing</span>
-              </span>
-            </button>
-            <div class="fg-panel" id="sec-forge"
-                 data-root="{% static 'minecraft/apotheosis/' %}"
-                 data-stamp="{{ forge_stamp }}">
-              <div class="sk-plan-head">
-                <span class="sk-plan-title">APOTHIC FORGE</span>
-                <em>reforging &amp; gem socketing</em>
-                <button type="button" class="sk-close" onclick="forgeShut()"
-                        aria-label="Close the forge">CLOSE</button>
-              </div>
-              <div class="fg-stage" id="fg-stage">
-                <p class="fg-loading">Reading the pack's data files…</p>
-              </div>
-            </div>
-          </div>
-
 
           <div class="ls-bar boss">
             <span class="lb-t">Bosses</span>
@@ -391,5 +432,6 @@ const SEASONS = [
 <script type="module" src="{% static 'scripts/mcmodel.js' %}?t={% now 'U' %}"></script>
 <script src="{% static 'scripts/minecraft.js' %}?t={% now 'U' %}"></script>
 <script src="{% static 'scripts/forge.js' %}?t={% now 'U' %}"></script>
+<script src="{% static 'scripts/enchant.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>

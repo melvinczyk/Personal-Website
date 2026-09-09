@@ -868,8 +868,15 @@ body::after { display: none; }
   --mc-lit:    #3d3d46;   /* bevel, top-left  */
   --mc-shade:  #08080a;   /* bevel, bottom-right */
   --mc-text:   #e6e6e8;
-  --mc-dim:    #9b9ba4;
-  --mc-faint:  #63636d;
+  /* The two quiet tones, raised. --mc-faint was #63636d, which is a 3:1
+     contrast on the panel behind it and less than that over the world card's
+     lit scenery or a boss card's tinted ground - so mod names, dates under
+     the first-blood rows, unit labels and half the small print on this page
+     were being read as texture rather than as words. Both are lifted to sit
+     clear of the backgrounds they actually land on while staying obviously
+     secondary to --mc-text. */
+  --mc-dim:    #b6b6c0;
+  --mc-faint:  #8e8e9c;
   --mc-xp:     #7bc518;
   --mc-heart:  #d94a3d;
   --mc-gold:   #ffd24a;
@@ -907,7 +914,9 @@ body::after { display: none; }
 .ls-name {
   font-size: 20px; color: var(--mc-text); text-shadow: 2px 2px #000;
 }
-.ls-sub  { font-size: 13px; color: var(--mc-faint); }
+/* No .ls-sub in the markup any more: the season number and "in progress" both
+   went. ONLINE beside it already says the server is live, and which season is
+   being played is the whole of what this page is. */
 /* Whether the world is up, in the same green a player's own ONLINE uses, and
    in the heart red when it is not: the two states people already read on this
    page as good and bad. */
@@ -957,22 +966,111 @@ body::after { display: none; }
 
 
 /* the numbers, as a row of inventory slots */
+/* ── the season's readings ───────────────────────────────────────────────────
+   The foot of the dashboard, and the one row of this page anybody reads at a
+   glance. It used to be six flat slots with a grey label and a number beside
+   it, which read like a spreadsheet on a page that is otherwise a console -
+   and one of the six counted legendary fish, which has a whole shelf of its
+   own further down and did not need a scoreboard as well.
+
+   Five now, each lit in the colour that reading already means here: the
+   experience green for who is on, gold for time, the boss green and the heart
+   red for the two tallies, and the sky blue for kills. The number leads, the
+   label sits under it, and the three that are a fraction of a whole carry a
+   bar showing how much of it. */
 .ls-tiles {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 4px; padding: 8px 10px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 5px; padding: 9px 10px 10px;
 }
-/* a number that wraps takes its whole row with it, so none of them may */
 .ls-tile {
-  display: flex; align-items: baseline; gap: 6px; padding: 5px 8px;
-  white-space: nowrap; overflow: hidden;
-  background: var(--mc-slot);
+  --lit: var(--mc-dim);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 1px;
+  padding: 9px 11px 10px; white-space: nowrap;
+  background:
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--lit) 13%, transparent) 0%,
+      transparent 58%),
+    var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  /* the reading's own colour down the edge, the way every lit thing on this
+     page is marked */
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lit) 70%, transparent);
+  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.ls-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 3px 0 0 var(--lit),
+              0 6px 18px -10px color-mix(in srgb, var(--lit) 80%, transparent);
+}
+.ls-tile b {
+  font-weight: 600; font-size: 25px; line-height: 1.05; color: var(--mc-text);
+  overflow: hidden; text-overflow: ellipsis;
+}
+/* the denominator of a fraction, kept out of the headline's weight: "7/128"
+   is one reading and the 128 is the quiet half of it */
+.ls-tile b em {
+  font-style: normal; font-size: 15px; font-weight: normal; color: var(--mc-faint);
+}
+.ls-tile i {
+  font-style: normal; font-size: 11px; letter-spacing: .06em;
+  color: var(--mc-faint); overflow: hidden; text-overflow: ellipsis;
+}
+.ls-tile.hot b { color: var(--lit); text-shadow: 0 0 14px color-mix(in srgb, var(--lit) 45%, transparent); }
+/* how much of the whole, for the readings that are a fraction of one */
+.ls-tile u {
+  display: block; height: 3px; margin-top: 7px; text-decoration: none;
+  background: rgba(255, 255, 255, 0.07);
+}
+.ls-tile u::after {
+  content: ''; display: block; height: 100%; width: var(--fill, 0%);
+  background: var(--lit);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--lit) 65%, transparent);
+  transition: width .5s cubic-bezier(.2, .7, .3, 1);
+}
+.ls-tile.online { --lit: var(--mc-xp); }
+.ls-tile.played { --lit: var(--mc-gold); }
+.ls-tile.kills  { --lit: var(--mc-sky); }
+.ls-tile.deaths { --lit: var(--mc-heart); }
+.ls-tile.bosses { --lit: #7bc518; }
+
+/* ── the dashboard ───────────────────────────────────────────────────────────
+   One container, not three.
+
+   The first go at this put a bordered box with a title bar around blocks that
+   were each already a bordered box, inside the console screen which is a
+   bordered box - so the eye counted three frames before it reached a single
+   number, and the middle one did not even read as holding the others. The
+   fix is not another frame: it is taking frames away.
+
+   So the panel is the only box. Everything directly inside it gives up its
+   own border and its own margin and sits flush, and the seams between them
+   are hairlines rather than gaps - which is what makes it read as one
+   instrument rather than as four things parked near each other. */
+.ls-dash {
+  position: relative; overflow: hidden;
+  margin: 10px 10px 14px;
+  background: rgba(0, 0, 0, 0.28);
   border: 2px solid var(--mc-shade);
   border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
 }
-.ls-tile i { font-style: normal; font-size: 13px; color: var(--mc-faint);
-             overflow: hidden; text-overflow: ellipsis; }
-.ls-tile b { margin-left: auto; font-weight: 600; font-size: 17px; color: var(--mc-text); }
-.ls-tile.hot b { color: var(--mc-gold); }
+/* the blocks inside are panes of the one panel now: flush to its edges, and
+   separated from each other by a rule rather than by a margin */
+.ls-dash .ls-deck { margin: 0; padding: 0; }
+.ls-dash .ls-deck-tabs { margin: 0; padding: 6px 8px 0; }
+.ls-dash .ls-top {
+  margin: 0; padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.ls-dash .ls-tiles {
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+/* the calendar and the map lose their own frame: the dashboard is the frame */
+.ls-dash .ls-deck-body { padding: 0 8px 8px; }
+.ls-dash .ls-year { border: 0; }
+.ls-dash .ls-map-mini { border: 0; }
 
 /* ── the world panel ────────────────────────────────────────────────────────
    The tiles under this say what the players have done. This says what the
@@ -2692,7 +2790,41 @@ body::after { display: none; }
    Everything else on this page reports what the server did. This is the one
    part of it you do something with, so it does not sit in the stack of folded
    grey bars with the rest - it is a plate of its own with its own way in. */
-.ls-plan-wrap { margin: 8px 10px; }
+/* ── the workshop ────────────────────────────────────────────────────────────
+   The two things on this page you make something with rather than read. They
+   used to sit one above the other in the middle of the folding sections, and
+   that is exactly where they read worst: fold the rosters away and the pair
+   of them were left stranded in the gap with nothing around them. They belong
+   together, and they belong under the dashboard - instruments, then workshop,
+   then the lists. Side by side, because they are two of a kind. */
+.ls-shop { margin: 0 10px 12px; }
+/* the section's name and nothing else - no caption explaining what a skill
+   tree is, which the word already says */
+.ls-shop-head { padding: 0 2px 6px; }
+.ls-shop-head .shop-t {
+  font-size: 12px; letter-spacing: .16em; color: var(--mc-dim);
+}
+/* two doors while both are shut; whichever one is opened takes the row whole,
+   because a skill tree or a reforging table in half a screen is neither */
+.ls-shop-row {
+  display: grid; gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  /* stretch, not start: the three doors are a set and a short one among two
+     tall ones reads as a mistake. Whatever the tallest title needs, they all
+     get - and the button fills the cell it is given. */
+  align-items: stretch;
+}
+.ls-shop-row .ls-plan-wrap { display: flex; }
+.ls-shop-row .sk-open-btn { flex: 1 1 auto; }
+.ls-shop-row:has(.ls-plan-wrap.on) { grid-template-columns: minmax(0, 1fr); }
+.ls-shop-row:has(.ls-plan-wrap.on) .ls-plan-wrap:not(.on) { display: none; }
+/* half the width it used to have, so the word comes down to meet it - and
+   the two titles match each other, which they never did before */
+.ls-shop-row .sk-open-btn { padding: 17px 14px; }
+.ls-shop-row .sk-open-title { font-size: 23px; letter-spacing: 4px; }
+.ls-shop-row .fg-open .sk-open-title { font-size: 23px; letter-spacing: 4px; }
+
+.ls-plan-wrap { min-width: 0; }
 .ls-plan { display: none; }
 .ls-plan-wrap.on .ls-plan { display: block; }
 .ls-plan-wrap.on .sk-open-btn { display: none; }
@@ -2701,25 +2833,21 @@ body::after { display: none; }
    or a stone plate, because everything else is a record of what happened; this
    is the one place you make something up, so it gets the tree's own violet and
    a corner-cut frame nothing else on the page wears. */
-.sk-open-btn, .ls-plan, .fg-panel {
+.sk-open-btn, .ls-plan, .fg-panel, .en-panel {
   --ink: #8f9bf0;
   position: relative;
-  background:
-    linear-gradient(135deg, transparent 0 13px, #14161f 13px) top left,
-    linear-gradient(-135deg, transparent 0 13px, #14161f 13px) top right,
-    linear-gradient(45deg, transparent 0 13px, #14161f 13px) bottom left,
-    linear-gradient(-45deg, transparent 0 13px, #14161f 13px) bottom right;
-  background-size: 51% 51%;
-  background-repeat: no-repeat;
+  /* Square. This was four corner gradients cutting a 13px notch out of each
+     corner, which read as the panel being clipped rather than as a shape -
+     and left the star field and the fire behind them showing through the
+     notches. A plain rectangle, and the frame below is a plain border. */
+  background: #14161f;
   border: 0;
 }
-/* the frame, drawn inside the cut corners rather than as a border */
-.sk-open-btn::before, .ls-plan::before, .fg-panel::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
-  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px,
-    100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%,
-    0 calc(100% - 13px), 0 13px);
+/* the frame: a plain rule around the edge now that the corners are square */
+.sk-open-btn::before, .ls-plan::before, .fg-panel::before,
+.en-panel::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
 }
 
 /* The one thing on this page you press to make something rather than to read
@@ -2730,21 +2858,165 @@ body::after { display: none; }
   width: 100%; padding: 20px 18px; font: inherit;
   cursor: pointer; color: var(--mc-text); overflow: hidden;
 }
-/* the nodes, scattered behind the word the way they are in the tree itself */
+/* ── the tree's sky ──────────────────────────────────────────────────────────
+   A galaxy behind the word rather than eight dots parked in a row. Three
+   layers of stars at three sizes, each drifting at its own pace and breathing
+   on its own clock, over a nebula that turns underneath them - which is what
+   makes it read as depth instead of as a pattern.
+
+   Every layer is a repeating background, so the drift is a background-position
+   animation and the whole thing costs one element and no script. */
 .sk-open-glow {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+  /* the nebula: two soft clouds in the tree's violet, slowly turning over */
   background:
-    radial-gradient(2px 2px at 12% 30%, var(--ink), transparent),
-    radial-gradient(2px 2px at 22% 68%, var(--ink), transparent),
-    radial-gradient(2px 2px at 34% 22%, var(--ink), transparent),
-    radial-gradient(2px 2px at 44% 74%, var(--ink), transparent),
-    radial-gradient(2px 2px at 58% 34%, var(--ink), transparent),
-    radial-gradient(2px 2px at 68% 70%, var(--ink), transparent),
-    radial-gradient(2px 2px at 79% 28%, var(--ink), transparent),
-    radial-gradient(2px 2px at 89% 62%, var(--ink), transparent),
-    radial-gradient(58% 150% at 50% 50%,
-      color-mix(in srgb, var(--ink) 20%, transparent), transparent 70%);
-  opacity: .5;
+    radial-gradient(60% 120% at 22% 40%,
+      color-mix(in srgb, var(--ink) 46%, transparent), transparent 70%),
+    radial-gradient(50% 130% at 78% 60%,
+      color-mix(in srgb, var(--ink) 36%, transparent), transparent 72%);
+  background-color: #070912;
+  background-size: 180% 180%, 200% 200%;
+  animation: sk-nebula 18s ease-in-out infinite alternate;
+  opacity: 1;
+}
+/* the star fields themselves, two layers deep */
+.sk-open-glow::before, .sk-open-glow::after {
+  content: ''; position: absolute; inset: -50% -10%;
+  background-repeat: repeat;
+}
+/* the far field: small, many, drifting slowly and twinkling out of step */
+.sk-open-glow::before {
+  background-image:
+    radial-gradient(1.4px 1.4px at 12px 24px, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 58px 12px, #dfe4ff, transparent),
+    radial-gradient(1.4px 1.4px at 96px 62px, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 34px 78px, #c9d2ff, transparent),
+    radial-gradient(1.4px 1.4px at 128px 38px, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 150px 90px, #e6ebff, transparent),
+    radial-gradient(1.3px 1.3px at 76px 96px, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 112px 8px, #d6ddff, transparent);
+  background-size: 170px 110px;
+  animation: sk-drift 34s linear infinite, sk-twinkle 3.4s ease-in-out infinite;
+  opacity: 1;
+}
+/* the near field: fewer, brighter, bigger, moving against the far one */
+.sk-open-glow::after {
+  background-image:
+    radial-gradient(2.6px 2.6px at 40px 30px,
+      color-mix(in srgb, var(--ink) 45%, #fff), transparent),
+    radial-gradient(2.4px 2.4px at 130px 76px, #fff, transparent),
+    radial-gradient(2.6px 2.6px at 200px 20px,
+      color-mix(in srgb, var(--ink) 32%, #fff), transparent),
+    radial-gradient(2.4px 2.4px at 88px 108px, #fff, transparent),
+    radial-gradient(2.2px 2.2px at 168px 120px, #eef1ff, transparent);
+  background-size: 240px 140px;
+  animation: sk-drift-near 21s linear infinite, sk-twinkle 2.3s ease-in-out infinite reverse;
+  opacity: 1;
+}
+@keyframes sk-nebula {
+  from { background-position: 0% 50%, 100% 50%; }
+  to   { background-position: 100% 50%, 0% 50%; }
+}
+@keyframes sk-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-170px, 0, 0); }
+}
+@keyframes sk-drift-near {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(240px, 0, 0); }
+}
+/* stars do not all blink together, which is why the two fields run this at
+   different periods and one of them backwards */
+@keyframes sk-twinkle {
+  0%, 100% { opacity: .2; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-open-glow,
+  .sk-open-glow::before,
+  .sk-open-glow::after { animation: none; }
+}
+
+/* ── the forge's fire ────────────────────────────────────────────────────────
+   The first go at this was hard-edged radial blobs sliding upward, which read
+   as circles on a conveyor rather than as fire. What makes flame look like
+   flame is that it has no edges, that it is brightest and whitest where it is
+   hottest, and that it does not move at one rate - so this is built out of
+   blurred tongues at two scales over a hot bed, each on its own clock, with a
+   flicker on the brightness that is deliberately not in time with either.
+
+   All of it is blurred hard (the blur is the point) and masked to fade out
+   before the top edge, so the fire dies away into the panel rather than
+   stopping against a line. */
+.fg-open .sk-open-glow {
+  background:
+    /* the coal bed: white-hot at the very bottom, falling off fast */
+    radial-gradient(150% 75% at 50% 110%,
+      rgba(255, 245, 210, .85) 0%,
+      rgba(255, 160, 45, .78) 26%,
+      rgba(215, 48, 0, .5) 54%,
+      transparent 82%);
+  background-size: auto;
+  animation: fg-flicker 1.9s ease-in-out infinite;
+  opacity: 1;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 92%);
+          mask-image: linear-gradient(to top, #000 0%, #000 34%, transparent 92%);
+}
+/* the near tongues: fewer, larger, brighter, rising quickly */
+.fg-open .sk-open-glow::before {
+  inset: -10% 0 0;
+  background-image:
+    radial-gradient(20px 62px at 30px 100%, rgba(255, 236, 175, 1), transparent 68%),
+    radial-gradient(16px 48px at 96px 100%, rgba(255, 178, 60, 1), transparent 68%),
+    radial-gradient(23px 74px at 168px 100%, rgba(255, 215, 130, .95), transparent 70%),
+    radial-gradient(15px 42px at 226px 100%, rgba(255, 150, 34, 1), transparent 68%);
+  background-size: 268px 100%;
+  background-repeat: repeat-x;
+  background-position: 0 0;
+  filter: blur(7px);
+  animation: fg-lick 1.7s ease-in infinite, fg-sway 4.3s ease-in-out infinite;
+  opacity: 1;
+}
+/* the far tongues: smaller, deeper red, slower, and offset so the two sets
+   never rise together */
+.fg-open .sk-open-glow::after {
+  inset: -10% 0 0;
+  background-image:
+    radial-gradient(14px 44px at 58px 100%, rgba(255, 100, 14, .95), transparent 70%),
+    radial-gradient(12px 34px at 132px 100%, rgba(235, 64, 0, .9), transparent 70%),
+    radial-gradient(17px 52px at 200px 100%, rgba(255, 132, 30, .85), transparent 70%),
+    radial-gradient(11px 30px at 258px 100%, rgba(205, 42, 0, .95), transparent 70%);
+  background-size: 300px 100%;
+  background-repeat: repeat-x;
+  filter: blur(9px);
+  animation: fg-lick 2.6s ease-in infinite -0.9s, fg-sway 5.9s ease-in-out infinite reverse;
+  opacity: .95;
+}
+/* A tongue rises, stretches and thins as it goes, and is gone before the top.
+   The scale is what sells it: real flame narrows and lengthens as it climbs. */
+@keyframes fg-lick {
+  0%   { transform: translateY(12%)  scaleY(.72) scaleX(1);    opacity: 0; }
+  22%  { opacity: 1; }
+  62%  { opacity: .62; }
+  100% { transform: translateY(-46%) scaleY(1.55) scaleX(.82); opacity: 0; }
+}
+/* and the whole sheet leans, the way a fire does in a draught */
+@keyframes fg-sway {
+  0%, 100% { background-position-x: 0; }
+  50%      { background-position-x: 34px; }
+}
+/* the bed brightening and dulling, on a period that divides into neither of
+   the tongue animations - so the fire never visibly repeats */
+@keyframes fg-flicker {
+  0%, 100% { opacity: .68; }
+  28%      { opacity: 1; }
+  55%      { opacity: .58; }
+  78%      { opacity: .95; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fg-open .sk-open-glow,
+  .fg-open .sk-open-glow::before,
+  .fg-open .sk-open-glow::after { animation: none; }
 }
 /* a light crossing it, the way the first-blood badge sweeps */
 .sk-open-btn::after {
@@ -2762,34 +3034,145 @@ body::after { display: none; }
   .sk-open-btn::after { animation: none; opacity: 0; }
 }
 /* The forge's entry, sharing the tree's frame and its sweep so the two read
-   as a pair, and taking Apotheosis' own rarity ladder for its colour rather
-   than inventing one: the title runs grey-green-blue-purple-orange the way an
-   item climbs from Common to Mythic, ending on the Ancient tier's warm white. */
-.fg-wrap { --ink: #ff9d2e; }
+   as a pair - and nothing else. The tree is a violet thing you plan in; this
+   is a fire you put metal into, so it is the orange of hot iron all the way
+   through, and at a glance down the page the two are never each other.
+
+   The colour has to be set on the elements themselves rather than on .fg-wrap
+   around them: --ink is declared *on* .sk-open-btn and .fg-panel, and a value
+   declared on the element beats one inherited from an ancestor no matter how
+   specific the ancestor's selector is. Setting it on the wrapper, which is
+   what this did, left the forge wearing the tree's violet. */
+.fg-wrap .sk-open-btn, .fg-wrap .fg-panel { --ink: #ff8a1f; }
 .fg-open { display: flex; }
-.fg-open:hover { --ink: #ffc46f; }
-.fg-open-stack {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
+/* two classes deep, so it outranks the shared .sk-open-btn:hover regardless
+   of which of the two the stylesheet happens to reach first */
+.fg-wrap .sk-open-btn:hover { --ink: #ffb257; }
+
+/* ── the arcane table's door ─────────────────────────────────────────────────
+   Lapis, because it is the one thing you actually spend at an enchanting
+   table and the one arcane colour the page was not already using: the tree
+   has violet, the forge has hot iron. */
+.en-wrap .sk-open-btn, .en-wrap .en-panel { --ink: #a855f7; }
+.en-wrap .sk-open-btn:hover { --ink: #c98bff; }
+.en-open { display: flex; }
+.en-open .sk-open-title {
+  font-size: 23px; letter-spacing: 4px;
+  color: #f0e2ff;
+  text-shadow:
+    0 0 8px var(--ink),
+    0 0 22px color-mix(in srgb, var(--ink) 70%, transparent),
+    0 0 44px color-mix(in srgb, var(--ink) 40%, transparent),
+    3px 3px #000;
 }
+
+/* Motes coming up off the page the way they do off a real enchanting table:
+   three layers of glyph-lights rising at three rates over a lapis glow, each
+   fading out before the top. Same construction as the tree's sky and the
+   forge's fire - one element, layered backgrounds, no script. */
+.en-open .sk-open-glow, .en-panel::after {
+  background:
+    radial-gradient(120% 80% at 50% 112%,
+      color-mix(in srgb, var(--ink, #3d8ce0) 40%, transparent),
+      transparent 70%);
+  background-color: #0a121c;
+  animation: en-pulse 5.5s ease-in-out infinite;
+}
+.en-open .sk-open-glow::before, .en-open .sk-open-glow::after {
+  content: ''; position: absolute; inset: 0; background-repeat: repeat-x;
+}
+.en-open .sk-open-glow::before {
+  background-image:
+    radial-gradient(2px 2px at 22px 100%, #ecd9ff, transparent 65%),
+    radial-gradient(2px 2px at 74px 100%, #c79bff, transparent 65%),
+    radial-gradient(3px 3px at 128px 100%, #f6ecff, transparent 68%),
+    radial-gradient(2px 2px at 176px 100%, #d4b0ff, transparent 65%);
+  background-size: 210px 100%;
+  filter: blur(.4px);
+  animation: en-rise 5.2s linear infinite;
+  opacity: .95;
+}
+.en-open .sk-open-glow::after {
+  background-image:
+    radial-gradient(2px 2px at 46px 100%, #a074ff, transparent 65%),
+    radial-gradient(3px 3px at 104px 100%, #dcc2ff, transparent 68%),
+    radial-gradient(2px 2px at 168px 100%, #8f5cff, transparent 65%);
+  background-size: 260px 100%;
+  filter: blur(1px);
+  animation: en-rise 7.8s linear infinite -2.4s;
+  opacity: .8;
+}
+/* a mote drifts up, brightens, and is gone before the top edge */
+@keyframes en-rise {
+  0%   { transform: translateY(16%); opacity: 0; }
+  20%  { opacity: 1; }
+  70%  { opacity: .55; }
+  100% { transform: translateY(-70%); opacity: 0; }
+}
+@keyframes en-pulse {
+  0%, 100% { opacity: .82; }
+  50%      { opacity: 1; }
+}
+/* the same glow behind the opened panel, quieter so it stays under the words */
+.en-panel { overflow: hidden; }
+/* the motes need something to be absolute against; the shared rule above now
+   gives .en-panel position: relative, which it did not have - so this layer
+   was sizing itself off some ancestor and never covered the panel at all */
+.en-panel::after {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(to top,
+      color-mix(in srgb, var(--ink, #3d8ce0) 22%, transparent) 0%,
+      transparent 55%),
+    radial-gradient(3px 3px at 12% 100%, rgba(226, 200, 255, .55), transparent 60%),
+    radial-gradient(2px 2px at 40% 100%, rgba(196, 150, 255, .5), transparent 60%),
+    radial-gradient(4px 4px at 68% 100%, rgba(238, 220, 255, .45), transparent 62%),
+    radial-gradient(3px 3px at 90% 100%, rgba(200, 160, 255, .5), transparent 60%);
+  background-repeat: no-repeat;
+  background-color: transparent;
+  filter: blur(9px);
+  animation: en-panel-motes 9s ease-in-out infinite;
+}
+@keyframes en-panel-motes {
+  0%, 100% { background-position: 0 0, 0 0, 0 8px, 0 -4px, 0 4px; opacity: .8; }
+  50%      { background-position: 0 0, 0 -70px, 0 -110px, 0 -60px, 0 -95px; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .en-open .sk-open-glow,
+  .en-open .sk-open-glow::before,
+  .en-open .sk-open-glow::after,
+  .en-panel::after { animation: none; }
+}
+/* Iron coming up to heat, and the heat moves: the gradient is twice the width
+   of the text and slides under it, so the word glows the way a bar does when
+   it is turned in the fire. Six rarity colours used to run through here, which
+   read as a rainbow rather than as a forge and shared no colour with anything
+   else this panel does. */
 .fg-open .sk-open-title {
   font-size: 26px; letter-spacing: 6px;
-  background: linear-gradient(95deg, #b6b6b6 0%, #33ff33 20%, #5555ff 40%,
-    #bb00bb 60%, #ed7014 80%, #fff6d8 100%);
+  background: linear-gradient(95deg, #8a3a06 0%, #ff8a1f 22%, #ffd27a 40%,
+    #fff6d8 50%, #ffd27a 60%, #ff8a1f 78%, #8a3a06 100%);
+  background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent; color: transparent;
   /* the glow is drawn behind the clipped text rather than as a shadow on it:
      a text-shadow under a transparent fill paints over the gradient */
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ink) 60%, transparent))
           drop-shadow(2px 2px 0 #000);
+  animation: fg-heat 7s ease-in-out infinite;
 }
-.fg-open-sub {
-  font-size: 11px; letter-spacing: 2px; color: var(--mc-dim);
-  text-shadow: 1px 1px #000;
+@keyframes fg-heat {
+  0%, 100% { background-position: 100% 0; }
+  50%      { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fg-open .sk-open-title { animation: none; background-position: 50% 0; }
 }
 
 .sk-open-btn:hover { --ink: #c3caff; }
-.sk-open-btn:hover .sk-open-glow { opacity: .85; }
+.sk-open-btn:hover .sk-open-glow { opacity: .95; }
+/* the fire is already at full strength; hover brightens the coals instead */
+.fg-open:hover .sk-open-glow { opacity: 1; filter: brightness(1.2); }
 
 .sk-open-title {
   position: relative; z-index: 1;
@@ -2806,7 +3189,113 @@ body::after { display: none; }
   text-shadow: 0 0 10px color-mix(in srgb, var(--ink) 45%, transparent), 2px 2px #000;
 }
 
-.ls-plan { padding: 14px 16px; }
+.ls-plan { padding: 14px 16px; overflow: hidden; }
+
+/* ── the same sky and the same fire, inside the opened panels ────────────────
+   The tab is a door with a galaxy behind it and the panel it opens was flat
+   dark, which made the door the best-looking part of the thing. Both panels
+   carry their background through now.
+
+   One element does it rather than three: ::before is already the corner-cut
+   frame on these panels, and ::after is free, so the layers here are stacked
+   as multiple background-images on that one pseudo-element and drift at
+   different rates inside a single keyframe - a background-position list
+   animates per layer, which is the whole trick. Sat at z-index 0 under the
+   content, which the `> *` rules below lift to 1. */
+.ls-plan > * { position: relative; z-index: 1; }
+
+.ls-plan::after, .fg-panel::after {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* the tree's sky: a nebula and two star fields, drifting against each other */
+.ls-plan::after {
+  background-image:
+    radial-gradient(1.4px 1.4px at 12px 24px, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 96px 62px, #d8dfff, transparent),
+    radial-gradient(1.3px 1.3px at 58px 92px, #fff, transparent),
+    radial-gradient(2.4px 2.4px at 150px 40px, #fff, transparent),
+    radial-gradient(2.2px 2.2px at 250px 108px,
+      color-mix(in srgb, var(--ink) 45%, #fff), transparent),
+    radial-gradient(70% 130% at 20% 30%,
+      color-mix(in srgb, var(--ink) 30%, transparent), transparent 70%),
+    radial-gradient(60% 120% at 82% 74%,
+      color-mix(in srgb, var(--ink) 24%, transparent), transparent 72%);
+  background-size:
+    170px 130px, 170px 130px, 170px 130px,
+    330px 190px, 330px 190px,
+    190% 190%, 210% 210%;
+  background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat;
+  animation: sk-panel-sky 55s linear infinite, sk-panel-pulse 5s ease-in-out infinite;
+  opacity: 1;
+}
+/* each layer travels a whole number of its own tiles, so every one of them
+   loops seamlessly despite all five moving at different speeds */
+@keyframes sk-panel-sky {
+  from {
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0% 50%, 100% 50%;
+  }
+  to {
+    background-position:
+      -340px 0, -340px 0, -340px 0,     /* far field: two tiles */
+      330px 0, 330px 0,                 /* near field: one tile, the other way */
+      100% 50%, 0% 50%;
+  }
+}
+@keyframes sk-panel-pulse {
+  0%, 100% { opacity: .5; }
+  50%      { opacity: 1; }
+}
+
+/* The forge's fire, up the whole panel rather than a smudge on its bottom
+   edge. On a nine-hundred-pixel panel a glow confined to the last forty was
+   invisible from anywhere you would actually be reading, so the tongues are
+   tall enough to climb a third of it and the whole thing sits over a warm
+   updraught that never quite settles. Kept under a fifth opacity and blurred
+   hard, because this has to stay behind six hundred words of tooltip. */
+.fg-panel { overflow: hidden; }
+.fg-panel::after {
+  background:
+    /* the updraught: warm at the foot of the panel, gone by halfway up */
+    linear-gradient(to top,
+      rgba(255, 120, 20, .34) 0%,
+      rgba(220, 60, 0, .18) 24%,
+      transparent 60%),
+    /* the bed */
+    radial-gradient(150% 32% at 50% 103%,
+      rgba(255, 232, 170, .75) 0%,
+      rgba(255, 145, 32, .58) 34%,
+      transparent 76%),
+    /* the tongues, tall and soft */
+    radial-gradient(50px 260px at 10% 104%, rgba(255, 180, 66, .62), transparent 72%),
+    radial-gradient(38px 200px at 33% 104%, rgba(255, 112, 22, .54), transparent 72%),
+    radial-gradient(58px 300px at 57% 104%, rgba(255, 205, 104, .54), transparent 74%),
+    radial-gradient(42px 225px at 79% 104%, rgba(255, 130, 28, .56), transparent 72%),
+    radial-gradient(33px 175px at 95% 104%, rgba(232, 72, 0, .54), transparent 72%);
+  background-repeat: no-repeat;
+  filter: blur(14px);
+  animation: fg-panel-fire 5.2s ease-in-out infinite;
+}
+/* the tongues rise and fall out of phase with each other and with the bed,
+   so the panel never looks like a still image with a filter on it */
+@keyframes fg-panel-fire {
+  0%, 100% {
+    background-position: 0 0, 0 0, 0 10px, 0 -6px, 0 4px, 0 -10px, 0 6px;
+    opacity: .8;
+  }
+  33% {
+    background-position: 0 0, 0 0, 0 -22px, 0 12px, 0 -30px, 0 6px, 0 -14px;
+    opacity: 1;
+  }
+  66% {
+    background-position: 0 0, 0 0, 0 8px, 0 -26px, 0 -6px, 0 -24px, 0 10px;
+    opacity: .88;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-plan::after, .fg-panel::after { animation: none; }
+}
 .sk-plan-head {
   position: relative; display: flex; align-items: baseline; gap: 10px;
   padding-bottom: 8px; margin-bottom: 8px;
@@ -3312,9 +3801,17 @@ body::after { display: none; }
    never reserves space or shows a bare corner on a fresh player. */
 .pc-badges {
   position: absolute; top: 6px; left: 6px; z-index: 2;
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; flex-wrap: wrap; gap: 4px;
   margin: 0;
+  /* Seven of these is possible - four tiers, minibosses, first blood and the
+     assist hand - and stacked in one column that ran off the bottom of the
+     model and straight through the player's name. Bounded to the stage and
+     allowed to wrap, so the overflow starts a second column beside the first
+     instead of walking into the text. */
+  max-height: 148px;
+  align-content: flex-start;
 }
+.pcard.open .pc-badges { max-height: 244px; }
 .pc-badges:empty { display: none; }
 /* Each badge is edged in its own star's colour rather than the same grey as
    its neighbours - the tier is already in the star, and a chip that carries
@@ -4323,11 +4820,34 @@ body::after { display: none; }
 
   .ls-head { padding: 8px 10px; }
   .ls-name { font-size: 17px; }
-  .ls-tiles { gap: 3px; padding: 0 7px 7px; }
-  .ls-tile { padding: 5px 7px; }
-  .ls-tile i { font-size: 12px; }
-  .ls-tile b { font-size: 15px; }
+  /* two readings a line rather than five squeezed into one: the number is the
+     point of these tiles and it is the first thing a narrow column takes */
+  .ls-tiles {
+    gap: 4px; padding: 7px 7px 8px;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  }
+  .ls-tile { padding: 7px 8px 8px; }
+  .ls-tile i { font-size: 10px; }
+  .ls-tile b { font-size: 19px; }
+  .ls-tile b em { font-size: 12px; }
   .ls-bar { padding: 6px 7px; gap: 6px; }
+
+  /* The dashboard's frame is a border and two margins the blocks inside it
+     did not used to pay for, and on a phone that is width off a calendar
+     twenty-four terms wide. Both insets come down to four so the box costs
+     three pixels a side against what those blocks had standing alone,
+     rather than eighteen. */
+  .ls-dash { margin: 8px 4px 12px; }
+  .ls-dash .ls-deck-tabs { padding: 5px 5px 0; }
+  .ls-dash .ls-deck-body { padding: 0 5px 6px; }
+  .ls-dash .ls-top, .ls-dash .ls-tiles { padding: 6px 5px; }
+  .ls-shop { margin: 0 7px 10px; }
+  /* stacked: two doors side by side on a phone is two titles with no room
+     for either */
+  .ls-shop-row { grid-template-columns: minmax(0, 1fr); }
+  .ls-shop-row .sk-open-btn { padding: 14px 12px; }
+  .ls-shop-row .sk-open-title,
+  .ls-shop-row .fg-open .sk-open-title { font-size: 19px; letter-spacing: 3px; }
 
   /* the world panel was inset ten pixels where every section around it is
      inset seven, so on a narrow screen it sat visibly proud of the tiles

@@ -795,12 +795,36 @@
     el.style.top = px(y);
     return el;
   }
+  /* An item's icon, and where the game animates it, the animation.
+
+     Fifteen of these textures move in-game: gem dust, the Mythic and Ancient
+     materials, and the six gems whose whole character is that they are lit.
+     The extractor bakes each one's mcmeta - the playback order, the repeats
+     and the interpolated cross-fades - down to a constant-rate filmstrip, so
+     running it here is one steps() keyframe over background-position and no
+     per-texture logic at all. A still icon stays an <img>; only a moving one
+     pays for a background layer. */
   function iconImg(id, cls) {
-    const img = document.createElement('img');
-    img.className = 'fg-icon ' + (cls || '');
-    img.src = asset('icons/' + D.icons[id]);
-    img.alt = '';
-    return img;
+    const anim = D.anims && D.anims[id];
+    if (!anim || !D.icons[id]) {
+      const img = document.createElement('img');
+      img.className = 'fg-icon ' + (cls || '');
+      if (D.icons[id]) img.src = asset('icons/' + D.icons[id]);
+      img.alt = '';
+      return img;
+    }
+    const el = document.createElement('i');
+    el.className = 'fg-icon anim ' + (cls || '');
+    el.style.backgroundImage = `url(${asset('icons/' + D.icons[id])})`;
+    el.style.setProperty('--frames', anim.frames);
+    /* steps(n, jump-none) yields exactly n output values, 0 to 1 inclusive -
+       so the step count is the frame count, not one less than it. Passing
+       frames-1 (the count you would want for the default `end` behaviour)
+       lands on frames-1 rungs and silently drops the last tile of every
+       strip. jump-none is what puts both ends of the film on screen. */
+    el.style.setProperty('--steps', Math.max(2, anim.frames));
+    el.style.setProperty('--dur', anim.seconds + 's');
+    return el;
   }
 
   function option(value, text) {
@@ -837,38 +861,73 @@
     wrap.className = 'fg-forge';
 
     const state = {
-      itemId: 'minecraft:netherite_sword',
+      // Gear of your own is the case this page is nearly always opened for:
+      // the pack's real endgame armour comes from a dozen mods Apotheosis has
+      // never heard of and will still happily reforge. Vanilla is the
+      // reference shelf beside it, not the front door.
+      itemId: CUSTOM_ID,
       rarity: 'mythic',
       seed: (Math.random() * 1e9) | 0,
       pick: 0,                            // which of the three offers is taken
       gems: [],                           // {id, rarity} per socket, or null
     };
-    if (!BY.item[state.itemId]) state.itemId = D.items[0].id;
 
     // ── controls ────────────────────────────────────────────────────────────
     const controls = document.createElement('div');
     controls.className = 'fg-controls';
 
+    /* Two ways in, as a switch rather than as one select with an odd entry at
+       the top. The old list mixed a piece you describe yourself in among
+       seventy you pick, and buried it under every Twilight Forest tier as
+       well - knightmetal, steeleaf, ironwood and fiery, none of which anyone
+       reforges on this server. What is left is vanilla, which is worth having
+       because its numbers are the ones everybody knows by heart, and yours. */
+    const modes = document.createElement('div');
+    modes.className = 'fg-modes';
+    const modeBtns = {};
+    for (const [key, label, note] of [
+      ['custom',  'Your gear',    'describe any piece'],
+      ['vanilla', 'Vanilla gear', 'the reference shelf'],
+    ]) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fg-mode';
+      btn.innerHTML = '<b></b><i></i>';
+      btn.firstChild.textContent = label;
+      btn.lastChild.textContent = note;
+      btn.addEventListener('click', () => {
+        state.itemId = key === 'custom' ? CUSTOM_ID : itemPick.value;
+        state.gems = [];
+        reroll();
+      });
+      modeBtns[key] = btn;
+      modes.appendChild(btn);
+    }
+    controls.appendChild(modes);
+
+    const picks = document.createElement('div');
+    picks.className = 'fg-picks';
+
     const itemPick = document.createElement('select');
-    const custom = document.createElement('optgroup');
-    custom.label = 'Your own';
-    custom.appendChild(option(CUSTOM_ID, customItem.name + ' (edit)'));
-    itemPick.appendChild(custom);
     for (const cat of D.categories) {
       const group = document.createElement('optgroup');
       group.label = cat.plural;
-      for (const item of D.items) {
+      for (const item of vanillaItems()) {
         if (item.category !== cat.id) continue;
         group.appendChild(option(item.id, D.names[item.id] || item.id));
       }
       if (group.children.length) itemPick.appendChild(group);
     }
-    itemPick.value = state.itemId;
+    itemPick.value = 'minecraft:netherite_sword';
+    if (!itemPick.value) itemPick.value = vanillaItems()[0].id;
     itemPick.addEventListener('change', () => {
       state.itemId = itemPick.value;
       state.gems = [];
       reroll();
     });
+    const gearField = field('Vanilla piece', itemPick);
+    gearField.className += ' fg-vanilla-field';
+    picks.appendChild(gearField);
 
     const rarityPick = document.createElement('select');
     for (const rarity of RARITIES) {
@@ -885,22 +944,35 @@
 
     const rollBtn = document.createElement('button');
     rollBtn.className = 'fg-roll';
-    rollBtn.textContent = 'Reroll';
+    rollBtn.innerHTML = '<span>Reroll</span>';
     rollBtn.addEventListener('click', () => {
       state.seed = (Math.random() * 1e9) | 0;
       state.gems = [];
+      rollBtn.classList.remove('spun');
+      // restart the strike rather than let a second press land on a running
+      // animation and do nothing visible
+      void rollBtn.offsetWidth;
+      rollBtn.classList.add('spun');
       reroll();
     });
 
-    controls.appendChild(field('Gear', itemPick));
-    controls.appendChild(field('Tier', rarityPick));
-    controls.appendChild(rollBtn);
+    picks.appendChild(field('Tier', rarityPick));
+    picks.appendChild(rollBtn);
+    controls.appendChild(picks);
 
     const editor = customEditor(() => { state.gems = []; reroll(); });
     controls.appendChild(editor.el);
     wrap.appendChild(controls);
 
-    // ── the table on the left, what came out of it on the right ─────────────
+    /* Three columns: the table, the sockets beside it, and what came out.
+
+       The sockets used to sit *under* the table in the same narrow column,
+       which is the one place on this panel that could not afford them - the
+       table is a fixed 352 pixels and cannot give any of it back, so three
+       socket cards stacked under it ran the whole panel a few hundred pixels
+       taller for a strip of empty space beside them. Put beside the table
+       they cost no height at all and fill width that was already going
+       spare. */
     const body = document.createElement('div');
     body.className = 'fg-body';
 
@@ -926,14 +998,11 @@
     gui.appendChild(rowLayer);
     make.appendChild(gui);
 
-    const costs = document.createElement('div');
-    costs.className = 'fg-costs';
-    make.appendChild(costs);
+    body.appendChild(make);
 
     const socketCol = document.createElement('div');
     socketCol.className = 'fg-socket-col';
-    make.appendChild(socketCol);
-    body.appendChild(make);
+    body.appendChild(socketCol);
 
     const result = document.createElement('div');
     result.className = 'fg-result';
@@ -944,12 +1013,20 @@
     let rolls = [];
 
     function baseItem() {
-      return state.itemId === CUSTOM_ID ? customItem : BY.item[state.itemId];
+      if (state.itemId === CUSTOM_ID) return customItem;
+      // an id that names nothing would throw all the way up through reroll()
+      // and leave the panel frozen on its last draw for the rest of the
+      // session, so it falls back to the piece you can always describe
+      return BY.item[state.itemId] || customItem;
     }
 
     function reroll() {
+      const custom = state.itemId === CUSTOM_ID;
       const base = baseItem();
-      editor.sync(state.itemId === CUSTOM_ID);
+      editor.sync(custom);
+      modeBtns.custom.classList.toggle('on', custom);
+      modeBtns.vanilla.classList.toggle('on', !custom);
+      gearField.classList.toggle('off', custom);
       // the three offers, each its own roll off the one seed, exactly as
       // ReforgingScreen.recomputeChoices builds them
       rolls = [0, 1, 2].map(row =>
@@ -979,16 +1056,24 @@
       drawResult();
     }
 
+    /* The table's own three slots, holding what this reforge actually costs.
+
+       They used to hold the tier's base cost while a separate "Cost ×2" box
+       under the table did the multiplying, which meant the two disagreed on
+       screen for every row but the first, and the box was a third place to
+       look for a number the container already had a slot for. The slots are
+       the cost now: choose Mythic and the third row and the material slot
+       says 36, the dust slot says 48, and the row itself says 900 levels. */
     function drawSlots() {
-      // the table's own three slots, filled from the controls rather than by
-      // hand: the item, the material that picks the tier, and the dust
       slotLayer.innerHTML = '';
       const recipe = D.recipes.reforging[state.rarity];
       const base = baseItem();
+      const mult = state.pick + 1;
       const filling = [
-        [25, 24, D.icons[base.id] ? base.id : null, 1, itemLabel(base)],
-        [15, 45, BY.rarity[state.rarity].material, recipe ? recipe.material_cost : 0],
-        [35, 45, 'apotheosis:gem_dust', recipe ? recipe.dust_cost : 0],
+        [25, 24, D.icons[base.id] ? base.id : null, 0, itemLabel(base)],
+        [15, 45, BY.rarity[state.rarity].material,
+         recipe ? recipe.material_cost * mult : 0],
+        [35, 45, 'apotheosis:gem_dust', recipe ? recipe.dust_cost * mult : 0],
       ];
       for (const [x, y, id, count, title] of filling) {
         const cell = document.createElement('div');
@@ -1005,13 +1090,19 @@
           mark.textContent = '?';
           cell.appendChild(mark);
         }
-        if (count > 1) {
+        // a cost of one still gets its badge, unlike an inventory stack: the
+        // number is the point of the slot here, not incidental to it
+        if (count) {
           const badge = document.createElement('b');
           badge.textContent = count;
+          // the count re-keys on every redraw so the tick is seen, not just
+          // arrived at
+          badge.className = 'tick';
           cell.appendChild(badge);
         }
         const name = title || D.names[id] || id;
-        cell.addEventListener('mouseenter', e => showTip([{ text: name }], e));
+        cell.addEventListener('mouseenter', e => showTip(
+          [{ text: count ? count + ' × ' + name : name }], e));
         cell.addEventListener('mouseleave', hideTip);
         slotLayer.appendChild(cell);
       }
@@ -1027,7 +1118,13 @@
         // src y 166 is the resting strip, 204 the highlighted one
         const strip = place(sheet(0, active ? 204 : 166, 108, 19), 60, 14 + 19 * row);
         strip.className += ' fg-row' + (active ? ' on' : '');
-        const badge = place(sheet(16 * row, 223, 16, 16), 61, 15 + 19 * row);
+        /* The tier gem, blitted from the sheet's own 16x16 cell. The cell starts
+           at y=224, not 223: sampling a row high took in a blank row above the
+           gem and dropped the bottom row of its cell, which pushed it a pixel
+           down inside its box. The gems themselves are 9x9, 9x11 and 11x13 in
+           the mod's texture - they grow mostly downward as the tier climbs,
+           which is Apotheosis' art rather than anything this page does to it. */
+        const badge = place(sheet(16 * row, 224, 16, 16), 61, 15 + 19 * row);
         badge.className += ' fg-badge';
 
         const shape = document.createElement('div');
@@ -1049,7 +1146,7 @@
            are not. */
         const recipe = D.recipes.reforging[state.rarity];
         const levels = recipe ? recipe.level_cost * (row + 1) : 0;
-        const mult = guiLabel(String(levels), 60 + 100, 18 + 19 * row, 'fg-mult');
+        const mult = guiLabel(levels + ' lvl', 60 + 100, 18 + 19 * row, 'fg-mult');
         mult.style.color = rarityColour(state.rarity);
 
         strip.addEventListener('mouseenter', e => showTip(itemTooltip(preview), e));
@@ -1232,35 +1329,6 @@
         }
         result.appendChild(stats);
       }
-      drawCosts();
-    }
-
-    function drawCosts() {
-      const recipe = D.recipes.reforging[state.rarity];
-      costs.innerHTML = '';
-      if (!recipe) return;
-      const mult = state.pick + 1;
-      const head = document.createElement('h4');
-      head.textContent = 'Cost ×' + mult;
-      costs.appendChild(head);
-      const parts = [
-        [BY.rarity[state.rarity].material, recipe.material_cost * mult],
-        ['apotheosis:gem_dust', recipe.dust_cost * mult],
-      ];
-      for (const [id, count] of parts) {
-        if (!count) continue;
-        const line = document.createElement('div');
-        line.className = 'fg-cost';
-        line.appendChild(iconImg(id, 'sm'));
-        const text = document.createElement('span');
-        text.textContent = count + ' × ' + (D.names[id] || id);
-        line.appendChild(text);
-        costs.appendChild(line);
-      }
-      const levels = document.createElement('div');
-      levels.className = 'fg-cost lv';
-      levels.textContent = recipe.level_cost * mult + ' levels';
-      costs.appendChild(levels);
     }
 
     reroll();
@@ -1283,18 +1351,47 @@
 
   // ── gear of your own ───────────────────────────────────────────────────────
   //
-  // The list of base items is the mod's own affix loot pool, which is real
-  // gear across every dimension but is not every piece in the pack: there is
-  // amethyst armour on this server that Apotheosis has never heard of and
-  // will still happily reforge, because anything with a LootCategory
-  // qualifies. Rather than guess at a hundred mods' worth of tiers, the last
-  // entry in the list is one you fill in yourself.
+  // The mod's own affix loot pool is real gear across every dimension, but it
+  // is not the gear anyone here reforges: it is vanilla plus four Twilight
+  // Forest tiers - knightmetal, steeleaf, ironwood, fiery - and the endgame
+  // on this server is none of those. It is amethyst and Cataclysm and a dozen
+  // mods Apotheosis has never heard of and will still happily reforge, because
+  // anything with a LootCategory qualifies.
+  //
+  // So the list is cut to vanilla, whose numbers everybody knows by heart and
+  // which is therefore worth having as a reference, and the piece you describe
+  // yourself is promoted from an odd entry at the bottom of a select to one of
+  // the two ways in. That one is the ninety-per-cent case.
+
+  const VANILLA_NS = 'minecraft:';
+  function vanillaItems() {
+    return D.items.filter(item => item.id.startsWith(VANILLA_NS));
+  }
 
   const CUSTOM_ID = '__custom__';
   const customItem = {
     id: CUSTOM_ID, name: 'Custom gear', category: 'chestplate',
     stats: { armor: 8, armor_toughness: 2, durability: 528 },
   };
+
+  /* Filling in four numbers by hand to describe a chestplate is the tax on
+     using this page at all, so the numbers are one press away: the vanilla
+     pieces of the same slot, offered as a starting point to edit down or up
+     from. Modded endgame armour is nearly always somewhere near netherite,
+     and "netherite plus two armour" is a far quicker thing to type than the
+     whole set. */
+  const PRESET_TIERS = ['netherite', 'diamond', 'iron'];
+  function presetsFor(cat) {
+    const out = [];
+    for (const tier of PRESET_TIERS) {
+      const item = D.items.find(i => i.category === cat
+        && i.id.startsWith(VANILLA_NS) && i.id.includes(tier));
+      if (item && item.stats && Object.keys(item.stats).length) {
+        out.push({ id: item.id, label: capitalise(tier), stats: item.stats });
+      }
+    }
+    return out;
+  }
 
   // which numbers are worth asking for, per category: nobody wants to be asked
   // for a chestplate's attack speed
@@ -1343,12 +1440,21 @@
       onChange();
     });
 
-    el.appendChild(field('Name', name));
-    el.appendChild(field('Slot', catPick));
+    const top = document.createElement('div');
+    top.className = 'fg-custom-top';
+    top.appendChild(field('Name', name));
+    top.appendChild(field('Slot', catPick));
+    el.appendChild(top);
 
     const nums = document.createElement('div');
     nums.className = 'fg-custom-nums';
     el.appendChild(nums);
+
+    // one press to start from a piece whose numbers are already known, rather
+    // than four boxes to fill from memory
+    const quick = document.createElement('div');
+    quick.className = 'fg-presets';
+    el.appendChild(quick);
 
     function paintStats() {
       nums.innerHTML = '';
@@ -1366,6 +1472,33 @@
           onChange();
         });
         nums.appendChild(field(label, input));
+      }
+      paintPresets();
+    }
+
+    function paintPresets() {
+      quick.innerHTML = '';
+      const list = presetsFor(customItem.category);
+      if (!list.length) return;
+      const lead = document.createElement('span');
+      lead.className = 'fg-presets-lead';
+      lead.textContent = 'Start from';
+      quick.appendChild(lead);
+      for (const preset of list) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fg-preset';
+        btn.appendChild(iconImg(preset.id, 'sm'));
+        const text = document.createElement('span');
+        text.textContent = preset.label;
+        btn.appendChild(text);
+        btn.title = 'Copy the numbers off a ' + (D.names[preset.id] || preset.id);
+        btn.addEventListener('click', () => {
+          customItem.stats = Object.assign({}, preset.stats);
+          paintStats();
+          onChange();
+        });
+        quick.appendChild(btn);
       }
     }
     paintStats();
@@ -1385,6 +1518,41 @@
   }
   function capitalise(text) {
     return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  /* Movement, added to something already on screen and readable without it.
+
+     Everything animated from script on this page goes through here so the two
+     ways it can be unwanted are handled in one place: the reduced-motion
+     setting, and a browser with no Web Animations API at all. In both cases
+     the element keeps its resting appearance and nothing is hidden - which is
+     the whole reason these are not CSS keyframes with a `backwards` fill. */
+  const REDUCED = window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)');
+  function motion(el, frames, options) {
+    if (!el || !el.animate || (REDUCED && REDUCED.matches)) return null;
+    let anim;
+    try {
+      anim = el.animate(frames, options);
+    } catch (error) {
+      return null;                       // an old browser, and no harm done
+    }
+    /* A fade-in holds its element at opacity 0 for as long as the animation
+       sits at its first keyframe, and an animation only leaves that keyframe
+       when the document timeline advances. Every real browser advances it;
+       a surface that has paused rendering does not, and there the fade would
+       never finish and the card would never appear.
+
+       So the end state is guaranteed off setTimeout, which runs on the wall
+       clock and owes the animation timeline nothing. If the animation ran
+       normally it has long since finished and this is a no-op. */
+    const life = (options.delay || 0) + (options.duration || 0) + 250;
+    if (Number.isFinite(life)) {
+      setTimeout(() => {
+        try { if (anim.playState !== 'finished') anim.finish(); } catch (e) { /* gone */ }
+      }, life);
+    }
+    return anim;
   }
   function cloneItem(item) {
     return Object.assign({}, item, {
@@ -1410,7 +1578,7 @@
   let catView = 'gems';
   const catState = {
     gemSearch: '', gemCat: '', gemOpen: null,
-    afxSearch: '', afxCat: '', afxTier: 'mythic', afxType: '',
+    afxSearch: '', afxCat: '', afxTier: 'mythic', afxType: '', afxOpen: null,
   };
 
   function catalog() {
@@ -1699,7 +1867,7 @@
     list.className = 'fg-afx-list';
     view.appendChild(list);
 
-    function paint() {
+    function paint(quiet) {
       list.innerHTML = '';
       const tier = catState.afxTier;
       const rows = [];
@@ -1738,56 +1906,170 @@
       }
 
       rows.sort((a, b) => a.prefix.localeCompare(b.prefix));
-      for (const row of rows) {
-        const el = document.createElement('div');
-        el.className = 'fg-afx';
-        // Coloured by the tier it first becomes reachable at, which is the one
-        // thing about an affix worth knowing at a glance: stat-or-ability was
-        // the old colouring and it told you nothing you could act on, while
-        // "this needs Rare gear" is the whole of why you would reforge again.
-        if (row.from) el.style.setProperty('--kind', rarityColour(row.from));
-
-        const head = document.createElement('div');
-        head.className = 'fg-afx-name';
-        const prefix = document.createElement('b');
-        prefix.textContent = row.prefix;
-        const suffix = document.createElement('i');
-        suffix.textContent = row.suffix;
-        head.append(prefix, suffix);
-        el.appendChild(head);
-
-        const value = document.createElement('div');
-        value.className = 'fg-afx-value';
-        value.textContent = row.value;
-        el.appendChild(value);
-
-        const fits = document.createElement('div');
-        fits.className = 'fg-afx-fits';
-        if (row.from && row.from !== RARITIES[0].id) {
-          const from = document.createElement('span');
-          from.className = 'chip from ' + RARITY_CLASS(row.from);
-          from.textContent = capitalise(row.from) + '+';
-          fits.appendChild(from);
-        }
-        if (row.fits.length === D.categories.length) {
-          const chip = document.createElement('span');
-          chip.className = 'chip all';
-          chip.textContent = 'any gear';
-          fits.appendChild(chip);
-        } else {
-          for (const cat of row.fits) {
-            const chip = document.createElement('span');
-            chip.className = 'chip';
-            chip.textContent = BY.cat[cat].name;
-            fits.appendChild(chip);
-          }
-        }
-        el.appendChild(fits);
-        list.appendChild(el);
-      }
+      /* The entrance belongs to a list that changed, not to a card that
+         opened. Expanding one affix repaints the whole list - which is cheap
+         and keeps the open state in one place - but replaying eighty staggered
+         fades every time somebody clicks a card made the page look like it was
+         reloading itself. `quiet` is set only by the card toggle. */
+      rows.forEach((row, index) =>
+        list.appendChild(affixCard(row, index, paint, !quiet)));
     }
     paint();
     return view;
+  }
+
+  /* One affix, shut.
+
+     What was here before put four things on every card at the same weight -
+     the prefix, the suffix, a sentence of value, and one chip per category it
+     fits, which for a general affix is twelve chips reading "Bow Crossbow
+     Pickaxe Shovel Heavy Weapon Helmet..." underneath every single entry. A
+     hundred of those is a wall, and the one number you came to read is the
+     smallest thing on it.
+
+     So: the value is the headline, the name is the label above it, and the
+     twelve chips collapse into at most five family names. Everything else -
+     the exact category list, and what this affix rolls at each of the six
+     tiers - is a press away rather than always on. */
+  const AFFIX_FAMILIES = [
+    ['Armour', ['helmet', 'chestplate', 'leggings', 'boots']],
+    ['Melee',  ['sword', 'heavy_weapon', 'trident']],
+    ['Tools',  ['pickaxe', 'shovel']],
+    ['Ranged', ['bow', 'crossbow']],
+    ['Shield', ['shield']],
+  ];
+
+  /* Twelve categories as at most five words. A family whose every member fits
+     is named; a family only partly covered names its members instead, which is
+     one or two words rather than a lie of omission. */
+  function affixFits(fits) {
+    if (fits.length === D.categories.length) return [{ text: 'any gear', all: true }];
+    const set = new Set(fits);
+    const out = [];
+    for (const [name, members] of AFFIX_FAMILIES) {
+      const hit = members.filter(c => set.has(c));
+      if (!hit.length) continue;
+      if (hit.length === members.length) out.push({ text: name });
+      else for (const cat of hit) out.push({ text: BY.cat[cat].name });
+    }
+    return out;
+  }
+
+  function affixCard(row, index, repaint, intro) {
+    const open = catState.afxOpen === row.affix.id;
+    const el = document.createElement('article');
+    el.className = 'fg-afx' + (open ? ' open' : '');
+    // Coloured by the tier it first becomes reachable at, which is the one
+    // thing about an affix worth knowing at a glance: stat-or-ability was
+    // the old colouring and it told you nothing you could act on, while
+    // "this needs Rare gear" is the whole of why you would reforge again.
+    if (row.from) el.style.setProperty('--kind', rarityColour(row.from));
+    // Staggered down the grid rather than eighty cards arriving at once, so a
+    // filter change reads as the list rebuilding itself. Capped at two dozen:
+    // past that the delay is longer than anyone waits to read the top of it.
+    // Skipped entirely when the repaint came from opening a card - see paint().
+    if (intro) {
+      motion(el, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 300, delay: Math.min(index, 24) * 16, easing: 'ease-out' });
+    }
+
+    const head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'fg-afx-head';
+    head.setAttribute('aria-expanded', String(open));
+
+    const name = document.createElement('span');
+    name.className = 'fg-afx-name';
+    const prefix = document.createElement('b');
+    prefix.textContent = row.prefix;
+    const suffix = document.createElement('i');
+    suffix.textContent = row.suffix;
+    name.append(prefix, suffix);
+
+    const value = document.createElement('span');
+    value.className = 'fg-afx-value';
+    value.textContent = row.value;
+
+    const meta = document.createElement('span');
+    meta.className = 'fg-afx-meta';
+    for (const chip of affixFits(row.fits)) {
+      const el2 = document.createElement('span');
+      el2.className = 'chip' + (chip.all ? ' all' : '');
+      el2.textContent = chip.text;
+      meta.appendChild(el2);
+    }
+    if (row.from && row.from !== RARITIES[0].id) {
+      const from = document.createElement('span');
+      from.className = 'chip from ' + RARITY_CLASS(row.from);
+      from.textContent = capitalise(row.from) + '+';
+      meta.appendChild(from);
+    }
+    const caret = document.createElement('span');
+    caret.className = 'fg-afx-caret';
+    caret.textContent = '▾';
+    meta.appendChild(caret);
+
+    head.append(name, value, meta);
+    head.addEventListener('click', () => {
+      catState.afxOpen = open ? null : row.affix.id;
+      repaint(true);                     // quiet: this is not a new list
+    });
+    el.appendChild(head);
+
+    if (open) {
+      const detail = affixDetail(row);
+      el.appendChild(detail);
+      // measured after it is in the document, so the sweep goes to the height
+      // the ladder actually needs rather than to a guessed maximum
+      requestAnimationFrame(() => {
+        const height = detail.scrollHeight;
+        motion(detail,
+          [{ height: '0px', opacity: 0 }, { height: height + 'px', opacity: 1 }],
+          { duration: 240, easing: 'ease-out' });
+      });
+    }
+    return el;
+  }
+
+  /* What it rolls at every tier, which is the question the shut card cannot
+     answer and the one that decides whether reforging again is worth it. */
+  function affixDetail(row) {
+    const box = document.createElement('div');
+    box.className = 'fg-afx-detail';
+
+    const ladder = document.createElement('div');
+    ladder.className = 'fg-afx-ladder';
+    for (const rarity of RARITIES) {
+      const line = document.createElement('div');
+      line.className = 'fg-afx-rung'
+        + (rarity.id === catState.afxTier ? ' here' : '');
+      line.style.setProperty('--tier', rarityColour(rarity.id));
+      const tier = document.createElement('i');
+      tier.className = RARITY_CLASS(rarity.id);
+      tier.textContent = capitalise(rarity.id);
+      const what = document.createElement('span');
+      const sample = catState.afxCat || row.fits[0];
+      what.textContent = canApply(row.affix, sample, rarity.id)
+        ? affixValue(row.affix, rarity.id, sample) : '—';
+      if (!canApply(row.affix, sample, rarity.id)) what.className = 'off';
+      line.append(tier, what);
+      ladder.appendChild(line);
+    }
+    box.appendChild(ladder);
+
+    // the full category list, which the shut card folded into families
+    if (row.fits.length !== D.categories.length) {
+      const all = document.createElement('div');
+      all.className = 'fg-afx-all';
+      for (const cat of row.fits) {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = BY.cat[cat].name;
+        all.appendChild(chip);
+      }
+      box.appendChild(all);
+    }
+    return box;
   }
 
   /* The bottom and top of what one affix rolls at one tier, worded the way its

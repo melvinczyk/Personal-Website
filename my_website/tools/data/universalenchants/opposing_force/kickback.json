@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:tesla_cannon",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "minecraft:quick_charge"
+  ]
+}

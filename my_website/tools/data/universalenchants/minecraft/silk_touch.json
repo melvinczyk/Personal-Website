@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:digger",
+    "apotheosis:pickaxe_tome",
+    "twilightforest:block_and_chain",
+    "cuisinedelight:spatula",
+    "legendary_monsters:withered_scythe",
+    "legendary_monsters:anchor_handle"
+  ],
+  "incompatible": [
+    "wkcr:herbicide",
+    "minecraft:luck_of_the_sea",
+    "minecraft:fortune",
+    "minecraft:looting"
+  ]
+}

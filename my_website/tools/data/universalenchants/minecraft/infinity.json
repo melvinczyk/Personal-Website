@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:bow",
+    "apotheosis:bow_tome",
+    "$minecraft:crossbow"
+  ],
+  "incompatible": [
+    "apotheosis:endless_quiver",
+    "wkcr:herbicide"
+  ]
+}

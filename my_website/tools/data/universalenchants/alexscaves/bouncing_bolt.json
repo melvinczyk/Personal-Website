@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:sea_staff",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "alexscaves:triple_splash"
+  ]
+}

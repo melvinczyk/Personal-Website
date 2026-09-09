@@ -395,6 +395,7 @@ class Assets:
 
     def __init__(self, jars):
         self.models, self.textures, self.langs = {}, {}, []
+        self.metas = {}
         for path in jars:
             try:
                 zf = zipfile.ZipFile(path)
@@ -408,6 +409,8 @@ class Assets:
                 rest = '/'.join(parts[3:])
                 if kind == 'models' and entry.endswith('.json'):
                     self.models.setdefault((ns, rest[:-5]), (zf, entry))
+                elif kind == 'textures' and entry.endswith('.png.mcmeta'):
+                    self.metas.setdefault((ns, rest[:-11]), (zf, entry))
                 elif kind == 'textures' and entry.endswith('.png'):
                     self.textures.setdefault((ns, rest[:-4]), (zf, entry))
                 elif kind == 'lang' and rest == 'en_us.json':
@@ -455,12 +458,23 @@ class Assets:
         return None
 
     def save(self, texture_ref, out_path):
-        """One 16x16 tile on disk. Animated textures give up their first frame.
+        """One tile on disk, or - where the game animates it - the filmstrip.
 
-        A .mcmeta beside a texture means the png is a filmstrip - Inferno and
-        the other animated gems are 16 wide and several hundred tall - and
-        pasting the whole strip into a slot would be absurd. The game shows
-        frame one at rest, so that is what gets cropped.
+        A .mcmeta beside a texture means the png is a filmstrip: Inferno,
+        Endersurge, gem dust and the Mythic and Ancient materials are all 16
+        wide and several hundred tall, and every one of them moves in the
+        player's hand. Cropping to frame one, which is what this did, threw
+        away the thing that makes them recognisable across a room.
+
+        What goes out is not the source strip. The mcmeta's `frames` list is
+        an arbitrary playback order with repeats - Mythic's is eight copies of
+        frame 0 and then eight more frames - and `interpolate` asks for a
+        cross-fade the browser cannot do over a sprite sheet. So the sequence
+        is *baked*: the tiles are written in playback order, one tile per unit
+        of time, which leaves the page with a plain constant-rate strip it can
+        run with a single steps() keyframe and no per-texture logic at all.
+
+        Returns None for a still texture, or {frames, seconds} for a baked one.
         """
         ref = self.textures.get(self.split(texture_ref))
         if not ref:
@@ -470,11 +484,92 @@ class Assets:
             image = Image.open(zipfile.ZipFile.open(zf, entry)).convert('RGBA')
         except Exception:
             return False
+
         width, height = image.size
-        if height > width and height % width == 0:
+        anim = self._anim_meta(texture_ref)
+        if anim and width and height > width and height % width == 0:
+            baked = self._bake(image, anim)
+            if baked:
+                strip, count, ticks = baked
+                strip.save(out_path)
+                return {'frames': count, 'seconds': round(ticks / 20.0, 3)}
+
+        if height > width and width and height % width == 0:
             image = image.crop((0, 0, width, width))
         image.save(out_path)
         return True
+
+    def _anim_meta(self, texture_ref):
+        ref = self.metas.get(self.split(texture_ref))
+        if not ref:
+            return None
+        try:
+            meta = json.loads(ref[0].read(ref[1]).decode('utf-8-sig'))
+        except Exception:
+            return None
+        return meta.get('animation')
+
+    # A texture that would bake to more tiles than this is left still rather
+    # than shipped as a megabyte of sprite sheet. Nothing in this pack comes
+    # close - the longest is Royalty at fifty - but the ceiling means a mod
+    # update cannot quietly turn one icon into the largest file on the page.
+    MAX_BAKED_FRAMES = 96
+
+    @staticmethod
+    def _bake(image, anim):
+        """The mcmeta's playback order as a constant-rate strip.
+
+        Minecraft's model: `frames` is the order (an int, or {index, time} for
+        a frame that holds longer than the default), `frametime` is how many
+        ticks each entry holds, and `interpolate` cross-fades from each frame
+        into the next over that hold. Without interpolation one tile per entry
+        is exact; with it the hold is cut into single-tick tiles and the blend
+        is done here, in Pillow, once - rather than asked of every browser
+        that opens the page.
+        """
+        size = image.size[0]
+        total = image.size[1] // size
+        tile = lambda i: image.crop((0, size * (i % total), size,
+                                     size * (i % total) + size))
+
+        default = int(anim.get('frametime') or 1)
+        order = anim.get('frames')
+        if order:
+            steps = []
+            for entry in order:
+                if isinstance(entry, dict):
+                    steps.append((int(entry.get('index', 0)),
+                                  int(entry.get('time') or default)))
+                else:
+                    steps.append((int(entry), default))
+        else:
+            steps = [(i, default) for i in range(total)]
+        if not steps:
+            return None
+
+        smooth = bool(anim.get('interpolate'))
+        frames, ticks = [], 0
+        for pos, (index, hold) in enumerate(steps):
+            hold = max(1, hold)
+            ticks += hold
+            if not smooth:
+                frames.append(tile(index))
+                continue
+            nxt = steps[(pos + 1) % len(steps)][0]
+            for sub in range(hold):
+                # Minecraft blends toward the *next* frame across the hold, and
+                # the first sub-tick is the frame itself
+                frames.append(tile(index) if sub == 0 else
+                              Image.blend(tile(index), tile(nxt), sub / hold))
+            if len(frames) > Assets.MAX_BAKED_FRAMES:
+                return None
+
+        if len(frames) < 2 or len(frames) > Assets.MAX_BAKED_FRAMES:
+            return None
+        strip = Image.new('RGBA', (size, size * len(frames)), (0, 0, 0, 0))
+        for i, frame in enumerate(frames):
+            strip.paste(frame, (0, size * i))
+        return strip, len(frames), ticks
 
     def save_layered(self, item_id, out_path):
         """A rune base with its glyph tinted over it, the way the gui draws it."""
@@ -842,6 +937,9 @@ def main():
     # ── icons ───────────────────────────────────────────────────────────────
     os.makedirs(ICON_DIR, exist_ok=True)
     icons, unresolved = {}, []
+    # {item id: {frames, seconds}} for the dozen textures the game animates.
+    # The png beside it is the baked filmstrip; this is how to run it.
+    anims = {}
 
     def pull(item_id, out_name):
         if item_id in LAYERED:
@@ -851,8 +949,11 @@ def main():
             unresolved.append(item_id)
             return False
         ref = assets.texture_of(item_id)
-        if ref and assets.save(ref, os.path.join(ICON_DIR, out_name + '.png')):
+        got = ref and assets.save(ref, os.path.join(ICON_DIR, out_name + '.png'))
+        if got:
             icons[item_id] = out_name + '.png'
+            if isinstance(got, dict):
+                anims[item_id] = got
             return True
         unresolved.append(item_id)
         return False
@@ -863,9 +964,12 @@ def main():
         pull(item_id, item_id.replace(':', '__'))
     for gem in gems:
         name = 'gem__' + gem['variant']
-        if assets.save(f'apotheosis:items/gems/{gem["variant"]}',
-                       os.path.join(ICON_DIR, name + '.png')):
+        got = assets.save(f'apotheosis:items/gems/{gem["variant"]}',
+                          os.path.join(ICON_DIR, name + '.png'))
+        if got:
             icons[gem['id']] = name + '.png'
+            if isinstance(got, dict):
+                anims[gem['id']] = got
         else:
             unresolved.append(gem['id'])
 
@@ -910,6 +1014,7 @@ def main():
         'effects': effects,
         'enchantments': enchants,
         'icons': icons,
+        'anims': anims,
         'gui': sheets,
         'names': item_names,
         'lang': wanted,
@@ -936,7 +1041,7 @@ def main():
 
     layers.close()
     print(f'{len(rarities)} rarities, {len(affixes)} affixes, {len(gems)} gems, '
-          f'{len(items)} base items, {len(icons)} icons')
+          f'{len(items)} base items, {len(icons)} icons, {len(anims)} animated')
     print('reforge tiers:', ', '.join(sorted(recipes['reforging'])))
     print('sigils:', recipes['sigils'])
     if missing:

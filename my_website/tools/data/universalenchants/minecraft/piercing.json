@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:crossbow",
+    "minecraft:trident",
+    "apotheosis:other_tome",
+    "block_factorys_bosses:kraken_trident",
+    "$minecraft:trident",
+    "$minecraft:bow"
+  ],
+  "incompatible": [
+    "wkcr:herbicide"
+  ]
+}

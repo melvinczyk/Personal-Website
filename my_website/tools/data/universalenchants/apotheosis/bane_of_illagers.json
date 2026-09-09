@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:weapon",
+    "apotheosis:weapon_tome",
+    "mutantmonsters:endersoul_hand",
+    "better_minoshroomtaur:better_minotaur_axe",
+    "twilightforest:block_and_chain",
+    "farmersdelight:skillet",
+    "cuisinedelight:cuisine_skillet",
+    "cataclysm:gauntlet_of_guard",
+    "cataclysm:gauntlet_of_bulwark",
+    "cataclysm:gauntlet_of_maelstrom",
+    "cataclysm:the_incinerator",
+    "cataclysm:soul_render",
+    "cataclysm:the_annihilator",
+    "cataclysm:astrape",
+    "cataclysm:ceraunus",
+    "cataclysm:brontes",
+    "cataclysm:the_immolator",
+    "cataclysm:meat_shredder",
+    "cataclysm:void_forge",
+    "cataclysm:tidal_claws",
+    "cataclysm:infernal_forge",
+    "cataclysm:ancient_spear",
+    "opposing_force:sawblade",
+    "opposing_force:trembling_slammer",
+    "legendary_monsters:mossy_hammer",
+    "legendary_monsters:fiery_jaw",
+    "legendary_monsters:withered_scythe",
+    "legendary_monsters:wand_of_clouds",
+    "legendary_monsters:axe_of_lightning"
+  ],
+  "incompatible": [
+    "minecraft:impaling",
+    "minecraft:bane_of_arthropods",
+    "minecraft:smite",
+    "apotheosis:shield_bash"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:totem_of_possession",
+    "apotheosis:other_tome"
+  ],
+  "incompatible": [
+    "alexscaves:detonating_death"
+  ]
+}

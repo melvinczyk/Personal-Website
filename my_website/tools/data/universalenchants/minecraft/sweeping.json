@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    "$minecraft:weapon",
+    "apotheosis:weapon_tome",
+    "better_minoshroomtaur:better_minotaur_axe",
+    "cataclysm:the_incinerator",
+    "cataclysm:ancient_spear",
+    "legendary_monsters:mossy_hammer",
+    "legendary_monsters:fiery_jaw",
+    "legendary_monsters:withered_scythe",
+    "legendary_monsters:wand_of_clouds",
+    "legendary_monsters:axe_of_lightning",
+    "$minecraft:universal_enchants_axe",
+    "$minecraft:trident"
+  ],
+  "incompatible": []
+}
