@@ -1,0 +1,641 @@
+/* The Apothic Forge: a panel of the portal, not a page.
+   It lives inside #fg-wrap and leans on minecraft.css for the --mc-* tokens,
+   the Minecraft face and the corner-cut frame it shares with the skill tree,
+   so the two read as a pair rather than as one thing bolted beside another.
+
+   The reforging table itself is drawn out of the game's own 256x256 container
+   sheet at 2x, so almost nothing below sets a colour or a border for it: the
+   sheet is the border. The rules that matter are the ones keeping the browser
+   from smoothing pixel art, and the ones putting slots at the coordinates the
+   mod's own screen class blits them to. */
+
+/* The panel opens where the tab was, the way the tree's does: the button is
+   put down and this takes its place, so the page never grows a second copy of
+   the same thing. The corner-cut frame itself is shared with the tree, in
+   minecraft.css, rather than drawn twice. */
+.fg-panel { display: none; padding: 14px 16px; }
+.fg-wrap.on .fg-panel { display: block; }
+.fg-panel > * { position: relative; z-index: 1; }
+.fg-panel .sk-plan-head em { flex: 1 1 auto; }
+.fg-stage { font-family: 'Minecraft', 'MGS1 Codec', monospace; }
+.fg-loading { margin: 0; padding: 18px 2px; font-size: 14px; color: var(--mc-faint); }
+
+/* ── tabs ─────────────────────────────────────────────────────────────────── */
+
+.fg-tabs { display: flex; gap: 2px; margin-bottom: 10px; }
+.fg-tab {
+  font-family: inherit; font-size: 13px; cursor: pointer; padding: 5px 16px;
+  color: var(--mc-dim);
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-top-color: var(--mc-lit); border-left-color: var(--mc-lit);
+}
+.fg-tab:hover { color: var(--mc-text); background: #2b2b33; }
+.fg-tab.active { color: var(--mc-gold); border-bottom-color: var(--mc-gold); }
+
+/* ── the controls ─────────────────────────────────────────────────────────── */
+
+.fg-controls {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px;
+  padding: 10px 12px; margin-bottom: 10px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.fg-field { display: flex; flex-direction: column; gap: 3px; position: relative; }
+.fg-field > span {
+  font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+}
+.fg-field select {
+  font-family: inherit; font-size: 13px; padding: 5px 8px; min-width: 170px;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  cursor: pointer;
+}
+.fg-field select:hover { border-color: var(--mc-lit); }
+.fg-field select option { color: var(--mc-text); background: #16161a; }
+
+.fg-roll {
+  font-family: inherit; font-size: 13px; letter-spacing: .08em; cursor: pointer;
+  padding: 6px 18px; color: #16161a; background: var(--mc-gold);
+  border: 2px solid var(--mc-shade);
+  border-top-color: #ffe89a; border-left-color: #ffe89a;
+}
+.fg-roll:hover { background: #ffe276; }
+.fg-roll:active { border-top-color: var(--mc-shade); border-left-color: var(--mc-shade); }
+
+/* Gear of your own. Folded away until the custom piece is the one selected,
+   because it is four more controls in a row that already has three. */
+.fg-custom {
+  display: none; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px;
+  flex-basis: 100%; padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.fg-custom.on { display: flex; }
+.fg-custom input {
+  font-family: inherit; font-size: 13px; padding: 5px 8px;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.fg-custom input[type="number"] { width: 90px; }
+.fg-custom-nums {
+  display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end;
+}
+
+/* ── the socket column ───────────────────────────────────────────────────── */
+/* The third column, where the tooltip used to leave a gap. Each socket is a
+   picker whose options carry the effect, over a face showing the chosen gem. */
+.fg-socket-col {
+  padding: 9px 11px; box-sizing: border-box; min-width: 0; flex: 1 1 auto;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.fg-socket-col h4 {
+  margin: 0 0 6px; padding-bottom: 5px;
+  font-size: 11px; font-weight: normal; letter-spacing: .06em;
+  color: var(--mc-faint); border-bottom: 1px solid rgba(255,255,255,.08);
+}
+/* One socket: the slot, and everything about what is in it beside it. The
+   picker used to sit above a separate box repeating the same gem, which read
+   as two controls for one thing. */
+.fg-socket {
+  position: relative; margin-bottom: 6px; padding: 6px;
+  background: var(--mc-panel); border: 1px solid rgba(255,255,255,.06);
+}
+.fg-socket.full { border-color: rgba(255,255,255,.12); }
+.fg-socket-face { display: flex; align-items: flex-start; gap: 8px; }
+.fg-socket-body { flex: 1 1 auto; min-width: 0; }
+
+/* the hole itself, sunken like an inventory slot, lit by what sits in it */
+.fg-socket-well {
+  flex: none; width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: #0f0f13;
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+}
+.fg-socket.full .fg-socket-well {
+  background: radial-gradient(70% 70% at 50% 50%,
+    color-mix(in srgb, var(--tier) 34%, transparent) 0%, #0f0f13 74%);
+}
+.fg-socket-well .fg-icon { width: 26px; height: 26px; }
+/* an empty socket is a hole, not a labelled box: the picker beside it has
+   already said everything there is to say about it */
+.fg-socket:not(.full) .fg-socket-well {
+  background: repeating-linear-gradient(45deg, #0f0f13 0 4px, #16161c 4px 8px);
+}
+
+.fg-socket select {
+  font-family: inherit; font-size: 12px; padding: 4px 6px;
+  width: 100%; box-sizing: border-box; cursor: pointer;
+  color: var(--mc-text); background: var(--mc-slot);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.fg-socket select:hover { border-color: var(--mc-lit); }
+.fg-socket select option { color: var(--mc-text); background: #16161a; }
+.fg-socket-body b {
+  display: block; margin-top: 4px; font-size: 12px; font-weight: normal;
+}
+.fg-socket-what {
+  display: block; margin-top: 2px; font-size: 11px; line-height: 1.4;
+  color: #ffff55;
+}
+
+/* The gem's own tier. A gem is found and cut apart from the gear it goes in,
+   so any tier it supports can sit in any item, and the gap between a Cracked
+   and a Perfect one is most of what a socket is worth. */
+.fg-socket-band { display: flex; gap: 3px; margin-top: 5px; }
+.fg-pip {
+  flex: 1 1 0; height: 8px; padding: 0; cursor: pointer;
+  background: color-mix(in srgb, var(--tier) 26%, #14141a);
+  border: 1px solid color-mix(in srgb, var(--tier) 34%, transparent);
+}
+.fg-pip:hover { background: color-mix(in srgb, var(--tier) 55%, #14141a); }
+.fg-pip.on {
+  background: var(--tier);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--tier) 70%, transparent);
+}
+
+.fg-nosocket { margin: 0; font-size: 12px; color: var(--mc-faint); }
+.fg-flash {
+  position: absolute; left: 0; top: 100%; z-index: 5;
+  margin-top: 4px; padding: 5px 8px; max-width: 250px;
+  font-size: 11px; line-height: 1.4; color: #ffdede;
+  background: #3a1418; border: 1px solid var(--mc-heart);
+}
+
+/* ── the container, blitted out of the game's own sheet ───────────────────── */
+
+/* Two columns: what you make it with, and what came out. Three columns of
+   different heights was what left the ragged gaps - the table is a fixed 352
+   pixels and cannot give any of it back, so everything that sizes with it
+   goes under it, and the result takes the whole of the rest. */
+.fg-body {
+  display: grid; gap: 12px; align-items: start;
+  grid-template-columns: 352px minmax(300px, 1fr);
+}
+.fg-make { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.fg-result {
+  display: flex; flex-wrap: wrap; gap: 10px; min-width: 0; align-items: stretch;
+}
+.fg-result > * { flex: 1 1 280px; min-width: 0; }
+
+.fg-gui { position: relative; image-rendering: pixelated; user-select: none; }
+.fg-blit { position: absolute; image-rendering: pixelated; background-repeat: no-repeat; }
+.fg-slot {
+  position: absolute; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+}
+.fg-slot .fg-icon { width: 32px; height: 32px; }
+.fg-slot b {
+  position: absolute; right: -2px; bottom: -3px;
+  font-size: 13px; font-weight: normal; color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
+}
+.fg-icon { image-rendering: pixelated; display: block; }
+.fg-icon.sm { width: 18px; height: 18px; }
+
+/* the three offers: one is the roll you are looking at, the other two are
+   what the same seed would have given on the second and third row */
+.fg-row { cursor: pointer; }
+.fg-row:hover { filter: brightness(1.25); }
+.fg-badge { z-index: 2; pointer-events: none; }
+
+/* Text drawn inside the container at the sheet's own scale. The game's font is
+   8px on a 9px line, so 2x lands at 14, and the dark labels the vanilla
+   screens draw get the same #404040 they do. */
+.fg-label {
+  position: absolute; z-index: 4;
+  font-family: 'Minecraft', monospace; font-size: 14px; line-height: 1;
+  white-space: nowrap; pointer-events: none; color: #404040;
+}
+/* the level cost, drawn the way the screen draws it: the tier's colour over a
+   hard black outline, because a light strip and a dark one both pass under it */
+.fg-mult {
+  font-size: 12px; transform: translateX(-100%);
+  text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000;
+}
+
+/* What each offer rolled, as pips: a name does not fit in a hundred and fifty
+   pixels and half a name is worse than none, but four stats and two sockets
+   fits and is the thing you are choosing between. Colours are the affix
+   list's own - blue stat, gold ability, green socket. */
+.fg-shape {
+  position: absolute; z-index: 4; display: flex; flex-wrap: wrap;
+  align-content: center; gap: 3px; width: 76px; height: 32px;
+  pointer-events: none;
+}
+.fg-shape .sh {
+  width: 7px; height: 7px; border: 1px solid rgba(0,0,0,.45);
+}
+.fg-shape .stat    { background: #4a7fd4; }
+.fg-shape .ability { background: #d99a20; }
+.fg-shape .socket  { background: #3fae62; border-radius: 50%; }
+
+/* custom gear has no icon of its own, so the slot says so rather than sitting
+   empty and reading as a bug */
+.fg-slot-mark {
+  font-family: 'Minecraft', monospace; font-size: 20px; color: #6b6b6b;
+  text-shadow: 1px 1px #fff;
+}
+
+/* ── costs, under the table ───────────────────────────────────────────────── */
+
+.fg-costs {
+  padding: 9px 11px; box-sizing: border-box;
+  background: var(--mc-slot); border-left: 4px solid var(--mc-gold);
+}
+.fg-costs h4 {
+  margin: 0 0 6px; font-size: 11px; font-weight: normal; letter-spacing: .06em;
+  color: var(--mc-gold);
+}
+.fg-cost {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; line-height: 1.65; color: var(--mc-dim);
+}
+.fg-cost.lv { color: var(--mc-xp); }
+
+/* ── the result: the game's own tooltip, then the numbers behind it ───────── */
+
+.fg-tipbox {
+  padding: 8px 10px; box-sizing: border-box;
+  background: #100010f2; border: 2px solid #2d0a63; outline: 1px solid #100010;
+  font-size: 14px; line-height: 1.45; color: var(--mc-text);
+}
+.fg-tip-line + .fg-tip-line { margin-top: 1px; }
+
+.fg-stats {
+  padding: 9px 11px; box-sizing: border-box;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.fg-stats h4 {
+  margin: 0 0 6px; padding-bottom: 5px;
+  font-size: 11px; font-weight: normal; letter-spacing: .06em;
+  color: var(--mc-faint); border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.fg-stat { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 1.8; }
+.fg-stat i { font-style: normal; color: var(--mc-dim); flex: 1 1 auto; }
+/* the base value, struck through where the roll moved it, so both numbers
+   stay readable rather than one quietly replacing the other */
+.fg-stat s { color: var(--mc-faint); text-decoration: line-through; }
+.fg-stat b { font-weight: normal; color: var(--mc-text); }
+.fg-stat b.up { color: #7bd66a; }
+.fg-stat b.down { color: #d97a6a; }
+.fg-statnote {
+  margin: 7px 0 0; font-size: 10.5px; line-height: 1.5; font-style: italic;
+  color: var(--mc-faint);
+}
+
+/* ── the floating tooltip over a row ──────────────────────────────────────── */
+/* above the chat box (55) and the item tip (60): it is drawn under the cursor
+   and anything crossing it would be crossing what you are pointing at */
+.fg-tip {
+  position: fixed; z-index: 70; pointer-events: none;
+  max-width: 430px; padding: 7px 9px;
+  background: #100010f2; border: 2px solid #2d0a63; outline: 1px solid #100010;
+  font-family: 'Minecraft', monospace; font-size: 14px; line-height: 1.45;
+  color: var(--mc-text);
+}
+
+.c-blue   { color: #5599ff; }
+.c-red    { color: #ff5555; }
+.c-yellow { color: #ffff55; }
+.c-green  { color: #55ff55; }
+.c-gold   { color: #ffaa00; }
+.c-gold-u { color: #ffff55; text-decoration: underline; }
+.c-dim    { color: #aaaaaa; }
+.c-faint  { color: var(--mc-faint); }
+.c-socket { color: #0aff8a; }
+.c-unique { color: #c73a52; }
+
+/* ── the catalog ──────────────────────────────────────────────────────────
+   The half of the panel people read. Three views behind a sub-nav rather than
+   one long scroll: "which gem goes in my sword" and "what can a mythic axe
+   roll" are different questions, and neither is served by scrolling past the
+   other to reach it. */
+
+.fg-subnav {
+  display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 10px;
+  border-bottom: 2px solid var(--mc-shade);
+}
+.fg-sub {
+  font-family: inherit; font-size: 13px; cursor: pointer;
+  padding: 5px 14px; color: var(--mc-faint);
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.fg-sub:hover { color: var(--mc-text); }
+.fg-sub.active { color: var(--mc-gold); border-bottom-color: var(--mc-gold); }
+
+/* ── the toolbar every view carries ──────────────────────────────────────── */
+
+.fg-toolbar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px;
+  padding: 9px 11px; margin-bottom: 10px;
+  background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+}
+.fg-tool { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fg-tool > span {
+  font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+}
+.fg-tool select, .fg-tool input {
+  font-family: inherit; font-size: 13px; padding: 5px 8px;
+  color: var(--mc-text); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.fg-tool select { cursor: pointer; min-width: 140px; }
+.fg-tool input { min-width: 170px; }
+.fg-tool select option { color: var(--mc-text); background: #16161a; }
+.fg-count {
+  margin-left: auto; align-self: center;
+  font-size: 11px; color: var(--mc-faint);
+}
+.fg-empty { margin: 14px 2px; font-size: 13px; color: var(--mc-faint); }
+
+/* ── gems, as cards ──────────────────────────────────────────────────────── */
+/* The same gesture the boss and player grids use: a wall of slots, and the
+   one being read lifts to the head of the run and opens wide, rather than
+   swelling in place and tearing its own row in two. */
+
+.fg-gems {
+  display: grid; gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+}
+.gcard {
+  position: relative; cursor: pointer; background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tier) 26%, transparent);
+}
+.gcard:hover { background: #2f2f37; }
+.gc-stage {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 78px; padding: 8px 0;
+  background: radial-gradient(62% 58% at 50% 52%,
+    color-mix(in srgb, var(--tier) 26%, transparent) 0%, transparent 72%);
+}
+.gc-stage .fg-icon {
+  width: 44px; height: 44px;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--tier) 55%, transparent));
+}
+.gc-foot {
+  padding: 5px 7px 6px; background: rgba(0,0,0,0.32);
+  border-top: 2px solid var(--mc-shade);
+}
+/* a gem name is two or three words and the tile is narrow, so it gets two
+   lines rather than an ellipsis: every card the same height, nothing clipped */
+.gc-name {
+  font-size: 13px; line-height: 1.2; height: 2.4em; overflow: hidden;
+  color: var(--mc-text);
+}
+/* the tiers this gem can be, as pips: faster to read than "rare-ancient" and
+   already wearing the colours its tooltip will use */
+.gc-band { display: flex; gap: 2px; margin-top: 4px; }
+.gc-pip {
+  flex: 1 1 0; height: 3px; background: rgba(255,255,255,.08);
+}
+.gc-unique {
+  display: block; margin-top: 3px; font-size: 10px; color: #c73a52;
+}
+
+.gcard.open {
+  grid-column: 1 / -1; order: -1; cursor: default;
+  display: grid; gap: 8px 18px;
+  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  padding: 12px 16px 16px;
+  background:
+    radial-gradient(80% 70% at 12% -4%,
+      color-mix(in srgb, var(--tier) 34%, transparent) 0%, transparent 62%),
+    linear-gradient(158deg,
+      color-mix(in srgb, var(--tier) 15%, #191b22) 0%, #15161c 60%, #101116 100%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier) 55%, transparent),
+              0 8px 30px -12px color-mix(in srgb, var(--tier) 70%, transparent);
+}
+.gcard.open .gc-stage { grid-area: 1 / 1; min-height: 120px; }
+.gcard.open .gc-stage .fg-icon { width: 72px; height: 72px; }
+.gcard.open .gc-foot {
+  grid-area: 2 / 1; align-self: start;
+  padding: 0; background: none; border: 0;
+}
+.gcard.open .gc-name {
+  height: auto; font-size: 16px;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--tier) 55%, transparent), 2px 2px 0 #000;
+}
+.gcard.open .gc-body { grid-area: 1 / 2 / 3 / 3; }
+/* the lit strip the open boss card wears, in the gem's own best tier */
+.gcard.open::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--tier) 20%, transparent) 0%, var(--tier) 34%,
+    color-mix(in srgb, var(--tier) 55%, #fff) 50%, var(--tier) 66%,
+    color-mix(in srgb, var(--tier) 20%, transparent) 100%);
+  background-size: 220% 100%;
+  animation: bcard-sweep 2.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .gcard.open::before { animation: none; } }
+
+.gc-facts {
+  display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.09);
+}
+.gc-facts > div { display: flex; gap: 6px; font-size: 12px; }
+.gc-facts i { font-style: normal; color: var(--mc-faint); }
+.gc-facts span { color: var(--mc-dim); }
+
+.gc-block { margin-bottom: 10px; }
+.gc-block h5 {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  margin: 0 0 4px; font-size: 13px; font-weight: normal; color: #ffaa00;
+}
+.gc-block h5 span { font-size: 10.5px; color: var(--mc-faint); }
+.gc-line {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px;
+  font-size: 12.5px; line-height: 1.55; padding: 1px 0;
+}
+.gc-line i { font-style: normal; }
+.gc-line span { color: #ffff55; }
+
+/* ── affixes, as a list ──────────────────────────────────────────────────── */
+/* Was a nine-column table: six tiers across, every cell a value in six-point
+   type and most of them a dash. It answered every question at once and none
+   of them legibly. The toolbar asks which tier you care about, and that tier
+   gets the width the other five were taking. */
+
+.fg-afx-list {
+  display: grid; gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+/* Coloured by the tier it first appears at, not by whether it is a stat or an
+   ability: the kind is a filter you set once, the tier is the reason you would
+   reforge again. */
+.fg-afx {
+  padding: 8px 11px; background: var(--mc-slot);
+  border: 1px solid var(--mc-shade);
+  border-left: 3px solid var(--kind, var(--mc-faint));
+}
+.fg-afx-name {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+  font-size: 14px; line-height: 1.3;
+}
+.fg-afx-name b { font-weight: normal; color: var(--mc-text); }
+.fg-afx-name i { font-style: normal; font-size: 12px; color: var(--mc-faint); }
+.fg-afx-value {
+  margin-top: 3px; font-size: 12.5px; line-height: 1.5; color: var(--kind);
+}
+.fg-afx-fits { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.fg-afx-fits .chip {
+  padding: 1px 6px; font-size: 10px; color: var(--mc-faint);
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+}
+.fg-afx-fits .chip.all { color: var(--mc-dim); }
+/* the tier gate, said in words as well as by the stripe down the side: a
+   colour on its own is not a reading for anyone who cannot separate the six */
+.fg-afx-fits .chip.from {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  border-color: color-mix(in srgb, currentColor 34%, transparent);
+}
+
+/* ── tiers and costs ─────────────────────────────────────────────────────── */
+
+.fg-cat-sec { margin-bottom: 26px; }
+.fg-cat-sec h2 {
+  margin: 0 0 7px; padding: 5px 10px; font-size: 16px; font-weight: normal;
+  color: var(--mc-gold);
+  background: linear-gradient(90deg, rgba(255,210,74,.13), transparent 90%);
+  border-left: 4px solid var(--mc-gold);
+}
+.fg-blurb {
+  margin: 0 0 11px; font-size: 12.5px; line-height: 1.6; max-width: 88ch;
+  color: var(--mc-dim);
+}
+.fg-note {
+  margin: 10px 0 0; font-size: 11.5px; line-height: 1.6; max-width: 88ch;
+  color: var(--mc-faint); font-style: italic;
+}
+
+/* Six tiers, and they are a ladder: wrapping five across left Ancient alone on
+   a second row reading as an afterthought rather than as the top of the climb.
+   Narrow enough to fit all six on a desk, and it still wraps on a phone. */
+.fg-tiers {
+  display: grid; gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+}
+.fg-tier {
+  padding: 8px 10px 9px; background: var(--mc-slot);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tier) 26%, transparent);
+}
+.fg-tier h5 {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 0 0 6px; font-size: 15px; font-weight: normal;
+}
+.fg-tier h5 em {
+  margin-left: auto; font-style: normal; font-size: 11px; color: var(--mc-faint);
+}
+.fg-tier-rolls { display: flex; flex-wrap: wrap; gap: 4px; }
+.fg-tier-rolls span {
+  display: flex; align-items: baseline; gap: 4px;
+  padding: 2px 6px; font-size: 11px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+}
+.fg-tier-rolls b { font-weight: normal; color: var(--mc-text); font-size: 12px; }
+.fg-tier-rolls i { font-style: normal; color: var(--mc-faint); }
+.fg-tier-cost {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 8px; padding-top: 7px; font-size: 12px; color: var(--mc-dim);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.fg-tier-cost > span { display: flex; align-items: center; gap: 4px; }
+.fg-tier-cost i { font-style: normal; }
+.fg-tier-cost .lv { color: var(--mc-xp); }
+
+.fg-cut-list { display: flex; flex-direction: column; gap: 3px; }
+.fg-cut {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 7px 10px; background: var(--mc-slot);
+  border: 1px solid var(--mc-shade);
+}
+.fg-cut-step {
+  display: flex; align-items: baseline; gap: 7px; font-size: 13px; min-width: 190px;
+}
+.fg-cut-step i { font-style: normal; }
+.fg-cut-step em { font-style: normal; color: var(--mc-faint); }
+.fg-cut-cost, .fg-cut-mats {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--mc-dim);
+}
+.fg-cut-cost > span, .fg-cut-mats > span { display: flex; align-items: center; gap: 4px; }
+.fg-cut-mats em { font-style: normal; font-size: 10.5px; color: var(--mc-faint); }
+.fg-cut-cost i, .fg-cut-mats i { font-style: normal; }
+
+/* ── on a narrow screen ──────────────────────────────────────────────────── */
+
+/* the sockets drop under the pair before the table does: they are the shortest
+   column, and the table has a fixed width it cannot give any of back */
+@media (max-width: 1050px) {
+  .fg-body { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* An open gem card puts the icon beside its bonuses, and on a phone that
+   leaves the bonuses no width at all - the same reason the boss card stacks
+   at this width. */
+@media (max-width: 700px) {
+  .gcard.open {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr;
+  }
+  .gcard.open .gc-stage { grid-area: 1 / 1; min-height: 92px; }
+  .gcard.open .gc-foot  { grid-area: 2 / 1; }
+  .gcard.open .gc-body  { grid-area: 3 / 1 / 4 / 2; }
+  .gc-line { grid-template-columns: 66px minmax(0, 1fr); gap: 8px; }
+}
+
+@media (max-width: 620px) {
+  /* the whole toolbar goes to one control a line rather than three squeezed
+     into a row none of them can be read in */
+  .fg-tool { flex: 1 1 100%; }
+  .fg-tool select, .fg-tool input { width: 100%; min-width: 0; box-sizing: border-box; }
+  .fg-count { margin-left: 0; }
+  .fg-gems { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .gc-stage { min-height: 62px; }
+  .gc-stage .fg-icon { width: 36px; height: 36px; }
+  .gc-name { font-size: 12px; }
+  .fg-afx-list { grid-template-columns: minmax(0, 1fr); }
+  .fg-tiers { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .fg-cut-step { min-width: 0; flex: 1 1 100%; }
+}
+
+/* The forge itself, at the width of a phone: one column, and the container
+   texture is the one thing here that cannot reflow, so it is scaled down
+   rather than left to push the page sideways. */
+@media (max-width: 780px) {
+  .fg-body { grid-template-columns: minmax(0, 1fr); }
+  .fg-field { flex: 1 1 100%; }
+  .fg-field select { min-width: 0; width: 100%; }
+  .fg-custom input { width: 100%; box-sizing: border-box; }
+  .fg-custom-nums > .fg-field { flex: 1 1 30%; }
+  .fg-panel { padding: 10px 9px; }
+}
+
+/* 176 game pixels at 2x is 352, and a 375-pixel phone has around 300 of usable
+   width inside the console's own bezel. The container is one fixed-size image
+   with everything positioned inside it, so it cannot reflow - it is scaled from
+   its top-left instead, which carries every blit and slot in it along, and the
+   space the transform no longer occupies is taken back off the bottom so
+   nothing below floats. */
+@media (max-width: 460px) {
+  .fg-make { --fg-shrink: .84; }
+  .fg-gui {
+    transform: scale(var(--fg-shrink)); transform-origin: top left;
+    margin-bottom: calc((var(--fg-shrink) - 1) * 160px);
+  }
+  .fg-tabs .fg-tab, .fg-sub { padding: 5px 11px; font-size: 12px; }
+  .fg-cat-sec h2 { font-size: 15px; }
+}
+@media (max-width: 390px) { .fg-make { --fg-shrink: .74; } }
+@media (max-width: 350px) { .fg-make { --fg-shrink: .66; } }

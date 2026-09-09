@@ -211,7 +211,25 @@ def portal(request):
         'live_json': json.dumps(board) if board else 'null',
         'map_url':  LIVE_MAP + LIVE_MAP_VIEW if live and LIVE_MAP else None,
         'map_home': LIVE_MAP,
+        'forge_stamp': _forge_stamp(),
     })
+
+
+def _forge_stamp():
+    """The mtime of the forge's data file, for the section to bust its cache on.
+
+    That json is fetched by script rather than named in the markup, so it never
+    picks up the ?t=timestamp every other asset here carries. It is a static
+    file that wants caching hard, and a re-extract served out of a browser
+    cache holding the old one is how a changed reforging cost silently does not
+    change - so it goes out stamped with its own mtime, which caches until the
+    extractor next runs and no longer.
+    """
+    try:
+        return int(os.path.getmtime(
+            os.path.join(MINECRAFT_ROOT, 'apotheosis', 'data.json')))
+    except OSError:
+        return 0
 
 
 def _board(key):

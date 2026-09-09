@@ -8,6 +8,7 @@
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
 <link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% static 'css/forge.css' %}?t={% now 'U' %}">
 <link rel="stylesheet" href="{% static 'css/guide.css' %}?t={% now 'U' %}">
 </head>
 <body>
@@ -118,6 +119,36 @@
             </button>
           </div>
 
+          <!-- The tree's sibling: the other thing on this page you make
+               something with rather than read, so it gets the same frame and
+               the same sweep in a colour of its own, and opens in place the
+               same way. Shut, it has fetched nothing - the forge's data file
+               is a hundred kilobytes of affix curves and gem tables, which is
+               a lot to spend on everyone who came for the screenshots. -->
+          <div class="ls-plan-wrap fg-wrap" id="fg-wrap">
+            <button class="sk-open-btn fg-open" onclick="forgeOpen()">
+              <span class="sk-open-glow" aria-hidden="true"></span>
+              <span class="fg-open-stack">
+                <span class="sk-open-title">APOTHIC FORGE</span>
+                <span class="fg-open-sub">reforging &amp; gem socketing</span>
+              </span>
+            </button>
+            <div class="fg-panel" id="sec-forge"
+                 data-root="{% static 'minecraft/apotheosis/' %}"
+                 data-stamp="{{ forge_stamp }}">
+              <div class="sk-plan-head">
+                <span class="sk-plan-title">APOTHIC FORGE</span>
+                <em>reforging &amp; gem socketing</em>
+                <button type="button" class="sk-close" onclick="forgeShut()"
+                        aria-label="Close the forge">CLOSE</button>
+              </div>
+              <div class="fg-stage" id="fg-stage">
+                <p class="fg-loading">Reading the pack's data files…</p>
+              </div>
+            </div>
+          </div>
+
+
           <div class="ls-bar boss">
             <span class="lb-t">Bosses</span>
             <button class="ls-btn sm" data-sec="sec-bosses" onclick="toggleSection('sec-bosses')">Hide</button>
@@ -150,6 +181,7 @@
           <div class="ls-sec" id="sec-fish">
             <div class="ls-fish" id="ls-fish"></div>
           </div>
+
 
         </div>
         {% endif %}
@@ -354,7 +386,10 @@ const SEASONS = [
   {% endfor %}
 ];
 </script>
+<div class="fg-tip" id="fg-tip" hidden></div>
+
 <script type="module" src="{% static 'scripts/mcmodel.js' %}?t={% now 'U' %}"></script>
 <script src="{% static 'scripts/minecraft.js' %}?t={% now 'U' %}"></script>
+<script src="{% static 'scripts/forge.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>

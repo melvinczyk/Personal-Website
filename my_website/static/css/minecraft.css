@@ -2701,7 +2701,7 @@ body::after { display: none; }
    or a stone plate, because everything else is a record of what happened; this
    is the one place you make something up, so it gets the tree's own violet and
    a corner-cut frame nothing else on the page wears. */
-.sk-open-btn, .ls-plan {
+.sk-open-btn, .ls-plan, .fg-panel {
   --ink: #8f9bf0;
   position: relative;
   background:
@@ -2714,7 +2714,7 @@ body::after { display: none; }
   border: 0;
 }
 /* the frame, drawn inside the cut corners rather than as a border */
-.sk-open-btn::before, .ls-plan::before {
+.sk-open-btn::before, .ls-plan::before, .fg-panel::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
   clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px,
@@ -2761,6 +2761,33 @@ body::after { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .sk-open-btn::after { animation: none; opacity: 0; }
 }
+/* The forge's entry, sharing the tree's frame and its sweep so the two read
+   as a pair, and taking Apotheosis' own rarity ladder for its colour rather
+   than inventing one: the title runs grey-green-blue-purple-orange the way an
+   item climbs from Common to Mythic, ending on the Ancient tier's warm white. */
+.fg-wrap { --ink: #ff9d2e; }
+.fg-open { display: flex; }
+.fg-open:hover { --ink: #ffc46f; }
+.fg-open-stack {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.fg-open .sk-open-title {
+  font-size: 26px; letter-spacing: 6px;
+  background: linear-gradient(95deg, #b6b6b6 0%, #33ff33 20%, #5555ff 40%,
+    #bb00bb 60%, #ed7014 80%, #fff6d8 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  /* the glow is drawn behind the clipped text rather than as a shadow on it:
+     a text-shadow under a transparent fill paints over the gradient */
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ink) 60%, transparent))
+          drop-shadow(2px 2px 0 #000);
+}
+.fg-open-sub {
+  font-size: 11px; letter-spacing: 2px; color: var(--mc-dim);
+  text-shadow: 1px 1px #000;
+}
+
 .sk-open-btn:hover { --ink: #c3caff; }
 .sk-open-btn:hover .sk-open-glow { opacity: .85; }
 
