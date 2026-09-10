@@ -1400,64 +1400,62 @@ def fish(season_path, faces=None):
 
 
 def _server_up(age, checked, mapped=None):
-    """Is the game server up? Two states, ONLINE or OFFLINE - nothing in
-    between makes it to the page.
+    """Is the game server up? The live map decides.
 
-    Two witnesses, and either one on its own is enough to say it is up:
+    BlueMap runs *inside* the server and its live endpoint is generated per
+    request out of the running player list - no cache, no Last-Modified,
+    nothing on disk that outlives the process. If it answers, there is a
+    server answering; if it stops, there is not. That is as direct a reading
+    of "is the server up" as anything available from outside the machine, so
+    it is the verdict. See puller.probe_map, which asks, and
+    puller.refresh_map, which is what keeps asking.
 
-      * `age`, how old the export is. The server rewrites it about once a
-        minute, so a fresh export is a server that is up, plainly.
-      * `mapped`, how long ago the live map last answered. BlueMap runs
-        inside the server, and its live endpoint is generated per request out
-        of the running player list - so an answer from it is the server
-        itself answering. See puller.probe_map.
+    The export's freshness does not vote. It is written by a mod, and a mod
+    can stop while the server carries on - it did, and the board spent an hour
+    and a half insisting a server people were playing on was OFFLINE. `age`
+    is still carried, because how far behind the export is belongs next to the
+    badge, and it is still the clock "down for how long" counts from.
 
-    The map is here because the export alone has a failure mode that looks
-    exactly like a dead server and is not one: the mod that writes the export
-    can stop while the server carries on. It did - an export an hour and a
-    half stale, its tps reading zero, on a server people were playing on, and
-    every number the board had said OFFLINE about it.
+    But it is the fallback, and it has to be, because the badge is the first
+    thing anybody looks at and a blank one is worse than a slightly stale one.
+    Making the map the sole witness quietly meant "no probe has ever landed"
+    produced no badge at all - which is what a checkout that has not synced,
+    or one whose probe thread has not run yet, looks like. So:
 
-    With both witnesses silent there is still the question of what a stale
-    export means, because there are two reasons for one and they do not mean
-    the same thing:
-
-      * we checked recently and the server had nothing new to say - that is
-        the server actually down.
-      * our own sync has gone quiet - the worker died, or nobody has had the
-        page open to trigger a pull - and a stale export is all that is left
-        lying around from whenever it last ran. A server sitting there fine
-        looks exactly like a dead one on that reading alone.
-
-    Only the first is grounds to call it OFFLINE. The second defaults to
-    ONLINE rather than a third state on the page: a wrong ONLINE corrects
-    itself the moment anybody looks again, where a wrong OFFLINE is the thing
-    that was actually reported - the badge insisting a server was down while
-    it plainly was not, because the read it was going on was ours, not the
-    server's.
+      * the map answered inside MAP_WINDOW - ONLINE. Whatever the export says.
+      * the map did not, and we asked recently enough for that silence to be
+        the server's rather than ours - OFFLINE. Again whatever the export
+        says: a fresh export and a dead map is the mod still running through
+        a server that is going down, and the map is the one to believe.
+      * we have never managed to ask, or have not asked in a long time - fall
+        back to the export, so the badge still says something. This is the
+        only branch the export decides, and it is the branch where we have
+        nothing better.
+      * and nothing at all, ever, from either - no badge, because there is
+        genuinely nothing to report and an unconfigured checkout should not
+        accuse a server it has never looked at.
     """
-    # nothing to go on at all: no export ever fetched and no map ever asked
-    if age is None and mapped is None:
-        return {'online': None, 'lag': None, 'mapped': None, 'down': None}
-    seen  = mapped is not None and mapped < MAP_WINDOW
-    fresh = age is not None and age < SERVER_WINDOW
-    # neither witness speaks for it, and we looked recently enough to trust
-    # that silence: down, in fact. Looked a while ago and it is not grounds
-    # to say so, so it reads online until a fresher check says otherwise.
-    confirmed_down = (not fresh and not seen
-                      and checked is not None and checked < CHECK_WINDOW)
-    up = not confirmed_down
-    return {
-        'online': up,
-        'lag': age,
-        # how long since the map last answered, so the page can say which
-        # witness it is going on when the two disagree
-        'mapped': mapped,
-        # how long it has been dark, counted from the last thing it wrote.
-        # None while it reads up, so the page has nothing to draw rather than
-        # a zero that looks like a reading
-        'down': age if confirmed_down else None,
-    }
+    seen = mapped is not None and mapped < MAP_WINDOW
+    if seen:
+        return {'online': True, 'lag': age, 'mapped': mapped, 'down': None}
+
+    # did we ask recently enough for the map's silence to mean anything?
+    asked = mapped is not None and mapped < CHECK_WINDOW
+    looked = checked is not None and checked < CHECK_WINDOW
+    if asked or looked:
+        return {'online': False, 'lag': age, 'mapped': mapped, 'down': age}
+
+    # nothing from the map worth standing on: fall back to the export
+    if age is not None:
+        fresh = age < SERVER_WINDOW
+        return {
+            'online': fresh,
+            'lag': age,
+            'mapped': mapped,
+            'down': None if fresh else age,
+        }
+
+    return {'online': None, 'lag': None, 'mapped': mapped, 'down': None}
 
 
 def board(season_path):

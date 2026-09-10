@@ -2321,9 +2321,11 @@
   };
 
   window.forgeShut = function () {
-    wrap.classList.remove('on');
     hideTip();
-    wrap.scrollIntoView({ block: 'nearest' });
+    // the shared close, so the forge goes out the same way the tree and the
+    // enchanting panel do rather than blinking out on its own
+    if (window.workshopShut) window.workshopShut(wrap);
+    else { wrap.classList.remove('on'); wrap.scrollIntoView({ block: 'nearest' }); }
   };
 
   function load() {

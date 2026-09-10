@@ -4958,13 +4958,41 @@ function planOpen() {
 function planShut() {
   const wrap = document.getElementById('sk-wrap');
   if (!wrap) return;
-  wrap.classList.remove('on');
   // the tree is fourteen hundred elements; closing should actually put them
-  // down rather than only hide them
-  const host = document.getElementById('ls-plan');
-  if (host) host.innerHTML = '';
-  wrap.scrollIntoView({ block: 'nearest' });
+  // down rather than only hide them - but not until the panel has finished
+  // going, or it empties itself in front of you on the way out
+  workshopShut(wrap, () => {
+    const host = document.getElementById('ls-plan');
+    if (host) host.innerHTML = '';
+  });
 }
+
+/* Shutting a workshop panel, for all three of them.
+
+   Taking .on off is what closes a panel, and it closes it on the same frame -
+   display:none, gone, nothing to animate. So the wrapper gets .shutting first,
+   which the stylesheet uses to hold the panel visible while it plays out, and
+   .on comes off only once that has finished. Anything the caller wants torn
+   down happens at the same moment.
+
+   The timer is a fallback rather than the mechanism: animationend is what
+   normally fires, but a panel with animations disabled - reduced motion, a
+   browser that skips them for a hidden tab - would never send one, and a door
+   that never comes back is worse than one that comes back abruptly. */
+function workshopShut(wrap, done) {
+  if (!wrap || wrap.classList.contains('shutting')) return;
+  const finish = () => {
+    if (!wrap.classList.contains('shutting')) return;
+    wrap.classList.remove('shutting', 'on');
+    if (done) done();
+    wrap.scrollIntoView({ block: 'nearest' });
+  };
+  const panel = wrap.querySelector('.ls-plan, .fg-panel, .en-panel');
+  wrap.classList.add('shutting');
+  if (panel) panel.addEventListener('animationend', finish, { once: true });
+  setTimeout(finish, 320);
+}
+window.workshopShut = workshopShut;
 
 // A player, as a thing you press. "load melvin0czyk" told you nothing about
 // what you were about to load - these carry the face the rest of the board

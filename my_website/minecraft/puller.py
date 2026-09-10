@@ -220,6 +220,10 @@ def probe_map(dest_dir, timeout=MAP_TIMEOUT):
     except Exception:                            # noqa: BLE001 - see docstring
         return False
     try:
+        # the folder is normally there because the sync made it; on a checkout
+        # that has never synced it is not, and the probe is now the one thing
+        # that still works there - so it makes its own place to write to
+        os.makedirs(dest_dir, exist_ok=True)
         open(os.path.join(dest_dir, MAP_STAMP), 'w').close()
     except OSError:
         pass                                     # a stamp is a nicety, never a fault
@@ -272,9 +276,6 @@ def _pull(season):
             history.sample(dest_for(season))
         except Exception:                    # noqa: BLE001 - never fail a pull
             pass
-        # and ask the map, which answers for the server itself rather than for
-        # the mod that writes the export - see probe_map
-        probe_map(dest_for(season))
         _mark('ok', f'{got} fetched, {same} unchanged', fetched=got)
     except sync.ConfigError as exc:
         # An unconfigured checkout is the ordinary case, not a fault: say so
@@ -312,9 +313,65 @@ def _report(running):
                 ago=(time.time() - _last['at']) if _last['at'] else None)
 
 
+# How often the map is asked, when nothing else is asking it. The board is
+# polled about once a minute by every open tab, so this is the throttle that
+# turns "every poll" into "every couple of minutes" - the same cadence the
+# file sync probes at, and three of these fit inside MAP_WINDOW.
+MAP_INTERVAL = 120
+
+_map_lock = threading.Lock()
+_map_busy = False
+_map_at   = 0.0
+
+
+def refresh_map(season):
+    """Ask the map whether the server is there, if it is time to ask again.
+
+    Its own job, on its own clock, deliberately.
+
+    It used to be the last line of a successful file pull, and that was fine
+    while the badge had two witnesses and only needed one of them. It is not
+    fine now that the map is the whole of the verdict, because of when a pull
+    stops succeeding: an unconfigured checkout, wrong credentials, an SFTP
+    gateway having a bad afternoon - every one of those skipped the probe
+    entirely, and the moment you most want to know whether the server is up is
+    exactly the moment the file sync has stopped working.
+
+    So the probe no longer rides along with anything. It answers about the
+    game server; the sync answers about a file gateway; they fail for
+    different reasons and they are asked separately.
+
+    Returns at once, always - the probe runs on its own thread, and the board
+    is drawn from whatever is on disk.
+    """
+    global _map_busy, _map_at
+    if not web_pull_allowed():
+        return
+    with _map_lock:
+        if _map_busy or time.time() - _map_at < MAP_INTERVAL:
+            return
+        _map_busy = True
+        _map_at = time.time()
+    threading.Thread(target=_map_probe, args=(season,), daemon=True).start()
+
+
+def _map_probe(season):
+    global _map_busy
+    try:
+        probe_map(dest_for(season))
+    except Exception:                        # noqa: BLE001 - never fail a poll
+        pass                                 # probe_map does not raise anyway
+    finally:
+        with _map_lock:
+            _map_busy = False
+
+
 def refresh(season, force=False):
     """Ask for a pull. Returns at once, whether or not one was started."""
     global _running
+    # The map is asked whatever the sync is doing, and before the sync's own
+    # throttle can return early - see refresh_map.
+    refresh_map(season)
     if not web_pull_allowed():
         return dict(SCHEDULED)
     with _lock:

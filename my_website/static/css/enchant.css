@@ -14,13 +14,38 @@
   font-family: 'Minecraft', 'MGS1 Codec', monospace;
   --en-ink: #a855f7;
   --en-lit: #d8b4fe;
-  /* one colour per stat, used everywhere the stat appears so a reading is the
-     same colour in the meter, on a shelf card and in a recipe's requirement */
-  --st-e: #7fd6ff;      /* eterna - the level ceiling */
-  --st-q: #ffb454;      /* quanta - variance, and therefore risk */
-  --st-a: #c88bff;      /* arcana - rarity */
-  --st-r: #6fe0a0;      /* rectification - the safety net */
+  /* One colour per stat, used everywhere the stat appears - in the gauge, on
+     a palette chip, on an infusion's requirement - so a reading is the same
+     colour wherever you meet it.
+
+     These are the mod's own three where the mod has one: Apotheosis draws
+     its Eterna bar in #3ec13e, its Quanta bar in #c14040 and its Arcana bar
+     in #a445c4, and matching them means the page and the game agree about
+     what green means. Rectification and Clues have no bar in game, so they
+     take the two that were left and read cleanly beside the others.
+
+     Each stat has two tokens rather than one. --st-* is the *ink*: the
+     number, the label, the chip, and it has to clear the dark panel behind
+     it, so the darker mod colours are lifted where they had to be. --sb-* is
+     the *bar*, which sits on its own dark track and can be the true colour,
+     or a gradient. Arcana is the one where the difference matters - a dark
+     purple bar is exactly right and dark purple text on #14161f is not. */
+  --st-e: #4cd34c;      /* eterna - the level ceiling */
+  --st-q: #e2564f;      /* quanta - variance, and therefore risk */
+  --st-a: #b57bee;      /* arcana - rarity */
+  --st-r: #f5c518;      /* rectification - the safety net */
   --st-c: #ffe27a;      /* clues - what you get to see */
+
+  --sb-e: linear-gradient(90deg, #2f9c3a, #3ec13e 60%, #7ef07e);
+  --sb-q: linear-gradient(90deg, #9b2f2f, #c14040 60%, #ef6b63);
+  --sb-a: linear-gradient(90deg, #4c1d95, #7c3aed 65%, #a445c4);
+  --sb-r: linear-gradient(90deg, #b08900, #f5c518 60%, #ffe680);
+  /* clues is the odd one on purpose: the other four are quantities pushing
+     at a ceiling, clues is how much of the answer you are shown before you
+     pay for it, which is a different kind of thing. The spectrum is also
+     what the game itself puts on writing you cannot read yet. */
+  --sb-c: linear-gradient(90deg, #ff4d4d, #ffa534 18%, #ffe74d 34%,
+                          #4dff88 52%, #4dd2ff 68%, #8b6cff 84%, #ff6cf0);
 }
 /* The panel is as wide as the page; its content is not. Left-locked, a build
    and a window sat in the corner of a very wide box with nothing beside them.
@@ -69,29 +94,6 @@
    The camera does not move. This is a diagram you read, not a scene you fly
    around, and a fixed angle keeps every build comparable with every other. */
 
-.en-top {
-  display: grid; gap: 12px; align-items: start; margin-bottom: 10px;
-  grid-template-columns: minmax(0, 1fr) 352px;
-}
-.en-stage-box {
-  padding: 10px; box-sizing: border-box; min-width: 0;
-  background:
-    radial-gradient(80% 70% at 50% 30%,
-      color-mix(in srgb, var(--en-ink) 14%, transparent), transparent 72%),
-    #0d1119;
-  border: 2px solid var(--mc-shade);
-  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
-}
-.en-iso {
-  position: relative; height: 400px; overflow: hidden;
-  perspective: none;
-}
-.en-iso-world {
-  position: absolute; left: 50%; top: 58%;
-  transform-style: preserve-3d;
-  /* the fixed camera, and the only place the angle is set */
-  transform: rotateX(60deg) rotateZ(-45deg);
-}
 .en-cube {
   position: absolute; transform-style: preserve-3d;
   /* --half is set from script alongside the cube's size, so the face offsets
@@ -129,6 +131,17 @@
 .en-cube .w-n, .en-cube .w-w { filter: brightness(.8); }
 .en-cube .w-s, .en-cube .w-e { filter: brightness(.95); }
 
+/* The book above the table in the build. Billboarded back out of the world's
+   own rotation so it faces the camera square-on, the way an entity model
+   would. */
+.en-iso-book {
+  position: absolute; width: 30px; height: 30px;
+  margin-left: -15px; margin-top: -15px;
+  background-size: 100% 100%; image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(200, 160, 255, .55));
+}
+
 /* an empty socket is a wire box you can put something in, not a block */
 .en-cube.ghost .f {
   background-image: none !important;
@@ -162,46 +175,100 @@
    one decision; the palette lives beside the build instead, so picking and
    placing are one glance apart. */
 
-/* One centred column, not a build pinned left with a palette pinned right.
-   The console this panel lives in is about six hundred pixels wide whatever
-   the browser is, and splitting that into a main column and a sidebar left
-   the build in three hundred of them, hard against the left edge. Everything
-   stacks and centres now, and the palette is a strip under the build rather
-   than a column beside it. */
-.en-work { display: block; margin-bottom: 10px; }
-.en-main { min-width: 0; }
+/* The build, and the things you build with.
+
+   Once upon a time this was two columns, and it was wrong: the panel was
+   about six hundred pixels wide whatever the browser was, so a main column
+   and a sidebar left the build in three hundred of them. Then it was one
+   column, and that was wrong the other way - the build got a letterbox and
+   the palette got a scroll bar, because the two things that most wanted room
+   were sharing one.
+
+   It is two columns again, but only where there are actually two columns'
+   worth of room, and the build no longer has a fixed size to be squeezed out
+   of: its camera fits itself to whatever the grid leaves it. Under 860 the
+   two stack, which is what a phone wants anyway. */
+.en-work { margin-bottom: 10px; }
+/* the handle hangs under the stage, outside the stage's own overflow so it
+   cannot be clipped by it */
+.en-main { position: relative; min-width: 0; }
 
 /* the five readings, across the top of the build they come from */
 .en-statbar {
   display: grid; gap: 4px; margin-bottom: 8px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
+/* A reading, as a gauge rather than a coloured box.
+
+   These used to be five slot-grey blocks each with a bar of colour rammed
+   down its left edge, which made the colour a label on a box instead of the
+   reading itself. The box is gone - a hairline and a dark ground - and what
+   is left is the shape of the thing: a name, a value against its ceiling, and
+   a track that fills. The colour is now on the part that moves. */
 .en-pill {
   --lit: var(--mc-dim);
-  padding: 6px 9px 7px; min-width: 0;
-  background: var(--mc-slot);
-  border: 1px solid var(--mc-shade);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lit) 75%, transparent);
+  --bar: var(--mc-dim);
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 8px 10px 9px; min-width: 0;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--lit) 7%, transparent), transparent 62%),
+    #12151d;
+  border: 1px solid color-mix(in srgb, var(--lit) 22%, transparent);
+  transition: border-color .25s ease, background .25s ease;
 }
-.en-pill.e { --lit: var(--st-e); }
-.en-pill.q { --lit: var(--st-q); }
-.en-pill.a { --lit: var(--st-a); }
-.en-pill.r { --lit: var(--st-r); }
-.en-pill.c { --lit: var(--st-c); }
+.en-pill:hover { border-color: color-mix(in srgb, var(--lit) 45%, transparent); }
+.en-pill.e { --lit: var(--st-e); --bar: var(--sb-e); }
+.en-pill.q { --lit: var(--st-q); --bar: var(--sb-q); }
+.en-pill.a { --lit: var(--st-a); --bar: var(--sb-a); }
+.en-pill.r { --lit: var(--st-r); --bar: var(--sb-r); }
+.en-pill.c { --lit: var(--st-c); --bar: var(--sb-c); }
+
 .en-pill-top { display: flex; align-items: baseline; gap: 6px; }
 .en-pill-top i {
-  font-style: normal; font-size: 10px; letter-spacing: .06em; color: var(--mc-faint);
+  font-style: normal; font-size: 9.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mc-faint);
 }
-.en-pill-top b {
-  margin-left: auto; font-weight: 600; font-size: 18px; color: var(--lit);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--lit) 40%, transparent);
+/* the value, and the ceiling it is measured against - the second one small
+   and quiet, because "50" means nothing until you know it is out of fifty */
+.en-pill-read { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+.en-pill-read b {
+  font-weight: 600; font-size: 22px; line-height: 1; color: var(--lit);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--lit) 45%, transparent);
 }
-.en-pill-note {
-  display: block; margin-top: 4px; font-size: 10px; color: var(--mc-faint);
+.en-pill-read em {
+  font-style: normal; font-size: 9.5px; color: var(--mc-faint);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+/* the track: sunk into the panel, with the colour only on what has filled */
+.en-gauge {
+  position: relative; height: 7px; overflow: hidden;
+  background: #05070b;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, .8), inset 0 -1px 0 rgba(255, 255, 255, .05);
+}
+.en-gauge span {
+  display: block; width: 0; height: 100%;
+  background: var(--bar);
+  box-shadow: 0 0 10px -1px color-mix(in srgb, var(--lit) 70%, transparent);
+  transition: width .5s cubic-bezier(.2, .8, .3, 1);
+}
+/* rectification is the one stat that goes below zero, and a negative one is
+   actively working against you - it gets the heart red and no glow, so it
+   cannot be mistaken for progress */
+.en-gauge span.neg { background: var(--mc-heart); box-shadow: none; }
+
+.en-pill-note {
+  font-size: 10px; color: var(--mc-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .en-gauge span { transition: none; }
+}
+
 .en-stage-box {
+  position: relative; overflow: hidden;
   padding: 0; box-sizing: border-box; min-width: 0;
   /* Not near-black. The enchanting table's sides are luma 37 and obsidian is
      14; against a background of 15 they disappeared entirely and the table's
@@ -222,22 +289,78 @@
    300 across at this cube size and the box was 330 tall with the ring sitting
    in the middle of it, so most of what you were looking at was empty sky. The
    scale pushes the build out to the edges of its own box instead. */
+/* The camera's frame.
+
+   A fixed 286 pixels was the whole of "too zoomed in": the build was scaled
+   by a constant measured against that number, so any width other than the one
+   it was measured at cropped it. The frame is a ratio now and the scale is
+   computed from it every time it changes - see isoStage's fit - so the build
+   is always the whole build, as large as the frame can show it.
+
+   touch-action is none rather than manipulation because the stage is painted
+   by dragging: with manipulation the browser claims a vertical drag as a page
+   scroll and the stroke dies on its second socket. */
 .en-iso {
-  position: relative; height: 286px; overflow: hidden;
-  touch-action: manipulation;
+  position: relative; overflow: hidden;
+  /* Height, not a ratio.
+
+     This was `aspect-ratio: 16/10` with a max-height, and the pair of them
+     is a trap: when the ratio would make the box taller than the cap, Chrome
+     honours the cap by shrinking the *width* to keep the ratio - so a 966
+     wide stage box got a 736 wide render area sitting against its left edge,
+     with two hundred and thirty pixels of nothing to the right of it. That
+     is what "the render is more to the left" actually was, and no amount of
+     centring inside the frame could fix it, because the frame was the thing
+     off-centre.
+
+     There is no reason to pin the ratio anyway. The camera measures the box
+     and fits the build to it, so the box is free to be whatever width the
+     panel has and whatever height reads well - which is what this is. */
+  width: 100%; box-sizing: border-box;
+  height: clamp(300px, 52vh, 540px);
+  touch-action: none; cursor: crosshair;
+  user-select: none; -webkit-user-select: none;
 }
 .en-iso-world {
-  /* dead centre of the box, both ways. It sat at 58% down, which put the
-     build's feet sixteen pixels through the floor of its own frame and left
-     thirty spare above it. */
+  /* dead centre of the box, with the script shifting the build's own measured
+     centre onto it - the ring is not symmetric about the origin once a
+     doorway is left out of it, so centring the origin is not the same thing
+     as centring the build. */
   position: absolute; left: 50%; top: 50%;
   transform-style: preserve-3d;
-  /* scale3d, not scale. A plain scale() is scale3d(k, k, 1) - it stretches
-     the footprint and leaves Z alone, so every block keeps its height while
-     its base grows and the whole build renders as flattened slabs. That is
-     what "the geometry is wrong" was: the cubes were not cubes. */
-  transform: rotateX(60deg) rotateZ(-45deg) scale3d(1.24, 1.24, 1.24);
+  /* the transform is set from script: a screen-space translate to centre the
+     measured bounds, then the camera, then scale3d. scale3d and not scale -
+     a plain scale() is scale3d(k, k, 1), which stretches the footprint and
+     leaves Z alone, so every block keeps its height while its base grows and
+     the build renders as flattened slabs. */
+  transform: rotateX(60deg) rotateZ(-45deg);
+  transition: transform .28s cubic-bezier(.2, .8, .3, 1);
 }
+@media (prefers-reduced-motion: reduce) {
+  .en-iso-world { transition: none; }
+}
+
+/* A socket you cannot use, because the doorway is where you walk in. Drawn,
+   because a gap you can see is the point of it, but drawn as a hole. */
+.en-cube.en-blocked { opacity: .1; pointer-events: none; }
+.en-cube.en-blocked .f { filter: grayscale(1) brightness(.5); }
+/* a layer that is not the one being worked on: still there, still counted,
+   just out of the way and out of the click path */
+.en-cube.en-dim { opacity: .28; pointer-events: none; }
+.en-cube { transition: opacity .2s ease; }
+
+/* A face the game animates - the Blazing Hellshelf's sides, and nothing else
+   in this pack. The png is a baked filmstrip several hundred pixels tall, so
+   it is scaled to frames x 100% and stepped a frame at a time. Without this
+   the whole strip was squashed into one square, which is what the shelf's
+   sides were doing: twenty-one frames of fire compressed into sixteen pixels
+   of noise. */
+.en-cube .f.anim {
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  animation: en-film var(--dur, 1s) steps(var(--steps), jump-none) infinite;
+}
+@media (prefers-reduced-motion: reduce) { .en-cube .f.anim { animation: none; } }
 
 /* The small controls the side window is built from. These used to live in a
    toolbar above the build; the toolbar is gone and they came with it, so they
@@ -269,6 +392,10 @@
   border: 1px solid color-mix(in srgb, var(--lit) 30%, transparent);
 }
 .st.e   { --lit: var(--st-e); }
+/* clues has no flat colour to tint a chip with, so the chip borrows the
+   spectrum for its text and keeps a neutral ground */
+.st.c   { background: none; border-color: rgba(255, 255, 255, .16); }
+.st.c::first-letter { color: #ff6cf0; }
 .st.q   { --lit: var(--st-q); }
 .st.a   { --lit: var(--st-a); }
 .st.r   { --lit: var(--st-r); }
@@ -289,70 +416,190 @@
 }
 .en-meter span.neg { background: var(--mc-heart); box-shadow: none; }
 
-/* ── the side window ──────────────────────────────────────────────────────── */
+/* ── the tools, and the blocks ─────────────────────────────────────────────
+   A column of small rows, each one labelled, then the palette under them.
+   This was a single flex box that put presets, a mode switch, two form
+   fields and a thirty-one row scroll list in one undifferentiated heap, and
+   the thing you used most - the block list - was the thing given a 188px
+   letterbox to live in. */
 
+/* The build tools, as a drawer over the build.
+
+   They used to be a fixed three-hundred-pixel column beside it, which took
+   that width off the panel for as long as the panel was open whether you
+   were using them or not - and which is why the render read as sitting left.
+   Over the build, the stage gets the whole panel and the camera centres in
+   whatever the drawer is not covering.
+
+   Down the right on a desk. On a phone it is a sheet that comes up from the
+   bottom instead, because a 300px rail on a 375px screen is the whole screen
+   - see the mobile block further down, which re-anchors it without changing
+   anything about what is in it. Everything is reachable in both. */
 .en-side {
-  display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; margin-top: 8px;
-  padding: 9px; box-sizing: border-box;
-  background: var(--mc-slot);
-  border: 2px solid var(--mc-lit);
-  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+  position: absolute; z-index: 6; top: 0; right: 0; bottom: 0;
+  width: min(292px, 82%);
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px; box-sizing: border-box;
+  overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background: color-mix(in srgb, var(--mc-slot) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-left: 2px solid color-mix(in srgb, var(--en-ink) 55%, transparent);
+  box-shadow: -14px 0 30px -18px #000;
+  transform: translateX(100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .3s cubic-bezier(.2, .8, .3, 1), opacity .3s ease,
+              visibility 0s linear .3s;
 }
-.en-side > .en-presets, .en-side > .en-modes { flex: 0 0 auto; }
-.en-side .en-field { flex: 1 1 108px; }
-.en-side .en-field select, .en-side .en-field input {
-  font-family: inherit; font-size: 12px; padding: 4px 6px; width: 100%;
-  box-sizing: border-box;
-  color: var(--mc-text); background: var(--mc-panel);
-  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+.en-side.on {
+  transform: none; opacity: 1; visibility: visible;
+  transition: transform .3s cubic-bezier(.2, .8, .3, 1), opacity .25s ease,
+              visibility 0s;
 }
-.en-side .en-field input:disabled { color: var(--mc-faint); }
-.en-side .en-presets { gap: 4px; }
-.en-side .en-preset { padding: 3px 8px; font-size: 11px; }
+@media (prefers-reduced-motion: reduce) {
+  .en-side, .en-side.on { transition: none; }
+}
 
-/* place or remove, because a phone has no shift key */
-.en-modes { display: flex; gap: 3px; }
-.en-mode {
-  flex: 1 1 0; font: inherit; font-size: 12px; cursor: pointer; padding: 5px 8px;
+/* the way out from inside the drawer - on a phone the handle is behind the
+   sheet, so there has to be one here */
+.en-tools-shut {
+  position: absolute; top: 5px; right: 6px; z-index: 2;
+  width: 26px; height: 26px; padding: 0; line-height: 1;
+  font: inherit; font-size: 16px; cursor: pointer;
   color: var(--mc-dim); background: var(--mc-panel);
-  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  border: 1px solid var(--mc-shade);
   transition: color .15s ease, background .15s ease;
 }
-.en-mode.sm { font-size: 11px; padding: 4px 6px; }
-.en-mode.on {
-  color: #0c1118; background: var(--en-lit); border-color: var(--en-ink);
+.en-tools-shut:hover { color: #ffb3b3; background: #34222a; }
+
+/* The handle. It carries the block a click is about to place, because that
+   is the one thing worth knowing while the drawer is shut. */
+.en-tools-btn {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  margin-top: 6px; padding: 7px 10px; box-sizing: border-box;
+  font: inherit; font-size: 12px; cursor: pointer; text-align: left;
+  color: var(--mc-dim); background: var(--mc-slot);
+  border: 2px solid var(--mc-lit);
+  border-right-color: var(--mc-shade); border-bottom-color: var(--mc-shade);
+  transition: color .15s ease, background .15s ease, box-shadow .2s ease;
+}
+.en-tools-btn:hover { color: var(--en-lit); background: #262b35; }
+.en-tools-btn.on {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--en-ink) 55%, transparent);
+}
+.en-tools-btn b { font-weight: normal; color: var(--mc-text); }
+.en-tools-btn i {
+  margin-left: auto; font-style: normal; font-size: 11px; color: var(--en-lit);
+}
+.en-tools-btn i::after { content: ' \25b8'; }
+.en-tools-btn.on i::after { content: ' \25be'; }
+.en-side-lbl {
+  flex: 0 0 100%; font-size: 10px; letter-spacing: .08em; color: var(--mc-faint);
+}
+.en-toolrow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
 }
 
-/* the brushes, as a list you scroll inside rather than a grid you scroll past */
-.en-brushes {
-  display: grid; gap: 2px; flex: 1 1 100%;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  max-height: 188px; overflow-y: auto; overscroll-behavior: contain;
-  padding-right: 2px;
-}
-.en-brush {
-  display: flex; align-items: center; gap: 7px; text-align: left;
-  font: inherit; cursor: pointer; padding: 4px 6px;
+/* a run of buttons that pick one of a set */
+.en-segs { display: flex; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.en-seg {
+  flex: 1 1 0; min-width: 0; font: inherit; font-size: 11.5px; cursor: pointer;
+  padding: 5px 8px; white-space: nowrap;
   color: var(--mc-dim); background: var(--mc-panel);
-  border: 1px solid transparent; border-left: 3px solid transparent;
-  transition: background .14s ease, border-color .14s ease;
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  transition: color .15s ease, background .15s ease, box-shadow .15s ease;
 }
-.en-brush:hover { background: #262b35; }
-.en-brush.on {
-  border-left-color: var(--en-ink);
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--en-ink) 22%, transparent), transparent 78%);
+.en-seg.wide { flex: 0 0 auto; }
+.en-seg:hover { color: var(--en-lit); background: #262b35; }
+.en-seg.on {
+  color: #0c1118; background: var(--en-lit); border-color: var(--en-ink);
+  box-shadow: 0 0 12px -3px color-mix(in srgb, var(--en-ink) 85%, transparent);
 }
-.en-brush-words { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.en-brush-words b {
+
+/* a button that does something rather than selecting something */
+.en-act {
+  flex: 0 0 auto; font: inherit; font-size: 11.5px; cursor: pointer;
+  padding: 5px 12px;
+  color: var(--en-lit); background: #232a3a;
+  border: 1px solid color-mix(in srgb, var(--en-ink) 45%, transparent);
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.en-act:hover {
+  background: #2c3448; transform: translateY(-1px);
+  box-shadow: 0 0 12px -4px color-mix(in srgb, var(--en-ink) 90%, transparent);
+}
+.en-act.clear { color: #ffb3b3; border-color: rgba(255, 140, 140, .35); }
+.en-act.clear:hover { background: #34222a; }
+
+.en-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+.en-presets .en-side-lbl { grid-column: 1 / -1; }
+.en-preset {
+  font: inherit; font-size: 11px; cursor: pointer;
+  padding: 5px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: var(--mc-dim); background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+  transition: color .15s ease, background .15s ease, transform .15s ease;
+}
+.en-preset:hover {
+  color: var(--en-lit); background: #24303f; transform: translateY(-1px);
+}
+
+/* How much of the ring is standing, against the thirty it can hold. */
+.en-fill { display: flex; flex-direction: column; gap: 4px; }
+.en-fill span { font-size: 10px; letter-spacing: .05em; color: var(--mc-faint); }
+.en-fill .en-meter { margin-top: 0; --lit: var(--st-e); }
+
+/* ── the palette ──────────────────────────────────────────────────────────
+   Every enchanting block at once, as the blocks. Thirty-one sprites in a
+   grid that reflows to whatever column it is given: at 300 wide that is six
+   across and six rows, which is less room than the scrolling list took and
+   shows all of them instead of five. Nothing here scrolls at any width. */
+.en-palette { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.en-pal-grid {
+  display: grid; gap: 3px;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+}
+.en-pal {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 1; padding: 0; cursor: pointer;
+  background: var(--mc-panel);
+  border: 2px solid var(--mc-shade);
+  border-right-color: var(--mc-lit); border-bottom-color: var(--mc-lit);
+  transition: background .14s ease, box-shadow .14s ease, transform .14s ease;
+}
+.en-pal:hover { background: #2b3240; transform: translateY(-2px); z-index: 1; }
+.en-pal:focus-visible { outline: 2px solid var(--en-lit); outline-offset: 1px; }
+.en-pal.on {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--en-ink) 34%, transparent), transparent 70%), var(--mc-panel);
+  box-shadow: inset 0 0 0 2px var(--en-lit),
+              0 0 14px -4px color-mix(in srgb, var(--en-ink) 90%, transparent);
+}
+.en-pal .en-icon { width: 32px; height: 32px; }
+/* how many of this block are standing in the build - the one number worth
+   carrying on the tile itself, drawn the way the game draws a stack count */
+.en-pal u {
+  position: absolute; right: 1px; bottom: 0;
+  text-decoration: none; font-size: 11px; line-height: 1; color: #fff;
+  text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
+  pointer-events: none;
+}
+
+/* One line under the grid: what you are pointing at, and what it is worth.
+   The stats used to be on all thirty-one rows at once, which is a wall of
+   chips nobody reads. One block's numbers, where you are already looking. */
+.en-pal-detail {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  min-height: 34px; padding: 5px 7px; box-sizing: border-box;
+  background: var(--mc-panel);
+  border: 1px solid var(--mc-shade); border-top-color: var(--mc-lit);
+}
+.en-pal-detail b {
   font-weight: normal; font-size: 11.5px; color: var(--mc-text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .en-brush-stats { display: flex; flex-wrap: wrap; gap: 2px; }
 .en-brush-stats .st { padding: 0 4px; font-size: 9.5px; }
-.en-brush u {
-  margin-left: auto; text-decoration: none; font-size: 12px; color: var(--en-lit);
-}
 
 /* ── casting ──────────────────────────────────────────────────────────────── */
 
@@ -369,49 +616,40 @@
 .en-gui { image-rendering: pixelated; user-select: none; }
 .en-gui-win { position: relative; }
 
-/* The three bars Apotheosis draws under the offers. They are not in vanilla's
-   sheet, so they are built rather than blitted - the same panel grey, the same
-   sunken border the game's own widgets wear, and the mod's own three colours. */
-.en-gui-stats {
-  padding: 6px 8px 8px; box-sizing: border-box; width: 100%;
-  background: #c6c6c6;
-  border-left: 4px solid #c6c6c6; border-right: 4px solid #c6c6c6;
-  border-bottom: 4px solid #555;
-  box-shadow: inset 2px 0 0 #fff, inset -2px 0 0 #8b8b8b;
-}
-.en-gbar {
-  display: grid; grid-template-columns: 84px minmax(0, 1fr);
-  align-items: center; gap: 8px; margin-bottom: 4px;
-}
-.en-gbar:last-child { margin-bottom: 0; }
-.en-gbar i {
-  font-family: 'Minecraft', monospace; font-style: normal; font-size: 15px;
-  color: var(--lit); text-shadow: 1px 1px 0 rgba(0, 0, 0, .35);
-}
-.en-gtrack {
-  height: 11px; background: #2b2b2b;
-  box-shadow: inset 1px 1px 0 #101010, inset -1px -1px 0 #4a4a4a;
-}
-.en-gtrack span {
-  display: block; height: 100%;
-  background: var(--lit);
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .28);
-  transition: width .45s cubic-bezier(.2, .8, .3, 1);
-}
+/* Apotheosis draws Eterna/Quanta/Arcana bars under this window in game, and
+   this panel drew them too - .en-gui-stats, .en-gbar, .en-gtrack. They are
+   gone. The gauges across the top of the build are the same three numbers and
+   two more besides, off the same totals, and the panel was reporting one
+   thing twice in two different visual languages. The window keeps what only
+   it can show: the offers, their levels and their cost. */
+
 .en-blit { position: absolute; image-rendering: pixelated; background-repeat: no-repeat; }
+/* the offer runes: a row of 8x8 glyphs blitted out of the SGA font sheet */
+.en-runes {
+  position: absolute; z-index: 4; display: flex; align-items: flex-start;
+  pointer-events: none;
+}
+.en-rune {
+  display: block; flex: none; image-rendering: pixelated;
+  background-repeat: no-repeat;
+  /* the game draws these in the same dark grey it draws the rest of the
+     window's text in */
+  filter: brightness(0) opacity(.62);
+}
+
 /* the book the table keeps open above its slots */
 .en-gbook { position: absolute; z-index: 3; width: 40px; height: 40px; }
 .en-gbook .en-icon { width: 40px; height: 40px; }
 
 /* the two things the table takes, sitting in its own slots */
 .en-gslot {
-  position: absolute; z-index: 3; width: 32px; height: 32px;
+  position: absolute; z-index: 3; width: 40px; height: 40px;
   display: flex; align-items: center; justify-content: center;
 }
-.en-gslot .en-icon { width: 32px; height: 32px; }
+.en-gslot .en-icon { width: 40px; height: 40px; }
 .en-gslot b {
   position: absolute; right: -2px; bottom: -3px;
-  font-family: 'Minecraft', monospace; font-size: 13px; font-weight: normal;
+  font-family: 'Minecraft', monospace; font-size: 15px; font-weight: normal;
   color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
 }
 .en-row { cursor: pointer; }
@@ -420,12 +658,12 @@
 .en-orb { z-index: 2; pointer-events: none; }
 .en-label {
   position: absolute; z-index: 4;
-  font-family: 'Minecraft', monospace; font-size: 14px; line-height: 1;
+  font-family: 'Minecraft', monospace; font-size: 17px; line-height: 1;
   white-space: nowrap; pointer-events: none; color: #404040;
 }
-.en-lapis { font-size: 12px; color: #3e3e3e; }
+.en-lapis { font-size: 14px; color: #3e3e3e; }
 .en-need {
-  font-size: 12px; transform: translateX(-100%); color: #80ff20;
+  font-size: 14px; transform: translateX(-100%); color: #80ff20;
   text-shadow: 1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000;
 }
 
@@ -472,12 +710,14 @@
 /* the window and the odds, side by side, so neither leaves a hole */
 .en-cast-row {
   display: grid; gap: 12px; align-items: stretch; justify-content: center;
-  grid-template-columns: 352px minmax(240px, 1fr);
+  /* the window is a fixed 440 of game texture at 2.5x; the odds take what is
+     left, and rather more of it than they used to */
+  grid-template-columns: 440px minmax(260px, 1fr);
 }
 
 /* the one button here that does something rather than sets something */
 .en-roll {
-  position: relative; overflow: hidden; display: block; width: 100%; max-width: 352px;
+  position: relative; overflow: hidden; display: block; width: 100%; max-width: 440px;
   margin-top: 8px; box-sizing: border-box;
   font-family: inherit; font-size: 14px; letter-spacing: .08em; cursor: pointer;
   padding: 8px 20px; color: #0c1118; background: var(--en-lit);
@@ -493,7 +733,7 @@
 .en-roll:disabled { opacity: .4; cursor: default; }
 
 .en-result {
-  padding: 9px 11px; min-height: 66px; box-sizing: border-box;
+  padding: 9px 11px; min-height: 64px; box-sizing: border-box;
   background: #100010f2; border: 2px solid #2d0a63; outline: 1px solid #100010;
 }
 .en-result-head {
@@ -507,7 +747,7 @@
 .en-got {
   --lit: var(--mc-dim);
   display: flex; align-items: baseline; gap: 8px;
-  font-size: 13.5px; line-height: 1.7;
+  font-size: 13px; line-height: 1.65;
 }
 .en-got b { font-weight: normal; color: var(--lit); }
 .en-got i { font-style: normal; color: var(--mc-faint); }
@@ -515,7 +755,7 @@
 .en-got.r-uncommon  { --lit: #6fe0a0; }
 .en-got.r-rare      { --lit: #79c2ff; }
 .en-got.r-very_rare { --lit: #c88bff; }
-.en-none { margin: 6px 0 0; font-size: 13px; color: var(--mc-faint); }
+.en-none { margin: 6px 0 0; font-size: 12.5px; color: var(--mc-faint); }
 
 /* the odds, with nothing written on them */
 .en-oddbars {
@@ -532,8 +772,8 @@
 }
 .en-oddbar {
   --lit: var(--mc-dim);
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 90px) 34px;
-  align-items: center; gap: 9px; font-size: 11.5px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 84px) 32px;
+  align-items: center; gap: 8px; font-size: 11.5px;
 }
 .en-oddbar i {
   font-style: normal; color: var(--mc-dim);
@@ -555,25 +795,61 @@
 @media (max-width: 1080px) {
   .en-cast-gui { display: flex; flex-direction: column; align-items: center; }
 }
+/* the build and its tools stop being two columns well before the panel gets
+   tight, because 300px of tools against 260px of build helps neither */
+@media (max-width: 860px) {
+  .en-iso { height: clamp(300px, 48vh, 440px); }
+  /* A rail down the side of a phone is the whole phone, so the drawer comes
+     up from the bottom instead and the build keeps the top of the frame.
+     Nothing about its contents changes - only which edge it is anchored to,
+     and fit() measures rather than assumes, so the camera follows. */
+  .en-side {
+    top: auto; left: 0; right: 0; width: auto;
+    max-height: 58%;
+    transform: translateY(100%);
+    border-left: 0;
+    border-top: 2px solid color-mix(in srgb, var(--en-ink) 55%, transparent);
+    box-shadow: 0 -14px 30px -18px #000;
+  }
+  .en-side.on { transform: none; }
+  /* a finger is about 44px; the tiles grow to meet one rather than staying
+     the size a mouse wanted */
+  .en-pal-grid { grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); }
+  .en-seg, .en-act, .en-preset { padding: 8px 10px; font-size: 12px; }
+}
 /* the window is a fixed 352 of game texture and the odds want about 250 more,
    so the pair only has to stack once the panel is under about seven hundred -
    well past where it used to give up */
-@media (max-width: 700px) {
+@media (max-width: 780px) {
   .en-cast-row { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 620px) {
   .en-statbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .en-iso { height: 260px; }
+  .en-iso { height: clamp(290px, 46vh, 400px); }
   .en-oddbar { grid-template-columns: minmax(0, 1fr) 34px; }
   .en-oddbar .en-meter { display: none; }
+  .en-panel { padding: 10px 8px; }
+  .en-side { padding: 7px; }
+  /* four across is one word each at 375px, and "Vanilla 15" is two - the
+     sheet scrolls anyway, so the extra row costs nothing and the labels read */
+  .en-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 420px) {
-  .en-cast-gui { --en-shrink: .84; }
-  .en-gui, .en-roll {
-    transform: scale(var(--en-shrink)); transform-origin: top left;
-  }
-  .en-cast-gui { margin-bottom: calc((var(--en-shrink) - 1) * 200px); }
+/* The window's own box. fitGui scales the window inside it and sets this
+   height to match, because a transform does not change layout and the row
+   would otherwise reserve a full-size window's worth of space under a
+   half-size one. The flat 0.84-under-420px rule this replaces was a guess at
+   one width that clipped the window at every other. */
+.en-gui-fit {
+  /* Full width of the column, not shrink-to-fit.
+     A transform does not change layout, so this box is still 440 wide however
+     small the window inside it is drawn - and .en-cast-gui centres its
+     children, which pushed a 440 box 88px out of the left of a 264 column and
+     took the scaled window (anchored to that box's top-left) with it. The
+     item and lapis slots ended up off the edge of the panel. Matching the
+     column means the box and the scaled window start in the same place. */
+  width: 100%; overflow: hidden;
 }
+.en-gui-fit .en-gui { will-change: transform; }
 
 /* ── the catalog toolbar ──────────────────────────────────────────────────── */
 

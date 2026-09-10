@@ -60,7 +60,14 @@ from extract_apotheosis import (           # noqa: E402
 # datapack can reach, so each carries the method it was read from.
 
 CONSTANTS = {
-    # EnchantingStatRegistry.absoluteMaxEterna, the field's default.
+    # EnchantingStatRegistry.absoluteMaxEterna. 50 is only the field's
+    # *initialiser*; computeAbsoluteMaxEterna overwrites it on every datapack
+    # reload with the largest maxEterna in the whole enchanting_stats
+    # registry. So this is a floor to fall back on, not the answer - the real
+    # value is worked out from the blocks below and written over this one, and
+    # power_ceiling with it. On this pack the two agree, because the Draconic
+    # Endshelf's ceiling is exactly 50; on a pack that adds a higher shelf
+    # they would not, and every power number on the page would be wrong.
     'max_eterna': 50.0,
     # RealEnchantmentHelper.getEnchantmentCost: maxLevel = round(eterna * 2).
     # "Each point of Eterna increases the maximum enchanting level by two."
@@ -434,9 +441,32 @@ def read_enchantment_config(instance):
             raw = field(body, key)
             return default if raw is None else raw == 'true'
 
+        # The enchantment's *natural* maximum level - what its own class
+        # returns from getMaxLevel() before Apotheosis touched it.
+        #
+        # This matters more than anything else in the block, because it is
+        # where EnchantmentInfo.defaultMin starts extrapolating: up to it, a
+        # level costs vanilla's own getMinCost; past it, each extra level
+        # costs another step * (levels past it) ^ 1.6. Get it wrong and every
+        # power number for that enchantment is wrong with it.
+        #
+        # Apotheosis writes it into the comment above the field - "The max
+        # level of this enchantment - originally 4." - and that comment is
+        # the only place the number appears anywhere on disk. The mod's own
+        # bytecode reads it off the live Enchantment object, which no file
+        # can be asked; Apotheosis' ASM redirect of getMaxLevel does not
+        # touch EnchantmentInfo, so it really is the class's own value and
+        # not the configured one.
+        #
+        # It is missing on forty-nine of the two hundred here, all of them
+        # modded and all of them written into the file by a run that emitted
+        # no comments. Those keep the old fallback and stay flagged.
+        natural = re.search(r'originally (\d+)', body)
+
         out.append({
             'id': eid,
             'max': num('Max Level', 1),
+            'natural': int(natural.group(1)) if natural else None,
             'loot': num('Max Loot Level', 1),
             'rarity': field(body, 'Rarity') or 'COMMON',
             'treasure': flag('Treasure'),
@@ -660,24 +690,44 @@ def main():
             unresolved.append(item_id)
 
     faces = {}
+    face_anims = {}
 
     def pull_faces(block_id):
-        """The block's own top and side, saved as flat 16x16 tiles."""
-        got = {}
+        """The block's own top and side - and, where the game animates one of
+        them, how long the filmstrip is.
+
+        Assets.save writes a *baked filmstrip* rather than a tile for any
+        texture with a .mcmeta beside it, and returns {frames, seconds} when
+        it does. That return value used to be thrown away here, which is how
+        the Blazing Hellshelf ended up with its twenty-one frames squashed
+        into one 16x16 face: the png the page was handed was 16x336 and
+        nothing told the page so. The top of that block is a still tile and
+        the side is not, so this has to be recorded per face rather than per
+        block - the item-level `anims` map cannot say which half moves.
+        """
+        got, moving = {}, {}
         for face, ref in resolve_faces(assets, block_id).items():
             if not ref:
                 continue
             out_name = '%s__%s.png' % (block_id.replace(':', '__'), face)
-            if assets.save(ref, os.path.join(ICON_DIR, out_name)):
-                got[face] = out_name
+            saved = assets.save(ref, os.path.join(ICON_DIR, out_name))
+            if not saved:
+                continue
+            got[face] = out_name
+            if isinstance(saved, dict):
+                moving[face] = saved
         # a block with only one resolvable face wears it on both, which is
         # what a plain cube does anyway
         if len(got) == 1:
-            only = next(iter(got.values()))
-            got.setdefault('top', only)
-            got.setdefault('side', only)
+            only_face, only = next(iter(got.items()))
+            for face in ('top', 'side'):
+                got.setdefault(face, only)
+                if only_face in moving:
+                    moving.setdefault(face, moving[only_face])
         if got:
             faces[block_id] = got
+        if moving:
+            face_anims[block_id] = moving
 
     for block in blocks:
         if block['is_tag']:
@@ -688,6 +738,8 @@ def main():
         pull_faces(ALIAS.get(block['id'], block['id']))
         if block['id'] in ALIAS and ALIAS[block['id']] in faces:
             faces[block['id']] = faces[ALIAS[block['id']]]
+        if block['id'] in ALIAS and ALIAS[block['id']] in face_anims:
+            face_anims[block['id']] = face_anims[ALIAS[block['id']]]
 
     # the table itself, and the block it stands on, so the builder can draw them
     for extra in ('minecraft:enchanting_table', 'minecraft:obsidian',
@@ -776,21 +828,57 @@ def main():
         ue = universal.get(ench['id'])
         ench['fits'] = ue['fits'] if ue else []
         ench['clashes'] = ue['clashes'] if ue else []
-        # the curve this one rolls on, and whether it was read or assumed
+        # the curve this one rolls on, and how much of it was read
+        #
+        # Two independent things go into a curve and they are known to
+        # different degrees, so they are tracked separately:
+        #
+        #   `min`  - the (a, b) of vanilla's getMinCost. Transcribed for the
+        #            vanilla enchantments; for a modded one it is
+        #            Enchantment's own base-class default, which is a genuine
+        #            default rather than an invention - a modded enchantment
+        #            that overrides nothing uses exactly it - but is still an
+        #            assumption per enchantment.
+        #
+        #   `vmax` - the natural maximum level, where extrapolation starts.
+        #            This is *read*, from the config's own comment, for every
+        #            enchantment that records one, modded ones included.
+        #
+        # It used to be neither for a modded enchantment: vmax was set to the
+        # configured max, which meant nothing ever extrapolated and every
+        # modded enchantment was priced as though its Apotheosis levels were
+        # free. Thunder Strike goes to 7 here and is natural to 3; on the old
+        # reading Thunder Strike VII asked for 71 power, where the mod asks
+        # for 71 + 10 * trunc(4 ^ 1.6) = 161. Enchantments were turning up in
+        # the pool a hundred power before the game would have offered them.
+        natural = ench.pop('natural', None)
         known = VANILLA_COSTS.get(ench['id'])
         if known:
             ench['min'] = known['min']
-            ench['vmax'] = known['vmax']
+            # the config agrees with the transcription on every vanilla
+            # enchantment in this pack; where it speaks, it is the authority
+            ench['vmax'] = natural if natural else known['vmax']
             ench['assumed'] = False
         else:
-            # no natural max is knowable for a modded enchantment either, so
-            # the configured one stands in and nothing extrapolates past it
             ench['min'] = BASE_CLASS_MIN
-            ench['vmax'] = ench['max']
+            ench['vmax'] = natural if natural else ench['max']
             ench['assumed'] = True
+        # the natural max was read rather than guessed - said separately from
+        # `assumed`, which is about the curve, so the page can be honest about
+        # which half of a modded enchantment's cost it actually knows
+        ench['natural_read'] = natural is not None
+
+    # computeAbsoluteMaxEterna, run against the blocks we actually loaded:
+    #   absoluteMaxEterna = max(stats.maxEterna for every registered block)
+    # and defaultMax, and therefore the power ceiling, is four times it.
+    constants = dict(CONSTANTS)
+    ceilings = [b['maxEterna'] for b in blocks if b.get('maxEterna')]
+    if ceilings:
+        constants['max_eterna'] = max(ceilings)
+        constants['power_ceiling'] = int(max(ceilings) * 4)
 
     payload = {
-        'constants': CONSTANTS,
+        'constants': constants,
         'arcana': ARCANA,
         'base_min': BASE_CLASS_MIN,
         'kinds': KINDS,
@@ -801,6 +889,7 @@ def main():
         'icons': icons,
         'anims': anims,
         'faces': faces,
+        'face_anims': face_anims,
         'gui': sheets,
         'sga_widths': widths,
         'offsets': BOOKSHELF_OFFSETS,

@@ -2818,6 +2818,91 @@ body::after { display: none; }
 .ls-shop-row .sk-open-btn { flex: 1 1 auto; }
 .ls-shop-row:has(.ls-plan-wrap.on) { grid-template-columns: minmax(0, 1fr); }
 .ls-shop-row:has(.ls-plan-wrap.on) .ls-plan-wrap:not(.on) { display: none; }
+/* Shut, a wrapper is a flex box so its door can stretch to the row's tallest.
+   Open, that same flex box was the bug: the panel inside it is a flex *item*,
+   so it shrink-wrapped to its own content and sat against the left edge of a
+   row it was supposed to fill - the enchanting panel came out 806 wide inside
+   a 998 wide row, pinned left, with two hundred pixels of nothing beside it.
+   Open, the wrapper goes back to being an ordinary block and the panel fills
+   it, which is what every centred thing inside it was already assuming. */
+.ls-shop-row .ls-plan-wrap.on { display: block; }
+
+/* ── opening and shutting a workshop door ───────────────────────────────────
+   All three of these used to be a display flip: the button vanished on one
+   frame and a full panel existed on the next, which reads as the page having
+   jumped rather than as something having opened. Nothing about the layout
+   changes here - only that you get to see it happen.
+
+   Two halves, and they have to be done differently. Opening can be a plain
+   CSS animation, because an element going from display:none to display:block
+   runs its animations on the frame it appears. Shutting cannot: the moment
+   the class comes off, display:none takes the element out and any animation
+   on it never gets a frame. So the close handlers put a .shutting class on
+   the wrapper first, that class holds the panel visible while it plays, and
+   the class coming off at the end is what actually closes it. */
+.ls-plan-wrap.on .sk-open-btn { display: none; }
+
+.ls-plan-wrap.on .ls-plan,
+.ls-plan-wrap.on .fg-panel,
+.ls-plan-wrap.on .en-panel {
+  animation: ws-open .42s cubic-bezier(.22, .9, .28, 1) both;
+}
+/* the panel's contents arrive just behind its frame, so the box reads as
+   having opened and then filled rather than as one flat card fading in */
+.ls-plan-wrap.on .ls-plan > *,
+.ls-plan-wrap.on .fg-panel > *,
+.ls-plan-wrap.on .en-panel > * {
+  animation: ws-rise .46s cubic-bezier(.22, .9, .28, 1) both;
+  animation-delay: .07s;
+}
+.ls-plan-wrap.on .sk-plan-head { animation-delay: .04s; }
+
+@keyframes ws-open {
+  from { opacity: 0; transform: translateY(-14px) scaleY(.94); transform-origin: top center; }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes ws-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* shutting: the wrapper keeps the panel on screen for the length of the
+   animation, and the door underneath comes back up as it goes */
+.ls-plan-wrap.shutting .ls-plan,
+.ls-plan-wrap.shutting .fg-panel,
+.ls-plan-wrap.shutting .en-panel {
+  display: block;
+  animation: ws-shut .26s cubic-bezier(.4, 0, .8, .4) both;
+  pointer-events: none;
+}
+.ls-plan-wrap.shutting .sk-open-btn { display: none; }
+.ls-shop-row:has(.ls-plan-wrap.shutting) { grid-template-columns: minmax(0, 1fr); }
+.ls-shop-row:has(.ls-plan-wrap.shutting) .ls-plan-wrap:not(.shutting) { display: none; }
+.ls-shop-row .ls-plan-wrap.shutting { display: block; }
+
+@keyframes ws-shut {
+  from { opacity: 1; transform: none; transform-origin: top center; }
+  to   { opacity: 0; transform: translateY(-10px) scaleY(.96); }
+}
+
+/* a door coming back after its panel has gone: the three of them re-flow into
+   a row, and doing that from nothing looks like a glitch rather than a return */
+.ls-shop-row .ls-plan-wrap { animation: ws-door .34s ease both; }
+.ls-shop-row .ls-plan-wrap.on,
+.ls-shop-row .ls-plan-wrap.shutting { animation: none; }
+@keyframes ws-door {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-plan-wrap.on .ls-plan, .ls-plan-wrap.on .fg-panel, .ls-plan-wrap.on .en-panel,
+  .ls-plan-wrap.on .ls-plan > *, .ls-plan-wrap.on .fg-panel > *,
+  .ls-plan-wrap.on .en-panel > *,
+  .ls-plan-wrap.shutting .ls-plan, .ls-plan-wrap.shutting .fg-panel,
+  .ls-plan-wrap.shutting .en-panel,
+  .ls-shop-row .ls-plan-wrap { animation: none; }
+}
 /* half the width it used to have, so the word comes down to meet it - and
    the two titles match each other, which they never did before */
 .ls-shop-row .sk-open-btn { padding: 17px 14px; }
@@ -2827,7 +2912,6 @@ body::after { display: none; }
 .ls-plan-wrap { min-width: 0; }
 .ls-plan { display: none; }
 .ls-plan-wrap.on .ls-plan { display: block; }
-.ls-plan-wrap.on .sk-open-btn { display: none; }
 
 /* Nothing else on this page is arcane. Every other panel is an inventory slot
    or a stone plate, because everything else is a record of what happened; this
