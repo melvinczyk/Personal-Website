@@ -20,7 +20,7 @@ import urllib.request
 from django.conf import settings
 
 from . import activity, chat, history, sync
-from .live import MAP_STAMP
+from .live import MAP_STAMP, MAP_TRY_STAMP
 
 DEFAULT_CONFIG = "mc_sync.json"
 
@@ -161,73 +161,96 @@ def refresh_chat(season):
 
 
 # ── is the server actually up? ─────────────────────────────────────────────
-# The map's own name for the world it is drawing, remembered between probes so
-# the usual case is one request. It changes when the world does - the id this
-# codebase was written against is two worlds out of date already - so it is
-# found rather than configured.
-_map_id = None
+#
+# One question, asked of one URL: does http://<host>:8100/ answer?
+#
+# BlueMap here is a mod running inside the game server, serving its own
+# webserver out of that process. There is no separate nginx in front of it and
+# no static copy of the map anywhere else, so the webserver being up and the
+# game server being up are the same fact - if something answers on that port,
+# the server is running.
+#
+# This used to ask a cleverer question. It fetched settings.json, took the
+# first world out of it, and asked that world's live/players.json - on the
+# reasoning that the live endpoint is generated per request from the running
+# player list, where index.html is a static file that a bare filesystem could
+# keep serving. That reasoning is sound in the abstract and it was wrong here:
+# it is three round trips and a world-name lookup where one request would do,
+# every one of them a way to fail, and all of them failing *silently* into
+# "the server is down". A probe with more moving parts than the thing it is
+# probing is not a better probe.
+#
+# What is given up: if the map were ever served by something other than the
+# game server, this would keep saying ONLINE after the server stopped. It is
+# not, and if that changes this comment is the place that says so.
+#
+# Never raises. A map that cannot be reached is a "no", and the reason is kept
+# so that a probe failing on the deployed box can actually be seen - see
+# map_state, which the board carries. That was the real cost of the old
+# version: every failure mode looked identical from outside, which is how a
+# server that had been up for hours could read OFFLINE with nothing to say
+# why.
+
+# what the last probe did, for diagnosis rather than for the verdict
+_map_last = {'at': 0.0, 'ok': None, 'why': 'not asked yet', 'ms': None}
 
 
-def _fetch(url, timeout):
-    with urllib.request.urlopen(url, timeout=timeout) as res:
-        return res.read()
+def map_state():
+    return dict(_map_last)
 
 
-def _map_names(timeout):
-    """Which worlds BlueMap is serving, out of its own settings."""
-    return json.loads(_fetch(MAP_URL + 'settings.json', timeout)
-                      .decode('utf-8')).get('maps') or []
-
-
-def _live_url(name):
-    return f'{MAP_URL}maps/{name}/live/players.json'
+def _map_alive(timeout):
+    """Does the map's webserver answer? Returns (ok, why)."""
+    started = time.time()
+    try:
+        with urllib.request.urlopen(MAP_URL, timeout=timeout) as res:
+            code = getattr(res, 'status', None) or res.getcode()
+            res.read(1)                          # prove the body is coming too
+            return 200 <= code < 400, f'HTTP {code}'
+    except urllib.error.HTTPError as exc:
+        # Something is listening and speaking HTTP, which is the whole
+        # question - a 404 or a 403 from BlueMap's own webserver still means
+        # the process behind it is alive. A 5xx is a gateway apologising for
+        # something that is not, so that one is a no.
+        return exc.code < 500, f'HTTP {exc.code}'
+    except Exception as exc:                     # noqa: BLE001 - see comment
+        return False, f'{type(exc).__name__}: {exc}'
+    finally:
+        _map_last['ms'] = int((time.time() - started) * 1000)
 
 
 def probe_map(dest_dir, timeout=MAP_TIMEOUT):
-    """Ask the live map whether there is a server behind it. Stamp it if so.
+    """Ask the map whether the server is there. Stamp the asking either way.
 
-    Deliberately not "is the map page reachable". BlueMap serves its index and
-    its settings as ordinary static files, with a Last-Modified and a day of
-    cache on them, and those keep being served by anything that can still read
-    the folder they are in. The live endpoint is a different animal: no cache,
-    no Last-Modified, generated per request out of the running server's own
-    player list. If that answers, there is a server answering.
+    Two stamps, and the one written on failure matters as much as the one
+    written on success: without it, a probe that has never worked here is
+    indistinguishable from a probe that has never run, and the board cannot
+    tell "the server is down" from "we have no idea". See live.MAP_TRY_STAMP.
 
-    Which is a thing the export cannot tell us. The mod that writes the export
-    can stop while the server carries on, and when it does the export goes
-    stale, its tps reads zero, and every reading we had said OFFLINE about a
-    server people were playing on.
-
-    Never raises: a map that cannot be reached is not knowing, and the caller
-    has other witnesses.
+    The attempt stamp carries the reason as its contents, so whichever process
+    is serving the board can say why the badge reads what it reads - the
+    worker does the probing and the web process draws the page, and they share
+    nothing but this folder.
     """
-    global _map_id
-    try:
-        if not _map_id:
-            _map_id = next(iter(_map_names(timeout)), None)
-        if not _map_id:
-            return False
-        try:
-            _fetch(_live_url(_map_id), timeout)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 404:
-                raise
-            # the world was renamed or re-rendered under us: ask once more
-            _map_id = next(iter(_map_names(timeout)), None)
-            if not _map_id:
-                return False
-            _fetch(_live_url(_map_id), timeout)
-    except Exception:                            # noqa: BLE001 - see docstring
-        return False
+    ok, why = _map_alive(timeout)
+    _map_last.update({'at': time.time(), 'ok': ok, 'why': why, 'url': MAP_URL})
     try:
         # the folder is normally there because the sync made it; on a checkout
-        # that has never synced it is not, and the probe is now the one thing
-        # that still works there - so it makes its own place to write to
+        # that has never synced it is not, and the probe is the one thing that
+        # still works there - so it makes its own place to write to
         os.makedirs(dest_dir, exist_ok=True)
-        open(os.path.join(dest_dir, MAP_STAMP), 'w').close()
-    except OSError:
-        pass                                     # a stamp is a nicety, never a fault
-    return True
+        with open(os.path.join(dest_dir, MAP_TRY_STAMP), 'w',
+                  encoding='utf-8') as fh:
+            fh.write(f'{MAP_URL} -> {why}')
+        if ok:
+            open(os.path.join(dest_dir, MAP_STAMP), 'w').close()
+    except OSError as exc:
+        # A stamp that cannot be written is not a probe that failed, but it is
+        # the reason the badge will not move - so it is worth saying, because
+        # returning quietly here leaves the board reading OFFLINE with a probe
+        # that believes it succeeded.
+        _map_last['why'] = f'{why}, but the stamp failed: {exc}'
+    return ok
 
 
 def config_path():
@@ -345,8 +368,16 @@ def refresh_map(season):
     is drawn from whatever is on disk.
     """
     global _map_busy, _map_at
-    if not web_pull_allowed():
-        return
+    # Deliberately not gated on web_pull_allowed().
+    #
+    # That flag turns off *SFTP pulls driven by page views*, because on a box
+    # with a scheduled worker the pulls are its job and a web request has no
+    # business opening an SFTP session. This is one HTTP GET to a map, it
+    # takes about a tenth of a second, and gating it meant that on the one
+    # configuration where the flag is actually set - the deployed one - the
+    # web process never probed at all and the badge could only ever be as
+    # right as the worker's last run. Which, when the worker's probe was
+    # failing, was never.
     with _map_lock:
         if _map_busy or time.time() - _map_at < MAP_INTERVAL:
             return

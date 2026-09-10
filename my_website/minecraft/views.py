@@ -285,11 +285,18 @@ def live_board(request):
     board = _board(key)
 
     if board is None:
-        return JsonResponse({'live': True, 'players': [], 'source': pull})
+        return JsonResponse({'live': True, 'players': [], 'source': pull,
+                             'map_probe': puller.map_state()})
 
     board['live']   = True
     board['season'] = LIVE_SEASON
     board['source'] = pull
+    # What the last look at the live map actually did, carried so a probe that
+    # is failing on the deployed box can be seen rather than guessed at. The
+    # badge is the map's verdict now, so "why is it OFFLINE" and "what did the
+    # probe say" have to be the same question - they were not, and a server
+    # that had been up for hours read OFFLINE with nothing anywhere to say why.
+    board['map_probe'] = puller.map_state()
     return JsonResponse(board)
 
 

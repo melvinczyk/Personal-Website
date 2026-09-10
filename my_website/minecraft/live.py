@@ -433,6 +433,22 @@ MAP_WINDOW = 420
 # circle. puller imports it, the way activity imports SERVER_WINDOW.
 MAP_STAMP = '.mapseen'
 
+# And where every probe *attempt* is recorded, with the reason it gave.
+#
+# Two stamps rather than one, because "the map did not answer" and "nobody
+# ever asked the map" are opposite facts and only one of them is evidence
+# about the server. With a success stamp alone they are indistinguishable
+# from here - both look like no file - and the board treated the pair of them
+# as OFFLINE on the strength of the *file sync* having run recently, which
+# says nothing whatever about the map. That is how a server with a
+# twenty-three second old export came to read OFFLINE.
+#
+# The file holds the reason, so the answer to "why is this OFFLINE" is
+# readable from any process rather than only from the one that happened to do
+# the asking. The worker probes and the web process serves the board; before
+# this they were different processes with no way to compare notes.
+MAP_TRY_STAMP = '.mapasked'
+
 
 def _kill_entries(record):
     """One player's boss_kills.json row, bosses and minibosses together.
@@ -1399,53 +1415,53 @@ def fish(season_path, faces=None):
     return out
 
 
-def _server_up(age, checked, mapped=None):
+def _map_why(data_dir):
+    """Whatever the last probe wrote about itself. Diagnosis, never a verdict."""
+    try:
+        with open(os.path.join(data_dir, MAP_TRY_STAMP), encoding='utf-8') as fh:
+            return fh.read(200).strip()
+    except OSError:
+        return ''
+
+
+def _server_up(age, checked, mapped=None, asked=None):
     """Is the game server up? The live map decides.
 
-    BlueMap runs *inside* the server and its live endpoint is generated per
-    request out of the running player list - no cache, no Last-Modified,
-    nothing on disk that outlives the process. If it answers, there is a
-    server answering; if it stops, there is not. That is as direct a reading
-    of "is the server up" as anything available from outside the machine, so
-    it is the verdict. See puller.probe_map, which asks, and
-    puller.refresh_map, which is what keeps asking.
+    BlueMap here runs inside the game server and serves its own webserver out
+    of that process, so the webserver answering and the server running are the
+    same fact. puller.probe_map asks it; this reads the two stamps that asking
+    leaves behind.
 
-    The export's freshness does not vote. It is written by a mod, and a mod
-    can stop while the server carries on - it did, and the board spent an hour
-    and a half insisting a server people were playing on was OFFLINE. `age`
-    is still carried, because how far behind the export is belongs next to the
-    badge, and it is still the clock "down for how long" counts from.
+    Three inputs and they are not interchangeable, which is the whole of what
+    went wrong before:
 
-    But it is the fallback, and it has to be, because the badge is the first
-    thing anybody looks at and a blank one is worse than a slightly stale one.
-    Making the map the sole witness quietly meant "no probe has ever landed"
-    produced no badge at all - which is what a checkout that has not synced,
-    or one whose probe thread has not run yet, looks like. So:
+      * `mapped` - when the map last *answered*. The verdict.
+      * `asked`  - when we last *tried* it, answered or not. What makes a
+                   silence meaningful.
+      * `checked`- when the file sync last ran. Nothing to do with the map,
+                   and it used to be standing in for `asked` - so a box whose
+                   probe had never once succeeded, but whose SFTP sync was
+                   running perfectly every two minutes, read a confident
+                   OFFLINE off the back of a sync that was never asked about
+                   the server at all. The export was twenty-three seconds old
+                   at the time.
 
-      * the map answered inside MAP_WINDOW - ONLINE. Whatever the export says.
-      * the map did not, and we asked recently enough for that silence to be
-        the server's rather than ours - OFFLINE. Again whatever the export
-        says: a fresh export and a dead map is the mod still running through
-        a server that is going down, and the map is the one to believe.
-      * we have never managed to ask, or have not asked in a long time - fall
-        back to the export, so the badge still says something. This is the
-        only branch the export decides, and it is the branch where we have
-        nothing better.
-      * and nothing at all, ever, from either - no badge, because there is
-        genuinely nothing to report and an unconfigured checkout should not
-        accuse a server it has never looked at.
+    `age` still does not vote on a server we have actually asked about. It is
+    the fallback for when we have not, because a badge that says nothing is
+    worse than one that is slightly behind, and it is still the clock that
+    "down for how long" counts from.
     """
     seen = mapped is not None and mapped < MAP_WINDOW
     if seen:
         return {'online': True, 'lag': age, 'mapped': mapped, 'down': None}
 
-    # did we ask recently enough for the map's silence to mean anything?
-    asked = mapped is not None and mapped < CHECK_WINDOW
-    looked = checked is not None and checked < CHECK_WINDOW
-    if asked or looked:
+    # we asked recently and got nothing: that silence is the server's
+    if asked is not None and asked < CHECK_WINDOW:
         return {'online': False, 'lag': age, 'mapped': mapped, 'down': age}
 
-    # nothing from the map worth standing on: fall back to the export
+    # we have not asked recently enough for silence to mean anything - the
+    # probe may never have run here at all. Fall back to the export so the
+    # badge still says something; this is the only branch it decides.
     if age is not None:
         fresh = age < SERVER_WINDOW
         return {
@@ -1488,6 +1504,11 @@ def board(season_path):
     # export has stopped. Touched by puller.probe_map, never here: a board
     # poll must not wait on a network.
     try:
+        asked = int(time.time()
+                    - os.path.getmtime(os.path.join(data_dir, MAP_TRY_STAMP)))
+    except OSError:
+        asked = None
+    try:
         mapped = int(time.time()
                      - os.path.getmtime(os.path.join(data_dir, MAP_STAMP)))
     except OSError:
@@ -1518,7 +1539,9 @@ def board(season_path):
         'read':    stamped.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z') if stamped else '',
         'age':     age,
         'age_txt': _span(age) if age is not None else '',
-        'server':      _server_up(age, checked, mapped),
+        'server':      _server_up(age, checked, mapped, asked),
+        'map_asked':   asked,
+        'map_why':     _map_why(data_dir),
         'checked':     checked,
         'checked_txt': _span(checked) if checked is not None else '',
         'mapped':      mapped,
