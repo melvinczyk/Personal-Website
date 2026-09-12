@@ -140,6 +140,13 @@
   "model": "cataclysm__wadjet.model.json"
  },
  {
+  "key": "eeeabsmobs__relic_earthshaker",
+  "id": "eeeabsmobs:relic_earthshaker",
+  "name": "Relic Earthshaker",
+  "mod": "eeeabsmobs",
+  "model": "eeeabsmobs__relic_earthshaker.model.json"
+ },
+ {
   "key": "fromtheshadows__bulldrogioth",
   "id": "fromtheshadows:bulldrogioth",
   "name": "Bulldrogioth",
@@ -222,6 +229,27 @@
   "name": "Tank",
   "mod": "majruszsdifficulty",
   "model": "majruszsdifficulty__tank.model.json"
+ },
+ {
+  "key": "metus_oblita__incarnation",
+  "id": "metus_oblita:incarnation",
+  "name": "Incarnation",
+  "mod": "metus_oblita",
+  "model": "metus_oblita__incarnation.model.json"
+ },
+ {
+  "key": "metus_oblita__juggernaut",
+  "id": "metus_oblita:juggernaut",
+  "name": "Juggernaut",
+  "mod": "metus_oblita",
+  "model": "metus_oblita__juggernaut.model.json"
+ },
+ {
+  "key": "metus_oblita__servus_colossus",
+  "id": "metus_oblita:servus_colossus",
+  "name": "Servus Colossus",
+  "mod": "metus_oblita",
+  "model": "metus_oblita__servus_colossus.model.json"
  },
  {
   "key": "mutantmonsters__mutant_creeper",

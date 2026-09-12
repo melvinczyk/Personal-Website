@@ -264,26 +264,6 @@
     {
       "id": "twilightforest:ur_ghast",
       "required": false
-    },
-    {
-      "id": "eeeabsmobs:realm_warden",
-      "required": false
-    },
-    {
-      "id": "eeeabsmobs:immortal",
-      "required": false
-    },
-    {
-      "id": "eeeabsmobs:nameless_guardian",
-      "required": false
-    },
-    {
-      "id": "eeeabsmobs:relic_annihilator",
-      "required": false
-    },
-    {
-      "id": "eeeabsmobs:corpse_warlock",
-      "required": false
     }
   ]
 }

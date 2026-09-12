@@ -228,10 +228,6 @@
     {
       "id": "metus_oblita:incarnation",
       "required": false
-    },
-    {
-      "id": "eeeabsmobs:relic_earthshaker",
-      "required": false
     }
   ]
 }

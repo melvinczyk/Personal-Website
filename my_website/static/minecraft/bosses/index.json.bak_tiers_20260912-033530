@@ -37,7 +37,7 @@
   "name": "Sun Spirit",
   "mod": "aether",
   "model": "aether__sun_spirit.model.json",
-  "tier": 1
+  "tier": 2
  },
  {
   "key": "aether__valkyrie_queen",
@@ -256,46 +256,6 @@
   "tier": 3
  },
  {
-  "key": "eeeabsmobs__corpse_warlock",
-  "id": "eeeabsmobs:corpse_warlock",
-  "name": "Corpse Warlock",
-  "mod": "eeeabsmobs",
-  "model": "eeeabsmobs__corpse_warlock.model.json",
-  "tier": 2
- },
- {
-  "key": "eeeabsmobs__immortal",
-  "id": "eeeabsmobs:immortal",
-  "name": "Immortal",
-  "mod": "eeeabsmobs",
-  "model": "eeeabsmobs__immortal.model.json",
-  "tier": 4
- },
- {
-  "key": "eeeabsmobs__nameless_guardian",
-  "id": "eeeabsmobs:nameless_guardian",
-  "name": "Nameless Guardian",
-  "mod": "eeeabsmobs",
-  "model": "eeeabsmobs__nameless_guardian.model.json",
-  "tier": 3
- },
- {
-  "key": "eeeabsmobs__realm_warden",
-  "id": "eeeabsmobs:realm_warden",
-  "name": "Realm Warden",
-  "mod": "eeeabsmobs",
-  "model": "eeeabsmobs__realm_warden.model.json",
-  "tier": 3
- },
- {
-  "key": "eeeabsmobs__relic_annihilator",
-  "id": "eeeabsmobs:relic_annihilator",
-  "name": "Relic Annihilator",
-  "mod": "eeeabsmobs",
-  "model": "eeeabsmobs__relic_annihilator.model.json",
-  "tier": 2
- },
- {
   "key": "fdbosses__chesed",
   "id": "fdbosses:chesed",
   "name": "Chesed",
@@ -397,7 +357,7 @@
   "name": "Dune Sentinel",
   "mod": "legendary_monsters",
   "model": "legendary_monsters__dune_sentinel.model.json",
-  "tier": 2
+  "tier": 1
  },
  {
   "key": "legendary_monsters__endersent",
@@ -453,7 +413,7 @@
   "name": "Aerwhale King",
   "mod": "lost_aether_content",
   "model": "lost_aether_content__aerwhale_king.model.json",
-  "tier": 2
+  "tier": 3
  },
  {
   "key": "netherman__azazel",
@@ -509,7 +469,7 @@
   "name": "Alpha Yeti",
   "mod": "twilightforest",
   "model": "twilightforest__alpha_yeti.model.json",
-  "tier": 1
+  "tier": 2
  },
  {
   "key": "twilightforest__hydra",
@@ -557,7 +517,7 @@
   "name": "Snow Queen",
   "mod": "twilightforest",
   "model": "twilightforest__snow_queen.model.json",
-  "tier": 1
+  "tier": 2
  },
  {
   "key": "twilightforest__ur_ghast",

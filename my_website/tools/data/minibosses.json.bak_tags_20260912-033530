@@ -216,22 +216,6 @@
     {
       "id": "wkcr:king",
       "required": false
-    },
-    {
-      "id": "metus_oblita:juggernaut",
-      "required": false
-    },
-    {
-      "id": "metus_oblita:servus_colossus",
-      "required": false
-    },
-    {
-      "id": "metus_oblita:incarnation",
-      "required": false
-    },
-    {
-      "id": "eeeabsmobs:relic_earthshaker",
-      "required": false
     }
   ]
 }

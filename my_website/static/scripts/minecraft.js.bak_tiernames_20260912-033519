@@ -2011,15 +2011,14 @@ const PIXEL_FLAG_SVG = `<svg class="badge-flag" viewBox="0 0 11 10" shape-render
 
 // One star per tier beaten, plus a grey star for minibosses. p.bosses already
 // holds one entry per boss ID beaten, so counting entries (not summing kills)
-// is what makes a boss killed three times still worth one star.
-// What each badge is, in the pack's own words: these are the exact labels
-// boss_rewards.js prints in chat when one goes down, so a player reads the
-// same grade here that they already saw in the kill announcement. Tier 4 was
-// called 'Beyond Apex Boss' here while the rung was still empty; the pack has
-// always named it Mythic Boss and now has 12 of them, so this follows the
-// pack (corrected 2026-09-12).
+// is what makes a boss killed three times still worth one star. Tier 4 has no
+// bosses yet, but the counter and the CSS (.pc-badge.t4) are ready for it.
+// What each badge is, in the pack's own words: boss_rewards.js grades every
+// boss it knows as a Lesser, Greater or Apex Boss, and that is the name a
+// player has already seen in chat when one went down. Tier 4 is the rung
+// above, held open by the roster and unused so far.
 const TIER_NAMES = {
-  1: 'Lesser Boss', 2: 'Greater Boss', 3: 'Apex Boss', 4: 'Mythic Boss',
+  1: 'Lesser Boss', 2: 'Greater Boss', 3: 'Apex Boss', 4: 'Beyond Apex Boss',
 };
 // every grade ends in the word, so one rule pluralises all four
 const plural = (name, n) => n === 1 ? name : `${name}es`;
