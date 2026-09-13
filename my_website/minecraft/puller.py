@@ -12,6 +12,8 @@ nothing, and the worst case is a board that says how old its numbers are.
 
 import json
 import os
+import socket
+import struct
 import threading
 import time
 import urllib.error
@@ -162,34 +164,59 @@ def refresh_chat(season):
 
 # ── is the server actually up? ─────────────────────────────────────────────
 #
-# One question, asked of one URL: does http://<host>:8100/ answer?
+# Ask the game server's own listener, the way the multiplayer menu does: open
+# a socket, send a handshake and a status request, read back the JSON it
+# answers with. That is the Server List Ping, and it is the only witness that
+# means what the badge claims to mean.
 #
-# BlueMap here is a mod running inside the game server, serving its own
-# webserver out of that process. There is no separate nginx in front of it and
-# no static copy of the map anywhere else, so the webserver being up and the
-# game server being up are the same fact - if something answers on that port,
-# the server is running.
+# This used to ask the map instead - does http://<host>:8100/ answer? - on the
+# reasoning that BlueMap runs inside the game server, so the webserver being
+# up and the server being up are the same fact. They are not, and the thing
+# that separates them is ReadyPlayerFun: it halts the server's tick loop while
+# nobody is playing, and BlueMap's webserver sits behind that loop and stops
+# answering with it. The server is still running and still joinable the whole
+# time. So the map's verdict was really "is somebody playing right now", and
+# the badge went dark every time the last player logged off - which is exactly
+# what it is not supposed to do.
 #
-# This used to ask a cleverer question. It fetched settings.json, took the
-# first world out of it, and asked that world's live/players.json - on the
-# reasoning that the live endpoint is generated per request from the running
-# player list, where index.html is a static file that a bare filesystem could
-# keep serving. That reasoning is sound in the abstract and it was wrong here:
-# it is three round trips and a world-name lookup where one request would do,
-# every one of them a way to fail, and all of them failing *silently* into
-# "the server is down". A probe with more moving parts than the thing it is
-# probing is not a better probe.
+# The status ping does not have that problem, and cannot: a pause-when-empty
+# mod has to keep the network listener accepting, because an incoming join is
+# the thing that wakes it. If the listener were asleep the server could never
+# be woken, so anything that answers a ping is a server that can still be
+# joined. That is the definition the badge wants.
 #
-# What is given up: if the map were ever served by something other than the
-# game server, this would keep saying ONLINE after the server stopped. It is
-# not, and if that changes this comment is the place that says so.
+# The player count rides along for free, which is a second witness to who is
+# on that does not go through the export at all.
 #
-# Never raises. A map that cannot be reached is a "no", and the reason is kept
-# so that a probe failing on the deployed box can actually be seen - see
+# The map is kept as a fallback rather than deleted: if the ping is ever
+# blocked where the site runs - a host that allows outbound HTTP and nothing
+# else would do it - an answering map is still proof the server is up. It can
+# only ever turn a "no" into a "yes", so the pause it goes quiet for costs
+# nothing now that it is no longer the one being asked.
+#
+# Never raises. A server that cannot be reached is a "no", and the reason is
+# kept so that a probe failing on the deployed box can actually be seen - see
 # map_state, which the board carries. That was the real cost of the old
 # version: every failure mode looked identical from outside, which is how a
 # server that had been up for hours could read OFFLINE with nothing to say
 # why.
+
+# Where the game actually listens. Not the SFTP host in mc_sync.json (that is
+# the panel's file gateway, on a port of its own) and not the map's address
+# either - the same box serves several servers, and :25565 on it belongs to
+# somebody else's. This is the address the client's own server list holds.
+GAME_HOST = 's45.oddblox.us'
+GAME_PORT = 29502
+
+# The protocol number the handshake claims to speak. A status ping is answered
+# whatever this says - the field only matters once a client tries to join, and
+# this never does - so it is pinned rather than kept up with the server.
+PROTOCOL = 765
+
+# A status response carries the favicon as base64, so it is tens of kilobytes
+# on a server that has one. Past this something is wrong with the framing and
+# reading further is not going to fix it.
+PING_CAP = 512 * 1024
 
 # what the last probe did, for diagnosis rather than for the verdict
 _map_last = {'at': 0.0, 'ok': None, 'why': 'not asked yet', 'ms': None}
@@ -199,22 +226,120 @@ def map_state():
     return dict(_map_last)
 
 
+def _varint(n):
+    """A Minecraft varint: seven bits at a time, high bit says 'more coming'."""
+    out = b''
+    while True:
+        part = n & 0x7F
+        n >>= 7
+        out += bytes([part | (0x80 if n else 0)])
+        if not n:
+            return out
+
+
+def _read_varint(sock):
+    n = shift = 0
+    while True:
+        got = sock.recv(1)
+        if not got:
+            raise EOFError('socket closed mid-varint')
+        byte = got[0]
+        n |= (byte & 0x7F) << shift
+        shift += 7
+        if shift > 35:
+            raise ValueError('varint too long')
+        if not byte & 0x80:
+            return n
+
+
+def _ping_alive(timeout, host=GAME_HOST, port=GAME_PORT):
+    """Does the game server answer a status ping? Returns (ok, why).
+
+    Two packets out, one back. The handshake names the protocol, the address
+    dialled and the port, and asks for state 1 (status) rather than 2 (login),
+    so this never takes a player slot and never shows up as a join attempt.
+    """
+    sock = None
+    try:
+        sock = socket.create_connection((host, port), timeout)
+        sock.settimeout(timeout)
+        addr = host.encode('utf-8')
+        shake = (b'\x00' + _varint(PROTOCOL)
+                 + _varint(len(addr)) + addr
+                 + struct.pack('>H', port) + _varint(1))
+        sock.sendall(_varint(len(shake)) + shake)
+        sock.sendall(_varint(1) + b'\x00')       # status request, empty body
+
+        _read_varint(sock)                       # packet length, unused
+        if _read_varint(sock) != 0:              # packet id: 0 is the response
+            return False, 'ping: unexpected packet id'
+        size = _read_varint(sock)
+        if size <= 0 or size > PING_CAP:
+            return False, f'ping: implausible body ({size} bytes)'
+        body = b''
+        while len(body) < size:
+            chunk = sock.recv(min(8192, size - len(body)))
+            if not chunk:
+                return False, 'ping: truncated response'
+            body += chunk
+
+        # The count is the interesting half of the answer, but a server that
+        # framed a reply at all has already said the only thing being asked.
+        # So a body that will not parse is still a yes, with a note on it.
+        try:
+            data = json.loads(body.decode('utf-8', 'replace'))
+            players = data.get('players') or {}
+            version = (data.get('version') or {}).get('name') or '?'
+            return True, (f'ping {version}, '
+                          f'{players.get("online")}/{players.get("max")} online')
+        except (ValueError, AttributeError):
+            return True, 'ping: answered, body unreadable'
+    except Exception as exc:                     # noqa: BLE001 - see comment
+        return False, f'{type(exc).__name__}: {exc}'
+    finally:
+        if sock is not None:
+            try:
+                sock.close()
+            except OSError:
+                pass
+
+
 def _map_alive(timeout):
-    """Does the map's webserver answer? Returns (ok, why)."""
-    started = time.time()
+    """Does the map's webserver answer? Returns (ok, why).
+
+    The fallback witness, not the verdict - see the note above. It goes quiet
+    whenever ReadyPlayerFun pauses the server, so a "no" from here means
+    nothing on its own and is never allowed to decide anything.
+    """
     try:
         with urllib.request.urlopen(MAP_URL, timeout=timeout) as res:
             code = getattr(res, 'status', None) or res.getcode()
             res.read(1)                          # prove the body is coming too
-            return 200 <= code < 400, f'HTTP {code}'
+            return 200 <= code < 400, f'map HTTP {code}'
     except urllib.error.HTTPError as exc:
         # Something is listening and speaking HTTP, which is the whole
-        # question - a 404 or a 403 from BlueMap's own webserver still means
-        # the process behind it is alive. A 5xx is a gateway apologising for
-        # something that is not, so that one is a no.
-        return exc.code < 500, f'HTTP {exc.code}'
+        # question - a 404 from BlueMap's own webserver still means the
+        # process behind it is alive. A 5xx is a gateway apologising for
+        # something that is not, and a 403 or 407 is very often a proxy
+        # refusing to carry the request at all, which is not a witness to
+        # anything on the far side.
+        ok = exc.code < 500 and exc.code not in (403, 407)
+        return ok, f'map HTTP {exc.code}'
     except Exception as exc:                     # noqa: BLE001 - see comment
-        return False, f'{type(exc).__name__}: {exc}'
+        return False, f'map {type(exc).__name__}: {exc}'
+
+
+def _server_alive(timeout):
+    """The ping decides; the map only ever gets to overturn a 'no'."""
+    started = time.time()
+    try:
+        ok, why = _ping_alive(timeout)
+        if ok:
+            return True, why
+        backup, why2 = _map_alive(timeout)
+        if backup:
+            return True, f'{why2} (ping failed: {why})'
+        return False, f'{why}; {why2}'
     finally:
         _map_last['ms'] = int((time.time() - started) * 1000)
 
@@ -232,8 +357,9 @@ def probe_map(dest_dir, timeout=MAP_TIMEOUT):
     worker does the probing and the web process draws the page, and they share
     nothing but this folder.
     """
-    ok, why = _map_alive(timeout)
-    _map_last.update({'at': time.time(), 'ok': ok, 'why': why, 'url': MAP_URL})
+    ok, why = _server_alive(timeout)
+    _map_last.update({'at': time.time(), 'ok': ok, 'why': why,
+                      'url': f'{GAME_HOST}:{GAME_PORT}'})
     try:
         # the folder is normally there because the sync made it; on a checkout
         # that has never synced it is not, and the probe is the one thing that
@@ -241,7 +367,7 @@ def probe_map(dest_dir, timeout=MAP_TIMEOUT):
         os.makedirs(dest_dir, exist_ok=True)
         with open(os.path.join(dest_dir, MAP_TRY_STAMP), 'w',
                   encoding='utf-8') as fh:
-            fh.write(f'{MAP_URL} -> {why}')
+            fh.write(f'{GAME_HOST}:{GAME_PORT} -> {why}')
         if ok:
             open(os.path.join(dest_dir, MAP_STAMP), 'w').close()
     except OSError as exc:

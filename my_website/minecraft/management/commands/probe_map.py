@@ -1,4 +1,10 @@
-"""Ask the live map whether the server is up, and say exactly what happened.
+"""Ask the server whether it is up, and say exactly what happened.
+
+Named for the map because that is what it used to ask. It now sends a status
+ping to the game port and only falls back to the map - see puller._server_alive
+for why that way round, and why the map alone was reading OFFLINE every time
+the last player logged off.
+
 
     python manage.py probe_map
     python manage.py probe_map --timeout 15
@@ -48,12 +54,13 @@ class Command(BaseCommand):
                 season = "season1"
         dest = puller.dest_for(season)
 
-        self.stdout.write(f"url     {puller.MAP_URL}")
+        self.stdout.write(f"ping    {puller.GAME_HOST}:{puller.GAME_PORT}")
+        self.stdout.write(f"map     {puller.MAP_URL}  (fallback only)")
         self.stdout.write(f"stamps  {dest}")
 
         started = time.time()
         if opts["no_stamp"]:
-            ok, why = puller._map_alive(opts["timeout"])
+            ok, why = puller._server_alive(opts["timeout"])
         else:
             ok = puller.probe_map(dest, timeout=opts["timeout"])
             why = puller.map_state().get("why", "")
@@ -65,10 +72,12 @@ class Command(BaseCommand):
 
         if not ok:
             self.stdout.write("")
-            self.stdout.write("The badge will read OFFLINE while this fails. If the")
-            self.stdout.write("map opens fine in a browser but this cannot reach it,")
-            self.stdout.write("the host running the site is the thing being blocked -")
-            self.stdout.write("outbound HTTP on a non-standard port is the usual one.")
+            self.stdout.write("The badge will read OFFLINE while this fails. Both")
+            self.stdout.write("witnesses had to miss for it to say so: the status")
+            self.stdout.write("ping and then the map. If you can join the server from")
+            self.stdout.write("a client right now, the host running the site is the")
+            self.stdout.write("thing being blocked - outbound to a non-standard port")
+            self.stdout.write("is the usual one.")
 
         # what the board will make of it, which is the question behind the
         # question - the stamps are what it actually reads, not this run
