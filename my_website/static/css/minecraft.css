@@ -4036,8 +4036,8 @@ body::after { display: none; }
    gold that was tier 1 is now tier 2, diamond is now 3, red is now 4, and the
    rainbow that was reserved at 4 is now the live tier 5. Tier 1 is a new
    bronze, derived from the gold ramp. */
-/* tier 1, Lesser Boss — bronze */
-.pc-badge.t1, .lb-star.t1, .bc-star.t1, .lb-row.t1 { --px-o: #24180e; --px-b: #cd7f32; --px-s: #8c5420; --px-h: #f0b878; }
+/* tier 1, Lesser Boss — silver */
+.pc-badge.t1, .lb-star.t1, .bc-star.t1, .lb-row.t1 { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
 /* tier 2, Greater Boss — gold (the exact colors sampled from the source star) */
 .pc-badge.t2, .lb-star.t2, .bc-star.t2, .lb-row.t2 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
 /* tier 3, Elite Boss — diamond */
@@ -4053,8 +4053,8 @@ body::after { display: none; }
 .pc-badge.t5, .lb-star.t5, .bc-star.t5, .lb-row.t5 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
 .pcard.open .pc-badge.t5 .badge-star,
 .bcard.open .bc-star.t5 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
-/* miniboss — grey, regardless of the tier it's tagged with */
-.pc-badge.mini, .lb-star.mini, .bc-star.mini, .lb-row.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
+/* miniboss — bronze, regardless of the tier it's tagged with */
+.pc-badge.mini, .lb-star.mini, .bc-star.mini, .lb-row.mini { --px-o: #24180e; --px-b: #cd7f32; --px-s: #8c5420; --px-h: #f0b878; }
 
 @keyframes pc-glow-red {
   0%, 100% { filter: drop-shadow(0 0 2px rgba(229,56,59,0.55)); }
@@ -4071,18 +4071,22 @@ body::after { display: none; }
    point of the line. */
 .bcard { cursor: default; }
 /* the roster's own border carries the same tier colour as its star badge -
-   grey for a miniboss, gold/diamond/red/rainbow for tiers 1-4 - the same
-   --px-b tone each .pc-badge.tN uses for its own star, so the two never
+   bronze for a miniboss, silver/gold/diamond/red/rainbow for tiers 1-5 - the
+   same --px-b tone each .pc-badge.tN uses for its own star, so the two never
    drift apart. It shows whether or not the card is felled yet, so a player
-   can read a card's rank at a glance before ever beating it. */
-.bcard.t1, .bcard.t2, .bcard.t3, .bcard.t4, .bcard.mini {
+   can read a card's rank at a glance before ever beating it.
+   These are written out rather than read from --px-b because --px-b is scoped
+   to the star's own element, not the card: that is why this list has to be
+   kept in step with the palettes above by hand. */
+.bcard.t1, .bcard.t2, .bcard.t3, .bcard.t4, .bcard.t5, .bcard.mini {
   border-color: var(--tier); border-right-color: var(--tier); border-bottom-color: var(--tier);
 }
-.bcard.t1   { --tier: #eeba62; }
-.bcard.t2   { --tier: #6fe0ee; }
-.bcard.t3   { --tier: #e6484b; }
-.bcard.t4   { --tier: #b23cff; animation: bcard-rainbow 3s linear infinite; }
-.bcard.mini { --tier: #8a97a8; }
+.bcard.t1   { --tier: #8a97a8; }
+.bcard.t2   { --tier: #eeba62; }
+.bcard.t3   { --tier: #6fe0ee; }
+.bcard.t4   { --tier: #e6484b; }
+.bcard.t5   { --tier: #b23cff; animation: bcard-rainbow 3s linear infinite; }
+.bcard.mini { --tier: #cd7f32; }
 @keyframes bcard-rainbow {
   from { filter: hue-rotate(0deg); }
   to   { filter: hue-rotate(360deg); }
@@ -4095,18 +4099,19 @@ body::after { display: none; }
    pixel-art star against its own dark outline and reads washed-out blown up
    as body text, so the name gets its own bolder, more saturated pick per
    tier instead of sharing that variable. */
-.bcard.beaten.t1 .bc-name-text   { color: #ffd24a; }             /* gold */
-.bcard.beaten.t2 .bc-name-text   { color: #3da5ff; }             /* blue */
-.bcard.beaten.t3 .bc-name-text   { color: #ff3b3b; }             /* dark red */
-.bcard.beaten.t4 .bc-name-text   { color: #c469ff; }             /* purple */
-.bcard.beaten.mini .bc-name-text { color: #b7c1cf; }             /* steel grey */
+.bcard.beaten.t1 .bc-name-text   { color: #b7c1cf; }             /* silver */
+.bcard.beaten.t2 .bc-name-text   { color: #ffd24a; }             /* gold */
+.bcard.beaten.t3 .bc-name-text   { color: #3da5ff; }             /* blue */
+.bcard.beaten.t4 .bc-name-text   { color: #ff3b3b; }             /* red */
+.bcard.beaten.t5 .bc-name-text   { color: #c469ff; }             /* purple */
+.bcard.beaten.mini .bc-name-text { color: #e59a4e; }             /* bronze */
 /* A beaten boss is filled in its own rank's colour rather than one green for
    all of them. Green was the game's colour for something felled and done
    with, but it said the same thing about a Naga as about a Netherite
    Monstrosity - and the card already knows the difference, since --tier is
    what its border and its star are drawn from. So the fill comes off the
-   same variable: gold for tier one, diamond for two, red for three, purple
-   for four, steel for a miniboss. Mixed most of the way into the panel
+   same variable: silver for tier one, gold for two, diamond for three, red
+   for four, purple for five, bronze for a miniboss. Mixed most of the way into the panel
    ground so it reads as a tint behind the mob rather than as a colour the
    mob is standing on, and the border it sits inside stays exactly as it was. */
 .bcard.beaten {
@@ -4292,7 +4297,7 @@ body::after { display: none; }
    the lit edge and loses the travelling part of it */
 @media (prefers-reduced-motion: reduce) {
   .bcard.open::before { animation: none; background-size: 100% 100%; }
-  .bcard.t4 { animation: none; }
+  .bcard.t5 { animation: none; }
 }
 /* the narrow-card truncation on the boss's own name, mod, and killer names
    all exist to fit a hundred-and-twenty-four-pixel card - open, the card is
