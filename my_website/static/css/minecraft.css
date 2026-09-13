@@ -884,7 +884,7 @@ body::after { display: none; }
   /* An assist needed a colour of its own and the page had few left: green is
      spoken for four times over (online, felled, the biggest share, a fight's
      own names), gold counts kills, red counts deaths, cyan heads the fight
-     history and stars the diamond tier, and purple is held for tier four.
+     history and stars the diamond tier, and purple is held for tier five.
      Periwinkle is the one clear gap - cool, so it parts cleanly from the gold
      kill count it sits beside, and far enough from cyan that the two never
      read as the same mark. It is the badge's weight that says an assist is
@@ -4031,21 +4031,28 @@ body::after { display: none; }
 /* Shared by the card-corner badges (.pc-badge), the server-record boss
    list (.lb-star), and the roster card's own name star (.bc-star) — one
    palette per tier, defined once so none of the three views drift apart. */
-/* tier 1, Lesser Boss — gold (the exact colors sampled from the source star) */
-.pc-badge.t1, .lb-star.t1, .bc-star.t1, .lb-row.t1 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
-/* tier 2, Greater Boss — diamond */
-.pc-badge.t2, .lb-star.t2, .bc-star.t2, .lb-row.t2 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
-/* tier 3, Apex Boss — red, glowing */
-.pc-badge.t3, .lb-star.t3, .bc-star.t3, .lb-row.t3 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
+/* FIVE TIERS (2026-09-13): the pack split its old tier 2 in half and shifted
+   everything above up one, so each palette below moved up a rung with it. The
+   gold that was tier 1 is now tier 2, diamond is now 3, red is now 4, and the
+   rainbow that was reserved at 4 is now the live tier 5. Tier 1 is a new
+   bronze, derived from the gold ramp. */
+/* tier 1, Lesser Boss — bronze */
+.pc-badge.t1, .lb-star.t1, .bc-star.t1, .lb-row.t1 { --px-o: #24180e; --px-b: #cd7f32; --px-s: #8c5420; --px-h: #f0b878; }
+/* tier 2, Greater Boss — gold (the exact colors sampled from the source star) */
+.pc-badge.t2, .lb-star.t2, .bc-star.t2, .lb-row.t2 { --px-o: #26242b; --px-b: #eeba62; --px-s: #b58a50; --px-h: #f6f28b; }
+/* tier 3, Elite Boss — diamond */
+.pc-badge.t3, .lb-star.t3, .bc-star.t3, .lb-row.t3 { --px-o: #132a2e; --px-b: #6fe0ee; --px-s: #3a99a6; --px-h: #eafeff; }
+/* tier 4, Apex Boss — red, glowing */
+.pc-badge.t4, .lb-star.t4, .bc-star.t4, .lb-row.t4 { --px-o: #2e0d0d; --px-b: #e6484b; --px-s: #a82f32; --px-h: #ffb3b8; }
 /* Only where somebody is looking. This used to animate a filter on every
    apex star on the board at once - fifty of them, each its own compositor
    pass, sixty times a second - to make a badge an inch wide shimmer. */
-.pcard.open .pc-badge.t3 .badge-star,
-.bcard.open .bc-star.t3 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
-/* tier 4 — reserved for the next boss above apex: rainbow, animated */
-.pc-badge.t4, .lb-star.t4, .bc-star.t4, .lb-row.t4 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
 .pcard.open .pc-badge.t4 .badge-star,
-.bcard.open .bc-star.t4 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
+.bcard.open .bc-star.t4 .badge-star { animation: pc-glow-red 1.6s ease-in-out infinite; }
+/* tier 5, Mythic Boss — rainbow, animated */
+.pc-badge.t5, .lb-star.t5, .bc-star.t5, .lb-row.t5 { --px-o: #241033; --px-b: #b23cff; --px-s: #7a1fbf; --px-h: #f0d9ff; }
+.pcard.open .pc-badge.t5 .badge-star,
+.bcard.open .bc-star.t5 .badge-star { animation: pc-rainbow-spin 3s linear infinite; }
 /* miniboss — grey, regardless of the tier it's tagged with */
 .pc-badge.mini, .lb-star.mini, .bc-star.mini, .lb-row.mini { --px-o: #1c2126; --px-b: #8a97a8; --px-s: #5b6570; --px-h: #e4e9ee; }
 

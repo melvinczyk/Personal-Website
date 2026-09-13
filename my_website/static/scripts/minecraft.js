@@ -1757,7 +1757,7 @@ function buildLive(board) {
     </div>`).join('') : '<p class="rp-none">the server has not reported anybody yet</p>';
 
   const bossCard = b => {
-    // the same tier -> class mapping the star badges use (t1..t4, or mini),
+    // the same tier -> class mapping the star badges use (t1..t5, or mini),
     // so the card's own border can carry the tier's colour before anyone
     // has felled it, not just after. A boss with no tier at all - the index
     // and boss_rewards.js's own grading have gone out of sync - gets no
@@ -2018,14 +2018,18 @@ const PIXEL_FLAG_SVG = `<svg class="badge-flag" viewBox="0 0 11 10" shape-render
 // called 'Beyond Apex Boss' here while the rung was still empty; the pack has
 // always named it Mythic Boss and now has 12 of them, so this follows the
 // pack (corrected 2026-09-12).
+// FIVE TIERS (2026-09-13): the pack split its old tier 2 in half - ten bosses
+// stayed at 2 and eighteen became the new Elite Boss at 3 - and everything
+// above shifted up one rung. Apex is now 4 and Mythic is now 5.
 const TIER_NAMES = {
-  1: 'Lesser Boss', 2: 'Greater Boss', 3: 'Apex Boss', 4: 'Mythic Boss',
+  1: 'Lesser Boss', 2: 'Greater Boss', 3: 'Elite Boss', 4: 'Apex Boss',
+  5: 'Mythic Boss',
 };
-// every grade ends in the word, so one rule pluralises all four
+// every grade ends in the word, so one rule pluralises all five
 const plural = (name, n) => n === 1 ? name : `${name}es`;
 
 function bossBadges(p) {
-  const counts = { 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
+  const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, mini: 0 };
   for (const b of p.bosses || []) {
     // A star is for having beaten the thing, and helping to bring a boss
     // down is beating it - the Ancient Guardian took two of them the better
@@ -2065,8 +2069,9 @@ function bossBadges(p) {
     ? `<span class="pc-badge first" role="img" data-tip="${ledTip}"
              aria-label="${ledTip}">${PIXEL_FLAG_SVG}x${led}</span>`
     : '';
-  return [chip('t4', counts[4], star(4)), chip('t3', counts[3], star(3)),
-          chip('t2', counts[2], star(2)), chip('t1', counts[1], star(1)),
+  return [chip('t5', counts[5], star(5)), chip('t4', counts[4], star(4)),
+          chip('t3', counts[3], star(3)), chip('t2', counts[2], star(2)),
+          chip('t1', counts[1], star(1)),
           chip('mini', counts.mini, n => `${n} ${plural('Miniboss', n)} beaten`),
           firsts, helped].join('');
 }
