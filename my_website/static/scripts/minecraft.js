@@ -4587,7 +4587,7 @@ function unskillHover(who) {
 const PLAN = '__plan';
 // The pack's own cap, read out of its config by the extractor. Kept as a
 // fallback here for a tree.json extracted before that was carried.
-const PLAN_FALLBACK = 130;
+const PLAN_FALLBACK = 200;
 function planMax() { return (skillTree && skillTree.max) || PLAN_FALLBACK; }
 let planHeld = [];
 
@@ -4786,6 +4786,17 @@ function planCostChart(spent) {
   let peak = ramp;
   for (let i = ramp; i < step.length; i++) if (step[i] >= step[peak]) peak = i;
 
+  // The extension: the pack bolted a straight line onto the end of the curve
+  // rather than continuing the S, so the tail climbs by a fixed amount per
+  // point. Found the same way the other two are - walk back from the end
+  // while the raw cost step is unchanged - so it appears on its own when the
+  // config has one and stays away when it does not. Read off raw experience,
+  // not levels: the levels are rounded and a rounded step wobbles.
+  let ext = raw.length - 1;
+  const tail = raw[raw.length - 1] - raw[raw.length - 2];
+  while (ext > 1 && raw[ext] - raw[ext - 1] === tail) ext--;
+  if (raw.length - ext < 6 || ext <= peak) ext = 0;
+
   const line = (from, to, cls) => {
     const pts = [];
     for (let i = from; i <= to && i < levels.length; i++) {
@@ -4852,10 +4863,11 @@ function planCostChart(spent) {
         <polygon class="sk-cost-area" points="${levels.map((v, i) =>
           `${px(i).toFixed(1)},${py(v).toFixed(1)}`).join(' ')} ${
           W - R},${T + plotH} ${L},${T + plotH}"/>
-        ${mark(ramp)}${mark(peak)}
+        ${mark(ramp)}${mark(peak)}${ext ? mark(ext) : ''}
         ${line(0, ramp, 'flat')}
         ${line(ramp, peak, 'ramp')}
-        ${line(peak, levels.length - 1, 'shoulder')}
+        ${line(peak, ext || levels.length - 1, 'shoulder')}
+        ${ext ? line(ext, levels.length - 1, 'extension') : ''}
         ${spent ? `<circle class="sk-cost-here"
           cx="${px(Math.min(spent, levels.length) - 1).toFixed(1)}"
           cy="${py(here).toFixed(1)}" r="5"/>` : ''}

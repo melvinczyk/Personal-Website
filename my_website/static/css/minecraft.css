@@ -3470,6 +3470,7 @@ body::after { display: none; }
 .sk-lv.flat     { stroke: #8a94b8; }
 .sk-lv.ramp     { stroke: #e0a24a; }
 .sk-lv.shoulder { stroke: #a97bff; }
+.sk-lv.extension { stroke: #4ec9a8; }
 .sk-lv-mark { stroke: rgba(255,255,255,0.16); stroke-width: 1; stroke-dasharray: 3 3; }
 .sk-lv-marktext { fill: var(--mc-faint); font-size: 10px; }
 
