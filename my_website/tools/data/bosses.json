@@ -284,6 +284,18 @@
     {
       "id": "eeeabsmobs:corpse_warlock",
       "required": false
+    },
+    {
+      "id": "hadean_breathe:hadean_enforcer",
+      "required": false
+    },
+    {
+      "id": "legionary:unbreakable",
+      "required": false
+    },
+    {
+      "id": "ydtwo:twisted_warden",
+      "required": false
     }
   ]
 }
