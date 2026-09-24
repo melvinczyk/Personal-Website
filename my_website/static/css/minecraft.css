@@ -6109,3 +6109,69 @@ body::after { display: none; }
   .ls-top { margin: 8px 7px 0; }
   .ls-deck { margin: 8px 7px 0; }
 }
+
+/* chat voices: the one roster panel you can act in rather than only read.
+   Same codec type and accent as the rest of the card, so it reads as part of
+   the same instrument instead of a form bolted onto it. */
+.voice-panel {
+  font-family: 'MGS1 Codec', monospace; font-size: 12px; color: #9fb0c6;
+  display: flex; flex-direction: column; min-height: 100%;
+}
+.vp-section { margin-bottom: 14px; }
+.vp-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; letter-spacing: .1em; color: #7f8ea3;
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  padding-bottom: 4px; margin-bottom: 8px;
+}
+.vp-head b { margin-left: auto; font-weight: normal; color: var(--rc, #ffd479); }
+.vp-hint { color: #7f8ea3; font-size: 11px; line-height: 1.5; margin: 0 0 9px; }
+
+.vp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; }
+.vp-chip {
+  display: flex; flex-direction: column; gap: 2px; text-align: left;
+  padding: 6px 9px; cursor: pointer; border: 1px solid rgba(255,255,255,0.12);
+  border-left: 2px solid transparent; background: rgba(255,255,255,0.04);
+  font-family: inherit; color: #9fb0c6;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.vp-chip b { font-weight: normal; font-size: 12px; color: #cfdaea; }
+.vp-chip i { font-style: normal; font-size: 10px; color: #6f7d90; line-height: 1.35; }
+.vp-chip:hover { background: rgba(255,255,255,0.1); color: #eef4ff; }
+.vp-chip:hover b { color: #fff; }
+.vp-chip.on {
+  border-left-color: var(--rc, #ffd479); background: rgba(255,212,121,0.12);
+}
+.vp-chip.on b { color: var(--rc, #ffd479); }
+.vp-chip.cloned i { color: #7fa8c9; }
+
+.voice-panel input[type=text],
+.voice-panel input[type=password],
+.voice-panel input[type=file],
+.voice-panel textarea {
+  width: 100%; margin-bottom: 6px; padding: 6px 9px;
+  background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.14);
+  color: #dfe7f2; font-family: inherit; font-size: 12px;
+}
+.voice-panel textarea { min-height: 54px; resize: vertical; }
+.voice-panel input:focus, .voice-panel textarea:focus {
+  outline: none; border-color: var(--rc, #ffd479);
+}
+.vp-btn {
+  margin-top: 3px; padding: 6px 14px; cursor: pointer;
+  border: 1px solid var(--rc, #ffd479); background: rgba(255,212,121,0.14);
+  color: var(--rc, #ffd479); font-family: inherit; font-size: 12px;
+  letter-spacing: .06em; transition: background .15s;
+}
+.vp-btn:hover { background: rgba(255,212,121,0.26); }
+.vp-btn:disabled { opacity: .45; cursor: default; }
+
+.vp-lock p { margin: 0 0 9px; color: #7f8ea3; font-size: 11px; line-height: 1.5; }
+
+.vp-status {
+  display: none; margin-top: auto; padding: 7px 9px; font-size: 11px; line-height: 1.45;
+  border-left: 2px solid transparent;
+}
+.vp-status.on { display: block; }
+.vp-status.ok { background: rgba(120,200,160,0.1); border-left-color: #6ee7a8; color: #a9dcc3; }
+.vp-status.err { background: rgba(220,120,120,0.12); border-left-color: #e77d7d; color: #f0b6b6; }
