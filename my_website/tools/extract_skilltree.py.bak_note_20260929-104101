@@ -493,14 +493,8 @@ def guide_chart(cap, costs):
             <text class="gxc-axislabel" x="{L + plot / 2:.0f}" y="298" text-anchor="middle">skill point # (1 to {cap})</text>
           </svg>"""
 
-    # Where the curve stops being cheap: the single biggest step up in cost.
-    # Read off the numbers rather than named, because this sentence had said
-    # "one level a point up to 60" long after the pack had retuned the run-up
-    # to only reach level 47 by then - the same staleness the chart itself had.
-    knee = max(range(1, len(costs)), key=lambda i: costs[i] / costs[i - 1])
-    note = (f'The player level each skill point needs, log scale. A gentle '
-            f'climb to <b>level {costs[knee - 1]:,}</b> over the first {knee} '
-            f'points, then it takes off, then it eases into the cap. '
+    note = (f'The player level each skill point needs, log scale. One level a '
+            f'point up to 60, then it takes off, then it eases into the cap. '
             f'In plain terms: half the tree, {cap // 2} points, is <b>level '
             f'{half:,}</b>. The other half costs the remaining '
             f'<b>{most - half:,} levels</b> up to <b>{most:,}</b>.')
