@@ -1,7 +1,7 @@
 """Pull the Passive Skill Tree's own tree out of the mod, and out of the pack.
 
 Run from my_website/:
-    python tools/extract_skilltree.py [--jar <jar>] [--pack <pst.zip>]
+    python tools/extract_skilltree.py [--jar <jar>] [--pack <pst.zip>] [--force]
 
 Two sources, layered, because the pack does not use the tree the mod ships:
 
@@ -38,6 +38,12 @@ MODS = [os.path.join(i, 'mods') for i in INSTANCES]
 # and every skill name the editor made up.
 PACK_ICONS = 'global_packs/required_resources/Passive Skill Tree Icons/assets/skilltree/textures/icons'
 PACK_LANG = 'kubejs/assets/skilltree/lang/en_us.json'
+
+# The server's datapack, where pull_from_server.py leaves it:
+#   python pull_from_server.py "Groid Pack OG/datapacks/pst.zip"
+# Found here so a run without --pack still gets the seventh class rather than
+# quietly writing out the jar's six.
+PACK_PULLED = 'remote_pull/Groid Pack OG/datapacks/pst.zip'
 
 # What the pack charges for a skill point, and how many it allows. Both are in
 # the instance's own config rather than in the mod, and both have been changed
@@ -487,18 +493,14 @@ def guide_chart(cap, costs):
             <text class="gxc-axislabel" x="{L + plot / 2:.0f}" y="298" text-anchor="middle">skill point # (1 to {cap})</text>
           </svg>"""
 
-    # Where the gentle opening ends. Derived, not asserted: the note used to
-    # claim "one level a point up to 60", which was true of one tuning of the
-    # curve and quietly wrong of the next. The knee is the first point that
-    # costs more than three times the opening's own average step.
-    steps = [b - a for a, b in zip(costs, costs[1:])]
-    opening = sum(steps[:20]) / 20 if len(steps) >= 20 else 1
-    knee = next((i + 1 for i, d in enumerate(steps) if d > max(3 * opening, 2)),
-                len(costs))
-
+    # Where the curve stops being cheap: the single biggest step up in cost.
+    # Read off the numbers rather than named, because this sentence had said
+    # "one level a point up to 60" long after the pack had retuned the run-up
+    # to only reach level 47 by then - the same staleness the chart itself had.
+    knee = max(range(1, len(costs)), key=lambda i: costs[i] / costs[i - 1])
     note = (f'The player level each skill point needs, log scale. A gentle '
-            f'climb to point {knee} (<b>level {costs[knee - 1]:,}</b>), then '
-            f'it takes off, then it eases into the cap. '
+            f'climb to <b>level {costs[knee - 1]:,}</b> over the first {knee} '
+            f'points, then it takes off, then it eases into the cap. '
             f'In plain terms: half the tree, {cap // 2} points, is <b>level '
             f'{half:,}</b>. The other half costs the remaining '
             f'<b>{most - half:,} levels</b> up to <b>{most:,}</b>.')
@@ -526,7 +528,14 @@ def find_jar(arg):
     return None
 
 
-def main(arg=None, pack=None):
+def main(arg=None, pack=None, force=False):
+    pack = pack or next((os.path.join(f, PACK_PULLED) for f in INSTANCES
+                         if os.path.exists(os.path.join(f, PACK_PULLED))), None)
+    if not pack or not os.path.exists(pack):
+        # Without it the tree is the jar's six classes, and writing that out
+        # is how Runekiller went missing from the site once already.
+        print('no pst.zip - pull it off the server first, or pass --pack')
+        return
     jar = find_jar(arg)
     if not jar or not os.path.exists(jar):
         print('no PassiveSkillTree jar found')
@@ -536,7 +545,7 @@ def main(arg=None, pack=None):
 
     # every skill file, the datapack's copy winning where both have one
     raw_skills = {}
-    sources = [jar] + ([pack] if pack and os.path.exists(pack) else [])
+    sources = [jar, pack]
     for source in sources:
         with zipfile.ZipFile(source) as z:
             for entry in z.namelist():
@@ -574,7 +583,7 @@ def main(arg=None, pack=None):
                 'g': grade if grade in GRADES else 'lesser',
                 'i': icon,
                 # which class's arm of the tree it is on. Every id is prefixed
-                # with it, and there are exactly six.
+                # with it, and there are seven: six from the jar, Runekiller from the pack.
                 'c': key.split('_')[0],
                 'start': bool(raw.get('isStartingPoint')),
                 # what it does, already worded - see bonus_line
@@ -621,6 +630,19 @@ def main(arg=None, pack=None):
             art.save(os.path.join(OUT, 'icons', name))
             drawn += 1
 
+    # Never let a re-extract lose a class the current tree has: a pack that
+    # came from the wrong place looks exactly like a pack that dropped one.
+    classes = {n['c'] for n in nodes.values()}
+    try:
+        with open(os.path.join(OUT, 'tree.json')) as fh:
+            lost = set(json.load(fh).get('classes') or []) - classes
+    except (OSError, ValueError):
+        lost = set()
+    if lost and not force:
+        print('refusing to write: this tree has no', ', '.join(sorted(lost)),
+              '- pass --force if that is really meant')
+        return
+
     cap, costs = skill_costs()
     tree = {'nodes': nodes, 'edges': out_edges,
             'classes': sorted({n['c'] for n in nodes.values()}),
@@ -646,4 +668,5 @@ def _flag(name):
 
 if __name__ == '__main__':
     loose = [a for a in sys.argv[1:] if not a.startswith('-')]
-    main(_flag('--jar') or (loose[0] if loose else None), _flag('--pack'))
+    main(_flag('--jar') or (loose[0] if loose else None), _flag('--pack'),
+         '--force' in sys.argv)

@@ -4121,8 +4121,9 @@ async function loadHistory(force) {
 // The real tree, at the mod's own coordinates. Every node in Passive Skill
 // Tree ships as data - where it sits, how big it draws, which icon it wears
 // and what it connects to - so tools/extract_skilltree.py lifts all of it out
-// of the jar and this draws it rather than drawing a diagram of it. Six
-// classes radiating from the middle, 588 nodes, 669 connections.
+// of the jar and the pack's datapack, and this draws it rather than drawing
+// a diagram of it. Seven classes radiating from the middle, 686 nodes, 784
+// connections.
 //
 // What the export gives is only which of them a player holds. So the whole
 // tree is drawn dim and the ones they took are lit, which is the reading:

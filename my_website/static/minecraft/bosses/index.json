@@ -496,6 +496,29 @@
   "tier": 5
  },
  {
+  "key": "skarrier_mobs__grave_construct",
+  "id": "skarrier_mobs:grave_construct",
+  "name": "Grave Construct",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__grave_construct.model.json"
+ },
+ {
+  "key": "skarrier_mobs__grave_construct_phase_melee",
+  "id": "skarrier_mobs:grave_construct_phase_melee",
+  "name": "Grave Construct Phase Melee",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__grave_construct_phase_melee.model.json",
+  "tier": 3
+ },
+ {
+  "key": "skarrier_mobs__grave_construct_phase_ranged",
+  "id": "skarrier_mobs:grave_construct_phase_ranged",
+  "name": "Grave Construct Phase Ranged",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__grave_construct_phase_ranged.model.json",
+  "tier": 3
+ },
+ {
   "key": "stalwart_dungeons__awful_ghast",
   "id": "stalwart_dungeons:awful_ghast",
   "name": "Awful Ghast",
