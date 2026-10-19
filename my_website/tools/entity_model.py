@@ -19,6 +19,8 @@ import sys
 import tempfile
 import zipfile
 
+import geo
+
 # the client jar moves with the install, which is not in the same place on
 # every machine this is run from - see bosses._instance
 JAR = next((os.path.expanduser(p) for p in (
@@ -28,6 +30,51 @@ JAR = next((os.path.expanduser(p) for p in (
     '~/curseforge/minecraft/Install/versions/1.20.1/1.20.1.jar'))
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
+
+def _literal_bone(name, tex_u, tex_v, x, y, z, w, h, d):
+    """One bone holding one box, stated outright rather than read.
+
+    For the two vanilla models whose part names are built at runtime --
+    BlazeModel's "part" + i and LavaSlimeModel's "cube" + i -- the bytecode
+    reader sees the numbers but never the names, so it comes away with one
+    bone or none. The numbers below are those same constants, read out of the
+    disassembly by hand; the unwrap is geo.box_uv, which is the one Minecraft
+    and Blockbench both use for a box with a single texture origin.
+    """
+    return {
+        'name': name, 'parent': None,
+        'pivot': [0.0, 0.0, 0.0], 'rot': [0.0, 0.0, 0.0],
+        'cubes': [{
+            'c': [x + w / 2.0, y + h / 2.0, z + d / 2.0],
+            's': [float(w), float(h), float(d)],
+            'f': geo.box_uv(tex_u, tex_v, w, h, d),
+        }],
+    }
+
+
+# LavaSlimeModel: eight 8x1x8 slabs stacked from y=16, with the third and
+# fourth taking their own texture origin, plus a 4x4x4 core. Its segments are
+# named "cube" + i at runtime, which is why the reader found only the core.
+def _magma_cube_bones():
+    bones = []
+    for i in range(8):
+        u, v = (24, 10) if i == 2 else (24, 19) if i == 3 else (0, i)
+        bones.append(_literal_bone(f'cube{i}', u, v, -4.0, 16.0 + i, -4.0, 8, 1, 8))
+    bones.append(_literal_bone('inside_cube', 0, 16, -2.0, 18.0, -2.0, 4, 4, 4))
+    return bones
+
+
+# BlazeModel: a head and twelve identical rods named "part" + i at runtime.
+# The renderer, not the mesh, decides where each rod sits -- they are all at
+# the origin here, exactly as the class leaves them.
+def _blaze_bones():
+    return ([_literal_bone('head', 0, 0, -4.0, -4.0, -4.0, 8, 8, 8)]
+            + [_literal_bone(f'part{i}', 0, 16, 0.0, 0.0, 0.0, 2, 8, 2)
+               for i in range(12)])
+
+_BLAZE_BONES = _blaze_bones()
+_MAGMA_BONES = _magma_cube_bones()
+
 
 # Each mob: a string only its model class holds, and the textures to lift out.
 MOBS = {
@@ -93,6 +140,144 @@ MOBS = {
         # the vindicator and pillager wear this, the evoker never does - its
         # own renderer just skips the part
         'drop':    ('hat',),
+    },
+
+    # ---------------------------------------------------------------------
+    # GROID: the mobs Summoner Scrolls can summon that are not bosses. Every
+    # one is pinned to its resolved class rather than searched for: the
+    # vanilla bipeds all carry the same seven part names, so a marker search
+    # returns five classes and the right one is not reliably first.
+    #
+    # The class ids below are for the 1.20.1 client jar and mean nothing in
+    # any other version. They were resolved by geometry, not by name -- the
+    # humanoid is the one with a 4x12x4 arm and seven bones, the enderman the
+    # one with a 2x30x2 arm -- which is repeatable when the jar changes.
+    # ---------------------------------------------------------------------
+
+    # HumanoidModel itself: the zombies are drawn on it unchanged.
+    'zombie': {
+        'tier': 0, 'order': 20, 'marker': 'right_leg', 'class': 'fbs.class',
+        'reject': None, 'texture': 'textures/entity/zombie/zombie.png',
+        'name': 'Zombie', 'id': 'minecraft:zombie',
+    },
+    'husk': {
+        'tier': 0, 'order': 21, 'marker': 'right_leg', 'class': 'fbs.class',
+        'reject': None, 'texture': 'textures/entity/zombie/husk.png',
+        'name': 'Husk', 'id': 'minecraft:husk',
+    },
+    'drowned': {
+        'tier': 0, 'order': 22, 'marker': 'right_leg', 'class': 'fbs.class',
+        'reject': None, 'texture': 'textures/entity/zombie/drowned.png',
+        'name': 'Drowned', 'id': 'minecraft:drowned',
+    },
+    # ZombieVillagerModel: the humanoid plus a hat rim.
+    'zombie_villager': {
+        'tier': 0, 'order': 23, 'marker': 'hat_rim', 'class': 'fdx.class',
+        'reject': None, 'texture': 'textures/entity/zombie_villager/zombie_villager.png',
+        'name': 'Zombie Villager', 'id': 'minecraft:zombie_villager',
+    },
+
+    # SkeletonModel replaces only the four limbs, with 2-wide ones. Its head,
+    # hat and body come from the humanoid underneath it.
+    'skeleton': {
+        'tier': 0, 'order': 24, 'marker': 'right_arm', 'class': 'fda.class',
+        'base': 'fbs.class', 'reject': None,
+        'texture': 'textures/entity/skeleton/skeleton.png',
+        'name': 'Skeleton', 'id': 'minecraft:skeleton',
+    },
+    'stray': {
+        'tier': 0, 'order': 25, 'marker': 'right_arm', 'class': 'fda.class',
+        'base': 'fbs.class', 'reject': None,
+        'texture': 'textures/entity/skeleton/stray.png',
+        'name': 'Stray', 'id': 'minecraft:stray',
+    },
+    'wither_skeleton': {
+        'tier': 0, 'order': 26, 'marker': 'right_arm', 'class': 'fda.class',
+        'base': 'fbs.class', 'reject': None,
+        'texture': 'textures/entity/skeleton/wither_skeleton.png',
+        'name': 'Wither Skeleton', 'id': 'minecraft:wither_skeleton',
+    },
+
+    # PiglinModel replaces the head and adds two ears; everything below the
+    # neck is the humanoid's.
+    'piglin': {
+        'tier': 0, 'order': 27, 'marker': 'left_ear', 'class': 'fcj.class',
+        'base': 'fbs.class', 'reject': None,
+        'texture': 'textures/entity/piglin/piglin.png',
+        'name': 'Piglin', 'id': 'minecraft:piglin',
+    },
+    'piglin_brute': {
+        'tier': 0, 'order': 28, 'marker': 'left_ear', 'class': 'fcj.class',
+        'base': 'fbs.class', 'reject': None,
+        'texture': 'textures/entity/piglin/piglin_brute.png',
+        'name': 'Piglin Brute', 'id': 'minecraft:piglin_brute',
+    },
+
+    # IllagerModel, the same class the evoker entry above already uses. These
+    # two wear the hat the evoker does not, so neither drops it.
+    'pillager': {
+        'tier': 0, 'order': 29, 'marker': 'hat_rim', 'class': 'fdq.class',
+        'reject': None, 'texture': 'textures/entity/illager/pillager.png',
+        'name': 'Pillager', 'id': 'minecraft:pillager',
+    },
+    'vindicator': {
+        'tier': 0, 'order': 30, 'marker': 'hat_rim', 'class': 'fdq.class',
+        'reject': None, 'texture': 'textures/entity/illager/vindicator.png',
+        'name': 'Vindicator', 'id': 'minecraft:vindicator',
+    },
+
+    'enderman': {
+        'tier': 0, 'order': 31, 'marker': 'right_arm', 'class': 'fbd.class',
+        'reject': None, 'texture': 'textures/entity/enderman/enderman.png',
+        'name': 'Enderman', 'id': 'minecraft:enderman',
+    },
+    'spider': {
+        'tier': 0, 'order': 32, 'marker': 'body0', 'class': 'fdg.class',
+        'reject': None, 'texture': 'textures/entity/spider/spider.png',
+        'name': 'Spider', 'id': 'minecraft:spider',
+    },
+    'cave_spider': {
+        'tier': 0, 'order': 33, 'marker': 'body0', 'class': 'fdg.class',
+        'reject': None, 'texture': 'textures/entity/spider/cave_spider.png',
+        'name': 'Cave Spider', 'id': 'minecraft:cave_spider',
+    },
+    'creeper': {
+        'tier': 0, 'order': 34, 'marker': 'right_hind_leg', 'class': 'faz.class',
+        'reject': None, 'texture': 'textures/entity/creeper/creeper.png',
+        'name': 'Creeper', 'id': 'minecraft:creeper',
+    },
+    'iron_golem': {
+        'tier': 0, 'order': 35, 'marker': 'right_arm', 'class': 'fbu.class',
+        'reject': None, 'texture': 'textures/entity/iron_golem/iron_golem.png',
+        'name': 'Iron Golem', 'id': 'minecraft:iron_golem',
+    },
+    'bee': {
+        'tier': 0, 'order': 36, 'marker': 'stinger', 'class': 'fal.class',
+        'reject': None, 'texture': 'textures/entity/bee/bee.png',
+        'name': 'Bee', 'id': 'minecraft:bee',
+    },
+    'slime': {
+        'tier': 0, 'order': 37, 'marker': 'right_eye', 'class': 'fdd.class',
+        'reject': None, 'texture': 'textures/entity/slime/slime.png',
+        'name': 'Slime', 'id': 'minecraft:slime',
+    },
+    # LavaSlimeModel: eight stacked segments and a core, not the slime's cube.
+    'magma_cube': {
+        'tier': 0, 'order': 38, 'marker': 'inside_cube', 'reject': None,
+        'texture': 'textures/entity/slime/magmacube.png',
+        'name': 'Magma Cube', 'id': 'minecraft:magma_cube',
+        'size': (64, 32), 'bones': _MAGMA_BONES,
+    },
+
+    # BlazeModel builds its twelve rods as "part" + i at runtime, so the class
+    # holds no part names at all and the bytecode reader comes away empty.
+    # The rods are identical 2x8x2 sticks and the renderer, not the mesh,
+    # decides where each one sits, so stating them here loses nothing.
+    'blaze': {
+        'tier': 0, 'order': 39, 'marker': 'part', 'reject': None,
+        'texture': 'textures/entity/blaze.png',
+        'name': 'Blaze', 'id': 'minecraft:blaze',
+        'size': (64, 32), 'bones': _BLAZE_BONES,
     },
 }
 
@@ -978,7 +1163,37 @@ def build_dragon():
     return model
 
 
+def build_literal(key, spec):
+    """Write a model whose bones the spec states outright. See build()."""
+    bones = [dict(b) for b in spec['bones']]
+    tw, th = spec.get('size', (64, 32))
+    os.makedirs(OUT, exist_ok=True)
+    with zipfile.ZipFile(JAR) as zf:
+        png = zf.read('assets/minecraft/' + spec['texture'])
+    with open(os.path.join(OUT, f'{key}.png'), 'wb') as fh:
+        fh.write(png)
+    model = {
+        'id': spec['id'], 'name': spec['name'], 'class': 'hand-authored',
+        'tw': tw, 'th': th, 'texture': f'{key}.png', 'bones': bones,
+    }
+    with open(os.path.join(OUT, f'{key}.model.json'), 'w') as fh:
+        json.dump(model, fh, separators=(',', ':'))
+    cubes = sum(len(b['cubes']) for b in bones)
+    print(f'{key:<8} {"hand":<12} {len(bones):>2} bones {cubes:>3} cubes  {tw}x{th}')
+    return model
+
+
 def build(key, spec):
+    # A model whose bones this reader can never see.
+    #
+    # BlazeModel names its twelve rods "part" + i, built at runtime, so the
+    # only string in the class is "part" and the reader comes away with
+    # nothing. The rods are identical and the renderer, not the mesh, decides
+    # where they sit, so writing them out by hand loses nothing that was ever
+    # in the class to begin with.
+    if spec.get('bones'):
+        return build_literal(key, spec)
+
     # A single marker string is usually enough to land on one class, or on a
     # handful where the right one reads first. Ravager's "mouth"/"horn"
     # strings are each shared with several other mobs' models (a wolf, a
@@ -999,6 +1214,35 @@ def build(key, spec):
     if mesh is None:
         raise SystemExit(f'{key}: no mesh in {", ".join(candidates)}')
     bones = mesh.bones
+    tw, th = mesh.size or (64, 64)
+
+    # A model class that only OVERRIDES parts of another one.
+    #
+    # SkeletonModel and PiglinModel are both written this way: SkeletonModel's
+    # createBodyLayer starts from HumanoidModel.createMesh and then replaces
+    # the four limbs with 2-wide ones, and PiglinModel starts from PlayerModel
+    # and replaces the head, adding ears. Read on its own, SkeletonModel is
+    # four floating limbs and PiglinModel is a head with no body -- which is
+    # exactly what came out of the first run, and why "vanilla builds this one
+    # by hand" was hiding two different problems.
+    #
+    # The base is laid down first and the mob's own parts land on top of it,
+    # replacing a bone of the same name and appending anything new. The mob's
+    # own texture size wins where it has one: a piglin sheet is 64x64 and the
+    # humanoid it is built from says 64x32.
+    if spec.get('base'):
+        under = parse(disassemble(JAR, spec['base']))
+        merged = [dict(b) for b in under.bones]
+        index = {b['name']: i for i, b in enumerate(merged)}
+        for bone in bones:
+            if bone['name'] in index:
+                merged[index[bone['name']]] = bone
+            else:
+                merged.append(bone)
+        bones = merged
+        if not mesh.size and under.size:
+            tw, th = under.size
+        entry = f"{spec['base']}+{entry}"
     if key == 'elder_guardian':
         bones = parse_guardian_spikes(text, bones)
     if spec.get('drop'):
@@ -1015,7 +1259,6 @@ def build(key, spec):
             if bone['name'] in gone:
                 bone['cubes'] = []
 
-    tw, th = mesh.size or (64, 64)
     os.makedirs(OUT, exist_ok=True)
 
     with zipfile.ZipFile(JAR) as zf:

@@ -487,8 +487,18 @@ def guide_chart(cap, costs):
             <text class="gxc-axislabel" x="{L + plot / 2:.0f}" y="298" text-anchor="middle">skill point # (1 to {cap})</text>
           </svg>"""
 
-    note = (f'The player level each skill point needs, log scale. One level a '
-            f'point up to 60, then it takes off, then it eases into the cap. '
+    # Where the gentle opening ends. Derived, not asserted: the note used to
+    # claim "one level a point up to 60", which was true of one tuning of the
+    # curve and quietly wrong of the next. The knee is the first point that
+    # costs more than three times the opening's own average step.
+    steps = [b - a for a, b in zip(costs, costs[1:])]
+    opening = sum(steps[:20]) / 20 if len(steps) >= 20 else 1
+    knee = next((i + 1 for i, d in enumerate(steps) if d > max(3 * opening, 2)),
+                len(costs))
+
+    note = (f'The player level each skill point needs, log scale. A gentle '
+            f'climb to point {knee} (<b>level {costs[knee - 1]:,}</b>), then '
+            f'it takes off, then it eases into the cap. '
             f'In plain terms: half the tree, {cap // 2} points, is <b>level '
             f'{half:,}</b>. The other half costs the remaining '
             f'<b>{most - half:,} levels</b> up to <b>{most:,}</b>.')

@@ -58,7 +58,9 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 # boss at all - it is graded there, once, by hand. Reading it here lets an
 # unfelled boss's card carry the right tier colour from the start, instead of
 # only after the server has recorded a first kill for it.
-TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'boss_rewards.js')
+TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'a_boss_roster.js')
+if not os.path.exists(TIER_SCRIPT):          # older packs kept the tables in boss_rewards.js
+    TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'boss_rewards.js')
 
 VANILLA_JAR = em.JAR
 PNG = re.compile(rb'([a-z][a-z0-9_/]*\.png)')
@@ -1144,14 +1146,21 @@ def build(boss, jars, listing, write=True):
         return {'id': boss, 'route': None, 'ok': False, 'why': 'no jar'}
     names = listing[jar]
     family = kin(names, ns, entity)
-    if not family:
-        return {'id': boss, 'route': None, 'ok': False, 'why': 'no class of that name'}
 
     fix = OVERRIDES.get(boss, {})
     try:
         pin_model, pin_texture = pinned(boss, jar, names, ns)
     except SyncMiss as exc:
         return {'id': boss, 'route': None, 'ok': False, 'why': str(exc)}
+
+    # The family search is how a mob is normally found, and it is not the only
+    # way: it looks for a CLASS named after the mob, which mobcompack's
+    # Jawbreaker does not have -- its model class is JawsModel, and only the
+    # geo file carries the mob's own name. A pin says outright which file to
+    # read, so it does not need the search to have succeeded first. Checked
+    # after the pin rather than before, which is the order it used to be in.
+    if not family and not pin_model:
+        return {'id': boss, 'route': None, 'ok': False, 'why': 'no class of that name'}
 
     found = None
     if pin_model:
