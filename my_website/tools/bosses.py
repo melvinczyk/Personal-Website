@@ -374,6 +374,15 @@ OVERRIDES = {
     # ragno is a spider and never grew the villager rig's arms to begin with;
     # it only needed the birthday candle dropped.
     'illageandspillage:ragno': {'drop': ('birthday',)},
+    # Both picked the wrong sheet unpinned: Paimon took a hand mob's skin and
+    # the Evolved Dagonzilla took the base Dagonzilla's.
+    'groidcinematics:paimon': {
+        'model': 'geo/paimon.geo.json',
+        'texture': 'textures/entity/paimon.png'},
+    'benstitans:dagonzillaevolved': {
+        'model': 'net/mcreator/benstitans/DagonzillaEvolvedModel.class',
+        'texture': 'textures/entities/dagonzilla_evolved.png',
+        'name': 'Evolved Dagonzilla'},
 }
 
 

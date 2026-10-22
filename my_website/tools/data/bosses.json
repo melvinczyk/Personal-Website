@@ -308,6 +308,14 @@
     {
       "id": "ydtwo:twisted_warden",
       "required": false
+    },
+    {
+      "id": "groidcinematics:paimon",
+      "required": false
+    },
+    {
+      "id": "benstitans:dagonzillaevolved",
+      "required": false
     }
   ]
 }
