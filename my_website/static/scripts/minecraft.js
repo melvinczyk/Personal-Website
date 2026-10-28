@@ -1976,20 +1976,33 @@ const PIXEL_STAR_SVG = `<svg class="badge-star" viewBox="0 0 11 10" shape-render
 <rect x="7" y="7" width="1" height="1" class="px-b"/><rect x="8" y="7" width="1" height="1" class="px-o"/><rect x="1" y="8" width="1" height="1" class="px-o"/><rect x="2" y="8" width="1" height="1" class="px-b"/><rect x="3" y="8" width="1" height="1" class="px-s"/><rect x="4" y="8" width="1" height="1" class="px-o"/><rect x="6" y="8" width="1" height="1" class="px-o"/><rect x="7" y="8" width="1" height="1" class="px-s"/><rect x="8" y="8" width="1" height="1" class="px-b"/><rect x="9" y="8" width="1" height="1" class="px-o"/><rect x="1" y="9" width="1" height="1" class="px-o"/><rect x="2" y="9" width="1" height="1" class="px-o"/><rect x="3" y="9" width="1" height="1" class="px-o"/><rect x="7" y="9" width="1" height="1" class="px-o"/><rect x="8" y="9" width="1" height="1" class="px-o"/><rect x="9" y="9" width="1" height="1" class="px-o"/>
 </svg>`;
 
-// A hand, drawn the same way the star is: whole pixels on a grid the same
-// shape, so it sits in the row of badges as one of them rather than as a
-// glyph borrowed from somewhere else. It marks the kills a player turned up
-// for without carrying, which is a thing a star cannot say - a star is for
-// what you beat, and this is for what you helped beat.
+// The cuck: a sad little man at the table, one tear, drawn on the same eleven
+// by ten grid as the star and the flag. It counts the winning fights a player
+// was in while somebody else got the kill.
 const PIXEL_HAND_SVG = `<svg class="badge-hand" viewBox="0 0 11 10" shape-rendering="crispEdges">
-<rect x="3" y="0" width="1" height="3" class="px-h"/><rect x="5" y="0" width="1" height="3" class="px-h"/><rect x="7" y="0" width="1" height="3" class="px-h"/>
-<rect x="3" y="3" width="5" height="1" class="px-b"/>
-<rect x="1" y="4" width="1" height="3" class="px-h"/>
-<rect x="2" y="4" width="6" height="1" class="px-b"/>
-<rect x="2" y="5" width="6" height="1" class="px-b"/>
-<rect x="2" y="6" width="6" height="1" class="px-b"/>
-<rect x="3" y="7" width="4" height="1" class="px-b"/>
-<rect x="4" y="8" width="2" height="1" class="px-s"/>
+<rect x="3" y="0" width="3" height="1" class="px-k"/>
+<rect x="2" y="1" width="1" height="1" class="px-k"/>
+<rect x="3" y="1" width="1" height="1" class="px-e"/>
+<rect x="4" y="1" width="1" height="1" class="px-k"/>
+<rect x="5" y="1" width="1" height="1" class="px-e"/>
+<rect x="6" y="1" width="1" height="1" class="px-k"/>
+<rect x="2" y="2" width="5" height="1" class="px-k"/>
+<rect x="7" y="2" width="1" height="1" class="px-t"/>
+<rect x="3" y="3" width="3" height="1" class="px-c"/>
+<rect x="7" y="3" width="1" height="1" class="px-t"/>
+<rect x="0" y="4" width="1" height="1" class="px-w"/>
+<rect x="2" y="4" width="5" height="1" class="px-c"/>
+<rect x="0" y="5" width="1" height="1" class="px-w"/>
+<rect x="2" y="5" width="5" height="1" class="px-c"/>
+<rect x="0" y="6" width="8" height="1" class="px-w"/>
+<rect x="0" y="7" width="1" height="1" class="px-w"/>
+<rect x="2" y="7" width="2" height="1" class="px-c"/>
+<rect x="6" y="7" width="1" height="1" class="px-w"/>
+<rect x="0" y="8" width="1" height="1" class="px-w"/>
+<rect x="2" y="8" width="2" height="1" class="px-c"/>
+<rect x="6" y="8" width="1" height="1" class="px-w"/>
+<rect x="0" y="9" width="1" height="1" class="px-w"/>
+<rect x="6" y="9" width="1" height="1" class="px-w"/>
 </svg>`;
 
 // A pennant on a pole, drawn on the same eleven by ten grid the star and the

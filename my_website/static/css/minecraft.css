@@ -3935,9 +3935,11 @@ body::after { display: none; }
   width: 14px; height: 13px; flex-shrink: 0;
   image-rendering: pixelated; shape-rendering: crispEdges;
 }
-.badge-hand .px-b { fill: var(--mc-assist); }
-.badge-hand .px-h { fill: #d3dcff; }
-.badge-hand .px-s { fill: #4d63c4; }
+.badge-hand .px-k { fill: #ecc4a0; }
+.badge-hand .px-e { fill: #281e1e; }
+.badge-hand .px-t { fill: #6ebeff; }
+.badge-hand .px-c { fill: #78788c; }
+.badge-hand .px-w { fill: #7a4e28; }
 /* First blood. Not a tier, so it takes no tier colour: an ember orange none
    of the stars wear, next to a gold one it reads as warmer and far more
    saturated, and the shape does the rest - a flag among stars is not a star.
