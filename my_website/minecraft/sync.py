@@ -45,6 +45,10 @@ DEFAULT_FILES = [
     "kubejs/exported/world_data.json",
     "kubejs/exported/boss_kills.json",
     "kubejs/exported/boss_fights.json",
+    # Groid World's boss ledger, which replaced the two above when the boss
+    # scripts moved into the mod; live.py reads these where they exist
+    "groid/fights.json",
+    "groid/stats.json",
     "kubejs/exported/fieldguide_counts.json",
     "kubejs/exported/fish_caught.json",
 ]

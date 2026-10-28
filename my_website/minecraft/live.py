@@ -34,6 +34,15 @@ BOSSES   = 'boss_kills.json'
 FIGHTS   = 'boss_fights.json'
 FIELDGUIDE = 'fieldguide_counts.json'
 FISH       = 'fish_caught.json'
+# The boss ledger Groid World keeps (groid/ at the server root) since the boss
+# scripts moved into the mod. fights.json is every fight, compact; stats.json
+# is what they add up to - kills, assists, first blood, records, medals,
+# badges, ranks - worked out once, by the mod's own rules, so nothing here
+# reckons credit again. Where there is no ledger yet (a season from before
+# the move, or a server still on the scripts) boss_kills.json and
+# boss_fights.json above are read the old way instead.
+LEDGER_FIGHTS = 'fights.json'
+LEDGER_STATS  = 'stats.json'
 
 # The four categories worth a card on the roster - "intro" is the guide's own
 # welcome entries, the same handful for everyone and no more a discovery than
@@ -448,6 +457,149 @@ MAP_STAMP = '.mapseen'
 # the asking. The worker probes and the web process serves the board; before
 # this they were different processes with no way to compare notes.
 MAP_TRY_STAMP = '.mapasked'
+
+
+# ── the boss ledger (Groid World) ───────────────────────────────────────────
+
+def _ledger(data_dir):
+    """(stats, fights) from the mod's ledger, or (None, None) without one."""
+    stats = _load(os.path.join(data_dir, LEDGER_STATS))
+    if not isinstance(stats, dict) or stats.get('format') != 2:
+        return None, None
+    fights = _load(os.path.join(data_dir, LEDGER_FIGHTS))
+    return stats, (fights if isinstance(fights, dict) else {})
+
+
+def _iso(ms):
+    """Epoch milliseconds as the ISO stamp the rest of this file reads."""
+    return datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def _ledger_history(fights, boss_id):
+    """One boss's kills from fights.json, newest first, in _fight_history's shape.
+
+    A fight row lists every player who hurt the boss with the role the mod
+    gave them (2 credited, 1 assisted, 0 below the floor); only the first two
+    are shown, as the old log only ever held those. Abandoned fights are not
+    kills and are counted on the card instead. Returns (history, total kills).
+    """
+    players = fights.get('players') or []
+    try:
+        index = (fights.get('bosses') or []).index(boss_id)
+    except ValueError:
+        return [], 0
+
+    def name(i):
+        return players[i][1] if isinstance(i, int) and 0 <= i < len(players) else ''
+
+    out = []
+    for f in fights.get('fights') or []:
+        if f.get('b') != index or f.get('k') != 1:
+            continue
+        rows = f.get('p') or []
+        total = sum(r[1] for r in rows) + (f.get('env') or 0)
+        shown = [r for r in rows if len(r) > 4 and r[4] > 0]
+        participants = [{'name': name(r[0]), 'damage': _float(r[1]),
+                         'share': round(r[1] * 100 / total) if total else 0,
+                         'lead': i == 0, 'credited': r[4] == 2,
+                         'deaths': r[3]}
+                        for i, r in enumerate(shown)]
+        end = f.get('t', 0) + f.get('ms', 0)
+        out.append({
+            'time':       _moment(_iso(end)),
+            'sort':       end,
+            'max_health': _int(f.get('hp')),
+            'duration':   _span(_int(f.get('ms', 0) / 1000)),
+            'finisher':   name(f.get('f', -1)),
+            'weapon':     _label(f.get('w')),
+            'lead':       participants[0]['name'] if participants else name(f.get('f', -1)),
+            'participants': participants,
+            'untracked_share': max(0, 100 - sum(p['share'] for p in participants)),
+            # read from the old KubeJS log, whose clock and damage counts missed
+            # much of many fights: the mod does not rank by its times
+            'legacy':     bool(f.get('lg')),
+        })
+    out.sort(key=lambda f: f['sort'], reverse=True)
+    for fight in out:
+        del fight['sort']
+    return out[:FIGHT_LIMIT], len(out)
+
+
+def _ledger_player_bosses(stats, uuid, name):
+    """One player's boss rows from stats.json, in _bosses()'s shape."""
+    out = []
+    for boss_id, b in (stats.get('bosses') or {}).items():
+        tier = _int(b.get('tier'))
+        pioneers = {p.get('uuid') for p in ((b.get('pioneer') or {}).get('by') or [])}
+        for p in b.get('players') or []:
+            if p.get('uuid') != uuid and p.get('name') != name:
+                continue
+            if not (p.get('kills') or p.get('assists')):
+                continue
+            out.append({
+                'id':       boss_id,
+                'name':     b.get('name') or 'UNKNOWN',
+                'tier':     max(0, tier),
+                'category': 'miniboss' if tier == 0 else 'boss',
+                'kills':    _int(p.get('kills')),
+                'assists':  _int(p.get('assists')),
+                'last':     _date((p.get('last') or '')[:10]),
+                'share':    _int(p.get('bestShare')),
+                'health':   _int(p.get('bestShareHp')),
+                'at':       p.get('bestShareAt') or '',
+                'first':    uuid in pioneers,
+            })
+    out.sort(key=lambda b: (not b['kills'], -b['tier'], -b['kills'], b['name']))
+    return out
+
+
+def _ledger_card(stats, fights, boss_id, faces):
+    """The roster's numbers for one boss from the ledger, in bosses()'s shape."""
+    b = (stats.get('bosses') or {}).get(boss_id)
+    history, logged = _ledger_history(fights, boss_id)
+    if not b:
+        return None, history, logged
+    people = b.get('players') or []
+    killers = sorted(({'name': p['name'], 'uuid': p['uuid'], 'kills': p['kills'],
+                       'last': _date((p.get('last') or '')[:10])}
+                      for p in people if p.get('kills')), key=lambda k: -k['kills'])
+    helpers = sorted(({'name': p['name'], 'uuid': p['uuid'], 'fights': p['assists'],
+                       'last': _date((p.get('last') or '')[:10])}
+                      for p in people if p.get('assists') and not p.get('kills')),
+                     key=lambda h: -h['fights'])
+    for who in killers + helpers:
+        who.update((faces or {}).get(who['uuid'], {}))
+    blood = b.get('pioneer')
+    pioneer = {'by': [{'name': p['name'], 'uuid': p['uuid']} for p in blood.get('by') or []],
+               'at': _date((blood.get('at') or '')[:10]),
+               'party': [p['name'] for p in blood.get('party') or []]} if blood else None
+    record = b.get('record')
+    return {
+        'felled':    bool(b.get('kills')),
+        'kills':     _int(b.get('kills')),
+        'killers':   killers,
+        'helpers':   helpers,
+        'assists':   sum(h['fights'] for h in helpers),
+        'first':     _date((b.get('first') or '')[:10]),
+        'last':      _date((b.get('last') or '')[:10]),
+        'pioneer':   pioneer if pioneer and pioneer['by'] else None,
+        # fights given up on before the boss went down: not kills, but part of its story
+        'abandoned': _int(b.get('abandoned')),
+        # the fastest solo, by whom and in how long (ms; -1 untimed)
+        'record':    {'name': record['name'], 'uuid': record['uuid'], 'ms': record.get('ms', -1)} if record else None,
+        'tier':      b.get('tier') if _int(b.get('tier')) > 0 else None,
+    }, history, logged
+
+
+def _ledger_ranks(stats):
+    """uuid -> the badge row the mod worked out: rank, score, stars, medals."""
+    out = {}
+    for uuid, p in (stats.get('players') or {}).items():
+        out[uuid] = {'rank': _int(p.get('rank')), 'score': _int(p.get('score')),
+                     'stars': p.get('stars') or {}, 'medals': p.get('medals') or [0, 0, 0],
+                     'firsts': _int(p.get('firsts')), 'solos': _int(p.get('solos')),
+                     'records': _int(p.get('records')), 'assists': _int(p.get('assists'))}
+    return out
 
 
 def _kill_entries(record):
@@ -1048,9 +1200,12 @@ def load(season_path):
         return {}
 
     # what the fight log credits each player with, for the fights the kill
-    # counter did not record - see _fight_credits
-    finished  = _by_player(_fight_credits(_load(os.path.join(data_dir, FIGHTS))))
+    # counter did not record - see _fight_credits. With the mod's ledger
+    # there is nothing to reckon: its stats.json already says.
+    ledger, _ = _ledger(data_dir)
+    finished  = {} if ledger else _by_player(_fight_credits(_load(os.path.join(data_dir, FIGHTS))))
     catalogue = _catalogue()
+    ranks     = _ledger_ranks(ledger) if ledger else {}
 
     updated = players.get('updated', '')
     stamped = _when(updated)
@@ -1075,7 +1230,8 @@ def load(season_path):
         behind   = int((stamped - recorded).total_seconds()) \
                    if stamped and recorded else None
 
-        beaten = _bosses(boss, finished.get(raw.get('name') or name), catalogue)
+        beaten = (_ledger_player_bosses(ledger, uuid, raw.get('name') or name) if ledger
+                  else _bosses(boss, finished.get(raw.get('name') or name), catalogue))
 
         out[uuid] = {
             'uuid':        uuid,
@@ -1134,6 +1290,9 @@ def load(season_path):
             # tools/extract_skilltree.py - so the page can draw the real tree
             # rather than a list of names.
             'skills':      _skills(raw.get('skills')),
+            # the badge board's row, from the ledger (None before it): rank,
+            # score, stars by tier, gold/silver/bronze solo medals
+            'badges':      ranks.get(uuid),
             'fieldguide':  _fieldguide(field),
             'fishing':     _fish(rod, covers),
             'recorded':    _moment(raw.get('recorded') or updated),
@@ -1174,6 +1333,31 @@ def bosses(season_path, faces=None):
               for b in _known(BOSS_INDEX)])
     if not known:
         return []
+
+    ledger, ledger_fights = _ledger(os.path.join(season_path, DATA_DIR))
+    if ledger:
+        out = []
+        for boss in known:
+            card, history, logged = _ledger_card(ledger, ledger_fights, boss['id'], faces)
+            card = card or {'felled': False, 'kills': 0, 'killers': [], 'helpers': [],
+                            'assists': 0, 'first': '', 'last': '', 'pioneer': None,
+                            'abandoned': 0, 'record': None, 'tier': None}
+            out.append({
+                'key':      boss['key'],
+                'id':       boss['id'],
+                'name':     boss['name'],
+                'mod':      boss.get('mod', ''),
+                'category': boss['category'],
+                'tier':     card.pop('tier') or boss.get('tier'),
+                'model':    f'{boss["url"]}/{boss["model"]}?v={_stamp(boss["dir"], boss["model"])}',
+                **card,
+                'fights':   history,
+                'logged':   logged,
+            })
+        out.sort(key=lambda b: (b['category'] == 'miniboss', b['tier'] or 99,
+                                not b['felled'], b['mod'] != 'minecraft',
+                                b['mod'], b['name']))
+        return out
 
     raw = _load(os.path.join(season_path, DATA_DIR, BOSSES))
     fights_raw = _load(os.path.join(season_path, DATA_DIR, FIGHTS))
@@ -1566,7 +1750,7 @@ def stamp(season_path):
     """When the export last changed, so a cached roster knows to rebuild."""
     data_dir = os.path.join(season_path, DATA_DIR)
     marks = []
-    for name in (WORLD, PLAYERS, BOSSES, FIGHTS, FIELDGUIDE, FISH):
+    for name in (WORLD, PLAYERS, BOSSES, FIGHTS, FIELDGUIDE, FISH, LEDGER_FIGHTS, LEDGER_STATS):
         try:
             marks.append(os.path.getmtime(os.path.join(data_dir, name)))
         except OSError:
