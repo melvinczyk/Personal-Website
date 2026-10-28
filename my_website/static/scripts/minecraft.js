@@ -2051,8 +2051,9 @@ function bossBadges(p) {
   // a star says what they have beaten, and this says only what they turned
   // up for without carrying, which is the least of the two.
   const lent = (p.bosses || []).reduce((n, b) => n + (b.assists || 0), 0);
-  const lentTip = `Was in ${lent} winning fight${
-    lent === 1 ? '' : 's'} without dealing the biggest share`;
+  // The game calls it the cuck badge: the same hand, the same count.
+  const lentTip = `Cuck: in ${lent} winning fight${
+    lent === 1 ? '' : 's'} where somebody else got the kill`;
   const helped = lent
     ? `<span class="pc-badge assist" role="img" data-tip="${lentTip}"
              aria-label="${lentTip}">${PIXEL_HAND_SVG}x${lent}</span>`

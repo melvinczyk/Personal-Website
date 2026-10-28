@@ -36,7 +36,7 @@ FIELDGUIDE = 'fieldguide_counts.json'
 FISH       = 'fish_caught.json'
 # The boss ledger Groid World keeps (groid/ at the server root) since the boss
 # scripts moved into the mod. fights.json is every fight, compact; stats.json
-# is what they add up to - kills, assists, first blood, records, medals,
+# is what they add up to - kills, assists, first blood, records,
 # badges, ranks - worked out once, by the mod's own rules, so nothing here
 # reckons credit again. Where there is no ledger yet (a season from before
 # the move, or a server still on the scripts) boss_kills.json and
@@ -592,11 +592,11 @@ def _ledger_card(stats, fights, boss_id, faces):
 
 
 def _ledger_ranks(stats):
-    """uuid -> the badge row the mod worked out: rank, score, stars, medals."""
+    """uuid -> the badge row the mod worked out: rank, score, stars."""
     out = {}
     for uuid, p in (stats.get('players') or {}).items():
         out[uuid] = {'rank': _int(p.get('rank')), 'score': _int(p.get('score')),
-                     'stars': p.get('stars') or {}, 'medals': p.get('medals') or [0, 0, 0],
+                     'stars': p.get('stars') or {},
                      'firsts': _int(p.get('firsts')), 'solos': _int(p.get('solos')),
                      'records': _int(p.get('records')), 'assists': _int(p.get('assists'))}
     return out
@@ -1291,7 +1291,7 @@ def load(season_path):
             # rather than a list of names.
             'skills':      _skills(raw.get('skills')),
             # the badge board's row, from the ledger (None before it): rank,
-            # score, stars by tier, gold/silver/bronze solo medals
+            # score (the tier weights of the records they hold), stars by tier
             'badges':      ranks.get(uuid),
             'fieldguide':  _fieldguide(field),
             'fishing':     _fish(rod, covers),
