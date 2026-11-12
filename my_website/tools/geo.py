@@ -11,7 +11,6 @@ Coordinates: Blockbench measures from the feet with +y up and the model facing
 model facing +z, so y' = 16 - y and z' = -z, which is a half turn about x.
 """
 
-import json
 import math
 
 # Where each biped bone attaches on the portal's model, in its own units.

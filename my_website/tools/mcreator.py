@@ -13,7 +13,6 @@ from the class name (which is how the rest of the extractor has to work) picks
 the wrong model whenever a mod ships more than one set of similar geometry.
 """
 
-import os
 import re
 import subprocess
 import tempfile

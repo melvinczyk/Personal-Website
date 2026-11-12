@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,8 +8,8 @@
 <title>404</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
-<link rel="stylesheet" href="{% static 'css/404.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/404.css' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -68,6 +68,6 @@
 
 </div>
 
-<script src="{% static 'scripts/404.js' %}"></script>
+<script src="{% stamped 'scripts/404.js' %}"></script>
 </body>
 </html>

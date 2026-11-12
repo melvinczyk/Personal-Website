@@ -4,7 +4,6 @@ import os
 from datetime import datetime
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.conf import settings
 
 from . import activity as activity_data
 from . import history as history_data
@@ -64,131 +63,140 @@ IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 VIDEO_EXTS = {'.mp4', '.webm', '.mov'}
 
 
-def _derivative(season_path, url_prefix, kind, stem):
-    """The URL of a web-sized copy, if tools/web_images.py has built one."""
-    name = f'{stem}.webp'
-    if os.path.isfile(os.path.join(season_path, '_web', kind, name)):
-        return f'{url_prefix}/_web/{kind}/{name}'
-    return None
-
-
-@lru_cache(maxsize=None)
-def _thumb_sizes(season_path):
-    """Every thumbnail's width and height, from the table beside them.
-
-    The gallery has to know these before the images arrive. Its tiles are
-    lazy-loaded into a column layout, and an image with no declared size
-    gives its tile no height - so the column collapses, nothing is ever near
-    enough to the viewport to trigger a load, and the gallery stays empty for
-    good. Read once per season rather than stat-ing six hundred files.
-    """
+def _stems(folder, exts):
+    """{stem: filename} for every file in a folder with one of these extensions."""
     try:
-        with open(os.path.join(season_path, '_web', 'sizes.json')) as fh:
-            return json.load(fh)
-    except (OSError, ValueError):
+        names = os.listdir(folder)
+    except OSError:
         return {}
+    return {os.path.splitext(n)[0]: n for n in names
+            if os.path.splitext(n)[1].lower() in exts}
 
 
-def parse_screenshot_date(filename):
-    name = os.path.splitext(filename)[0]
+def _shot_date(stem):
     try:
-        return datetime.strptime(name, "%Y-%m-%d_%H.%M.%S")
+        return datetime.strptime(stem, "%Y-%m-%d_%H.%M.%S")
     except ValueError:
         return datetime.min
 
 
+@lru_cache(maxsize=None)
+def _season_media(season_path, url_prefix, _stamp):
+    """A season's logo, screenshots and clips, read off disk once per change.
+
+    The gallery is built from the web-sized copies under _web/, not from the
+    original screenshots: the originals are gitignored (1.3 GB of them), so a
+    deployed checkout has none, and listing them is how every gallery came up
+    empty. An original is only used where no web copy of it exists. sizes.json
+    gives each tile its height before the lazy-loaded image lands.
+    """
+    web = os.path.join(season_path, '_web')
+    try:
+        with open(os.path.join(web, 'sizes.json')) as fh:
+            sizes = json.load(fh)
+    except (OSError, ValueError):
+        sizes = {}
+
+    files = _stems(season_path, IMAGE_EXTS | VIDEO_EXTS)
+    # WebP first: season 4's logo is 39 frames and the GIF of it is two megabytes
+    logo = next((f for f in ('logo.webp', 'logo.png', 'logo.jpg', 'logo.gif')
+                 if os.path.isfile(os.path.join(season_path, f))), None)
+    files.pop('logo', None)
+    originals = {k: v for k, v in files.items()
+                 if os.path.splitext(v)[1].lower() in IMAGE_EXTS}
+    thumbs = _stems(os.path.join(web, 'thumb'), {'.webp'})
+    views  = _stems(os.path.join(web, 'view'), {'.webp'})
+
+    screenshots = []
+    for stem in sorted(set(originals) | set(thumbs) | set(views),
+                       key=lambda k: (_shot_date(k), k)):
+        thumb = f'{url_prefix}/_web/thumb/{thumbs[stem]}' if stem in thumbs else None
+        view  = f'{url_prefix}/_web/view/{views[stem]}' if stem in views else None
+        url   = f'{url_prefix}/{originals[stem]}' if stem in originals else None
+        w, h  = (list(sizes.get(stem) or ()) + [0, 0])[:2]
+        screenshots.append({
+            'stem':  stem,
+            'url':   url or view or thumb,
+            'thumb': thumb or view or url,
+            'view':  view or url or thumb,
+            'w': w, 'h': h,
+            'label': stem,
+        })
+    videos = [{'url': f'{url_prefix}/{name}', 'label': name}
+              for name in sorted(files.values())
+              if os.path.splitext(name)[1].lower() in VIDEO_EXTS]
+    return logo, screenshots, videos
+
+
+def _season_dirs():
+    """(number, folder) for every seasonN directory, in season order."""
+    try:
+        names = os.listdir(MINECRAFT_ROOT)
+    except OSError:
+        return []
+    return sorted(
+        (int(d[6:]), d) for d in names
+        if d.startswith('season') and d[6:].isdigit()
+        and os.path.isdir(os.path.join(MINECRAFT_ROOT, d)))
+
+
+def _media(season_dir):
+    season_path = os.path.join(MINECRAFT_ROOT, season_dir)
+    # the folders' mtimes change when a file is added or removed, which is
+    # exactly when the cached listing goes stale
+    stamp = tuple(_mtime(os.path.join(season_path, *sub))
+                  for sub in ((), ('_web', 'thumb'), ('_web', 'view'), ('_web', 'sizes.json')))
+    return _season_media(season_path, f'/static/minecraft/{season_dir}', stamp)
+
+
+def _hero(season_num, screenshots, kind='view'):
+    """The screenshot that stands for a season: the picked one, else a mid-list one."""
+    stem = os.path.splitext(SEASON_HEROES.get(season_num, ''))[0]
+    shot = next((x for x in screenshots if x['stem'] == stem), None)
+    if shot is None and screenshots:
+        shot = screenshots[len(screenshots) // 2]
+    return shot[kind] if shot else None
+
+
+def summary():
+    """The portal in four numbers and a few thumbnails, for the codec's panel.
+
+    Counted off disk so the home page cannot drift from the gallery it links to.
+    """
+    seasons = _season_dirs()
+    shots = clips = 0
+    thumbs, years = [], []
+    for num, folder in seasons:
+        _, screenshots, videos = _media(folder)
+        shots += len(screenshots)
+        clips += len(videos)
+        years += [d.year for d in (_shot_date(x['stem']) for x in screenshots) if d.year > 1]
+        if screenshots:
+            thumbs.append({'s': num, 'url': _hero(num, screenshots, 'thumb')})
+    span = f'{min(years)}-{max(years) % 100:02d}' if years else ''
+    return {'seasons': len(seasons), 'shots': shots, 'clips': clips, 'span': span,
+            'thumbs': thumbs, 'map': LIVE_MAP + LIVE_MAP_VIEW if LIVE_MAP else ''}
+
+
 def portal(request):
-    minecraft_root = MINECRAFT_ROOT
-
     seasons = []
-
-    if not os.path.isdir(minecraft_root):
-        return render(request, 'minecraft.html', {'seasons': seasons})
-
-    season_dirs = sorted(
-        [d for d in os.listdir(minecraft_root)
-         if d.startswith('season') and os.path.isdir(os.path.join(minecraft_root, d))],
-        key=lambda d: int(''.join(filter(str.isdigit, d)) or '0')
-    )
-
     live = None
 
-    for season_dir in season_dirs:
-        digits = ''.join(filter(str.isdigit, season_dir))
-        if not digits:
-            continue
-        season_num  = int(digits)
-        season_path = os.path.join(minecraft_root, season_dir)
-        url_prefix  = f'/static/minecraft/{season_dir}'
-
-        logo_file = next(
-            # WebP first: season 4's logo is 39 frames of animation and the
-            # GIF of it is two megabytes, against six hundred kilobytes for
-            # the same thing at the size it is actually drawn
-            (f for f in ('logo.webp', 'logo.png', 'logo.jpg', 'logo.gif')
-             if os.path.isfile(os.path.join(season_path, f))),
-            None
-        )
-        has_logo  = logo_file is not None
-        screenshots = []
-        videos      = []
-
-        for filename in os.listdir(season_path):
-            if filename in ('logo.png',):
-                continue
-            ext = os.path.splitext(filename)[1].lower()
-            url = f'{url_prefix}/{filename}'
-
-            if ext in IMAGE_EXTS:
-                # A web-sized copy where tools/web_images.py has made one, and
-                # the original where it has not. The originals are Minecraft
-                # screenshots straight off disk - some are thirteen megabytes -
-                # and putting one of those behind the header was most of what
-                # the page weighed.
-                stem = os.path.splitext(filename)[0]
-                small = _derivative(season_path, url_prefix, 'thumb', stem)
-                big = _derivative(season_path, url_prefix, 'view', stem)
-                w, h = (_thumb_sizes(season_path).get(stem) or (0, 0))[:2] or (0, 0)
-                screenshots.append({
-                    'filename': filename,
-                    'url':      url,
-                    'thumb':    small or big or url,
-                    'view':     big or url,
-                    # so a tile has a height before its image lands
-                    'w':        w,
-                    'h':        h,
-                    'label':    filename,
-                    'date':     parse_screenshot_date(filename),
-                })
-            elif ext in VIDEO_EXTS:
-                videos.append({
-                    'filename': filename,
-                    'url':      url,
-                    'label':    filename,
-                })
-
-        screenshots.sort(key=lambda x: x['date'])
-
-        roster = season_roster(season_path)
-
-        hero_name = SEASON_HEROES.get(season_num)
-        # the hero is a background image the size of the header, never the
-        # full-resolution original
-        hero = next((x['view'] for x in screenshots if x['filename'] == hero_name), None)
-        if hero is None and screenshots:
-            hero = screenshots[len(screenshots) // 2]['view']
+    for season_num, season_dir in _season_dirs():
+        logo_file, screenshots, videos = _media(season_dir)
+        roster = season_roster(os.path.join(MINECRAFT_ROOT, season_dir))
+        # a background image the size of the header, never the original
+        hero = _hero(season_num, screenshots)
 
         entry = {
             'number':           season_num,
             'name':             SEASON_NAMES.get(season_num, f'SEASON {season_num}'),
             'description':      SEASON_DESCRIPTIONS.get(season_num, f'Season {season_num}.'),
-            'has_logo':         has_logo,
+            'has_logo':         logo_file is not None,
             'logo_file':        logo_file,
             'screenshots':      screenshots,
             'videos':           videos,
             'hero':             hero,
-            'screenshot_count': len(screenshots),
-            'video_count':      len(videos),
             'roster':           roster,
             'roster_json':      json.dumps(roster),
         }
@@ -211,7 +219,7 @@ def portal(request):
         'live_json': json.dumps(board) if board else 'null',
         'map_url':  LIVE_MAP + LIVE_MAP_VIEW if live and LIVE_MAP else None,
         'map_home': LIVE_MAP,
-        'forge_stamp': _forge_stamp(),
+        'forge_stamp': _stamp_for('data.json'),
         'ench_stamp': _stamp_for('enchanting.json'),
     })
 
@@ -219,32 +227,31 @@ def portal(request):
 def _stamp_for(filename):
     """The mtime of one of the apotheosis data files, as a cache buster.
 
-    Same job as _forge_stamp below, for the enchanting panel's own file. Both
-    are fetched by script rather than named in the markup, so neither picks up
-    the ?t= every other asset on the page carries.
+    These are fetched by script rather than named in the markup, so they never
+    pick up the stamp every other asset on the page carries. They are static
+    files that want caching hard, and a re-extract served out of a browser
+    cache holding the old one is how a changed reforging cost silently does
+    not change - so each goes out stamped with its own mtime, which caches
+    until the extractor next runs and no longer.
     """
+    return _mtime(os.path.join(MINECRAFT_ROOT, 'apotheosis', filename))
+
+
+def _mtime(path):
     try:
-        return int(os.path.getmtime(
-            os.path.join(MINECRAFT_ROOT, 'apotheosis', filename)))
+        return int(os.path.getmtime(path))
     except OSError:
         return 0
 
 
-def _forge_stamp():
-    """The mtime of the forge's data file, for the section to bust its cache on.
-
-    That json is fetched by script rather than named in the markup, so it never
-    picks up the ?t=timestamp every other asset here carries. It is a static
-    file that wants caching hard, and a re-extract served out of a browser
-    cache holding the old one is how a changed reforging cost silently does not
-    change - so it goes out stamped with its own mtime, which caches until the
-    extractor next runs and no longer.
-    """
-    try:
-        return int(os.path.getmtime(
-            os.path.join(MINECRAFT_ROOT, 'apotheosis', 'data.json')))
-    except OSError:
-        return 0
+def _live_data(feed):
+    """A view over the live season's data folder, or a 404 with no season."""
+    def view(request):
+        if not LIVE_SEASON:
+            return JsonResponse({'live': False}, status=404)
+        return JsonResponse(feed(
+            os.path.join(MINECRAFT_ROOT, f'season{LIVE_SEASON}', 'data')))
+    return view
 
 
 def _board(key):
@@ -329,23 +336,17 @@ def chat_feed(request):
     return JsonResponse(feed)
 
 
-def activity_feed(request):
-    """When the server gets played, hour by hour.
+# When the server gets played, hour by hour. Its own endpoint rather than part
+# of the board: the board is polled every minute and this changes on the sync's
+# clock, not the page's, so it is fetched once when the section is opened. The
+# hour buckets go out in UTC - rolling them into a day-of-week grid means
+# picking a timezone, and the only one worth picking belongs to the reader.
+activity_feed = _live_data(activity_data.board)
 
-    Its own endpoint rather than part of the board: the board is polled every
-    minute and this changes on the sync's clock, not the page's. It is fetched
-    once when the section is opened and left alone after that.
-
-    The hour buckets go out in UTC. Rolling them into a day-of-week grid means
-    picking a timezone, and the only one worth picking belongs to whoever is
-    reading, so the page does it.
-    """
-    if not LIVE_SEASON:
-        return JsonResponse({'live': False}, status=404)
-
-    key = f'season{LIVE_SEASON}'
-    return JsonResponse(
-        activity_data.board(os.path.join(MINECRAFT_ROOT, key, 'data')))
+# What each player's own numbers have been doing, day by day. Its own endpoint
+# for the same reason, and because it is bigger: a row per player per day plus
+# an hourly gauge series is not something to put on a one-minute poll.
+history_feed = _live_data(history_data.board)
 
 
 def skill_tree(request):
@@ -357,29 +358,8 @@ def skill_tree(request):
     icon on this page already uses, applied to the one file that is fetched
     by script rather than named in the markup.
     """
-    path = os.path.join(MINECRAFT_ROOT, 'skilltree', 'tree.json')
-    try:
-        stamp = int(os.path.getmtime(path))
-    except OSError:
-        stamp = 0
+    stamp = _mtime(os.path.join(MINECRAFT_ROOT, 'skilltree', 'tree.json'))
     return redirect(f'/static/minecraft/skilltree/tree.json?v={stamp}')
-
-
-def history_feed(request):
-    """What each player's own numbers have been doing, day by day.
-
-    Its own endpoint for activity_feed's reason: it changes on the sync's
-    clock rather than the page's, so it is fetched when the section is opened
-    rather than ridden along on the board's poll. Bigger than the activity
-    feed too - a row per player per day plus an hourly gauge series - which is
-    a second reason not to put it on something polled every minute.
-    """
-    if not LIVE_SEASON:
-        return JsonResponse({'live': False}, status=404)
-
-    key = f'season{LIVE_SEASON}'
-    return JsonResponse(
-        history_data.board(os.path.join(MINECRAFT_ROOT, key, 'data')))
 
 
 def guide(request):

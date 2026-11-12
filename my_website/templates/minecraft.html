@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minecraft Portal</title>
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/forge.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/enchant.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/guide.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/minecraft.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/forge.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/enchant.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/guide.css' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -429,9 +429,9 @@ const SEASONS = [
 </script>
 <div class="fg-tip" id="fg-tip" hidden></div>
 
-<script type="module" src="{% static 'scripts/mcmodel.js' %}?t={% now 'U' %}"></script>
-<script src="{% static 'scripts/minecraft.js' %}?t={% now 'U' %}"></script>
-<script src="{% static 'scripts/forge.js' %}?t={% now 'U' %}"></script>
-<script src="{% static 'scripts/enchant.js' %}?t={% now 'U' %}"></script>
+<script type="module" src="{% stamped 'scripts/mcmodel.js' %}"></script>
+<script src="{% stamped 'scripts/minecraft.js' %}"></script>
+<script src="{% stamped 'scripts/forge.js' %}"></script>
+<script src="{% stamped 'scripts/enchant.js' %}"></script>
 </body>
 </html>

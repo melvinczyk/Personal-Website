@@ -1241,8 +1241,6 @@ const CHART_RANGE = {};
 // when each chart was last drawn, and how much time a pixel of it is worth
 const CHART_DRAWN = {};
 
-function chartRange(key) { return CHART_RANGE[key] ?? Infinity; }
-
 // Re-draw one card's chart when its range changes. Only that chart: the boss
 // list is sixty cards of WebGL and rebuilding it to change a dropdown would be
 // an absurd way to spend a frame.
@@ -1656,12 +1654,6 @@ function localMoment(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${localClock(d)}`;
-}
-
-function localTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : localClock(d);
 }
 
 // matches _span() on the server, so the age counter reads the same whether it
@@ -2443,7 +2435,6 @@ const SOLAR = [
     grass: '#a8af65', leaf: '#9aa64f',
     note: 'Winds died away, but icy coldness still.' },
 ];
-const YEAR_TERMS = SOLAR.map(t => t.name);
 
 // the term the world is on, or null when the board has not said yet - the
 // same -1 convention sub_index uses for a name this build has never heard of
@@ -2672,11 +2663,6 @@ function seasonHero(realm, w) {
             : `Day ${w.season_day || 0} of ${w.year_days || 0}`}</span>
       </div>
     </div>`;
-}
-
-function nextTermName(index) {
-  const next = SOLAR[(index + 1) % SOLAR.length];
-  return next ? next.name : 'the next term';
 }
 
 // what the ground looks like in each realm - the sky and the weather effects
