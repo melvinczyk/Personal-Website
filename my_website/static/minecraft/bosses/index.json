@@ -120,6 +120,14 @@
   "tier": 2
  },
  {
+  "key": "benstitans__dagonzillaevolved",
+  "id": "benstitans:dagonzillaevolved",
+  "name": "Evolved Dagonzilla",
+  "mod": "benstitans",
+  "model": "benstitans__dagonzillaevolved.model.json",
+  "tier": 5
+ },
+ {
   "key": "better_minoshroomtaur__better_minoshroomtaur",
   "id": "better_minoshroomtaur:better_minoshroomtaur",
   "name": "Better Minoshroomtaur",
@@ -334,6 +342,14 @@
   "mod": "graveyard",
   "model": "graveyard__lich.model.json",
   "tier": 2
+ },
+ {
+  "key": "groidcinematics__paimon",
+  "id": "groidcinematics:paimon",
+  "name": "Paimon",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__paimon.model.json",
+  "tier": 4
  },
  {
   "key": "hadean_breathe__hadean_enforcer",

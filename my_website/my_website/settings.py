@@ -31,8 +31,9 @@ if os.path.isfile(dotenv_file):
 # UPDATE secret key
 SECRET_KEY = os.environ['SECRET_KEY']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# On unless the environment says otherwise: set DJANGO_DEBUG=false on the
+# deployed box (in .env) so error pages stop printing settings to visitors.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() != 'false'
 
 ALLOWED_HOSTS = ["*"]
 
@@ -128,11 +129,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

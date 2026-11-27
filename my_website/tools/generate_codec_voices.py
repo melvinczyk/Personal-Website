@@ -8,7 +8,7 @@ Usage:
 Skips files that already exist, so it can be re-run until all lines are done.
 Output: static/audio/codec/<key>.m4a  (played by the codec dialogue engine)
 """
-import os, shutil, subprocess, sys, time
+import os, subprocess, sys, time
 from pathlib import Path
 
 DEST = Path(__file__).resolve().parent.parent / "static" / "audio" / "codec"
@@ -29,6 +29,8 @@ LINES = {
     "c0_l0": "Snake, this is Nick Burcheck. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a Titans software R and D intern.",
     "c0_l1": "Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list.",
     "c1_l0": "His operation records. Twelve declassified projects on file.",
+    # portfolio.js asks for c1_l0_<count> whenever the count is not twelve
+    "c1_l0_14": "His operation records. Fourteen declassified projects on file.",
     "c1_l1": "For the details, get Ottacon on the line. Hal's been cataloguing all of it.",
     "c1_l2": "He's already listening.",
     "c2_l0": "He also records as Zero Barbecue. A one-man operation.",
@@ -45,6 +47,7 @@ SPLIT_LINES = {
                          "We've also attached his direct links.",
                          "For anything specific, tune through the other channels, or open MEMORY for the list."], "gap_ms": 430},
     "c1_l0": {"parts": ["His operation records.", "Twelve declassified projects on file."], "gap_ms": 450},
+    "c1_l0_14": {"parts": ["His operation records.", "Fourteen declassified projects on file."], "gap_ms": 450},
     "c1_l1": {"parts": ["For the details, get Ottacon on the line.",
                          "Hal's been cataloguing all of it."], "gap_ms": 420},
     "c2_l0": {"parts": ["He also records as Zero Barbecue.", "A one-man operation."], "gap_ms": 420},
@@ -152,11 +155,27 @@ PROJECT_DIALOGUE = {
             "It flies programmatically through the Tello software kit, logging telemetry and tagging every detection for spatial analysis.",
         ],
     },
-    "modpack-updater": {
+    # "2": the app was rewritten, and the first take describes the old one.
+    # portfolio.js sets voice:'modpack-updater2' on the project to match.
+    "modpack-updater2": {
         "snake": "Modpack Updater. What's it do?",
         "otacon": [
-            "A cross platform desktop client that syncs Minecraft modpacks across a group using Amazon S three as the backing store.",
-            "It uses Git style change tracking against a manifest, so one click pulls only the differences. Built in Java and Java F X, packaged with Gradle.",
+            "It keeps everyone's Minecraft modpack identical to the server. It hashes every tracked file, then downloads, replaces or deletes whatever drifted. Worlds, screenshots and settings are never touched.",
+            "Rebuilt from the ground up in Java. Packs live in Backblaze B two cloud storage, admins publish versioned changes with a changelog, and the app even updates itself on launch.",
+        ],
+    },
+    "gvoice": {
+        "snake": "G Voice. Another radio?",
+        "otacon": [
+            "Closer than you'd think. It's the speech server behind Groid Voice, a Minecraft mod that reads every chat message aloud through proximity voice chat.",
+            "Two stages. Kokoro turns the text into speech, then an R V C model repaints the timbre into any of eighteen thousand voices. It all ships as one Docker container, so it deploys to a local G P U or Cloud Run.",
+        ],
+    },
+    "groidberbium": {
+        "snake": "Groid berbium. Sounds unstable.",
+        "otacon": [
+            "It's the opposite. A fork of Ember bium, the Forge rendering engine descended from Sodium, rebuilt to draw Minecraft faster.",
+            "About thirty percent more frames on average, and it holds sixty at a sixty-four chunk render distance. On a laptop, Snake.",
         ],
     },
     "visaudio": {

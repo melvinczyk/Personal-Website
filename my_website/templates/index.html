@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Nick Burczyk</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -60,34 +60,32 @@
   <div id="cx-content"><div id="output"></div></div>
 
   <div id="cx-memory-panel">
-    <div class="cx-mem-title">◈ MEMORY</div>
+    <div class="cx-mem-title"><svg class="ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z"/></svg>MEMORY</div>
     <div id="cx-mem-list"></div>
-    <div class="cx-mem-foot">◄ ► TUNE &nbsp;·&nbsp; M MEMORY &nbsp;·&nbsp; ESC CLOSE</div>
+    <div class="cx-mem-foot"><svg class="ic" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><svg class="ic" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg> TUNE · M MEMORY · ESC CLOSE</div>
   </div>
 </div>
 
+{{ mc|json_script:"mc-data" }}
+{{ voices|json_script:"voice-data" }}
 <script>
 const STATIC_URLS = {
   ring:       "{% static 'audio/ring.mp3' %}",
   hover:      "{% static 'audio/hover.mp3' %}",
   click:      "{% static 'audio/click.mp3' %}",
-  error:      "{% static 'audio/error.mp3' %}",
   menu:       "{% static 'audio/menu.mp3' %}",
   open:       "{% static 'audio/open.mp3' %}",
   uploadFile: "{% url 'upload_file' %}",
+  song2vec:   "{% url 'song2vec_index' %}",
   minecraft:  "{% url 'minecraft' %}",
+  live:       "{% url 'minecraft-live' %}",
   codecBase:  "{% static 'codec' %}",
   voiceBase:  "{% static 'audio/codec' %}",
-  mcMap: "{{ map_url }}",
-  live: "{% url 'minecraft-live' %}",
-  mcThumbs: [
-    { s: 'S1', url: "{% static 'minecraft/season1/2023-12-19_16.03.58.png' %}" },
-    { s: 'S2', url: "{% static 'minecraft/season2/2024-09-04_12.45.03.png' %}" },
-    { s: 'S3', url: "{% static 'minecraft/season3/2025-01-29_12.23.36.png' %}" },
-    { s: 'S4', url: "{% static 'minecraft/season4/2026-01-26_00.31.43.png' %}" },
-  ],
+  echoScout:  "{% stamped 'scripts/echo_scout.js' %}",
+  mc:         JSON.parse(document.getElementById('mc-data').textContent),
+  voices:     JSON.parse(document.getElementById('voice-data').textContent),
 };
 </script>
-<script src="{% static 'scripts/portfolio.js' %}?t={% now 'U' %}"></script>
+<script src="{% stamped 'scripts/portfolio.js' %}"></script>
 </body>
 </html>

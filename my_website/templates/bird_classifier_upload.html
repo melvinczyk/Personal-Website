@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,8 +7,8 @@
 <title>Bird Classifier</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
-<link rel="stylesheet" href="{% static 'css/bird_classifier.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/bird_classifier.css' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -364,7 +364,7 @@
 
 </div>
 
-<script src="{% static 'scripts/bird_classifier.js' %}"></script>
+<script src="{% stamped 'scripts/bird_classifier.js' %}"></script>
 <script>
 document.addEventListener('click', e => {
   const btn = e.target.closest('button');

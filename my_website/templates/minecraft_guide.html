@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OG Remastered: Modpack Guide</title>
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link rel="stylesheet" href="{% static 'css/minecraft.css' %}?t={% now 'U' %}">
-<link rel="stylesheet" href="{% static 'css/guide.css' %}?t={% now 'U' %}">
+<link rel="stylesheet" href="{% stamped 'css/minecraft.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/guide.css' %}">
 </head>
 <body class="guide-body">
 

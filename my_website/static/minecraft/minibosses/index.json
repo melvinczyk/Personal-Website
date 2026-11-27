@@ -161,6 +161,41 @@
   "model": "fromtheshadows__nehemoth.model.json"
  },
  {
+  "key": "groidcinematics__mutant_soul_knight",
+  "id": "groidcinematics:mutant_soul_knight",
+  "name": "Mutant Soul Knight",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__mutant_soul_knight.model.json"
+ },
+ {
+  "key": "groidcinematics__mutant_soul_skeleton",
+  "id": "groidcinematics:mutant_soul_skeleton",
+  "name": "Mutant Soul Skeleton",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__mutant_soul_skeleton.model.json"
+ },
+ {
+  "key": "groidcinematics__mutant_soul_zombie",
+  "id": "groidcinematics:mutant_soul_zombie",
+  "name": "Mutant Soul Zombie",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__mutant_soul_zombie.model.json"
+ },
+ {
+  "key": "groidcinematics__pale_soul_rider",
+  "id": "groidcinematics:pale_soul_rider",
+  "name": "Pale Soul Rider",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__pale_soul_rider.model.json"
+ },
+ {
+  "key": "groidcinematics__soul_rider",
+  "id": "groidcinematics:soul_rider",
+  "name": "Soul Rider",
+  "mod": "groidcinematics",
+  "model": "groidcinematics__soul_rider.model.json"
+ },
+ {
   "key": "illageandspillage__absorber",
   "id": "illageandspillage:absorber",
   "name": "Absorber",

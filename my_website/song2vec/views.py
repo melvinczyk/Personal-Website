@@ -1,9 +1,17 @@
 import io
 import base64
+from functools import lru_cache
+from itertools import islice
 
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
+
+from .paths import available
+
+# The corpus lives outside the repo. A checkout without it answers plainly
+# instead of raising FileNotFoundError out of every keystroke in the search box.
+NO_DATA = {'error': 'The Song2Vec dataset is not installed on this server.', 'results': []}
 
 
 def index(request):
@@ -21,22 +29,25 @@ def search(request):
     q = request.GET.get('q', '').strip().lower()
     if len(q) < 2:
         return JsonResponse({'results': []})
+    if not available():
+        return JsonResponse(NO_DATA, status=503)
 
     d._load()
 
-    results = []
-    for name_lower, artist_lower, sid in d.SONG_INDEX:
-        if q in name_lower or q in artist_lower:
-            s = d.SONGS[sid]
-            results.append({
-                'id':     sid,
-                'name':   s['name'],
-                'artist': s['artist'],
-            })
-            if len(results) == 10:
-                break
+    hits = islice((sid for name, artist, sid in d.SONG_INDEX if q in name or q in artist), 10)
+    return JsonResponse({'results': [
+        {'id': sid, 'name': d.SONGS[sid]['name'], 'artist': d.SONGS[sid]['artist']} for sid in hits]})
 
-    return JsonResponse({'results': results})
+
+@lru_cache(maxsize=256)
+def _blob_png(sid):
+    """A song's blob as base64 PNG. Drawing one is the slow part of a render and
+    the same song always draws the same blob, so the popular ones are kept."""
+    from . import data as d
+    song = d.SONGS[sid]
+    buf = io.BytesIO()
+    d.render_blob(sorted(song['genres']), song['tags'], size=400).save(buf, format='PNG', optimize=True)
+    return base64.b64encode(buf.getvalue()).decode('ascii')
 
 
 @require_GET
@@ -48,25 +59,17 @@ def render_song(request):
     from . import data as d  # lazy: keeps heavy numerical imports off the boot path
 
     sid = request.GET.get('id', '').strip()
+    if not available():
+        return JsonResponse(NO_DATA, status=503)
     d._load()
     if not sid or sid not in d.SONGS:
         return JsonResponse({'error': 'Song not found'}, status=404)
     song = d.SONGS[sid]
 
-    genres = sorted(song['genres'])
-    tags   = song['tags']   # list of (tag, popularity)
-
-    img = d.render_blob(genres, tags, size=400)
-
-    buf = io.BytesIO()
-    img.save(buf, format='PNG', optimize=True)
-    buf.seek(0)
-    img_b64 = base64.b64encode(buf.read()).decode('ascii')
-
     return JsonResponse({
         'name':   song['name'],
         'artist': song['artist'],
-        'genres': genres,
-        'tags':   [t for t, _ in tags],
-        'image':  img_b64,
+        'genres': sorted(song['genres']),
+        'tags':   [t for t, _ in song['tags']],   # (tag, popularity) pairs
+        'image':  _blob_png(sid),
     })

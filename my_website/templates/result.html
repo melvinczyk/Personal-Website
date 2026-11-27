@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static stamped %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,8 +7,8 @@
 <title>Bird Classifier Results</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/portfolio.css' %}">
-<link rel="stylesheet" href="{% static 'css/bird_results.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
+<link rel="stylesheet" href="{% stamped 'css/bird_results.css' %}">
 </head>
 <body>
 <div class="grid-overlay"></div>
@@ -57,10 +57,10 @@
             <div class="bird-label">// DETECTED SPECIES</div>
             <div class="bird-name">{{ result.bird }}</div>
 
-            <!-- confidence goes through a data attr: Django and JS both want {{ }} -->
+            {# confidence goes through a data attr: Django and JS both want double braces #}
             <div class="conf-label">
               <span>CONFIDENCE</span>
-              <span style="color:{% if result.severity == 'success' %}var(--mgs-cyan){% elif result.severity == 'warning' %}var(--alert-yellow){% else %}var(--alert-red){% endif %}">{{ result.confidence }}%</span>
+              <span style="color:{% if result.severity == 's' %}var(--mgs-cyan){% elif result.severity == 'w' %}var(--alert-yellow){% else %}var(--alert-red){% endif %}">{{ result.confidence }}%</span>
             </div>
             <div class="conf-track">
               <div class="conf-fill" id="confbar" style="width:0" data-confidence="{{ result.confidence }}"></div>
@@ -69,7 +69,7 @@
             <div class="stats-grid">
               <div class="stat-box">
                 <div class="stat-lbl">CONFIDENCE</div>
-                <div class="stat-val {% if result.severity == 'success' %}s{% elif result.severity == 'warning' %}w{% else %}e{% endif %}">{{ result.confidence }}%</div>
+                <div class="stat-val {{ result.severity }}">{{ result.confidence }}%</div>
               </div>
               <div class="stat-box">
                 <div class="stat-lbl">SEGMENTS</div>
@@ -78,17 +78,17 @@
               </div>
               <div class="stat-box">
                 <div class="stat-lbl">CLASS ACCURACY</div>
-                <div class="stat-val {% if result.acc_severity == 'success' %}s{% elif result.acc_severity == 'warning' %}w{% else %}e{% endif %}">{{ result.accuracy }}%</div>
+                <div class="stat-val {{ result.acc_severity }}">{{ result.accuracy }}%</div>
               </div>
             </div>
 
             <div class="readout">
               <div><span class="k">$</span> model.predict(audio_input)</div>
               <div><span class="k">→</span> species: <span class="v">{{ result.bird }}</span></div>
-              <div><span class="k">→</span> confidence: <span class="{% if result.severity == 'success' %}vg{% else %}vy{% endif %}">{{ result.confidence }}%</span></div>
+              <div><span class="k">→</span> confidence: <span class="{% if result.severity == 's' %}vg{% else %}vy{% endif %}">{{ result.confidence }}%</span></div>
               <div><span class="k">→</span> segments_examined: <span class="v">{{ result.num_segments }}</span></div>
               <div><span class="k">→</span> audio_duration: <span class="v">{{ result.duration }}s</span></div>
-              <div><span class="k">→</span> class_accuracy: <span class="{% if result.acc_severity == 'success' %}vg{% else %}vy{% endif %}">{{ result.accuracy }}%</span></div>
+              <div><span class="k">→</span> class_accuracy: <span class="{% if result.acc_severity == 's' %}vg{% else %}vy{% endif %}">{{ result.accuracy }}%</span></div>
               <div><span class="k">→</span> exit_status: <span class="vg">0 (OK)</span></div>
             </div>
           </div>
@@ -204,6 +204,6 @@
 
 </div>
 
-<script src="{% static 'scripts/bird_results.js' %}"></script>
+<script src="{% stamped 'scripts/bird_results.js' %}"></script>
 </body>
 </html>

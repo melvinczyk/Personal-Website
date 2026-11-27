@@ -232,6 +232,26 @@
     {
       "id": "eeeabsmobs:relic_earthshaker",
       "required": false
+    },
+    {
+      "id": "groidcinematics:soul_rider",
+      "required": false
+    },
+    {
+      "id": "groidcinematics:pale_soul_rider",
+      "required": false
+    },
+    {
+      "id": "groidcinematics:mutant_soul_zombie",
+      "required": false
+    },
+    {
+      "id": "groidcinematics:mutant_soul_skeleton",
+      "required": false
+    },
+    {
+      "id": "groidcinematics:mutant_soul_knight",
+      "required": false
     }
   ]
 }

@@ -6,7 +6,6 @@ Keeps everything in memory so search/render requests are fast.
 import csv
 import json
 import colorsys
-import io
 import math
 import os
 import threading

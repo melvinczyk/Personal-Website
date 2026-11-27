@@ -54,13 +54,11 @@ TAG = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'static', 'minecraft', 'bosses')
 
-# boss_rewards.js's own BOSSES dict is the one place a tier is assigned to a
-# boss at all - it is graded there, once, by hand. Reading it here lets an
-# unfelled boss's card carry the right tier colour from the start, instead of
-# only after the server has recorded a first kill for it.
-TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'a_boss_roster.js')
-if not os.path.exists(TIER_SCRIPT):          # older packs kept the tables in boss_rewards.js
-    TIER_SCRIPT = _instance('kubejs', 'server_scripts', 'boss_rewards.js')
+# The Groid Tags datapack grades every boss: groid:bosses_tier1..5, one tag
+# per tier (the boss scripts' own table moved there when they became part of
+# the Groid World mod). Reading it here lets an unfelled boss's card carry the
+# right tier colour from the start, instead of only after a first kill.
+TIER_PACK = _instance('global_packs', 'required_data', 'Groid Tags.zip')
 
 VANILLA_JAR = em.JAR
 PNG = re.compile(rb'([a-z][a-z0-9_/]*\.png)')
@@ -374,6 +372,15 @@ OVERRIDES = {
     # ragno is a spider and never grew the villager rig's arms to begin with;
     # it only needed the birthday candle dropped.
     'illageandspillage:ragno': {'drop': ('birthday',)},
+    # Both picked the wrong sheet unpinned: Paimon took a hand mob's skin and
+    # the Evolved Dagonzilla took the base Dagonzilla's.
+    'groidcinematics:paimon': {
+        'model': 'geo/paimon.geo.json',
+        'texture': 'textures/entity/paimon.png'},
+    'benstitans:dagonzillaevolved': {
+        'model': 'net/mcreator/benstitans/DagonzillaEvolvedModel.class',
+        'texture': 'textures/entities/dagonzilla_evolved.png',
+        'name': 'Evolved Dagonzilla'},
 }
 
 
@@ -392,29 +399,19 @@ def read_tag(path):
         return [v['id'] for v in json.load(fh)['values']]
 
 
-TIER_ENTRY = re.compile(r"'([a-z0-9_]+:[a-z0-9_]+)':\s*(\d+)")
-
-
-def read_tiers(path=TIER_SCRIPT):
-    """boss_id -> tier, read out of boss_rewards.js's own `var BOSSES = {...}`.
-
-    Read as text, not as JavaScript - there is no JS engine here, and the
-    object is simple enough (one quoted id, one integer, per line) that a
-    line-by-line scan is honest about what it is doing. Stops at the object's
-    own closing brace so `var MINIBOSSES = {...}`, where the tier is always 0
-    and would mean nothing here, is never read into the same dict.
-    """
+def read_tiers(path=TIER_PACK):
+    """boss_id -> tier (1..5), read out of the Groid Tags datapack's tier tags."""
+    import zipfile
+    out = {}
     try:
-        with open(path) as fh:
-            text = fh.read()
-    except OSError:
+        with zipfile.ZipFile(path) as z:
+            for tier in range(1, 6):
+                entry = f'data/groid/tags/entity_types/bosses_tier{tier}.json'
+                for v in json.loads(z.read(entry))['values']:
+                    out[v['id'] if isinstance(v, dict) else v] = tier
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile):
         return {}
-    start = text.find('var BOSSES = {')
-    if start < 0:
-        return {}
-    end = text.find('\n}', start)
-    block = text[start:end if end >= 0 else None]
-    return {m.group(1): int(m.group(2)) for m in TIER_ENTRY.finditer(block)}
+    return out
 
 
 def index_jars(folder):

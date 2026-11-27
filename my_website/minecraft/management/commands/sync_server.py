@@ -30,7 +30,6 @@ Credentials come from the config file, never from the command line, so they do
 not end up in shell history or a process list.
 """
 
-import os
 import posixpath
 import signal
 import stat as statmod

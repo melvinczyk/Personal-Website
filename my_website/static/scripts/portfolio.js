@@ -1,56 +1,176 @@
-// Counts come from static/minecraft/ (5 seasons, the fifth still being played;
-// 590 png, 4 mp4 + 1 gif).
-const MC_STATS = { seasons: 5, shots: 590, clips: 5, span: '2023-26' };
-
-// Brightened from the brand colours so they read on black. The about card at
-// 140.85 is the only place they appear now.
+// Brightened from the brand colours so they read on black.
 const SOCIAL_LINKS = [
   { label:'GitHub',   url:'https://github.com/melvinczyk',                          color:'#b07cff' },
   { label:'LinkedIn', url:'https://www.linkedin.com/in/nicholas-burczyk/',          color:'#4da3e8' },
   { label:'Spotify',  url:'https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy', color:'#2ee06a' },
   { label:'Bandcamp', url:'https://zerobarbecue.bandcamp.com',                      color:'#35b8dd' },
 ];
-const TAG_CLASS = {
-  'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award',
-  'ML/DL':'ai', 'EMBEDDED':'embedded', 'OPEN SOURCE':'ongoing', 'HARDWARE':'hardware', 'NETWORKING':'networking',
-};
 
-const PROJECTS = [
-  { id:"oculosaurus",      name:"OCULOSAURUS",                tags:["1ST PLACE","HARDWARE","NETWORKING"], tech:"Python / OpenCV / Raspberry Pi / YOLO",              img:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/example.gif",  img2:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/point_cloud.png", desc:"Stereo vision system to assist visually impaired individuals with real-time depth perception. Distributed architecture: Raspberry Pi goggles, cloud compute, mobile notifications. Features live 3D point cloud visualization, proximity warnings, and optional YOLO object recognition. Won 1st place for Senior Capstone competition", link:"https://github.com/melvinczyk/StereoCamera-DepthObjectEstimator"},
-  { id:"memprobe",         name:"MEMPROBE",                   tags:["EMBEDDED", "LIBRARY", "IN DEV"],        tech:"Python / pyelftools / ELF + DWARF / GCC & IAR map parsers / pytest", img:null, img2:null, desc:"Open-source firmware memory analyzer. Parses ELF/DWARF binaries and GCC/IAR linker maps to show exactly where flash and RAM go: per-symbol and per-library attribution, stack usage, dead code detection, bloat insights, and build-over-build diffing. Enforces size budgets so CI fails when firmware outgrows its target. Ships as an installable Python package with local build history.", link:"https://github.com/melvinczyk/memprobe/tree/master"},
-  { id:"echo-scout",       name:"ECHO SCOUT",                 tags:["EMBEDDED","HARDWARE", "NETWORKING"],            tech:"C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF / IMU", img:"https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946",                img2:null,                                                                                                         desc:"Compact 2.8\" handheld device that detects people and maps out rooms in real time. The mmWave radar covers an 80 degree area in front of the user, while the 8x8 ToF sensor builds a 3D point cloud of the surrounding space. Orientation and heading tracked via IMU with a live compass on the touchscreen display.", link:"https://github.com/melvinczyk/Heartbeat-Sensor"},
-  { id:"song2vec",         name:"SONG2VEC",                   tags:["ML/DL","LIVE"],                  tech:"Python / PyTorch / VAE / PCA / scikit-learn",        img:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/multi_blobs.png",                                  img2:"https://github.com/melvinczyk/Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png", desc:"Skip-gram based embedding model that learns vector representations of genres, tags, and songs in a shared latent space. Includes a VAE that maps songs into a 16-dimensional latent space and synthesizes unique colour blob images driven by genre and mood embeddings. PCA projects 1,305 genre and 985 tag vectors into colour+layout space.", link:"https://github.com/melvinczyk/Song2Vec"},
-  { id:"bird-classifier",  name:"BACKYARD BIRD CLASSIFIER",   tags:["ML/DL", "LIVE"],                 tech:"Python / CNN / Django / mel-spectrogram",             img:"https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg",             img2:"https://github.com/melvinczyk/Bird-classifier/blob/main/final_matrix.png?raw=true",    desc:"Audio classification CNN identifying 30 Alabama bird species from calls. Applied to mel-spectrograms. Full-stack Django web app: upload a bird call, see the species prediction, top-5 guesses, and a spectrogram visualization.", link:"https://github.com/melvinczyk/Bird-Classifier"},
-  { id:"personal-website", name:"NICHOLASBURCZYK.COM",        tags:["LIVE"],                         tech:"Django / Python / Qwen3-TTS voice cloning / Web Audio API / MGS1 font + PSone.css",                                    img:"https://www.svgrepo.com/show/353657/django-icon.svg",                                                         img2:null,                                                                                                         desc:"This website. Character AI voices, cloned from the original game audio with a TTS model running on a cloud GPU, sprite lip-sync is computed frame by frame from each clip's waveform. Also serves live ML inference, hosting the bird classifier model. Credit to PSOne.css for components", link:"https://github.com/melvinczyk/Personal-Website"},
-  { id:"waste-drone",      name:"WASTE DETECTION DRONE",      tags:["ML/DL","HARDWARE","NETWORKING"],             tech:"Python / YOLOv5 / Tello SDK",                        img:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/Medium%20model%20frame.png",          img2:"https://github.com/melvinczyk/Waste-detection-drone/raw/main/images/model_.gif",        desc:"Autonomous drone for environmental waste monitoring. Custom YOLOv5 model trained on annotated waste datasets. Programmatic flight via Tello SDK with precision navigation, telemetry logging, and automated spatial classification.", link:"https://github.com/melvinczyk/Waste-detection-drone"},
-  { id:"modpack-updater",  name:"MINECRAFT MODPACK UPDATER",  tags:["NETWORKING"],                               tech:"Java / JavaFX / Amazon S3 / Gradle",                 img:"https://github.com/user-attachments/assets/db32657d-8d6b-49d9-afe8-498cf750cc41",                          img2:"https://github.com/user-attachments/assets/a06daa21-547a-404c-8c95-eadcb740e267",                            desc:"Desktop app using Amazon S3 to host and sync Minecraft modpacks across a friend group. Git-style change tracking with a manifest. Admin panel: push updates, view changelogs, track folders, add new packs. One-click update for clients. Cross-platform.", link:"https://github.com/melvinczyk/ModpackUpdater"},
-  { id:"visaudio",         name:"VISAUDIO",                   tags:[],                               tech:"Python / librosa / PyQt",                            img:"https://github.com/melvinczyk/VisAudio/blob/main/images/menu.png?raw=true",                                img2:null,                                                                                                         desc:"Desktop app for audio file manipulation: format conversion, bitrate resampling, noise reduction, YouTube audio downloader, mel-spectrogram and waveform visualization. Supports mp3, wav, flac, ogg, m4a, aac.", link:"https://github.com/melvinczyk/VisAudio"},
-  { id:"born-in-spellbooks",name:"BORN IN SPELLBOOKS MOD",    tags:[],                               tech:"Java / Minecraft Forge 1.20.1",                      img:"https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png",                                                          img2:null,                                                                                                         desc:"Minecraft Forge compatibility mod combining Iron's Spells & Spellbooks with Born In Chaos. 17+ spells coded with custom rendering, animation layering, entity sharing. Three releases.", link:"https://github.com/melvinczyk/Born_in_spellbooks"},
-  { id:"fretwatch",        name:"FRETWATCH",                  tags:["IN DEV"],               tech:"Python / OpenCV / PyTorch / librosa",                 img:"https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png",                                        img2:null,                                                                                                         desc:"Live guitar note detection from video and audio. Signal processing extracts audio features to detect notes and chords being played. Combines librosa for audio analysis and OpenCV for live video frame manipulation.", link:"https://github.com/melvinczyk/FretWatch"},
-  { id:"minecraft-server", name:"MINECRAFT SERVER & MODPACK", tags:["NETWORKING","ONGOING"],                     tech:"Java / Python / Linux server admin",        img:"https://i.ibb.co/7KCwNZr/minecraft.png",                                                                     img2:null,                                                                                                         desc:"Ongoing modpack series with curated mods, resource & data packs currently on Season 5. Server admin: config management, real-time troubleshooting, networking. Custom data packs with custom mobs, biomes, loot tables, fixes, structure generation, pretty much anything.", link:"https://github.com/melvinczyk/Datapacks"},
+// Every pictogram on the page, drawn rather than typed: the codec font has no
+// arrows of its own and falls back to whatever the system offers.
+const ICONS = {
+  mark:   '<path d="M12 3l9 9-9 9-9-9z"/><path d="M12 9l3 3-3 3-3-3z" fill="currentColor"/>',
+  ext:    '<path d="M7 17 17 7M9 7h8v8"/>',
+  left:   '<path d="M15 5l-7 7 7 7"/>',
+  right:  '<path d="M9 5l7 7-7 7"/>',
+  reset:  '<path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/>',
+  lock:   '<rect x="5" y="11" width="14" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  work:   '<rect x="3" y="7" width="18" height="13"/><path d="M9 7V4h6v3M3 13h18"/>',
+  lab:    '<path d="M9 3h6M10 3v6L5 20h14L14 9V3M8 15h8"/>',
+  school: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c3 2.5 9 2.5 12 0v-4.5"/>',
+  learn:  '<rect x="6" y="6" width="12" height="12"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/>',
+  cube:   '<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
+};
+const icon = (name, size = 18) =>
+  `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">${ICONS[name]}</svg>`;
+
+// The personnel file at 140.85: where he is posted, then what he is into.
+const BIO_POSTS = [
+  ['work',   'Software Developer II', 'Viper Imaging'],
+  ['lab',    'Year-Round Intern',     'Sandia National Labs'],
+  ['school', 'MSAI',                  'UAB · Spring 2027'],
+];
+const BIO_TRACKS = [
+  ['learn',  'LEARNING',  ['High-performance AI integration', 'Dockerized deployable software']],
+  ['target', 'INTERESTS', ['Distributed systems', 'Hardware + AI integration', 'Docker']],
+  ['cube',   'GAMING',    ['Minecraft modding', 'Custom server', 'Forge mods']],
 ];
 
-function buildSidebarProjects() {
-  const container = document.getElementById('sb-projects');
-  if (!container) return;
-  container.innerHTML = '';
-  PROJECTS.forEach(p => {
-    const btn = document.createElement('button');
-    btn.className = 'sb-proj-btn';
-    btn.onclick = () => runCmd(`project ${p.id}`);
-    const cls = p.tags.includes('1ST PLACE') ? 'sb-glow-award'
-              : p.tags.includes('ML/DL')     ? 'sb-glow-ai'
-              : p.tags.includes('EMBEDDED')  ? 'sb-glow-embedded'
-              : '';
-    btn.innerHTML = `<span class="${cls}">${p.id.toUpperCase()}</span>`;
-    container.appendChild(btn);
-  });
-}
+const TAG_CLASS = {
+  'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award', 'ML/DL':'ai',
+  'EMBEDDED':'embedded', 'HARDWARE':'hardware', 'NETWORKING':'networking',
+};
+const GH = 'https://github.com/melvinczyk/';
 
-document.addEventListener('DOMContentLoaded', buildSidebarProjects);
+// One record per project: a one-line `sum` and three `points`, never a
+// paragraph. `ask` is Snake's question and `tell` Otacon's answer; their voice
+// clips are sk_<voice>.m4a and ot_<voice>_<n>.m4a (see
+// tools/generate_codec_voices.py), `voice` defaulting to the id. A line whose
+// clip does not exist yet plays as text. A project with no `link` is ours and
+// stays unlinked.
+const PROJECTS = [
+  { id:'oculosaurus', name:'OCULOSAURUS', tags:['1ST PLACE','HARDWARE','NETWORKING'],
+    tech:'Python / OpenCV / Raspberry Pi / YOLO', link:GH+'StereoCamera-DepthObjectEstimator',
+    img:GH+'StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/example.gif',
+    img2:GH+'StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/point_cloud.png', thumb:'img2',
+    sum:'Stereo-vision goggles that give visually impaired users real-time depth awareness.',
+    points:['Raspberry Pi headset, cloud compute, phone alerts', 'Live 3D point cloud and proximity warnings', '1st place, Senior Capstone competition'],
+    ask:"Oculosaurus. What am I looking at?",
+    tell:["A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pi headset triangulate depth in real time, the way your own eyes judge distance.",
+          "It runs YOLO object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way."] },
+  { id:'gvoice', name:'GVOICE', tags:['ML/DL','NETWORKING','IN DEV'],
+    tech:'Python / FastAPI / Docker / Kokoro TTS / RVC / Cloud Run', link:GH+'GVoice',
+    sum:'Dockerized speech server that gives every Minecraft chat message an AI voice.',
+    points:['Kokoro text-to-speech into RVC voice conversion', '~18,000 pretrained voices to pick from', 'Deploys to a local GPU or Cloud Run'],
+    ask:"GVoice. Another radio?",
+    tell:["Closer than you'd think. It's the speech server behind GroidVoice, a Minecraft mod that reads every chat message aloud through proximity voice chat.",
+          "Two stages. Kokoro turns the text into speech, then an RVC model repaints the timbre into any of eighteen thousand voices. It all ships as one Docker container, so it deploys to a local GPU or Cloud Run."] },
+  { id:'groidberbium', name:'GROIDBERBIUM', tags:['ONGOING'],
+    tech:'Java / Minecraft Forge 1.20.1 / OpenGL / Gradle',
+    sum:'Our fork of the Emberbium rendering engine for Forge, tuned for more frames.',
+    points:['~30% more FPS on average, up to 60%', '250 FPS with ~240 mods on an M2 Air', 'A smooth 60 at 64-chunk render distance'],
+    ask:"Groidberbium. Sounds unstable.",
+    tell:["It's the opposite. A fork of Emberbium, the Forge rendering engine descended from Sodium, rebuilt to draw Minecraft faster.",
+          "About thirty percent more frames on average, and it holds sixty at a sixty-four chunk render distance. On a laptop, Snake."] },
+  { id:'memprobe', name:'MEMPROBE', tags:['EMBEDDED','IN DEV'],
+    tech:'Python / pyelftools / ELF + DWARF / pytest', link:GH+'memprobe/tree/master',
+    sum:'Firmware memory analyzer that shows exactly where flash and RAM go.',
+    points:['Parses ELF/DWARF and GCC/IAR linker maps', 'Per-symbol attribution, stack usage, dead code', 'Size budgets that fail CI'],
+    ask:"Memprobe. Break it down for me.",
+    tell:["It's a firmware forensics tool. You point it at a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes.",
+          "It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your CI when the firmware outgrows its budget."] },
+  { id:'echo-scout', name:'ECHO SCOUT', tags:['EMBEDDED','HARDWARE','NETWORKING'],
+    tech:'C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF', link:GH+'Heartbeat-Sensor',
+    img:'https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946',
+    sum:'Handheld scanner that detects people and maps rooms in real time.',
+    points:['mmWave radar with an 80° field of view', '8x8 ToF sensor builds a 3D point cloud', 'IMU compass on a 2.8" touchscreen'],
+    ask:"Echo Scout. This one's yours in the field.",
+    tell:["A handheld scanner built on an ESP32. Millimeter-wave radar sweeps an 80 degree arc to detect people in the dark, even behind thin cover.",
+          "An 8x8 time-of-flight sensor rebuilds the room as a 3D point cloud, while the IMU keeps a live compass on the touchscreen. Written in C++."] },
+  { id:'song2vec', name:'SONG2VEC', tags:['ML/DL','LIVE'],
+    tech:'Python / PyTorch / VAE / PCA / scikit-learn', link:GH+'Song2Vec',
+    img:GH+'Song2Vec/raw/main/outputs/multi_blobs.png',
+    img2:GH+'Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png',
+    sum:'Embeds songs, genres and tags in one latent space, then paints each song as a colour blob.',
+    points:['Skip-gram embeddings and a 16-dimension VAE', '203K songs, 1,305 genres, 985 tags', 'PCA maps vectors to colour and layout'],
+    ask:"Song2Vec. What's the science here?",
+    tell:["It takes word-embedding theory and applies it to music. A skip-gram model learns vectors for genres, tags, and songs in one shared latent space.",
+          "A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with PCA."] },
+  { id:'bird-classifier', name:'BACKYARD BIRD CLASSIFIER', tags:['ML/DL','LIVE'],
+    tech:'Python / CNN / Django / mel-spectrogram', link:GH+'Bird-Classifier',
+    img:'https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg',
+    img2:GH+'Bird-classifier/blob/main/final_matrix.png?raw=true',
+    sum:'A CNN that identifies 30 Alabama bird species from their calls.',
+    points:['Classifies mel-spectrograms of the audio', 'Upload, record, or pull a sample call', 'Returns the top five guesses and the spectrogram'],
+    ask:"Backyard Bird Classifier. Explain.",
+    tell:["A convolutional neural network trained to identify thirty Alabama bird species purely from their calls.",
+          "It turns each recording into a mel-spectrogram, an image of sound, then classifies it. Wrapped in a Django app that returns the top five guesses and the spectrogram itself."] },
+  { id:'personal-website', name:'NICHOLASBURCZYK.COM', tags:['LIVE'],
+    tech:'Django / Python / Qwen3-TTS / Web Audio API', link:GH+'Personal-Website',
+    img:'https://www.svgrepo.com/show/353657/django-icon.svg',
+    sum:'This site: an MGS codec with AI-cloned character voices.',
+    points:['Voices cloned with a TTS model on a cloud GPU', "Lip-sync computed from each clip's waveform", 'MGS1 font and PSone.css components'],
+    ask:"His personal site. Anything to it?",
+    tell:["You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text-to-speech model on a cloud GPU, then computed our mouth movements straight off the waveform.",
+          "The interface is the real thing too. That's the actual MGS1 bitmap font off the disc, and every menu panel is a PlayStation component borrowed from an open-source stylesheet called PSone.",
+          "It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio."] },
+  { id:'waste-drone', name:'WASTE DETECTION DRONE', tags:['ML/DL','HARDWARE','NETWORKING'],
+    tech:'Python / YOLOv5 / Tello SDK', link:GH+'Waste-detection-drone',
+    img:GH+'Waste-detection-drone/raw/main/images/Medium%20model%20frame.png',
+    img2:GH+'Waste-detection-drone/raw/main/images/model_.gif',
+    sum:'Autonomous drone that spots litter from the air.',
+    points:['Custom-trained YOLOv5 detector', 'Programmatic flight through the Tello SDK', 'Telemetry logging and spatial tagging'],
+    ask:"Waste Detection Drone. Give me the specs.",
+    tell:["An autonomous quadcopter for environmental monitoring. A custom YOLOv5 model, trained on annotated waste imagery, spots litter from the air.",
+          "It flies programmatically through the Tello SDK, logging telemetry and tagging every detection for spatial analysis."] },
+  // voice 'modpack-updater2': the app was rewritten, so Otacon's old clips
+  // describe software that no longer exists. Snake's question still fits.
+  { id:'modpack-updater', name:'GROIDPACK UPDATER', tags:['NETWORKING','LIVE'], voice:'modpack-updater2', askVoice:'modpack-updater',
+    tech:'Java 17 / Swing + FlatLaf / Backblaze B2 / Gradle', link:GH+'ModpackUpdater',
+    sum:"Keeps every player's Minecraft modpack identical to the server.",
+    points:['Update and Repair by file hash', 'Admins publish versions with a changelog', 'Self-updating, on Windows and macOS'],
+    ask:"Modpack Updater. What's it do?",
+    tell:["It keeps everyone's Minecraft modpack identical to the server. It hashes every tracked file, then downloads, replaces or deletes whatever drifted. Worlds, screenshots and settings are never touched.",
+          "Rebuilt from the ground up in Java. Packs live in Backblaze B2 cloud storage, admins publish versioned changes with a changelog, and the app even updates itself on launch."] },
+  { id:'visaudio', name:'VISAUDIO', tags:[],
+    tech:'Python / librosa / PyQt', link:GH+'VisAudio',
+    img:GH+'VisAudio/blob/main/images/menu.png?raw=true',
+    sum:'Desktop workbench for converting, cleaning and visualising audio.',
+    points:['Format conversion and resampling', 'Noise reduction', 'Waveform and mel-spectrogram views'],
+    ask:"VisAudio. Run it down.",
+    tell:["An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built-in downloader.",
+          "It visualizes every file as a waveform and a mel-spectrogram through librosa, wrapped in a PyQt interface. Handles nearly every codec you'd throw at it."] },
+  { id:'born-in-spellbooks', name:'BORN IN SPELLBOOKS MOD', tags:[],
+    tech:'Java / Minecraft Forge 1.20.1', link:GH+'Born_in_spellbooks',
+    img:'https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png',
+    sum:"Forge mod bridging Iron's Spells & Spellbooks with Born In Chaos.",
+    points:['17+ custom spells', 'Custom rendering and layered animation', 'Three releases'],
+    ask:"Born in Spellbooks. A game mod?",
+    tell:["A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch.",
+          "Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep."] },
+  { id:'fretwatch', name:'FRETWATCH', tags:['IN DEV'],
+    tech:'Python / OpenCV / PyTorch / librosa', link:GH+'FretWatch',
+    img:'https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png',
+    sum:'Detects guitar notes and chords live from video and audio.',
+    points:['librosa pulls the audio features', 'OpenCV tracks the fretboard', 'Still in development'],
+    ask:"FretWatch. What's the readout?",
+    tell:["Real-time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play.",
+          "librosa extracts the spectral features while OpenCV tracks the fretboard frame by frame. Still in development."] },
+  { id:'minecraft-server', name:'MINECRAFT SERVER & MODPACK', tags:['NETWORKING','ONGOING'],
+    tech:'Java / Python / Linux server admin', link:GH+'Datapacks',
+    img:'https://i.ibb.co/7KCwNZr/minecraft.png',
+    sum:'A long-running custom modpack and server, now on Season 5.',
+    points:['Curated mods, resource packs and data packs', 'Custom mobs, biomes, loot and structures', 'Linux server administration'],
+    ask:"The Minecraft server. That's infrastructure.",
+    tell:["A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand-built data packs.",
+          "The data packs are scripted in JSON and mcscript to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management."] },
+];
+const NUM_WORDS = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve',
+                   'Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen','Twenty'];
 
 let audioCtx = null;
-let hoverBuffer = null, clickBuffer = null, errorBuffer = null, bgMusic = null, bgMusicSource = null;
+let hoverBuffer = null, clickBuffer = null, bgMusic = null, bgMusicSource = null;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -93,12 +213,6 @@ function initMuteButton() {
   const b = document.createElement('button');
   b.id = 'cx-mute';
   b.className = 'cx-mute';
-// critical positioning/visibility inline so it never depends on the CSS file
-// loading (the .cx-mute class just adds the blur + hover polish)
-  b.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10000;width:40px;height:40px;' +
-    'display:flex;align-items:center;justify-content:center;padding:0;color:#4ddc85;' +
-    'background:rgba(0,22,18,0.55);border:1px solid rgba(77,220,133,0.55);border-radius:7px;' +
-    'opacity:0.8;cursor:pointer;';
   b.onclick = (e) => { e.stopPropagation(); cxToggleMute(); };
   (document.body || document.documentElement).appendChild(b);
   updateMuteBtn();
@@ -210,13 +324,13 @@ function playBackgroundMusic() {
 
 function playHoverBeep()  { playBuffer(hoverBuffer, 0.3); }
 function playClickSound() { playBuffer(clickBuffer, 0.4); }
-function playErrorSound() { playBuffer(errorBuffer, 0.5); }
 
+// mouseenter also fires on the document itself, which has no closest()
 document.addEventListener('mouseenter', e => {
-  if (e.target.closest('button, a, .qbtn, .sb-btn, .sb-proj-btn')) playHoverBeep();
+  if (e.target.closest && e.target.closest('button, a')) playHoverBeep();
 }, true);
 document.addEventListener('click', e => {
-  const target = e.target.closest('button, a, .qbtn, .sb-btn, .sb-proj-btn');
+  const target = e.target.closest('button, a');
   if (target && target.id !== 'codec-btn') {
     playClickSound();
     const btn = e.target.closest('button');
@@ -237,917 +351,317 @@ async function enterSite() {
   cxUnlockVoice();   // prime the voice element while we're in a user gesture
   codec.classList.add('codec-entering');
 
-  const ringBuffer = await loadSound(STATIC_URLS.ring);
-  playBuffer(ringBuffer, 0.8);
-
-  [hoverBuffer, clickBuffer, errorBuffer, bgMusic] = await Promise.all([
-    loadSound(STATIC_URLS.hover),
-    loadSound(STATIC_URLS.click),
-    loadSound(STATIC_URLS.error),
-    loadSound(STATIC_URLS.menu),
-  ]);
-
-  const openBuffer = await loadSound(STATIC_URLS.open);
+  // everything is fetched at once; only the ring has to land before it plays
+  const rest = Promise.all(['hover', 'click', 'menu', 'open'].map(k => loadSound(STATIC_URLS[k])));
+  playBuffer(await loadSound(STATIC_URLS.ring), 0.8);
+  let openBuffer;
+  [hoverBuffer, clickBuffer, bgMusic, openBuffer] = await rest;
 
   setTimeout(() => {
     codec.classList.add('fade-out');
     playBuffer(openBuffer, 0.7);
-    codec.addEventListener('animationend', () => {
+    // on a clock rather than on animationend: a browser that throttles or
+    // skips the fade must not leave the visitor parked on the call screen
+    setTimeout(() => {
       codec.style.display = 'none';
       screen.classList.add('visible', 'crt-open');
       setTimeout(playBackgroundMusic, 300);
       initCodec();
-    }, { once: true });
+    }, 800);
   }, 1800);
 }
 
+// ── the content panel under the codec ──────────────────────────────────────
 const out = document.getElementById('output');
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function ln(html='',cls='line'){const d=document.createElement('div');d.className=`line ${cls} fade-in`;d.innerHTML=html;out.appendChild(d);out.scrollTop=out.scrollHeight;}
-function bl(){const d=document.createElement('div');d.className='blank fade-in';out.appendChild(d);out.scrollTop=out.scrollHeight;}
-function addHtml(h){const d=document.createElement('div');d.className='fade-in';d.innerHTML=h;out.appendChild(d);out.scrollTop=out.scrollHeight;}
-function echo(cmd){ln(`<span style="color:var(--mgs-border)">>></span> <span style="color:var(--mgs-cyan)">${esc(cmd)}</span>`);}
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const tagsHtml = tags => tags.map(t => `<span class="tag ${TAG_CLASS[t] || ''}">${esc(t)}</span>`).join('');
+const chipsHtml = items => `<div class="chips">${items.map(c => `<span>${esc(c)}</span>`).join('')}</div>`;
+const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const CMDS = {
-about(){
-  bl();
-  addHtml(`<div class="who-card fade-in">
-    <div class="ps-bar"><span class="ps-t">◈ NICK BURCZYK</span><span class="ps-r">140.85</span></div>
-    <div class="who-info">
-      <div class="who-row"><span class="who-key">school</span><span class="who-val">MSAI @ UAB - Spring 2027</span></div>
-      <div class="who-row"><span class="who-key">work</span><span class="who-val">TITANS-SW R&amp;D Intern @ Sandia National Labs</span></div>
-      <div class="who-row"><span class="who-key">interests</span><span class="who-val">complex software, hardware integration</span></div>
-      <div class="who-row"><span class="who-key">learning</span><span class="who-val">C/C++ - embedded, performance computing, low-level work</span></div>
-      <div class="who-row"><span class="who-key">music</span><span class="who-val">Zero Barbecue - producer / artist</span></div>
-      <div class="who-row"><span class="who-key">gaming</span><span class="who-val">Minecraft - modding, custom server, Forge mods</span></div>
-      <div class="who-row who-links-row"><span class="who-key">links</span><span class="who-val who-links">${SOCIAL_LINKS.map(l =>
-        `<a href="${l.url}" target="_blank" rel="noopener" style="--lc:${l.color}">${l.label}</a>`).join('')}</span></div>
-    </div>
-  </div>`);
-  bl();
-},
+// Swap what the panel shows. Where the browser can, the old view morphs into
+// the new one: the element named pj-hero on each side is the same object.
+function cxShow(html, after, morph){
+  const swap = () => { out.innerHTML = html; cxDecodeAll(); if (after) after(); };
+  if (morph !== 'slide') delete document.documentElement.dataset.dir;
+  if (morph && document.startViewTransition && !REDUCED_MOTION) document.startViewTransition(swap);
+  else swap();
+}
 
-projects(){
-  bl();
-  PROJECTS.forEach((p,i)=>{
-    const n=String(i+1).padStart(2,'0');
-    ln(`  <span style="color:#225544">${n}</span>  <span style="color:var(--mgs-cyan);cursor:pointer;text-decoration:underline" onclick="runCmd('project ${p.id}')">${p.id.padEnd(22)}</span><span style="color:#559988">${esc(p.name)}</span>`);
+// Text that resolves out of noise, left to right, the way the codec tunes in.
+function cxDecodeAll(){
+  if (REDUCED_MOTION) return;
+  const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%/';
+  out.querySelectorAll('[data-decode]').forEach(el => {
+    const final = el.textContent;
+    let n = 0;
+    const t = setInterval(() => {
+      if (!el.isConnected || ++n >= final.length) { clearInterval(t); el.textContent = final; return; }
+      el.textContent = final.replace(/\S/g, (c, i) => i < n ? c : glyphs[Math.random() * glyphs.length | 0]);
+    }, 30);
   });
-  bl();
-},
+}
 
-project(id){
-  id=(id||'').trim().toLowerCase();
-  if(!id){ln(`  Usage: project [id]. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
-  const p=PROJECTS.find(x=>x.id===id||x.name.toLowerCase().includes(id));
-  if(!p){ln(`  Not found: ${esc(id)}. Run <span style="color:var(--mgs-cyan)">projects</span> for a list`,'red');return;}
-  bl();
-  const img2html=p.img2?`<img src="${p.img2}" alt="secondary" style="width:100%;margin-top:8px;max-height:120px;object-fit:cover;border:2px solid var(--mgs-border);filter:grayscale(0.3) contrast(1.1);">` :'';
-  const tagsHtml = (p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('');
-  const esId   = p.id==='echo-scout'    ? `esdemo${Date.now()}` : null;
-  const demoSection = esId ? `
-    <div class="proj-demo-outer" id="${esId}-wrap">
-      <div class="proj-demo-hdr">
-        <span>◈ EMULATED LIVE DEMO</span>
-        <span class="proj-demo-sim">SIMULATED SENSOR DATA</span>
-      </div>
-      <div class="proj-demo-body">
-        <div class="echo-device-outer">
-          <div class="echo-device-bezel">
-            <div class="echo-device-notch"></div>
-            <canvas id="${esId}" width="240" height="320" class="echo-device-canvas"></canvas>
-          </div>
-          <div class="echo-device-controls">
-            <button class="echo-reset-btn" id="${esId}-reset">⟳ RESET</button>
-            <div class="echo-device-footer">ECHO SCOUT v1.0 &nbsp;◈&nbsp; ESP32-S3</div>
-          </div>
-        </div>
-        <div class="echo-demo-hint">
-          <div class="echo-hint-title">◈ INTERACTIVE EMULATOR</div>
-          <div class="echo-hint-body">
-            <div class="echo-hint-row">● Boots automatically to menu</div>
-            <div class="echo-hint-row">● Tap menu buttons to navigate</div>
-            <div class="echo-hint-row">● Tap <b>&lt; MENU</b> to go back</div>
-            <div class="echo-hint-row">● Tab bars switch sensor views</div>
-            <div class="echo-hint-row">● RESET restarts from boot screen</div>
-          </div>
-        </div>
-      </div>
-    </div>` : (p.id==='song2vec' ? `
-    <div class="proj-demo-outer" style="padding:16px 20px;">
-      <div class="proj-demo-hdr" style="margin-bottom:10px;">
-        <span>◈ LIVE INTERACTIVE DEMO</span>
-        <span class="proj-demo-sim">203K SONGS · 1305 GENRES · 985 TAGS</span>
-      </div>
-      <a href="/song2vec/" class="proj-link" style="display:inline-block;margin-top:4px;">→ OPEN SONG2VEC DEMO /song2vec/</a>
-    </div>` : (p.id==='bird-classifier' ? psBirdPanel() : (p.id==='minecraft-server' ? psPortalPanel() : '')));
-  addHtml(`<div class="proj-card">
-    <div class="proj-card-header"><span class="proj-name">${esc(p.name)}</span>${tagsHtml}</div>
-    <div class="proj-card-body">
-      ${p.img ? `<div class="proj-img-wrap"><div style="width:100%"><img src="${p.img}" alt="${esc(p.name)}" onerror="this.parentElement.style.display='none'">${img2html}</div></div>` : ''}
-      <div class="proj-info">
-        <div class="proj-tech">tech: <span style="color:var(--mgs-cyan)">${esc(p.tech)}</span></div>
-        <div class="proj-desc">${esc(p.desc)}</div>
-        <a class="proj-link" href="${p.link}" target="_blank">→ ${p.link.includes('github.com') ? `GITHUB: ${p.link.replace('https://github.com/','')}` : `LIVE: ${p.link.replace(/^https?:\/\//,'')}`}</a>
+function aboutHtml(){
+  return `<section class="ps-panel dossier">
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}PERSONNEL FILE</span><span class="ps-r"><span class="ps-live"></span>ACTIVE · 140.85</span></div>
+    <div class="dos-id">
+      <div class="dos-badge" aria-hidden="true">NB</div>
+      <div>
+        <div class="dos-name" data-decode>NICK BURCZYK</div>
+        <div class="dos-role">SOFTWARE DEVELOPER</div>
       </div>
     </div>
-    ${demoSection}
-  </div>`);
-  if (esId)   requestAnimationFrame(()=>startEchoScoutDemo(esId));
-  bl();
-},
+    <div class="dos-posts">${BIO_POSTS.map(([ic, head, where], i) => `<div class="dos-post" style="--i:${i}">
+      ${icon(ic, 26)}<div><b>${esc(head)}</b><span>${esc(where)}</span></div>
+    </div>`).join('')}</div>
+    <div class="dos-tracks">${BIO_TRACKS.map(([ic, label, items], i) => `<div class="dos-track" style="--i:${i + BIO_POSTS.length}">
+      <h4>${icon(ic, 16)}${label}</h4>${chipsHtml(items)}
+    </div>`).join('')}</div>
+    <div class="dos-links" style="--i:${BIO_POSTS.length + BIO_TRACKS.length}">${SOCIAL_LINKS.map(l =>
+      `<a href="${l.url}" target="_blank" rel="noopener" style="--lc:${l.color}">${l.label}${icon('ext', 15)}</a>`).join('')}</div>
+  </section>`;
+}
 
-music(){
-  bl();
-  ln('  Artist: <span style="color:var(--mgs-cyan)">Zero Barbecue</span>','line');
-  ln('  First single out now.','white');
-  bl();
-  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">◈ ZERO BARBECUE</span><span class="ps-r">FIRST SINGLE</span></div>
+function musicHtml(){
+  return `<section class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}ZERO BARBECUE</span><span class="ps-r">FIRST SINGLE</span></div>
     <div class="ps-body">
-      <div class="ps-frame"><iframe src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0" height="200" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Zero Barbecue on Spotify"></iframe></div>
+      <div class="ps-frame"><iframe src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0" height="200" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Zero Barbecue on Spotify"></iframe></div>
       <div class="ps-btnrow">
         <a class="ps-btn ps-sm ps-alt" href="https://open.spotify.com/artist/0uOm4SIBucaY6CHRlQoPBy" target="_blank" rel="noopener"><span class="ps-lbl">SPOTIFY</span></a>
         <a class="ps-btn ps-sm ps-alt" href="https://zerobarbecue.bandcamp.com" target="_blank" rel="noopener"><span class="ps-lbl">BANDCAMP</span></a>
       </div>
     </div>
-  </div></div>`);
-  bl();
-},
-
-
-minecraft(){
-  bl();
-  addHtml(psPortalPanel());
-  psFillFaces();
-  bl();
-},
-
-clear(){ out.innerHTML=''; },
-
-'bird-classifier'(){
-  bl();
-  addHtml(psBirdPanel());
-  bl();
-},
-};
-
-CMDS['classifier']=CMDS['bird-classifier'];
-CMDS['classify']=CMDS['bird-classifier'];
-
-CMDS['song2vec'] = function() {
-  bl();
-  ln('  <span style="color:var(--mgs-cyan)">Song2Vec · Musical Blob Visualizer</span>','line');
-  ln('  VAE · PCA · 203K songs · 1305 genres · 985 tags','white');
-  bl();
-  ln('  Redirecting in <span style="color:var(--mgs-cyan)" id="countdown2">3</span>...','line');
-  bl();
-  addHtml(`<div style="padding:0 20px 8px;max-width:480px"><div style="border:2px solid var(--mgs-border);border-left:4px solid var(--mgs-cyan);padding:12px 16px;background:rgba(0,25,25,0.5);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"><div><div style="color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:16px;letter-spacing:2px;font-weight:700">SONG2VEC</div><div style="color:var(--mgs-border);font-size:11px;margin-top:4px">Search a song and generate its musical blob</div></div><a href="/song2vec/" style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:2px solid var(--mgs-cyan);color:var(--mgs-cyan);font-family:'MGS1 Codec',monospace;font-size:11px;font-weight:700;padding:8px 16px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(0,255,204,.15)'" onmouseout="this.style.background='transparent'">▸ LAUNCH</a></div></div>`);
-  bl();
-  let n=3;
-  const cd=document.getElementById('countdown2');
-  const t=setInterval(()=>{ n--; if(cd) cd.textContent=n; if(n<=0){clearInterval(t);window.location.href='/song2vec/';} },1000);
-};
-CMDS['mc']=CMDS['minecraft'];
-// the links have their own row on the about card, so the channel that used to
-// list them separately is gone; anyone still typing `contact` lands there
-CMDS['contact']=CMDS['about'];
-CMDS['links']=CMDS['about'];
-// the live map renders the world being played, so it moved to the live season
-// inside the portal; anyone still typing `map` should be sent after it
-CMDS['map']=CMDS['minecraft'];
-
-function runCmd(raw){
-  const trimmed=(raw||'').trim();
-  echo(trimmed);
-  if(!trimmed){bl();return;}
-  const lo=trimmed.toLowerCase();
-  if(lo==='project'||lo.startsWith('project ')){ CMDS['project'](trimmed.slice('project'.length).trim()); return; }
-  const fn=CMDS[lo]||CMDS[lo.split(' ')[0]];
-  if(fn){ fn(trimmed.split(' ').slice(1).join(' ')); }
-  else { playErrorSound(); ln(`  command not found: <span style="color:#ff5555">${esc(trimmed)}</span>. Type <span style="color:var(--mgs-cyan)">help</span>`); bl(); }
+  </section>`;
 }
 
-let _esDemoRAF = null;
+// ── projects: a grid of records, each opening into its own file ────────────
+const projectById = id => PROJECTS.find(p => p.id === id);
 
-function startEchoScoutDemo(canvasId) { // eslint-disable-line no-unused-vars
-  if (_esDemoRAF) { cancelAnimationFrame(_esDemoRAF); _esDemoRAF = null; }
+function projectsHtml(heroId){
+  const filters = ['ALL', ...new Set(PROJECTS.flatMap(p => p.tags))];
+  return `<section class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}OPERATION RECORDS</span><span class="ps-r">${PROJECTS.length} DECLASSIFIED</span></div>
+    <div class="ps-body">
+      <div class="pj-filter">${filters.map((f, i) =>
+        `<button class="tag ${TAG_CLASS[f] || ''}${i ? '' : ' on'}" onclick="cxFilterProjects(this)">${esc(f)}</button>`).join('')}</div>
+      <div class="pj-grid">${PROJECTS.map((p, i) => {
+        const shot = p[p.thumb || 'img'];
+        return `<button class="pj-tile" data-tags="${esc(p.tags.join('|'))}" onclick="cxOpenProject('${p.id}', this)"
+            style="--i:${i}${p.id === heroId ? ';view-transition-name:pj-hero' : ''}">
+          ${shot ? `<img class="pj-shot" src="${shot}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          <span class="pj-freq">141.${13 + i}</span>
+          <span class="pj-name">${esc(p.name)}</span>
+          <span class="pj-tech">${esc(p.tech.split(' / ').slice(0, 3).join(' · '))}</span>
+          <span class="pj-tags">${tagsHtml(p.tags)}</span>
+        </button>`;
+      }).join('')}</div>
+    </div>
+  </section>`;
+}
 
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
+out.addEventListener('pointermove', e => {
+  const t = e.target.closest('.pj-tile, .dos-post');
+  if (!t) return;
+  const r = t.getBoundingClientRect();
+  t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  t.style.setProperty('--my', (e.clientY - r.top) + 'px');
+});
 
-  let screen    = 'loading';
-  let subTab    = 0;
-  let t         = 0;
-  let loadPct   = 0;
-  let lastScreen = '';
-  let lastSubTab = -1;
-  let anglState = 0;
-  const SCOPE_SAMPLES = 240;
-  const _scopeBuf = [new Float32Array(SCOPE_SAMPLES), new Float32Array(SCOPE_SAMPLES), new Float32Array(SCOPE_SAMPLES)];
-  let _scopeHead = 0;
-
-  const resetBtn = document.getElementById(`${canvasId}-reset`);
-  if (resetBtn) resetBtn.addEventListener('click', () => {
-    screen='loading'; subTab=0; t=0; loadPct=0; lastScreen=''; lastSubTab=-1; anglState=0; _scopeHead=0;
+function cxFilterProjects(btn){
+  const tag = btn.textContent;
+  btn.parentElement.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  let shown = 0;
+  out.querySelectorAll('.pj-tile').forEach(t => {
+    t.hidden = tag !== 'ALL' && !t.dataset.tags.split('|').includes(tag);
+    if (t.hidden) return;
+    // replay the entrance so the survivors close ranks instead of jumping
+    t.style.setProperty('--i', shown++);
+    t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
   });
+}
 
-  const K = { BG:'#000000', G:'#00FC00', DIM:'#006000', FAINT:'#003000',
-              SEP:'#005800', RED:'#FF0000', AMB:'#F85C00', WHT:'#FFFFFF' };
+// What a project card carries besides its description.
+const PROJECT_DEMOS = {
+  'echo-scout': { html: () => `<div class="proj-demo">
+      <div class="ps-bar"><span class="ps-t">${icon('mark')}EMULATED LIVE DEMO</span><span class="ps-r proj-demo-sim">SIMULATED SENSOR DATA</span></div>
+      <div class="proj-demo-body">
+        <div class="echo-device-outer">
+          <div class="echo-device-bezel">
+            <div class="echo-device-notch"></div>
+            <canvas id="es-demo" width="240" height="320" class="echo-device-canvas"></canvas>
+          </div>
+          <div class="echo-device-controls">
+            <button class="echo-reset-btn" id="es-demo-reset">${icon('reset', 16)}RESET</button>
+            <div class="echo-device-footer">ECHO SCOUT v1.0 · ESP32-S3</div>
+          </div>
+        </div>
+        <ul class="echo-demo-hint">
+          <li>Boots automatically to the menu</li>
+          <li>Tap menu buttons to navigate</li>
+          <li>Tap <b>&lt; MENU</b> to go back</li>
+          <li>Tab bars switch sensor views</li>
+          <li>RESET restarts from the boot screen</li>
+        </ul>
+      </div>
+    </div>`,
+    // seven hundred lines of emulator nobody needs until this card is open
+    after(){
+      const run = () => startEchoScoutDemo('es-demo');
+      if (window.startEchoScoutDemo) return run();
+      const s = document.createElement('script');
+      s.src = STATIC_URLS.echoScout; s.onload = run;
+      document.head.appendChild(s);
+    } },
+  'song2vec': { html: () => `<div class="proj-demo">
+      <div class="ps-bar"><span class="ps-t">${icon('mark')}LIVE INTERACTIVE DEMO</span><span class="ps-r">203K SONGS · 1305 GENRES · 985 TAGS</span></div>
+      <div class="ps-body"><a class="ps-btn" href="${STATIC_URLS.song2vec}"><span class="ps-lbl">OPEN SONG2VEC</span></a></div>
+    </div>` },
+  'bird-classifier':  { html: () => `<div class="proj-demo">${psBirdPanel()}</div>` },
+  'minecraft-server': { html: () => `<div class="proj-demo">${psPortalPanel()}</div>`, after: () => psFillFaces() },
+};
 
-  function fr(x,y,w,h,c)        { ctx.fillStyle=c; ctx.fillRect(x,y,w,h); }
-  function dr(x,y,w,h,c)        { ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1); }
-  function hl(x,y,l,c)          { ctx.fillStyle=c; ctx.fillRect(x,y,l,1); }
-  function vl(x,y,l,c)          { ctx.fillStyle=c; ctx.fillRect(x,y,1,l); }
-  function fc(cx,cy,r,c)        { ctx.fillStyle=c; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); }
-  function lnC(x1,y1,x2,y2,c)  { ctx.strokeStyle=c; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
-  function txt(s,x,y,sz,c,al='left') {
-    ctx.save(); ctx.fillStyle=c;
-    ctx.font=`${sz===1?8:sz===2?13:sz===4?24:8}px "Courier New",monospace`;
-    ctx.textBaseline='top'; ctx.textAlign=al; ctx.fillText(s,x,y); ctx.restore();
-  }
-  function ctxt(s,cx,y,sz,c) { txt(s,cx,y,sz,c,'center'); }
+function projectHtml(p){
+  const i = PROJECTS.indexOf(p), n = PROJECTS.length;
+  const prev = PROJECTS[(i + n - 1) % n], next = PROJECTS[(i + 1) % n];
+  const shots = [p.img, p.img2].filter(Boolean);
+  const demo = PROJECT_DEMOS[p.id];
+  return `<article class="ps-panel proj-card">
+    <div class="ps-bar">
+      <button class="pj-back" onclick="cxBackToProjects('${p.id}')">${icon('left', 14)}RECORDS</button>
+      <span class="ps-t" data-decode>${esc(p.name)}</span>
+      <span class="ps-r">FILE ${String(i + 1).padStart(2, '0')} / ${n}</span>
+    </div>
+    <div class="proj-body">
+      ${shots.length ? `<div class="proj-media">
+        <img class="proj-main" src="${shots[0]}" alt="${esc(p.name)}" onerror="this.closest('.proj-media').remove()">
+        ${shots.length > 1 ? `<div class="proj-strip">${shots.map((s, k) =>
+          `<button class="${k ? '' : 'on'}" onclick="cxSwapShot(this)" aria-label="Image ${k + 1}"><img src="${s}" alt="" loading="lazy" onerror="this.parentElement.remove()"></button>`).join('')}</div>` : ''}
+      </div>` : ''}
+      <div class="proj-info">
+        ${p.tags.length ? `<div class="proj-tags">${tagsHtml(p.tags)}</div>` : ''}
+        ${chipsHtml(p.tech.split(' / '))}
+        <p class="proj-sum">${esc(p.sum)}</p>
+        <ul class="proj-points">${p.points.map((pt, k) => `<li style="--i:${k}">${esc(pt)}</li>`).join('')}</ul>
+        ${p.link
+          ? `<a class="ps-btn ps-sm" href="${p.link}" target="_blank" rel="noopener"><span class="ps-lbl">VIEW ON GITHUB${icon('ext', 17)}</span></a>`
+          : `<div class="proj-private">${icon('lock', 15)}IN-HOUSE BUILD · NOT PUBLIC</div>`}
+      </div>
+    </div>
+    ${demo ? demo.html() : ''}
+    <div class="pj-nav">
+      <button onclick="cxOpenProject('${prev.id}')">${icon('left', 14)}<span>${esc(prev.name)}</span></button>
+      <button onclick="cxOpenProject('${next.id}')"><span>${esc(next.name)}</span>${icon('right', 14)}</button>
+    </div>
+  </article>`;
+}
 
-  function drawArt(lines, sx, sy, cw, lh, col) {
-    ctx.save(); ctx.fillStyle=col;
-    ctx.font=`${lh}px "Courier New",monospace`;
-    ctx.textBaseline='top';
-    for (let row=0; row<lines.length; row++) {
-      const line=lines[row];
-      for (let c=0; c<line.length; c++) {
-        if (line[c]===' ') continue;
-        ctx.fillText(line[c], sx+c*cw, sy+row*lh);
-      }
+function cxSwapShot(btn){
+  btn.parentElement.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const main = btn.closest('.proj-media').querySelector('.proj-main');
+  main.classList.remove('swap'); void main.offsetWidth; main.classList.add('swap');
+  main.src = btn.firstElementChild.src;
+}
+
+// Snake asks, Otacon explains, and the card opens out of the tile that was
+// clicked.
+function cxOpenProject(id, tile){
+  const p = projectById(id);
+  if (!p) return;
+  if (tile) tile.style.viewTransitionName = 'pj-hero';
+  const demo = PROJECT_DEMOS[id];
+  cxShow(projectHtml(p), demo && demo.after, true);
+  document.getElementById('cx-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Otacon holds the left portrait even if a project was clicked before the
+  // intro handed off to him
+  cxProjectsIntroDone = true;
+  cxSetPortrait('otacon');
+  const voice = p.voice || p.id;
+  cxSay([{ text: p.ask, speaker: 'snake', key: `sk_${p.askVoice || voice}` },
+         ...p.tell.map((text, n) => ({ text, speaker: 'otacon', key: `ot_${voice}_${n}` }))]);
+}
+function cxBackToProjects(heroId){
+  cxHardStop();
+  cxShow(projectsHtml(heroId), null, true);
+}
+
+// ── the Minecraft portal and bird classifier panels ────────────────────────
+function psPortalPanel(){
+  const mc = STATIC_URLS.mc, url = STATIC_URLS.minecraft;
+  const stats = [[mc.seasons, 'SEASONS'], [mc.shots, 'SCREENSHOTS'], [mc.clips, 'CLIPS'], [mc.span, 'UPTIME']];
+  return `<section class="ps-panel ps-portal">
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}MINECRAFT PORTAL</span><span class="ps-r"><span class="ps-live"></span>SEASON ${mc.seasons} LIVE</span></div>
+    <div class="ps-body">
+      <div class="ps-stats">${stats.map(([v, k], i) => `<div style="--i:${i}"><b>${v}</b><i>${k}</i></div>`).join('')}</div>
+      <div class="ps-thumbs">${mc.thumbs.map((t, i) =>
+        `<a href="${url}" data-s="SEASON ${t.s}" style="--i:${i}"><img src="${t.url}" alt="Season ${t.s} screenshot" loading="lazy" onerror="this.parentElement.remove()"></a>`).join('')}
+        <a href="${url}" class="ps-more" style="--i:${mc.thumbs.length}"><span>+${Math.max(0, mc.shots - mc.thumbs.length)}<br>MORE</span></a>
+      </div>
+      <div class="ps-faces" id="ps-faces"><span class="ps-face-none">reading the server...</span></div>
+      <div class="ps-frame ps-map" id="ps-map" hidden></div>
+      <a class="ps-btn" href="${url}"><span class="ps-lbl">OPEN THE PORTAL</span></a>
+      <div class="ps-hint">the live map, the full roster and every boss still standing are inside</div>
+    </div>
+  </section>`;
+}
+
+// The panel is drawn the moment the channel opens; who is on the server has to
+// be asked for. Everyone tracked gets a face, the ones online lit and the rest
+// dimmed, so an empty server still shows a crew - and a failed fetch says so
+// rather than leaving "reading the server" up for good.
+//
+// The same answer says whether the live map is there to be framed. It is only
+// drawn when it is: a map that is down, or one served over plain http to an
+// https page (which the browser refuses to frame), is an empty black box.
+async function psFillFaces(){
+  const row = document.getElementById('ps-faces');
+  if (!row) return;
+  try {
+    const board = await (await fetch(STATIC_URLS.live)).json();
+    const map = document.getElementById('ps-map'), src = STATIC_URLS.mc.map;
+    if (map && src && (board.map_probe || {}).ok && !(location.protocol === 'https:' && src.startsWith('http:'))) {
+      map.innerHTML = `<iframe src="${src}" loading="lazy" title="Live world map"></iframe>`;
+      map.hidden = false;
     }
-    ctx.restore();
+    const players = (board.players || []).slice().sort((a, b) => !!b.online - !!a.online);
+    if (!players.length) throw new Error('nobody on file');
+    const on = players.filter(p => p.online).length;
+    row.innerHTML = `<span class="ps-faces-t">${on} OF ${players.length} ONLINE</span>` +
+      players.map(p => `<span class="ps-face${p.online ? ' on' : ''}" title="${esc(p.name)}">
+        <i${p.skin ? ` style="background-image:url('${esc(p.skin)}')"` : ''}></i>
+        <b>${esc(p.name)}</b>
+      </span>`).join('');
+  } catch (err) {
+    row.innerHTML = '<span class="ps-face-none">roster unavailable</span>';
   }
+}
 
-  const ECHO_ART = [
-    '___________      .__          ',
-    '\\_   _____/ ____ |  |__   ____',
-    ' |    __)__/ ___\\|  |  \\ /  _ \\',
-    ' |        \\  \\___|   Y  (  <_> )',
-    '/_______  /\\___  >___|  /\\____/',
-    '        \\/     \\/     \\/       ',
-  ];
-  const SCOUT_ART = [
-    '  _________                    __  ',
-    ' /   _____/ ____  ____  __ ___/  |_',
-    ' \\_____  \\_/ ___\\/  _ \\|  |  \\   __\\',
-    ' /        \\  \\__(  <_> )  |  /|  | ',
-    '/_______  /\\___  >____/|____/ |__| ',
-    '        \\/     \\/                  ',
-  ];
-
-  function drawHeader(title, showCal=false) {
-    fr(0,0,240,28,K.BG); hl(0,27,240,K.SEP);
-    ctx.save(); ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(3,3,64,22,[3]); ctx.stroke();
-    if (showCal) { ctx.beginPath(); ctx.roundRect(173,3,64,22,[3]); ctx.stroke(); }
-    ctx.restore();
-    ctxt('< MENU',35,7,2,K.DIM); ctxt(title,120,9,2,K.G);
-    if (showCal) ctxt('CAL',205,7,2,K.DIM);
-  }
-
-  function drawTabBar(labels, active) {
-    const tw=Math.floor(240/labels.length);
-    fr(0,280,240,40,K.BG); hl(0,280,240,K.SEP);
-    labels.forEach((lbl,i) => {
-      const x=i*tw;
-      if(i===active) { fr(x,281,tw-1,39,K.FAINT); hl(x,280,tw,K.G); ctxt(lbl,x+tw/2,293,1,K.G); }
-      else ctxt(lbl,x+tw/2,293,1,K.DIM);
-    });
-  }
-
-  function drawLoading() {
-    fr(0,0,240,320,K.BG);
-    dr(2,2,236,316,K.FAINT);
-    drawArt(ECHO_ART,  42, 16, 5, 9, K.G);
-    drawArt(SCOUT_ART, 30, 80, 5, 9, K.G);
-    ctxt('FLASHING SENSOR FIRMWARE',120,162,1,K.DIM);
-    const BX=20,BY=185,BW=200,BH=14;
-    dr(BX-1,BY-1,BW+2,BH+2,K.DIM);
-    const fill=Math.round((BW-4)*loadPct/100);
-    if(fill>0) fr(BX+2,BY+2,fill,BH-4,K.G);
-    ctxt(`${Math.round(loadPct)}%`,120,BY+BH+6,1,K.DIM);
-  }
-
-  function drawMenu() {
-    fr(0,0,240,320,K.BG);
-    dr(2,2,236,316,K.FAINT);
-    dr(8,8,224,138,K.DIM); dr(12,12,216,130,K.G);
-    hl(16,16,16,K.G); vl(16,16,16,K.G);
-    hl(207,16,16,K.G); vl(223,16,16,K.G);
-    hl(16,138,16,K.G); vl(16,123,16,K.G);
-    hl(207,138,16,K.G); vl(223,123,16,K.G);
-    fr(70,137,100,6,K.BG);
-    ctxt('VERSION: 1.0',120,137,1,K.DIM);
-    drawArt(ECHO_ART,  42, 16, 5, 9, K.G);
-    drawArt(SCOUT_ART, 30, 80, 5, 9, K.G);
-    const sy=147, sh=13;
-    fr(0,sy,240,sh,K.BG);
-    hl(8,sy,224,K.SEP); hl(8,sy+sh-1,224,K.SEP);
-    vl(88,sy+2,sh-4,K.SEP); vl(160,sy+2,sh-4,K.SEP);
-    function sUnit(cx,label) {
-      const w=label.length*6+13, sx2=cx-w/2;
-      fc(sx2+3,sy+sh/2,3,K.G);
-      ctx.save(); ctx.fillStyle=K.G; ctx.font='8px "Courier New",monospace';
-      ctx.textBaseline='middle'; ctx.textAlign='left';
-      ctx.fillText(label,sx2+10,sy+sh/2); ctx.restore();
-    }
-    sUnit(44,'RADAR'); sUnit(124,'IMU'); sUnit(200,'TOF');
-    hl(8,158,224,K.SEP);
-    const bx=12,by=160,bw=216,bh=44, arm=10;
-    dr(bx,by,bw,bh,K.DIM); dr(bx+2,by+2,bw-4,bh-4,K.G);
-    hl(bx+6,by+6,arm,K.G); vl(bx+6,by+6,arm,K.G);
-    hl(bx+bw-arm-6,by+6,arm,K.G); vl(bx+bw-7,by+6,arm,K.G);
-    hl(bx+6,by+bh-7,arm,K.G); vl(bx+6,by+bh-arm-6,arm,K.G);
-    hl(bx+bw-arm-6,by+bh-7,arm,K.G); vl(bx+bw-7,by+bh-arm-6,arm,K.G);
-    const ix=bx+22, iy=by+bh/2;
-    vl(ix,iy-7,14,K.G);
-    lnC(ix,iy,ix-5,iy-6,K.G); lnC(ix,iy,ix+5,iy-6,K.G);
-    hl(ix-6,iy,13,K.G);
-    for(let a=-50;a<=50;a+=10){
-      const r=a*Math.PI/180;
-      ctx.fillStyle=K.G;
-      ctx.fillRect(ix+Math.round(8*Math.sin(r))-0.5, iy-Math.round(8*Math.cos(r))-0.5,1,1);
-      ctx.fillRect(ix+Math.round(12*Math.sin(r))-0.5,iy-Math.round(12*Math.cos(r))-0.5,1,1);
-    }
-    ctxt('[ RADAR ]',128,by+13,4,K.G);
-    hl(8,204,224,K.SEP);
-    function mBtn(bx2,by2,bw2,bh2,label) {
-      dr(bx2,by2,bw2,bh2,K.DIM); dr(bx2+2,by2+2,bw2-4,bh2-4,K.G);
-      ctxt(label,bx2+bw2/2,by2+bh2/2-4,1,K.G);
-    }
-    mBtn(8,206,108,30,'3D MAP'); mBtn(120,206,108,30,'SURVEYOR');
-    hl(8,236,224,K.SEP);
-    mBtn(8,238,108,26,'SCANNER'); mBtn(120,238,108,26,'ATTITUDE');
-    hl(8,264,224,K.SEP);
-    mBtn(8,266,108,24,'SETTINGS'); mBtn(120,266,108,24,'BATTERY');
-    hl(8,290,224,K.SEP);
-    dr(40,294,160,16,K.RED); ctxt('[ POWER OFF ]',120,297,1,K.RED);
-  }
-
-  const _coneCanvas=document.createElement('canvas');
-  _coneCanvas.width=240; _coneCanvas.height=320;
-  (function buildCone(){
-    const gc=_coneCanvas.getContext('2d');
-    gc.fillStyle=K.BG; gc.fillRect(0,0,240,320);
-    const AX=120,AY=316,CLEN=227,HD=55,AR=4000;
-    const sd=d=>Math.pow(Math.min(d/AR,1),0.75)*0.88;
-    [-55,-27.5,0,27.5,55].forEach((a,i)=>{
-      const r=a*Math.PI/180;
-      gc.strokeStyle=(i===0||i===4)?K.DIM:K.FAINT; gc.lineWidth=1;
-      gc.beginPath(); gc.moveTo(AX,AY); gc.lineTo(AX+CLEN*Math.sin(r),AY-CLEN*Math.cos(r)); gc.stroke();
-    });
-    [1000,2000,3000,4000].forEach((rMM,ri)=>{
-      const rpx=sd(rMM)*CLEN; gc.strokeStyle=ri===3?K.DIM:K.FAINT; gc.lineWidth=1;
-      gc.beginPath(); let first=true;
-      for(let a=-HD;a<=HD;a+=1.5){
-        const r=a*Math.PI/180,gx=AX+rpx*Math.sin(r),gy=AY-rpx*Math.cos(r);
-        if(gy<28) continue;
-        first?(gc.moveTo(gx,gy),first=false):gc.lineTo(gx,gy);
-      }
-      gc.stroke();
-      const ly=Math.max(32,AY-rpx);
-      gc.fillStyle=K.DIM; gc.font='8px "Courier New",monospace';
-      gc.textBaseline='top'; gc.textAlign='left';
-      gc.fillText(rMM>=1000?`${rMM/1000}m`:`${rMM}mm`,AX+2,ly-8);
-    });
-    [-55,-27.5,0,27.5,55].forEach(a=>{
-      const r=a*Math.PI/180;
-      const lx=Math.max(8,Math.min(232,AX+CLEN*Math.sin(r)));
-      const ly=Math.max(32,Math.min(AY-10,AY-CLEN*Math.cos(r)));
-      gc.fillStyle=K.DIM; gc.font='8px "Courier New",monospace';
-      gc.textBaseline='top'; gc.textAlign='center';
-      gc.fillText(`${a>0?'+':''}${a}`,lx,ly);
-    });
-    gc.fillStyle=K.G; gc.beginPath(); gc.arc(AX,AY,4,0,Math.PI*2); gc.fill();
-  })();
-
-  const _tgts=[
-    {ph:0,   ps:0.009,db:1400,da:500,ab:12, aa:28},
-    {ph:2.1, ps:0.015,db:850, da:320,ab:-20,aa:18},
-  ];
-
-  function drawRadar(t) {
-    const AX=120,AY=316,CLEN=227,AR=4000,CTOP=28;
-    const sd=d=>Math.pow(Math.min(d/AR,1),0.75)*0.88;
-    const DY=30,DH=54,CW=76,DP=4;
-    fr(0,0,240,320,K.BG);
-    drawHeader('ECHO SCOUT');
-    hl(0,DY+DH,240,K.SEP);
-    for(let i=0;i<3;i++) dr(DP+i*(CW+DP),DY+2,CW,DH-4,K.DIM);
-    ctxt('DIST', DP+CW/2,           DY+5,1,K.DIM);
-    ctxt('ANGLE',DP+(CW+DP)+CW/2,   DY+5,1,K.DIM);
-    ctxt('SPEED',DP+2*(CW+DP)+CW/2, DY+5,1,K.DIM);
-    ctx.drawImage(_coneCanvas,0,CTOP,240,320-CTOP,0,CTOP,240,320-CTOP);
-    const blips=_tgts.map(tg=>{
-      const phase=tg.ph+t*tg.ps, dist=tg.db+tg.da*Math.sin(phase), angle=tg.ab+tg.aa*Math.sin(phase*0.7);
-      const rpx=sd(dist)*CLEN, rad=angle*Math.PI/180;
-      const sx=AX+rpx*Math.sin(rad), sy=AY-rpx*Math.cos(rad);
-      return {dist,angle,sx,sy,ok:sy>=CTOP&&sy<316};
-    });
-    blips.forEach(b=>{
-      if(!b.ok) return;
-      const g=ctx.createRadialGradient(b.sx,b.sy,0,b.sx,b.sy,9);
-      g.addColorStop(0,'rgba(255,0,0,0.55)'); g.addColorStop(1,'rgba(255,0,0,0)');
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(b.sx,b.sy,9,0,Math.PI*2); ctx.fill();
-      fc(b.sx,b.sy,5,K.RED);
-    });
-    const vis=blips.filter(b=>b.ok);
-    if(vis.length){
-      const cl=vis.reduce((a,b)=>a.dist<b.dist?a:b);
-      const dStr=cl.dist<1000?`${Math.round(cl.dist)}mm`:`${(cl.dist/1000).toFixed(2)}m`;
-      const spd=(0.25+0.15*Math.sin(t*0.025)).toFixed(2);
-      ctxt(dStr,                        DP+CW/2,           DY+18,2,K.G);
-      ctxt(`${cl.angle>=0?'+':''}${cl.angle.toFixed(0)}°`,DP+(CW+DP)+CW/2,DY+18,2,K.AMB);
-      ctxt(`${spd}m/s`,                 DP+2*(CW+DP)+CW/2,DY+18,2,K.RED);
-    } else {
-      [DP+CW/2,DP+(CW+DP)+CW/2,DP+2*(CW+DP)+CW/2].forEach(x=>ctxt('--',x,DY+20,2,K.DIM));
-    }
-  }
-
-  function tofCol(d) {
-    if(d<=0)   return '#202020';
-    if(d<300)  return '#FF0000';
-    if(d<600)  {const f=(d-300)/300; return `rgb(248,${Math.round(f*80)},0)`;}
-    if(d<1200) {const f=(d-600)/600; return `rgb(${Math.round(248*(1-f))},${Math.round(80+f*172)},0)`;}
-    if(d<2500) return K.G;
-    return K.DIM;
-  }
-
-  function drawTofGrid(t) {
-    const CELL=30, GY=28;
-    const cd=280+700*(0.5+0.5*Math.sin(t/110));
-    for(let i=0;i<64;i++){
-      const row=Math.floor(i/8),col=i%8;
-      const dr_=row-3.5,dc_=col-3.5;
-      const d=Math.max(50,Math.min(3000,cd+Math.sqrt(dr_*dr_+dc_*dc_)*230+Math.sin(i*17+t*0.08)*25));
-      ctx.fillStyle=tofCol(d); ctx.fillRect(col*CELL+1,GY+row*CELL+1,CELL-2,CELL-2);
-    }
-  }
-
-  function drawTofAngl(t) {
-    const VIZ_CX=120, VIZ_CY=189;
-    const ANGL_NUM_H=76, BTN_Y=236, BTN_H=44;
-    const angleVal=(45+40*Math.sin(t*0.008)).toFixed(1);
-    if(anglState===0){
-      ctxt('POINT AT TARGET A',120,30,1,K.DIM);
-      ctxt('--',120,44,4,K.DIM);
-    } else if(anglState===1){
-      ctxt('POINT AT TARGET B',120,30,1,K.AMB);
-      ctxt(`${angleVal}`,120,44,4,K.AMB);
-    } else {
-      ctxt('ANGLE LOCKED',120,30,1,K.G);
-      ctxt(`${angleVal}`,120,44,4,K.G);
-    }
-    function proj3(x,y,z){
-      const rx=0.3,ry=t*0.01;
-      const cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy2=Math.sin(ry);
-      const x2=x*cy+z*sy2, z2=-x*sy2+z*cy;
-      const y2=y*cx-z2*sx, z3=y*sx+z2*cx;
-      const sc=180/(z3+5);
-      return [VIZ_CX+x2*sc, VIZ_CY+y2*sc];
-    }
-    const axLen=55;
-    [[axLen,0,0,K.RED],[0,axLen,0,K.G],[0,0,axLen,K.DIM]].forEach(([x,y,z,c])=>{
-      const p0=proj3(0,0,0), p1=proj3(x,y,z);
-      lnC(p0[0],p0[1],p1[0],p1[1],c);
-    });
-    ctx.save(); ctx.font='8px "Courier New",monospace'; ctx.textBaseline='top'; ctx.fillStyle=K.RED; ctx.fillText('X',...proj3(axLen+4,0,0));
-    ctx.fillStyle=K.G; ctx.fillText('Y',...proj3(0,axLen+4,0));
-    ctx.fillStyle=K.DIM; ctx.fillText('Z',...proj3(0,0,axLen+4)); ctx.restore();
-    const aAngle=0.8, p0=proj3(0,0,0), pA=proj3(Math.cos(aAngle)*50,Math.sin(aAngle)*50,0);
-    lnC(p0[0],p0[1],pA[0],pA[1],K.G);
-    fc(pA[0],pA[1],4,K.G);
-    if(anglState>0){
-      const bAngle=aAngle+parseFloat(angleVal)*Math.PI/180;
-      const pB=proj3(Math.cos(bAngle)*50,Math.sin(bAngle)*50,0);
-      lnC(p0[0],p0[1],pB[0],pB[1],K.AMB);
-      fc(pB[0],pB[1],4,K.AMB);
-      ctx.strokeStyle=anglState===2?K.G:K.AMB; ctx.lineWidth=1;
-      ctx.beginPath();
-      for(let s=0;s<=20;s++){
-        const f=s/20, ang=aAngle+parseFloat(angleVal)*f*Math.PI/180;
-        const pa=proj3(Math.cos(ang)*28,Math.sin(ang)*28,0);
-        s===0?ctx.moveTo(pa[0],pa[1]):ctx.lineTo(pa[0],pa[1]);
-      }
-      ctx.stroke();
-    }
-    const bLabel=anglState===0?'LOCK A':anglState===1?'LOCK B':'RESET';
-    const bCol=anglState===0?K.G:anglState===1?K.AMB:K.DIM;
-    dr(20,BTN_Y,200,BTN_H,bCol); dr(22,BTN_Y+2,196,BTN_H-4,bCol);
-    ctxt(`[ ${bLabel} ]`,120,BTN_Y+16,2,bCol);
-  }
-
-  function drawTofDist(t) {
-    const DIST_VIZ_CX=120, DIST_VIZ_Y=64, DIST_VIZ_BOT=232;
-    const DIST_BTN_Y=236, DIST_BTN_H=44, DIST_BTN_W=200, DIST_BTN_X=20;
-    const dist=Math.round(500+1500*(0.5+0.5*Math.sin(t*0.008)));
-    const distStr=dist<1000?`${dist}mm`:`${(dist/1000).toFixed(2)}m`;
-    ctxt(distStr,120,4,4,K.G);
-    const VH=DIST_VIZ_BOT-DIST_VIZ_Y, AX=DIST_VIZ_CX, AY=DIST_VIZ_BOT;
-    const CLEN=VH;
-    vl(AX,DIST_VIZ_Y,VH,K.DIM);
-    const spread=52;
-    lnC(AX,AY, AX+CLEN*Math.sin(spread*Math.PI/180), DIST_VIZ_Y, K.DIM);
-    lnC(AX,AY, AX-CLEN*Math.sin(spread*Math.PI/180), DIST_VIZ_Y, K.DIM);
-    const MAX_D=4000;
-    [500,1000,1500,2000,3000,4000].forEach(ring=>{
-      const yp=Math.round(AY-CLEN*ring/MAX_D);
-      if(yp<DIST_VIZ_Y) return;
-      const hw=Math.round(CLEN*Math.sin(spread*Math.PI/180)*ring/MAX_D);
-      hl(AX-hw,yp,hw*2,K.FAINT);
-      ctx.save(); ctx.fillStyle=K.DIM; ctx.font='7px "Courier New",monospace'; ctx.textBaseline='middle';
-      ctx.fillText(ring>=1000?`${ring/1000}m`:`${ring}`,AX+hw+2,yp); ctx.restore();
-    });
-    const markerY=Math.round(AY-CLEN*Math.min(dist,MAX_D)/MAX_D);
-    if(markerY>=DIST_VIZ_Y){
-      const hw2=Math.round(CLEN*Math.sin(spread*Math.PI/180)*Math.min(dist,MAX_D)/MAX_D);
-      ctx.strokeStyle=K.G; ctx.lineWidth=1; ctx.setLineDash([3,3]);
-      ctx.beginPath(); ctx.moveTo(AX-hw2,markerY); ctx.lineTo(AX+hw2,markerY); ctx.stroke();
-      ctx.setLineDash([]);
-      fc(AX,markerY,4,K.G);
-    }
-    fr(AX-8,AY-6,16,6,K.DIM);
-    dr(DIST_BTN_X,DIST_BTN_Y,DIST_BTN_W,DIST_BTN_H,K.G);
-    dr(DIST_BTN_X+2,DIST_BTN_Y+2,DIST_BTN_W-4,DIST_BTN_H-4,K.G);
-    ctxt('[ MEASURE ]',120,DIST_BTN_Y+16,2,K.G);
-  }
-
-  function drawTofNrml(t) {
-    const NUM_H=52, VIZ_Y=80, VIZ_CX=120, VIZ_CY=180, SCALE=55;
-    const tiltX=(12*Math.sin(t*0.007)).toFixed(1);
-    const azimuth=(30+25*Math.sin(t*0.005)).toFixed(1);
-    txt(`TILT ${tiltX} deg`,10,28,2,K.G);
-    txt(`AZ ${azimuth} deg`,10,46,2,K.AMB);
-    function proj(x,y,z){ return [VIZ_CX+(x+z*0.35)*SCALE/500, VIZ_CY+(y-z*0.18)*SCALE/500]; }
-    [[500,0,0,K.RED],[0,500,0,K.G],[0,0,500,K.DIM]].forEach(([x,y,z,c])=>{
-      const p0=proj(0,0,0), p1=proj(x,y,z);
-      lnC(p0[0],p0[1],p1[0],p1[1],c);
-    });
-    for(let ri=0;ri<8;ri++) for(let ci=0;ci<8;ci++){
-      const px_=(ci-3.5)*80, pz=(ri-3.5)*80;
-      const py_=-px_*Math.sin(parseFloat(tiltX)*Math.PI/180)*0.3+Math.sin(t*0.05+ri*ci)*8;
-      const [sx,sy]=proj(px_,py_,pz);
-      ctx.fillStyle=K.DIM; ctx.fillRect(sx-1,sy-1,2,2);
-    }
-    const plCorners=[[-400,-20,-400],[-400,-20,400],[400,-20,400],[400,-20,-400]].map(([x,y,z])=>proj(x,y,z));
-    ctx.strokeStyle=K.AMB; ctx.lineWidth=1; ctx.beginPath();
-    ctx.moveTo(plCorners[0][0],plCorners[0][1]);
-    plCorners.forEach(p=>ctx.lineTo(p[0],p[1]));
-    ctx.closePath(); ctx.stroke();
-    const tipP=proj(0,-350,0);
-    lnC(VIZ_CX,VIZ_CY,tipP[0],tipP[1],K.G);
-    fc(tipP[0],tipP[1],5,K.G);
-  }
-
-  function drawTof(t, tab) {
-    fr(0,0,240,320,K.BG);
-    drawHeader('TOF IMAGER');
-    if(tab===0) drawTofGrid(t);
-    else if(tab===1) drawTofAngl(t);
-    else if(tab===2) drawTofDist(t);
-    else drawTofNrml(t);
-    drawTabBar(['GRID','ANGL','DIST','NRML'],tab);
-  }
-
-  function drawImuCube(t) {
-    const CX=120,CY=154,SZ=62;
-    const rx=t*0.012, ry=t*0.018, rz=t*0.007;
-    const cos=Math.cos,sin=Math.sin;
-    function rot([x,y,z]) {
-      let nx=x,ny=y*cos(rx)-z*sin(rx),nz=y*sin(rx)+z*cos(rx);
-      [nx,nz]=[nx*cos(ry)+nz*sin(ry),-nx*sin(ry)+nz*cos(ry)];
-      [nx,ny]=[nx*cos(rz)-ny*sin(rz),nx*sin(rz)+ny*cos(rz)];
-      return [nx,ny,nz];
-    }
-    const verts=[[-1,-1,-1],[-1,-1,1],[-1,1,-1],[-1,1,1],[1,-1,-1],[1,-1,1],[1,1,-1],[1,1,1]].map(v=>rot(v));
-    const prj=v=>[CX+v[0]*SZ/(v[2]+4),CY+v[1]*SZ/(v[2]+4)];
-    const edges=[[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
-    ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
-    edges.forEach(([a,b])=>{const pa=prj(verts[a]),pb=prj(verts[b]);ctx.beginPath();ctx.moveTo(pa[0],pa[1]);ctx.lineTo(pb[0],pb[1]);ctx.stroke();});
-    ctx.strokeStyle=K.G;
-    edges.slice(9).forEach(([a,b])=>{const pa=prj(verts[a]),pb=prj(verts[b]);ctx.beginPath();ctx.moveTo(pa[0],pa[1]);ctx.lineTo(pb[0],pb[1]);ctx.stroke();});
-    hl(0,248,240,K.SEP);
-    const roll=(Math.sin(t*0.012)*45).toFixed(1),pitch=(Math.sin(t*0.018)*30).toFixed(1),yaw=((t*0.007*180/Math.PI)%360).toFixed(1);
-    ctxt(`R:${roll>=0?'+':''}${roll}`,60,253,1,K.G);
-    ctxt(`P:${pitch>=0?'+':''}${pitch}`,120,253,1,K.AMB);
-    ctxt(`Y:${parseFloat(yaw).toFixed(1)}`,180,253,1,K.DIM);
-    ctxt('ROLL / PITCH / YAW',120,265,1,K.FAINT);
-  }
-
-  function drawImuPlmb(t) {
-    const CX=120,CY=154,R=80,MD=66,BR=9;
-    ctx.save(); ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(CX,CY,R-8,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-    for(let a=0;a<360;a+=30){
-      const r=a*Math.PI/180;
-      const ox=Math.cos(r),oy=Math.sin(r);
-      lnC(CX+ox*(R-8),CY+oy*(R-8),CX+ox*R,CY+oy*R,K.DIM);
-    }
-    hl(CX-R+6,CY,2*(R-6)+1,K.DIM); vl(CX,CY-R+6,2*(R-6)+1,K.DIM);
-    const bx=MD*0.35*Math.sin(t/95),by=MD*0.35*Math.cos(t/75);
-    const level=Math.sqrt(bx*bx+by*by)<10;
-    fc(Math.round(CX+bx),Math.round(CY+by),BR,level?K.G:K.RED);
-    fc(Math.round(CX+bx)-3,Math.round(CY+by)-3,3,K.WHT);
-    hl(0,248,240,K.SEP);
-    const rollV=(bx/MD*40).toFixed(1),pitchV=(by/MD*40).toFixed(1);
-    ctxt(`X: ${rollV>=0?'+':''}${rollV}°   Y: ${pitchV>=0?'+':''}${pitchV}°`,120,255,1,K.G);
-    ctxt(level?'LEVEL':'TILTED',120,268,1,level?K.G:K.RED);
-  }
-
-  function tickScope(t) {
-    _scopeBuf[0][_scopeHead]=Math.sin(t*0.012)*45;
-    _scopeBuf[1][_scopeHead]=Math.sin(t*0.018+1.0)*30;
-    _scopeBuf[2][_scopeHead]=(t*0.007*180/Math.PI)%360-180;
-    _scopeHead=(_scopeHead+1)%SCOPE_SAMPLES;
-  }
-
-  function drawScopeFrame() {
-    const SCOPE_Y0=46, LH=78;
-    const LANES=[{lbl:'R',col:K.G},{lbl:'P',col:K.AMB},{lbl:'Y',col:K.DIM}];
-    const RANGES=[90,60,180];
-    hl(0,SCOPE_Y0+LH,240,K.FAINT);
-    hl(0,SCOPE_Y0+LH*2,240,K.FAINT);
-    [SCOPE_Y0+LH/2, SCOPE_Y0+LH+LH/2, SCOPE_Y0+LH*2+LH/2].forEach(my=>{
-      hl(0,Math.round(my),240,K.FAINT);
-    });
-    LANES.forEach(({lbl,col},i)=>{
-      fr(178,32+i*10,6,6,col);
-      ctx.save(); ctx.fillStyle=col; ctx.font='8px "Courier New",monospace';
-      ctx.textBaseline='top'; ctx.fillText(lbl,186,32+i*10-1); ctx.restore();
-    });
-    LANES.forEach(({col},li)=>{
-      const RANGE=RANGES[li];
-      const midY=SCOPE_Y0+li*LH+LH/2;
-      ctx.strokeStyle=col; ctx.lineWidth=1; ctx.beginPath();
-      for(let x=0;x<240;x++){
-        const idx=(_scopeHead-240+x+SCOPE_SAMPLES)%SCOPE_SAMPLES;
-        const v=_scopeBuf[li][idx];
-        const y=midY - (v/RANGE)*(LH/2-3);
-        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-      }
-      ctx.stroke();
-    });
-  }
-
-  function drawIMU(t, tab) {
-    fr(0,0,240,320,K.BG);
-    drawHeader('ATTITUDE',true);
-    if(tab===0) drawImuCube(t);
-    else if(tab===1) drawImuPlmb(t);
-    else drawScopeFrame();
-    drawTabBar(['CUBE','PLMB','SCPE'],tab);
-  }
-
-  function drawBattery(t) {
-    fr(0,0,240,320,K.BG);
-    drawHeader('BATTERY');
-    const pct=Math.round(72+8*Math.sin(t/200));
-    const col=pct>30?K.G:K.RED;
-    ctxt('CHARGE LEVEL',120,58,1,K.DIM);
-    const BX=10,BY=72,BW=196,BH=46,BR=5;
-    ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(BX,BY,BW,BH,BR); ctx.stroke();
-    fr(206,86,8,18,K.DIM);
-    const fillW=Math.round((BW-8)*pct/100);
-    if(fillW>0){ ctx.save(); ctx.beginPath(); ctx.roundRect(BX+4,BY+4,BW-8,BH-8,BR-2); ctx.clip(); fr(BX+4,BY+4,fillW,BH-8,col); ctx.restore(); }
-    ctxt('VOLTAGE',120,128,2,K.DIM);
-    ctxt('3.84 V',120,146,4,K.G);
-    ctxt('REMAINING',120,180,2,K.DIM);
-    ctxt(`${Math.round(pct*18)}/1800 mAh`,120,198,2,K.G);
-    hl(8,220,224,K.SEP);
-    ctxt('CHARGE',120,228,2,K.DIM);
-    ctxt(`${pct}%`,120,246,4,col);
-  }
-
-  function drawSettings() {
-    fr(0,0,240,320,K.BG);
-    drawHeader('SETTINGS');
-    const ARROW_W=52, ROW_H=46, HDR_H=22;
-    const sections=[
-      {hdr:'DETECTION',  items:[['MAX RANGE','4000 MM','max detect dist'],['SENSITIVITY','MED','target filter level']]},
-      {hdr:'GEOMETRY',   items:[['FOV ANGLE','55 DEG','radar sweep angle']]},
-      {hdr:'DISPLAY',    items:[['BRIGHTNESS','100%','screen brightness'],['THEME','GREEN','color theme']]},
-      {hdr:'POWER',      items:[['SLEEP TIME','60 SEC','idle sleep delay']]},
-    ];
-    let y=28;
-    sections.forEach(sec=>{
-      if(y+HDR_H>270) return;
-      fr(0,y,240,HDR_H,K.BG);
-      hl(0,y+HDR_H-1,240,K.AMB);
-      ctxt(sec.hdr,120,y+6,1,K.AMB);
-      y+=HDR_H;
-      sec.items.forEach(([lbl,val,desc])=>{
-        if(y+ROW_H>270) return;
-        fr(0,y,240,ROW_H,K.BG);
-        hl(0,y+ROW_H-1,240,K.SEP);
-        vl(ARROW_W,y+2,ROW_H-4,K.SEP);
-        vl(240-ARROW_W,y+2,ROW_H-4,K.SEP);
-        ctxt('<',26,y+ROW_H/2-6,2,K.DIM);
-        ctxt('>',240-26,y+ROW_H/2-6,2,K.DIM);
-        txt(lbl,ARROW_W+8,y+6,1,K.DIM);
-        txt(desc,ARROW_W+8,y+18,1,K.FAINT);
-        ctxt(val,120,y+ROW_H/2-6,2,K.G);
-        y+=ROW_H;
-      });
-    });
-    const ry=270;
-    dr(16,ry+7,208,26,K.RED);
-    ctxt('RESET DEFAULTS',120,ry+14,2,K.RED);
-  }
-
-  const _mapPts=(function(){
-    const pts=[]; const N=400; const ROOM=300;
-    for(let i=0;i<N;i++){
-      const u=(Math.random()-0.5)*2*ROOM, v=(Math.random()-0.5)*2*ROOM;
-      const face=Math.floor(Math.random()*6);
-      let p;
-      if(face===0) p=[u,  ROOM,v];
-      else if(face===1) p=[u,-ROOM,v];
-      else if(face===2) p=[-ROOM,u,v];
-      else if(face===3) p=[ ROOM,u,v];
-      else if(face===4) p=[u,v,  ROOM];
-      else              p=[u,v,-ROOM];
-      pts.push(p);
-    }
-    return pts;
-  })();
-
-  function ironColor(v) {
-    v=Math.max(0,Math.min(1,v));
-    if(v<0.33)  { const f=v/0.33; return `rgb(${Math.round(f*200)},0,${Math.round(f*80)})`; }
-    if(v<0.66)  { const f=(v-0.33)/0.33; return `rgb(${Math.round(200+f*55)},${Math.round(f*160)},${Math.round(80*(1-f))})`; }
-    const f=(v-0.66)/0.34; return `rgb(255,${Math.round(160+f*95)},${Math.round(f*255)})`;
-  }
-
-  function drawMap3d(t) {
-    fr(0,0,240,320,K.BG);
-    drawHeader('3D MAP');
-    const VIEW_Y=28, VIEW_H=244, VIEW_CX=120, VIEW_CY=150, FOCAL=200;
-    const ry=t*0.006;
-    const cosY=Math.cos(ry), sinY=Math.sin(ry);
-    const projected=[];
-    _mapPts.forEach(([px,py,pz])=>{
-      const rx=px*cosY+pz*sinY, rz=-px*sinY+pz*cosY;
-      const depth=rz+600;
-      if(depth<10) return;
-      const sx=VIEW_CX+rx*FOCAL/depth;
-      const sy=VIEW_CY+py*FOCAL/depth;
-      if(sy<VIEW_Y||sy>VIEW_Y+VIEW_H||sx<0||sx>240) return;
-      projected.push({sx,sy,depth});
-    });
-    projected.sort((a,b)=>b.depth-a.depth);
-    projected.forEach(({sx,sy,depth})=>{
-      const v=1-Math.min(1,(depth-10)/900);
-      ctx.fillStyle=ironColor(v);
-      ctx.fillRect(Math.round(sx)-1,Math.round(sy)-1,2,2);
-    });
-    hl(8,272,224,K.SEP);
-    fr(8,279,224,32,K.BG);
-    dr(8,279,224,32,K.DIM);
-    ctxt('CLEAR',120,289,2,K.DIM);
-  }
-
-  const SURF_COLS=['#00FFFF','#848484','#FF8000','#0000FF','#00FF00','#FF0000'];
-  const SURF_NAMES=['CEILING','FLOOR','LEFT','RIGHT','FRONT','BACK'];
-  const _survCap=[true,true,false,false,false,false];
-
-  function drawSurveyor(t) {
-    fr(0,0,240,320,K.BG);
-    drawHeader('SURVEYOR');
-    const INFO_Y=28, INFO_H=16;
-    fr(0,INFO_Y,240,INFO_H,K.BG);
-    ctxt('ROOM DIMENSIONS',120,INFO_Y+3,1,K.DIM);
-    hl(0,INFO_Y+INFO_H-1,240,K.SEP);
-    const BTN_Y=44, BTN_ROW_H=36;
-    for(let i=0;i<6;i++){
-      const col=i%2, row=Math.floor(i/2);
-      const bx=col===0?0:120, bw=120, by=BTN_Y+row*BTN_ROW_H, bh=BTN_ROW_H;
-      const sc=SURF_COLS[i], cap=_survCap[i];
-      fr(bx,by,bw,bh,cap?'#0a0a0a':K.BG);
-      dr(bx,by,bw,bh,cap?sc:K.DIM);
-      ctx.save(); ctx.fillStyle=cap?sc:K.DIM; ctx.font='8px "Courier New",monospace';
-      ctx.textBaseline='middle'; ctx.textAlign='center';
-      ctx.fillText(SURF_NAMES[i],bx+bw/2,by+bh/2); ctx.restore();
-    }
-    const CLR_Y=152, CLR_H=24;
-    dr(4,CLR_Y,140,CLR_H,K.G); ctxt('CAPTURE',74,CLR_Y+7,1,K.G);
-    dr(152,CLR_Y,84,CLR_H,K.DIM); ctxt('CLEAR ALL',194,CLR_Y+7,1,K.DIM);
-    hl(0,CLR_Y+CLR_H,240,K.SEP);
-    const VIZ_Y=177, VIZ_CX=120, VIZ_CY=248, VIZ_H=143;
-    fr(0,VIZ_Y,240,VIZ_H,K.BG);
-    const W2=80,H2=50,D2=60;
-    const corners=[
-      [-W2,-H2,-D2],[ W2,-H2,-D2],[ W2, H2,-D2],[-W2, H2,-D2],
-      [-W2,-H2, D2],[ W2,-H2, D2],[ W2, H2, D2],[-W2, H2, D2],
-    ];
-    const yaw=0.55+t*0.004, pitch=-0.4;
-    const cy=Math.cos(yaw),sy2=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
-    function projRoom(x,y,z){
-      const x2=x*cy-z*sy2, z2=x*sy2+z*cy;
-      const y2=y*cp-z2*sp, z3=y*sp+z2*cp;
-      const FOCAL=220;
-      return [VIZ_CX+x2*FOCAL/(z3+300), VIZ_CY+y2*FOCAL/(z3+300)];
-    }
-    const pts2d=corners.map(([x,y,z])=>projRoom(x,y,z));
-    const wireEdges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
-    ctx.strokeStyle=K.DIM; ctx.lineWidth=1;
-    wireEdges.forEach(([a,b])=>{
-      if(pts2d[a][1]>VIZ_Y&&pts2d[b][1]>VIZ_Y){
-        ctx.beginPath(); ctx.moveTo(pts2d[a][0],pts2d[a][1]); ctx.lineTo(pts2d[b][0],pts2d[b][1]); ctx.stroke();
-      }
-    });
-    const userP=projRoom(0,0,0);
-    fc(userP[0],userP[1],4,K.G);
-  }
-
-  function drawPower() {
-    fr(0,0,240,320,K.BG);
-    dr(2,2,236,316,K.RED); dr(4,4,232,312,K.RED);
-    ctxt('POWER',120,55,4,K.RED);
-    ctxt('OPTIONS',120,90,4,K.RED);
-    dr(20,148,200,44,K.AMB); dr(22,150,196,40,K.AMB);
-    ctxt('[ RESTART ]',120,162,2,K.AMB);
-    ctxt('rescans all devices',120,185,1,K.FAINT);
-    dr(20,204,200,44,K.RED); dr(22,206,196,40,K.RED);
-    ctxt('[ POWER OFF ]',120,218,2,K.RED);
-    ctxt('tap screen to wake',120,241,1,K.FAINT);
-    dr(20,260,200,44,K.DIM); dr(22,262,196,40,K.DIM);
-    ctxt('[ CANCEL ]',120,274,2,K.DIM);
-  }
-
-  function handleClick(x,y) {
-    if(screen==='loading') return;
-    if(screen==='menu'){
-      if(x>=12&&x<=228&&y>=160&&y<=204)  { screen='radar';    t=0; lastScreen=''; return; }
-      if(x>=8 &&x<=116&&y>=206&&y<=236)  { screen='map3d';    t=0; lastScreen=''; return; }
-      if(x>=120&&x<=228&&y>=206&&y<=236) { screen='surveyor'; t=0; lastScreen=''; return; }
-      if(x>=8 &&x<=116&&y>=238&&y<=264)  { screen='tof'; subTab=0; t=0; lastScreen=''; return; }
-      if(x>=120&&x<=228&&y>=238&&y<=264) { screen='imu'; subTab=0; t=0; lastScreen=''; return; }
-      if(x>=8 &&x<=116&&y>=266&&y<=290)  { screen='settings'; t=0; lastScreen=''; return; }
-      if(x>=120&&x<=228&&y>=266&&y<=290) { screen='battery';  t=0; lastScreen=''; return; }
-      if(x>=40&&x<=200&&y>=294&&y<=310)  { screen='power';    t=0; lastScreen=''; return; }
-      return;
-    }
-    if(x>=3&&x<=67&&y>=3&&y<=25) { screen='menu'; t=0; lastScreen=''; return; }
-    if(screen==='power'){
-      if(x>=20&&x<=220&&y>=148&&y<=192) { screen='loading'; loadPct=0; t=0; lastScreen=''; return; } // RESTART
-      if(x>=20&&x<=220&&y>=204&&y<=248) { screen='loading'; loadPct=0; t=0; lastScreen=''; return; } // POWER OFF
-      if(x>=20&&x<=220&&y>=260&&y<=304) { screen='menu';    t=0; lastScreen=''; return; }            // CANCEL
-      return;
-    }
-    if(screen==='tof'&&subTab===1&&y>=236&&y<=280){
-      anglState=(anglState+1)%3; return;
-    }
-    if(screen==='tof'&&y>=280) { subTab=Math.min(3,Math.floor(x/60)); lastSubTab=-1; return; }
-    if(screen==='imu'&&y>=280) { subTab=Math.min(2,Math.floor(x/80)); lastSubTab=-1; return; }
-    if(screen==='map3d'&&x>=8&&x<=232&&y>=279&&y<=311) { t=0; return; }
-  }
-
-  canvas.addEventListener('click', e=>{
-    const rect=canvas.getBoundingClientRect();
-    handleClick((e.clientX-rect.left)*(240/rect.width),(e.clientY-rect.top)*(320/rect.height));
-  });
-  canvas.style.cursor='pointer';
-
-  function loop() {
-    t++;
-    if(screen==='loading'){
-      loadPct=Math.min(100,loadPct+1.2);
-      drawLoading();
-      if(loadPct>=100) setTimeout(()=>{if(screen==='loading'){screen='menu';lastScreen='';}},300);
-    } else if(screen==='menu'){
-      if(lastScreen!=='menu'){ drawMenu(); lastScreen='menu'; }
-    } else if(screen==='radar') {
-      drawRadar(t);
-    } else if(screen==='tof') {
-      if(subTab===1) tickScope(t); // reuse scope buffer for ANGL animation
-      drawTof(t,subTab);
-      lastScreen='tof'; lastSubTab=subTab;
-    } else if(screen==='imu') {
-      if(subTab===2) tickScope(t);
-      drawIMU(t,subTab);
-      lastScreen='imu'; lastSubTab=subTab;
-    } else if(screen==='battery') {
-      drawBattery(t);
-    } else if(screen==='settings') {
-      if(lastScreen!=='settings'){ drawSettings(); lastScreen='settings'; }
-    } else if(screen==='map3d') {
-      drawMap3d(t);
-    } else if(screen==='surveyor') {
-      drawSurveyor(t);
-    } else if(screen==='power') {
-      if(lastScreen!=='power'){ drawPower(); lastScreen='power'; }
-    }
-    _esDemoRAF=requestAnimationFrame(loop);
-  }
-  loop();
+function psBirdPanel(){
+  const u = STATIC_URLS.uploadFile;
+  const rows = [['NORTHERN FLICKER', 94], ['RED-BELLIED WOODPKR', 31], ['PILEATED WOODPECKER', 18],
+                ['BLUE JAY', 9], ['CAROLINA WREN', 4]]
+    .map(([name, pc], i) => `<div class="ps-row${i ? ' ps-dim' : ''}">
+        <span class="ps-nm">${name}</span>
+        <div class="ps-prog"><div class="ps-fill" style="width:${pc}%;--i:${i}"></div></div>
+        <span class="ps-pc">${pc}%</span>
+      </div>`).join('');
+  return `<section class="ps-panel">
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}BIRD CLASSIFIER</span><span class="ps-r"><span class="ps-live"></span>MODEL ONLINE</span></div>
+    <div class="ps-body">
+      ${chipsHtml(['CNN', 'MEL-SPECTROGRAM', '30 SPECIES', 'PYTORCH', 'DJANGO'])}
+      <p class="ps-p">Feed it a bird call and it returns a species, the top five candidates with confidence, and the spectrogram it actually classified.</p>
+      <div class="ps-sub"><span>SAMPLE OUTPUT</span><span>northern_flicker.wav</span></div>
+      ${rows}
+      <a class="ps-btn" href="${u}#drop-zone"><span class="ps-lbl">UPLOAD A RECORDING</span></a>
+      <div class="ps-btnrow">
+        <a class="ps-btn ps-sm ps-alt" href="${u}#start-recording"><span class="ps-lbl">RECORD FROM MIC</span></a>
+        <a class="ps-btn ps-sm ps-alt" href="${u}#bird-search"><span class="ps-lbl">TRY A SAMPLE CALL</span></a>
+      </div>
+      <div class="ps-hint">wav / mp3 / ogg / m4a · or pull one by Macaulay ML number</div>
+    </div>
+  </section>`;
 }
 
 // Sprites and voice load without Django's ?t= cache-buster, so the browser
@@ -1182,52 +696,56 @@ function cxSetPortrait(speakerKey){
   if (img) img.src = sp.neutral;
 }
 
+
+// One channel per frequency. `view` is what the panel shows and `script` what
+// gets said on arrival, or nothing when the line has already been delivered.
+// Lines carry their own voice key (static/audio/codec/<key>.m4a); a key with no
+// file plays as text, which is the right failure for a line not yet recorded.
+let cxProjectsIntroDone = false;
 const CX_CONTACTS = [
-  { freq:'140.85', name:'COLONEL',
-    lines:["Snake, this is Nick Burczyk. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a TITANS software R&D intern.",
-           "Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list."],
-    render(){ CMDS.about(); } },
-  { freq:'141.12', name:'PROJECTS',
-    lines:["His operation records. Twelve declassified projects on file.",
-           "Select a target below for the full briefing."],
-    render(){ cxRenderProjectIndex(); } },
-  { freq:'141.52', name:'MUSIC',
-    lines:["He also records as Zero Barbecue. A one-man operation.",
-           "First single's out now. Listen below."],
-    render(){ CMDS.music(); } },
-  // These carry their own voice keys because the lines were rewritten when the
-  // map moved into the portal: the old c3_l0/c3_l1 recordings say the old
-  // words, and a key that has no file plays as text, which is the right
-  // failure. Record c3_p0/c3_p1 to give the Colonel his voice back.
-  { freq:'140.07', name:'MC PORTAL',
-    lines:[{ text:"A private Minecraft world: custom modpack, custom server. Five seasons on record.", key:'c3_p0' },
-           { text:"We've opened a portal into it. The live map, who's online, and every boss still standing. Go through it, Snake.", key:'c3_p1' }],
-    render(){ cxRenderMinecraft(); } },
+  { freq:'140.85', name:'COLONEL', view: () => [aboutHtml()],
+    // the Colonel briefs once; after that the channel idles on "..."
+    script(){
+      if (this.done) return null;
+      this.done = true;
+      return [
+        { key:'c0_l0', text:"Snake, this is Nick Burczyk. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a TITANS software R&D intern." },
+        { key:'c0_l1', text:"Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list." },
+      ];
+    } },
+  { freq:'141.12', name:'PROJECTS', view: () => [projectsHtml()],
+    // a one-time three-way handoff, then only Otacon greets you
+    script(){
+      if (cxProjectsIntroDone) return [{ text:"Want to learn more about any projects?", speaker:'otacon', key:'ot_repeat' }];
+      cxProjectsIntroDone = true;
+      const n = PROJECTS.length;
+      return [
+        // the recorded take says "twelve"; any other count is text until re-recorded
+        { text:`His operation records. ${NUM_WORDS[n] || n} declassified projects on file.`, key: n === 12 ? 'c1_l0' : `c1_l0_${n}` },
+        { text:"For the details, get Otacon on the line. Hal's been cataloguing all of it.", key:'c1_l1' },
+        { text:"Hal Emmerich. Been a while since Shadow Moses. Patch him in.", speaker:'snake', key:'snake_hal' },
+        { text:"He's already listening.", key:'c1_l2' },
+        { text:"Hey, Snake. It's been a while.", speaker:'otacon', key:'ot_hello' },
+        { text:"Click on any project to see the full briefing. I can fill you in on the details, too.", speaker:'otacon', key:'ot_brief' },
+        { text:"Alright. Let's take a look, then.", speaker:'snake', key:'snake_look' },
+      ];
+    } },
+  { freq:'141.52', name:'MUSIC', view: () => [musicHtml()],
+    script: () => [
+      { key:'c2_l0', text:"He also records as Zero Barbecue. A one-man operation." },
+      { key:'c2_l1', text:"First single's out now. Listen below." },
+    ] },
+  { freq:'140.07', name:'MC PORTAL', view: () => [psPortalPanel(), psFillFaces],
+    script: () => [
+      { key:'c3_p0', text:`A private Minecraft world: custom modpack, custom server. ${NUM_WORDS[STATIC_URLS.mc.seasons] || STATIC_URLS.mc.seasons} seasons on record.` },
+      { key:'c3_p1', text:"We've opened a portal into it. The live map, who's online, and every boss still standing. Go through it, Snake." },
+    ] },
 ];
 let cxIdx = 0;
 let cxBooted = false;
-// The Colonel briefs once; after that the COLONEL channel just idles on "...".
-let cxColonelDone = false;
-let cxProjectsIntroDone = false;
-const CX_PROJECTS_IDX = 1;
-// One-time three-way intro on PROJECTS, then only Otacon greets you. Screen
-// text keeps real spellings; the voice clips use phonetic ones.
-const CX_PROJECTS_INTRO = [
-  { text:"His operation records. Twelve declassified projects on file.", key:'c1_l0' },
-  { text:"For the details, get Otacon on the line. Hal's been cataloguing all of it.", key:'c1_l1' },
-  { text:"Hal Emmerich. Been a while since Shadow Moses. Patch him in.", speaker:'snake', key:'snake_hal' },
-  { text:"He's already listening.", key:'c1_l2' },
-  { text:"Hey, Snake. It's been a while.", speaker:'otacon', key:'ot_hello' },
-  { text:"Click on any project to see the full briefing. I can fill you in on the details, too.", speaker:'otacon', key:'ot_brief' },
-  { text:"Alright. Let's take a look, then.", speaker:'snake', key:'snake_look' },
-];
-const CX_PROJECTS_RETURN = [
-  { text:"Want to learn more about any projects?", speaker:'otacon', key:'ot_repeat' },
-];
 
-// Each line may carry a voice key (static/audio/codec/<key>.m4a). Typing
-// drives the mouth; if the voice outruns the typing the mouth keeps flapping
-// until the audio ends, and the next line waits for both.
+// Typing drives the mouth; if the voice outruns the typing the mouth keeps
+// flapping until the audio ends, and the next line waits for both.
 let cxTypeTimer = null;
 // One steady timer eases the mouth a step at a time toward a target openness
 // (0 closed .. 3 wide) so it never snaps open<->shut, which read as jitter.
@@ -1375,7 +893,12 @@ function cxStopVoice(){
   cxMeterStop();
   cxVoiceDone = true;
 }
+function cxSpotlight(imgId){
+  document.querySelectorAll('.cx-portrait').forEach(p =>
+    p.classList.toggle('talking', !!imgId && !!p.querySelector('#' + imgId)));
+}
 function cxHardStop(){
+  cxSpotlight(null);
   if (cxTypeTimer) { clearInterval(cxTypeTimer); cxTypeTimer = null; }
   if (cxAdvanceTimer) { clearTimeout(cxAdvanceTimer); cxAdvanceTimer = null; }
   cxStopVoice();
@@ -1413,6 +936,8 @@ function cxTypeNext(){
   cxStopVoice();
   cxRest();
   dlg.textContent = '';
+  dlg.dataset.who = item.who.toUpperCase();
+  cxSpotlight(cxSpeaker.imgId);
   let i = 0;
   const startedAt = performance.now();
   const tick = () => {
@@ -1457,13 +982,13 @@ function cxTypeNext(){
     a.play().then(() => cxMeterStart(vkey)).catch(() => { cxVoiceDone = true; });   // file missing: text-only
   }
 }
-function cxSay(lines, keys){
+// Which lines have a recording, by key: the names of the clips on disk.
+const CX_VOICES = new Set(STATIC_URLS.voices);
+function cxSay(lines){
   cxHardStop();
-  cxQueue = lines.map((l, i) => {
-    const o = typeof l === 'string' ? { text: l } : l;
-    return { text: o.text, key: o.key || (keys && keys[i]),
-             speaker: CX_SPEAKERS[o.speaker] || CX_SPEAKERS.colonel };
-  });
+  // a line whose clip has not been recorded is typed in silence, not asked for
+  cxQueue = lines.map(l => ({ text: l.text, key: CX_VOICES.has(l.key) ? l.key : null, who: l.speaker || 'colonel',
+                               speaker: CX_SPEAKERS[l.speaker] || CX_SPEAKERS.colonel }));
   cxTypeNext();
 }
 function skipTyping(){
@@ -1486,51 +1011,51 @@ function skipTyping(){
   }
 }
 
-function cxOpenContact(i){
+// The readout spins through the band before it settles, like a dial being turned.
+let cxFreqTimer = null;
+function cxRollFreq(to){
+  const el = document.getElementById('freq-num');
+  clearInterval(cxFreqTimer);
+  if (REDUCED_MOTION) { el.textContent = to; return; }
+  let n = 0;
+  cxFreqTimer = setInterval(() => {
+    if (++n > 7) { clearInterval(cxFreqTimer); el.textContent = to; return; }
+    el.textContent = (140 + Math.random() * 2).toFixed(2);
+  }, 38);
+}
+function cxOpenContact(i, dir){
+  const last = cxIdx;
   cxIdx = (i + CX_CONTACTS.length) % CX_CONTACTS.length;
-  const c = CX_CONTACTS[cxIdx];
+  const c = CX_CONTACTS[cxIdx], idx = cxIdx;
   cxHardStop();
-  document.getElementById('freq-num').textContent = c.freq;
+  cxRollFreq(c.freq);
   document.getElementById('cx-contact-name').textContent = c.name;
-  ['cx-portrait-l','cx-portrait-r'].forEach(id => {
-    const p = document.getElementById(id);
+  const dlg = document.getElementById('cx-dialogue');
+  dlg.textContent = '';
+  delete dlg.dataset.who;
+  document.querySelectorAll('.cx-portrait').forEach(p => {
     p.classList.add('static');
     setTimeout(() => p.classList.remove('static'), 280);
   });
-  out.innerHTML = '';
-  const panel = document.getElementById('cx-content');
-  panel.classList.remove('visible');
-  c.render();
-  requestAnimationFrame(() => panel.classList.add('visible'));
-// Otacon holds the left portrait once he has taken over PROJECTS
-  cxSetPortrait(cxIdx === CX_PROJECTS_IDX && cxProjectsIntroDone ? 'otacon' : 'colonel');
-  const idx = cxIdx;
-  const delay = cxBooted ? 320 : 2000;
+  // the panel leaves the way the dial was turned and the next one follows it in
+  document.documentElement.dataset.dir = (dir || (cxIdx >= last ? 1 : -1)) > 0 ? 'fwd' : 'back';
+  document.getElementById('cx-content').classList.add('visible');
+  const [html, after] = c.view();
+  cxShow(html, after, cxBooted ? 'slide' : false);
+  // Otacon holds the left portrait once he has taken over PROJECTS
+  cxSetPortrait(c.name === 'PROJECTS' && cxProjectsIntroDone ? 'otacon' : 'colonel');
+  const delay = cxBooted ? 420 : 2000;
   cxBooted = true;
   setTimeout(() => {
     if (idx !== cxIdx) return;  // user already retuned
-    if (idx === CX_PROJECTS_IDX) {
-// one-time Colonel->Otacon handoff, then just Otacon on return
-      if (cxProjectsIntroDone) { cxSay(CX_PROJECTS_RETURN); return; }
-      cxProjectsIntroDone = true;
-      cxSay(CX_PROJECTS_INTRO);
-      return;
-    }
-    if (idx === 0 && cxColonelDone) {
-      const dlg = document.getElementById('cx-dialogue');
-      if (dlg) dlg.textContent = '...';
-      cxRest();
-      return;
-    }
-    if (idx === 0) cxColonelDone = true;
-    cxSay(c.lines, c.lines.map((_, j) => `c${idx}_l${j}`));
+    const lines = c.script();
+    if (lines) return cxSay(lines);
+    dlg.textContent = '...';
+    cxRest();
   }, delay);
   cxUpdateMemoryHighlight();
 }
-function tuneStep(dir){
-  playClickSound();
-  cxOpenContact(cxIdx + dir);
-}
+function tuneStep(dir){ cxOpenContact(cxIdx + dir, dir); }
 
 function cxBuildMemory(){
   const list = document.getElementById('cx-mem-list');
@@ -1540,7 +1065,7 @@ function cxBuildMemory(){
     const b = document.createElement('button');
     b.className = 'cx-mem-row';
     b.innerHTML = `<span class="cx-mem-freq">${c.freq}</span><span class="cx-mem-name">${c.name}</span>`;
-    b.onclick = () => { playClickSound(); cxOpenContact(i); toggleMemory(false); };
+    b.onclick = () => { cxOpenContact(i); toggleMemory(false); };
     list.appendChild(b);
   });
 }
@@ -1555,206 +1080,22 @@ function toggleMemory(force){
   p.classList.toggle('open', open);
 }
 
-function cxRenderProjectIndex(){
-  addHtml(`<div class="ps-wrap fade-in"><div class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">◈ OPERATION RECORDS</span><span class="ps-r">${PROJECTS.length} DECLASSIFIED</span></div>
-    <div class="ps-body">${PROJECTS.map((p, i) => `
-      <button class="cx-proj-row" onclick="cxOpenProject('${p.id}')">
-        <span class="cx-proj-freq">141.${String(13 + i).padStart(2,'0')}</span>
-        <span class="cx-proj-name">${esc(p.name)}</span>
-        ${(p.tags||[]).map(t=>`<span class="tag ${TAG_CLASS[t]||''}">${esc(t)}</span>`).join('')}
-      </button>`).join('')}</div>
-  </div></div>`);
-}
-// Per-project briefing: Snake asks, Otacon explains. Keys match
-// generate_codec_voices.py; screen text keeps real spellings, voices phonetic.
-const CX_PROJECT_DIALOGUE = {
-  "oculosaurus": [
-    { s:'snake',  k:'sk_oculosaurus',   t:"Oculosaurus. What am I looking at?" },
-    { s:'otacon', k:'ot_oculosaurus_0', t:"A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pi headset triangulate depth in real time, the way your own eyes judge distance." },
-    { s:'otacon', k:'ot_oculosaurus_1', t:"It runs YOLO object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way." },
-  ],
-  "memprobe": [
-    { s:'snake',  k:'sk_memprobe',   t:"Memprobe. Break it down for me." },
-    { s:'otacon', k:'ot_memprobe_0', t:"It's a firmware forensics tool. You point it at a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes." },
-    { s:'otacon', k:'ot_memprobe_1', t:"It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your CI when the firmware outgrows its budget." },
-  ],
-  "echo-scout": [
-    { s:'snake',  k:'sk_echo-scout',   t:"Echo Scout. This one's yours in the field." },
-    { s:'otacon', k:'ot_echo-scout_0', t:"A handheld scanner built on an ESP32. Millimeter-wave radar sweeps an 80 degree arc to detect people in the dark, even behind thin cover." },
-    { s:'otacon', k:'ot_echo-scout_1', t:"An 8x8 time-of-flight sensor rebuilds the room as a 3D point cloud, while the IMU keeps a live compass on the touchscreen. Written in C++." },
-  ],
-  "song2vec": [
-    { s:'snake',  k:'sk_song2vec',   t:"Song2Vec. What's the science here?" },
-    { s:'otacon', k:'ot_song2vec_0', t:"It takes word-embedding theory and applies it to music. A skip-gram model learns vectors for genres, tags, and songs in one shared latent space." },
-    { s:'otacon', k:'ot_song2vec_1', t:"A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with PCA." },
-  ],
-  "bird-classifier": [
-    { s:'snake',  k:'sk_bird-classifier',   t:"Backyard Bird Classifier. Explain." },
-    { s:'otacon', k:'ot_bird-classifier_0', t:"A convolutional neural network trained to identify thirty Alabama bird species purely from their calls." },
-    { s:'otacon', k:'ot_bird-classifier_1', t:"It turns each recording into a mel-spectrogram, an image of sound, then classifies it. Wrapped in a Django app that returns the top five guesses and the spectrogram itself." },
-  ],
-  "personal-website": [
-    { s:'snake',  k:'sk_personal-website',   t:"His personal site. Anything to it?" },
-    { s:'otacon', k:'ot_personal-website_0', t:"You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text-to-speech model on a cloud GPU, then computed our mouth movements straight off the waveform." },
-    { s:'otacon', k:'ot_personal-website_1', t:"The interface is the real thing too. That's the actual MGS1 bitmap font off the disc, and every menu panel is a PlayStation component borrowed from an open-source stylesheet called PSone." },
-    { s:'otacon', k:'ot_personal-website_2', t:"It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio." },
-  ],
-  "waste-drone": [
-    { s:'snake',  k:'sk_waste-drone',   t:"Waste Detection Drone. Give me the specs." },
-    { s:'otacon', k:'ot_waste-drone_0', t:"An autonomous quadcopter for environmental monitoring. A custom YOLOv5 model, trained on annotated waste imagery, spots litter from the air." },
-    { s:'otacon', k:'ot_waste-drone_1', t:"It flies programmatically through the Tello SDK, logging telemetry and tagging every detection for spatial analysis." },
-  ],
-  "modpack-updater": [
-    { s:'snake',  k:'sk_modpack-updater',   t:"Modpack Updater. What's it do?" },
-    { s:'otacon', k:'ot_modpack-updater_0', t:"A cross-platform desktop client that syncs Minecraft modpacks across a group using Amazon S3 as the backing store." },
-    { s:'otacon', k:'ot_modpack-updater_1', t:"It uses Git-style change tracking against a manifest, so one click pulls only the differences. Built in Java and JavaFX, packaged with Gradle." },
-  ],
-  "visaudio": [
-    { s:'snake',  k:'sk_visaudio',   t:"VisAudio. Run it down." },
-    { s:'otacon', k:'ot_visaudio_0', t:"An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built-in downloader." },
-    { s:'otacon', k:'ot_visaudio_1', t:"It visualizes every file as a waveform and a mel-spectrogram through librosa, wrapped in a PyQt interface. Handles nearly every codec you'd throw at it." },
-  ],
-  "born-in-spellbooks": [
-    { s:'snake',  k:'sk_born-in-spellbooks',   t:"Born in Spellbooks. A game mod?" },
-    { s:'otacon', k:'ot_born-in-spellbooks_0', t:"A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch." },
-    { s:'otacon', k:'ot_born-in-spellbooks_1', t:"Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep." },
-  ],
-  "fretwatch": [
-    { s:'snake',  k:'sk_fretwatch',   t:"FretWatch. What's the readout?" },
-    { s:'otacon', k:'ot_fretwatch_0', t:"Real-time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play." },
-    { s:'otacon', k:'ot_fretwatch_1', t:"librosa extracts the spectral features while OpenCV tracks the fretboard frame by frame. Still in development." },
-  ],
-  "minecraft-server": [
-    { s:'snake',  k:'sk_minecraft-server',   t:"The Minecraft server. That's infrastructure." },
-    { s:'otacon', k:'ot_minecraft-server_0', t:"A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand-built data packs." },
-    { s:'otacon', k:'ot_minecraft-server_1', t:"The data packs are scripted in JSON and mcscript to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management." },
-  ],
-};
-function cxOpenProject(id){
-  playClickSound();
-  out.innerHTML = '';
-  addHtml(`<button class="cx-back-row" onclick="cxBackToProjects()">◂ ALL PROJECTS</button>`);
-  CMDS.project(id);
-  document.getElementById('cx-content').scrollIntoView({ behavior:'smooth', block:'start' });
-// Otacon holds the left portrait even if a project was clicked before the
-// intro handed off to him
-  cxProjectsIntroDone = true;
-  cxSetPortrait('otacon');
-  const lines = CX_PROJECT_DIALOGUE[id];
-  if (lines) cxSay(lines.map(l => ({ text: l.t, speaker: l.s, key: l.k })));
-  else cxHardStop();
-}
-function cxBackToProjects(){
-  playClickSound();
-  cxHardStop();
-  out.innerHTML = '';
-  cxRenderProjectIndex();
-}
-function psPortalPanel(){
-  const thumbs = (STATIC_URLS.mcThumbs || []).map(t =>
-    `<a href="${STATIC_URLS.minecraft}" data-s="${t.s}"><img src="${t.url}" alt="${t.s} screenshot" loading="lazy"></a>`).join('');
-  return `<div class="ps-wrap fade-in"><div class="ps-win">
-    <div class="ps-bar"><span class="ps-t">◈ MINECRAFT PORTAL</span><span class="ps-r">${MC_STATS.seasons} SEASONS</span></div>
-    <div class="ps-body">
-      <div class="ps-stats">
-        <div><b>${MC_STATS.seasons}</b><i>SEASONS</i></div>
-        <div><b>${MC_STATS.shots}</b><i>SCREENSHOTS</i></div>
-        <div><b>${MC_STATS.clips}</b><i>CLIPS</i></div>
-        <div><b>${MC_STATS.span}</b><i>UPTIME</i></div>
-      </div>
-      <div class="ps-frame ps-map"><iframe src="${STATIC_URLS.mcMap}" loading="lazy" title="Live world map"></iframe></div>
-      <div class="ps-faces" id="ps-faces"><span class="ps-face-none">reading the server...</span></div>
-      <div class="ps-thumbs">${thumbs}
-        <a href="${STATIC_URLS.minecraft}" class="ps-more"><span>+${MC_STATS.shots - (STATIC_URLS.mcThumbs||[]).length}<br>MORE</span></a>
-      </div>
-      <a class="ps-btn" href="${STATIC_URLS.minecraft}"><span class="ps-lbl">OPEN THE PORTAL</span></a>
-      <div class="ps-hint">${MC_STATS.seasons} seasons · the live map and the full roster are inside</div>
-    </div>
-  </div></div>`;
-}
-
-// The panel is drawn the moment the channel opens; who is on the server has to
-// be asked for. The row fills itself in when the answer lands and says plainly
-// if it never does, because a codec panel left reading "reading the server"
-// looks broken rather than patient. Everyone tracked gets a face, the ones
-// online lit and the rest dimmed, so an empty server still shows a crew.
-async function psFillFaces(){
-  const row = document.getElementById('ps-faces');
-  if (!row) return;
-  try {
-    const res = await fetch(STATIC_URLS.live, { headers: { 'X-Requested-With': 'fetch' } });
-    const board = await res.json();
-    const players = (board.players || []).slice()
-      .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
-    if (!players.length) throw new Error('nobody on file');
-    const on = players.filter(p => p.online).length;
-    row.innerHTML = `<span class="ps-faces-t">${on} OF ${players.length} ONLINE</span>` +
-      players.map(p => `<span class="ps-face${p.online ? ' on' : ''}" title="${esc(p.name)}">
-        <i${p.skin ? ` style="background-image:url('${p.skin}')"` : ''}></i>
-        <b>${esc(p.name)}</b>
-      </span>`).join('');
-  } catch (err) {
-    row.innerHTML = '<span class="ps-face-none">roster unavailable</span>';
-  }
-}
-function psBirdPanel(){
-  const u = STATIC_URLS.uploadFile;
-  const rows = [
-    ['NORTHERN FLICKER', 94, false],
-    ['RED-BELLIED WOODPKR', 31, true],
-    ['PILEATED WOODPECKER', 18, true],
-    ['BLUE JAY', 9, true],
-    ['CAROLINA WREN', 4, true],
-  ].map(([n, pc, dim]) => `<div class="ps-row${dim ? ' ps-dim' : ''}">
-        <span class="ps-nm">${n}</span>
-        <div class="ps-prog"><div class="ps-fill" style="width:${pc}%"></div></div>
-        <span class="ps-pc">${pc}%</span>
-      </div>`).join('');
-  return `<div class="ps-wrap fade-in"><div class="ps-win">
-    <div class="ps-bar"><span class="ps-t">◈ BIRD CLASSIFIER</span><span class="ps-r"><span class="ps-live"></span>MODEL ONLINE</span></div>
-    <div class="ps-body">
-      <div class="ps-spec"><span>CNN</span><span>MEL-SPECTROGRAM</span><span>30 SPECIES</span><span>PYTORCH</span><span>DJANGO</span></div>
-      <div class="ps-p">Feed it a bird call and it returns a species, the top five candidates with confidence, and the spectrogram it actually classified.</div>
-      <div class="ps-bar" style="border-radius:0;margin:0 0 12px;border-top:1px solid rgba(0,255,204,0.28)">
-        <span class="ps-t" style="font-size:17px">SAMPLE OUTPUT</span><span class="ps-r">northern_flicker.wav</span>
-      </div>
-      ${rows}
-      <div style="height:8px"></div>
-      <a class="ps-btn" href="${u}#drop-zone"><span class="ps-lbl">UPLOAD A RECORDING</span></a>
-      <div class="ps-btnrow">
-        <a class="ps-btn ps-sm ps-alt" href="${u}#start-recording"><span class="ps-lbl">RECORD FROM MIC</span></a>
-        <a class="ps-btn ps-sm ps-alt" href="${u}#bird-search"><span class="ps-lbl">TRY A SAMPLE CALL</span></a>
-      </div>
-      <div class="ps-hint">wav / mp3 / ogg / m4a · or pull one by Macaulay ML number</div>
-    </div>
-  </div></div>`;
-}
-function cxRenderMinecraft(){
-  addHtml(psPortalPanel());
-  psFillFaces();
-}
-
 function initCodec(){
   Object.values(CX_SPEAKERS).forEach(sp =>
-    [sp.neutral, ...sp.pose].forEach(src => { const im = new Image(); im.src = src; }));
-// Signal meter: a dense stack of left-aligned bars on a concave curve, top
-// bar longest, matching the real codec display.
+    [sp.neutral, ...sp.pose].forEach(src => { new Image().src = src; }));
+  // Signal meter: a dense stack of left-aligned bars on a concave curve, top
+  // bar longest, matching the real codec display.
   const bars = document.getElementById('cx-bars');
-  cxBarEls = [];   // ordered top -> bottom
-  const widths = [196, 118, 92, 78, 68, 61, 56, 52, 49];
-  if (bars) widths.forEach((w) => {
+  cxBarEls = [196, 118, 92, 78, 68, 61, 56, 52, 49].map(w => {
     const s = document.createElement('span');
     s.style.width = w + 'px';
     s._base = 0.28;
-    s.style.opacity = s._base;
-    bars.appendChild(s);
-    cxBarEls.push(s);
+    return bars.appendChild(s);
   });
   cxBuildMemory();
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft')  tuneStep(-1);
-    if (e.key === 'ArrowRight') tuneStep(1);
+    // the arrows on screen click for themselves; the keys have to be given one
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { playClickSound(); tuneStep(e.key === 'ArrowLeft' ? -1 : 1); }
     if (e.key === 'm' || e.key === 'M') toggleMemory();
     if (e.key === 'Escape') toggleMemory(false);
   });
