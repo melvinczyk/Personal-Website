@@ -802,6 +802,8 @@ function cxUnlockVoice(){
   cxVoiceEl.play().catch(() => {});
 }
 let cxTypeDone = true, cxVoiceDone = true, cxAdvanceTimer = null;
+// the key of a line whose voice the browser refused to play (no click yet)
+let cxBlockedKey = null;
 
 // Signal-meter VU: the wedge follows a precomputed amplitude envelope synced
 // by playback time, so the audio element never has to be rerouted.
@@ -984,7 +986,8 @@ function cxTypeNext(){
     a.onerror = () => { cxVoiceDone = true; cxMaybeAdvance(); };
     a.src = CX_VOICE_URL(item.key);
     const vkey = item.key;
-    a.play().then(() => cxMeterStart(vkey)).catch(() => { cxVoiceDone = true; });   // file missing: text-only
+    a.play().then(() => { cxBlockedKey = null; cxMeterStart(vkey); })
+      .catch(err => { if (err && err.name === 'NotAllowedError') cxBlockedKey = vkey; cxVoiceDone = true; });   // blocked or missing: text-only
   }
 }
 // Which lines have a recording, by key: the names of the clips on disk.
@@ -1147,6 +1150,18 @@ function resumeSite(){
   const wake = () => {
     ['pointerdown', 'keydown'].forEach(t => document.removeEventListener(t, wake, true));
     getAudioCtx().resume().then(playBackgroundMusic);
+// the line on screen typed out silently: say it now, inside this gesture
+    if (cxBlockedKey) {
+      const k = cxBlockedKey; cxBlockedKey = null;
+      if (cxAdvanceTimer) { clearTimeout(cxAdvanceTimer); cxAdvanceTimer = null; }
+      cxVoice = cxVoiceEl; cxVoiceDone = false;
+      cxVoiceEl.src = CX_VOICE_URL(k);
+      cxVoiceEl.play().then(() => cxMeterStart(k)).catch(() => { cxVoiceDone = true; cxMaybeAdvance(); });
+    } else if (cxVoiceDone) {
+// nothing speaking: unlock the element for later lines without firing the last line's handlers
+      cxVoiceEl.onended = cxVoiceEl.onerror = cxVoiceEl.onloadedmetadata = null;
+      cxUnlockVoice();
+    }
   };
   ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, wake, true));
 }
