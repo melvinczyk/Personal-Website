@@ -663,7 +663,7 @@ body::after {
 .proj-body > *, .proj-demo, .pj-nav { animation: rise 0.4s var(--ease) both; }
 .proj-info { animation-delay: 80ms; }
 .proj-demo { animation-delay: 160ms; }
-.proj-media { padding: 16px; background: rgba(0,0,0,0.35); border-right: 1px solid var(--rule); }
+.proj-media { display: flex; flex-direction: column; justify-content: center; padding: 16px; background: rgba(0,0,0,0.35); border-right: 1px solid var(--rule); }
 .proj-main { display: block; width: 100%; max-height: 300px; object-fit: contain; background: #000; border: 1px solid var(--line-soft); }
 .proj-main.swap { animation: shot-swap 0.35s ease; }
 @keyframes shot-swap { from { opacity: 0; filter: brightness(2.5) saturate(0) } }
