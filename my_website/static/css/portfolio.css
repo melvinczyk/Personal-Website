@@ -554,7 +554,7 @@ body::after {
 
 /* ── keeping the records alive ─────────────────────────────────────────── */
 .pj-grid { perspective: 900px; }
-.pj-tile { transform-style: preserve-3d; animation: pj-in 0.55s var(--ease) backwards; animation-delay: calc(var(--i) * 45ms); }
+.pj-tile { animation: pj-in 0.55s var(--ease) backwards; animation-delay: calc(var(--i) * 45ms); }
 @keyframes pj-in {
   0%   { opacity: 0; transform: translateY(14px); clip-path: inset(0 0 100% 0); filter: brightness(2.2) saturate(0); }
   60%  { opacity: 1; clip-path: inset(0); filter: brightness(1.4) saturate(0.4); }
@@ -587,7 +587,6 @@ body::after {
 .pj-art::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px);
-  mix-blend-mode: multiply;
 }
 .pj-sweep {
   position: absolute; left: 0; right: 0; top: -40%; height: 40%; z-index: 2; pointer-events: none; opacity: 0;
