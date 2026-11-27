@@ -113,7 +113,7 @@ const PROJECTS = [
           "Then it paints each one as a blob of colour."] },
   { id:'modpack-updater', name:'GROIDPACK UPDATER', kind:'MINECRAFT', also:['TOOLS'], status:'LIVE',
     tech:'Java 17 / Swing / Backblaze B2', link:GH+'ModpackUpdater',
-    img:IMG('groidpack_updater_logo.gif'), pixel:true,
+    img:GH+'ModpackUpdater/blob/master/docs/logo.gif?raw=true', pixel:true,
     sum:"A desktop app that keeps every player's modpack matched to the server.",
     note:'Worlds, screenshots and settings are never touched.',
     ask:"GroidPack Updater. What's it do?",
