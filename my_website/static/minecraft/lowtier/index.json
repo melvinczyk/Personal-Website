@@ -1,0 +1,282 @@
+[
+ {
+  "key": "bee",
+  "id": "minecraft:bee",
+  "name": "Bee",
+  "mod": "minecraft",
+  "model": "bee.model.json"
+ },
+ {
+  "key": "blaze",
+  "id": "minecraft:blaze",
+  "name": "Blaze",
+  "mod": "minecraft",
+  "model": "blaze.model.json"
+ },
+ {
+  "key": "cave_spider",
+  "id": "minecraft:cave_spider",
+  "name": "Cave Spider",
+  "mod": "minecraft",
+  "model": "cave_spider.model.json"
+ },
+ {
+  "key": "creeper",
+  "id": "minecraft:creeper",
+  "name": "Creeper",
+  "mod": "minecraft",
+  "model": "creeper.model.json"
+ },
+ {
+  "key": "drowned",
+  "id": "minecraft:drowned",
+  "name": "Drowned",
+  "mod": "minecraft",
+  "model": "drowned.model.json"
+ },
+ {
+  "key": "enderman",
+  "id": "minecraft:enderman",
+  "name": "Enderman",
+  "mod": "minecraft",
+  "model": "enderman.model.json"
+ },
+ {
+  "key": "evoker",
+  "id": "minecraft:evoker",
+  "name": "Evoker",
+  "mod": "minecraft",
+  "model": "evoker.model.json"
+ },
+ {
+  "key": "husk",
+  "id": "minecraft:husk",
+  "name": "Husk",
+  "mod": "minecraft",
+  "model": "husk.model.json"
+ },
+ {
+  "key": "iron_golem",
+  "id": "minecraft:iron_golem",
+  "name": "Iron Golem",
+  "mod": "minecraft",
+  "model": "iron_golem.model.json"
+ },
+ {
+  "key": "magma_cube",
+  "id": "minecraft:magma_cube",
+  "name": "Magma Cube",
+  "mod": "minecraft",
+  "model": "magma_cube.model.json"
+ },
+ {
+  "key": "piglin",
+  "id": "minecraft:piglin",
+  "name": "Piglin",
+  "mod": "minecraft",
+  "model": "piglin.model.json"
+ },
+ {
+  "key": "piglin_brute",
+  "id": "minecraft:piglin_brute",
+  "name": "Piglin Brute",
+  "mod": "minecraft",
+  "model": "piglin_brute.model.json"
+ },
+ {
+  "key": "pillager",
+  "id": "minecraft:pillager",
+  "name": "Pillager",
+  "mod": "minecraft",
+  "model": "pillager.model.json"
+ },
+ {
+  "key": "skeleton",
+  "id": "minecraft:skeleton",
+  "name": "Skeleton",
+  "mod": "minecraft",
+  "model": "skeleton.model.json"
+ },
+ {
+  "key": "slime",
+  "id": "minecraft:slime",
+  "name": "Slime",
+  "mod": "minecraft",
+  "model": "slime.model.json"
+ },
+ {
+  "key": "spider",
+  "id": "minecraft:spider",
+  "name": "Spider",
+  "mod": "minecraft",
+  "model": "spider.model.json"
+ },
+ {
+  "key": "stray",
+  "id": "minecraft:stray",
+  "name": "Stray",
+  "mod": "minecraft",
+  "model": "stray.model.json"
+ },
+ {
+  "key": "vindicator",
+  "id": "minecraft:vindicator",
+  "name": "Vindicator",
+  "mod": "minecraft",
+  "model": "vindicator.model.json"
+ },
+ {
+  "key": "wither_skeleton",
+  "id": "minecraft:wither_skeleton",
+  "name": "Wither Skeleton",
+  "mod": "minecraft",
+  "model": "wither_skeleton.model.json"
+ },
+ {
+  "key": "zombie",
+  "id": "minecraft:zombie",
+  "name": "Zombie",
+  "mod": "minecraft",
+  "model": "zombie.model.json"
+ },
+ {
+  "key": "zombie_villager",
+  "id": "minecraft:zombie_villager",
+  "name": "Zombie Villager",
+  "mod": "minecraft",
+  "model": "zombie_villager.model.json"
+ },
+ {
+  "key": "enemyexpansion__meature",
+  "id": "enemyexpansion:meature",
+  "name": "Meature",
+  "mod": "enemyexpansion",
+  "model": "enemyexpansion__meature.model.json"
+ },
+ {
+  "key": "enemyexpansion__slugger",
+  "id": "enemyexpansion:slugger",
+  "name": "Slugger",
+  "mod": "enemyexpansion",
+  "model": "enemyexpansion__slugger.model.json"
+ },
+ {
+  "key": "enemyexpansion__sprinter",
+  "id": "enemyexpansion:sprinter",
+  "name": "Sprinter",
+  "mod": "enemyexpansion",
+  "model": "enemyexpansion__sprinter.model.json"
+ },
+ {
+  "key": "mobcompack__jawbreaker",
+  "id": "mobcompack:jawbreaker",
+  "name": "Jawbreaker",
+  "mod": "mobcompack",
+  "model": "mobcompack__jawbreaker.model.json"
+ },
+ {
+  "key": "opposing_force__dicer",
+  "id": "opposing_force:dicer",
+  "name": "Dicer",
+  "mod": "opposing_force",
+  "model": "opposing_force__dicer.model.json"
+ },
+ {
+  "key": "opposing_force__rambler",
+  "id": "opposing_force:rambler",
+  "name": "Rambler",
+  "mod": "opposing_force",
+  "model": "opposing_force__rambler.model.json"
+ },
+ {
+  "key": "opposing_force__skyvern",
+  "id": "opposing_force:skyvern",
+  "name": "Skyvern",
+  "mod": "opposing_force",
+  "model": "opposing_force__skyvern.model.json"
+ },
+ {
+  "key": "skarrier_mobs__bowlder",
+  "id": "skarrier_mobs:bowlder",
+  "name": "Bowlder",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__bowlder.model.json"
+ },
+ {
+  "key": "skarrier_mobs__breacher",
+  "id": "skarrier_mobs:breacher",
+  "name": "Breacher",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__breacher.model.json"
+ },
+ {
+  "key": "skarrier_mobs__grave_construct",
+  "id": "skarrier_mobs:grave_construct",
+  "name": "Grave Construct",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__grave_construct.model.json"
+ },
+ {
+  "key": "skarrier_mobs__quake",
+  "id": "skarrier_mobs:quake",
+  "name": "Quake",
+  "mod": "skarrier_mobs",
+  "model": "skarrier_mobs__quake.model.json"
+ },
+ {
+  "key": "twilightforest__redcap",
+  "id": "twilightforest:redcap",
+  "name": "Redcap",
+  "mod": "twilightforest",
+  "model": "twilightforest__redcap.model.json"
+ },
+ {
+  "key": "wkcr__barney",
+  "id": "wkcr:barney",
+  "name": "Barney",
+  "mod": "wkcr",
+  "model": "wkcr__barney.model.json"
+ },
+ {
+  "key": "wkcr__papon",
+  "id": "wkcr:papon",
+  "name": "Papon",
+  "mod": "wkcr",
+  "model": "wkcr__papon.model.json"
+ },
+ {
+  "key": "wkcr__papoteus",
+  "id": "wkcr:papoteus",
+  "name": "Papoteus",
+  "mod": "wkcr",
+  "model": "wkcr__papoteus.model.json"
+ },
+ {
+  "key": "wkcr__remolachon",
+  "id": "wkcr:remolachon",
+  "name": "Remolachon",
+  "mod": "wkcr",
+  "model": "wkcr__remolachon.model.json"
+ },
+ {
+  "key": "wkcr__remolachus",
+  "id": "wkcr:remolachus",
+  "name": "Remolachus",
+  "mod": "wkcr",
+  "model": "wkcr__remolachus.model.json"
+ },
+ {
+  "key": "wkcr__zanahorial",
+  "id": "wkcr:zanahorial",
+  "name": "Zanahorial",
+  "mod": "wkcr",
+  "model": "wkcr__zanahorial.model.json"
+ },
+ {
+  "key": "wkcr__zanahorius",
+  "id": "wkcr:zanahorius",
+  "name": "Zanahorius",
+  "mod": "wkcr",
+  "model": "wkcr__zanahorius.model.json"
+ }
+]

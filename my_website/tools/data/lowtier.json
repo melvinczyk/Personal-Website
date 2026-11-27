@@ -1,0 +1,165 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "minecraft:drowned",
+      "required": false
+    },
+    {
+      "id": "minecraft:zombie_villager",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_skeleton",
+      "required": false
+    },
+    {
+      "id": "minecraft:slime",
+      "required": false
+    },
+    {
+      "id": "minecraft:magma_cube",
+      "required": false
+    },
+    {
+      "id": "minecraft:pillager",
+      "required": false
+    },
+    {
+      "id": "minecraft:vindicator",
+      "required": false
+    },
+    {
+      "id": "minecraft:blaze",
+      "required": false
+    },
+    {
+      "id": "twilightforest:redcap",
+      "required": false
+    },
+    {
+      "id": "enemyexpansion:slugger",
+      "required": false
+    },
+    {
+      "id": "enemyexpansion:sprinter",
+      "required": false
+    },
+    {
+      "id": "opposing_force:rambler",
+      "required": false
+    },
+    {
+      "id": "mobcompack:jawbreaker",
+      "required": false
+    },
+    {
+      "id": "opposing_force:dicer",
+      "required": false
+    },
+    {
+      "id": "opposing_force:skyvern",
+      "required": false
+    },
+    {
+      "id": "wkcr:papon",
+      "required": false
+    },
+    {
+      "id": "wkcr:remolachon",
+      "required": false
+    },
+    {
+      "id": "wkcr:zanahorial",
+      "required": false
+    },
+    {
+      "id": "wkcr:barney",
+      "required": false
+    },
+    {
+      "id": "wkcr:zanahorius",
+      "required": false
+    },
+    {
+      "id": "wkcr:papoteus",
+      "required": false
+    },
+    {
+      "id": "wkcr:remolachus",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:bowlder",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:breacher",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:quake",
+      "required": false
+    },
+    {
+      "id": "minecraft:zombie",
+      "required": false
+    },
+    {
+      "id": "minecraft:spider",
+      "required": false
+    },
+    {
+      "id": "minecraft:skeleton",
+      "required": false
+    },
+    {
+      "id": "minecraft:bee",
+      "required": false
+    },
+    {
+      "id": "minecraft:husk",
+      "required": false
+    },
+    {
+      "id": "minecraft:stray",
+      "required": false
+    },
+    {
+      "id": "minecraft:cave_spider",
+      "required": false
+    },
+    {
+      "id": "minecraft:enderman",
+      "required": false
+    },
+    {
+      "id": "minecraft:piglin",
+      "required": false
+    },
+    {
+      "id": "minecraft:creeper",
+      "required": false
+    },
+    {
+      "id": "minecraft:piglin_brute",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_golem",
+      "required": false
+    },
+    {
+      "id": "minecraft:evoker",
+      "required": false
+    },
+    {
+      "id": "enemyexpansion:meature",
+      "required": false
+    },
+    {
+      "id": "skarrier_mobs:grave_construct",
+      "required": false
+    }
+  ]
+}

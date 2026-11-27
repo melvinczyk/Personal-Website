@@ -14,7 +14,7 @@ mc_sync.json
 config.json
 known_hosts
 *.sync.lock
-
+.claude
 # The live season's data folder is written by the sync worker, not by hand.
 #
 # Tracking it meant every deploy hit "local changes would be overwritten", and
