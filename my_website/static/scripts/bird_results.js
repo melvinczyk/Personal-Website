@@ -1,10 +1,3 @@
-function tick() {
-  const t = new Date().toLocaleTimeString('en-US', { hour12: false });
-  document.getElementById('clock').textContent = t;
-  document.getElementById('sclk').textContent  = t;
-}
-tick();
-setInterval(tick, 1000);
 
 window.addEventListener('load', () => {
   setTimeout(() => {

@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bird Classifier Results</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/bird_results.css' %}">
 </head>
@@ -16,30 +15,21 @@
 
 <div id="screen">
 
-  <div id="titlebar">
-    <div class="ttl">NICK BURCZYK — BIRD CLASSIFIER — RESULTS</div>
-    <div class="clk" id="clock">00:00:00</div>
-  </div>
-
-  <div id="navback">
-    <a href="/" class="nb-link">~/home</a>
-    <span class="nb-sep">/</span>
-    <a href="{% url 'upload_file' %}" class="nb-link">bird-classifier</a>
-    <span class="nb-sep">/</span>
-    <span class="nb-active">results</span>
-    <div class="nb-right">
-      <a href="/" class="nb-link">← home</a>
-      <a href="{% url 'upload_file' %}" class="nb-link">↺ classify another</a>
-    </div>
-  </div>
+  <nav id="site-bar">
+    <a href="/" class="sb-home">NICK BURCZYK</a>
+    <span class="sb-sep">/</span>
+    <a href="{% url 'upload_file' %}" class="sb-here tl">BIRD CLASSIFIER</a>
+    <span class="sb-sep">/</span>
+    <span class="sb-here">RESULT</span>
+    <a href="{% url 'upload_file' %}" class="sb-back">Classify another</a>
+  </nav>
 
   <div id="main">
 
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
         <span class="ts-title">CLASSIFICATION RESULT</span>
-        <span class="ts-sub">model: backyard-bird-cnn-v1 &nbsp;·&nbsp; region: Alabama</span>
+        <span class="ts-sub">model: backyard-bird-cnn-v1 / region: Alabama</span>
       </div>
       <div class="ts-bd">
         <div class="hero">
@@ -48,13 +38,13 @@
             <img src="{{ result.bird_image }}"
                  alt="{{ result.bird }}"
                  onerror="this.style.opacity='.15'">
-            <div style="text-align:center;color:var(--mgs-border);font-size:10px;margin-top:6px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">
-              // reference image — hover to unfilter
+            <div style="text-align:center;color:var(--mgs-border);font-size:10px;margin-top:6px;letter-spacing:1px;">
+              reference image — hover to unfilter
             </div>
           </div>
 
           <div class="bird-info">
-            <div class="bird-label">// DETECTED SPECIES</div>
+            <div class="bird-label">DETECTED SPECIES</div>
             <div class="bird-name">{{ result.bird }}</div>
 
             {# confidence goes through a data attr: Django and JS both want double braces #}
@@ -99,13 +89,12 @@
 
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
         <span class="ts-title">GENERATED SPECTROGRAMS</span>
-        <span class="ts-sub">mel-spectrogram · one per segment · click to enlarge</span>
+        <span class="ts-sub">mel-spectrogram / one per segment / click to enlarge</span>
       </div>
       <div class="ts-bd">
-        <div style="font-size:11px;color:var(--mgs-border);margin-bottom:12px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">
-          // {{ result.num_segments }} segment(s) — hover to unfilter, click to zoom
+        <div style="font-size:11px;color:var(--mgs-border);margin-bottom:12px;letter-spacing:1px;">
+          {{ result.num_segments }} segment(s) — hover to unfilter, click to zoom
         </div>
         <div class="spectro-grid">
           {% for image in result.image_list %}
@@ -120,13 +109,12 @@
 
     <div class="ts">
       <div class="ts-hd">
-        <span style="color:var(--mgs-border);font-size:11px;font-family:'Share Tech Mono',monospace">//</span>
         <span class="ts-title">HELP IMPROVE THE MODEL</span>
-        <span class="ts-sub">optional · responses used for retraining</span>
+        <span class="ts-sub">optional / responses used for retraining</span>
       </div>
       <div class="ts-bd" style="max-width:540px">
 
-        <div style="font-size:12px;color:var(--mgs-border);margin-bottom:20px;line-height:1.9;font-family:'Share Tech Mono',monospace;">
+        <div style="font-size:12px;color:var(--mgs-border);margin-bottom:20px;line-height:1.9;">
           Was the prediction right? Each response helps retrain and improve the classifier for Alabama bird species. Takes 5 seconds.
         </div>
 
@@ -141,7 +129,7 @@
           {% csrf_token %}
 
           <div class="form-row">
-            <label for="accuracy-select" class="form-lbl">// WAS THE PREDICTION ACCURATE?</label>
+            <label for="accuracy-select" class="form-lbl">WAS THE PREDICTION ACCURATE?</label>
             <select id="accuracy-select" name="accuracy" class="term-select">
               <option disabled selected value="">select an option...</option>
               <option value="yes">yes — correct species</option>
@@ -151,7 +139,7 @@
           </div>
 
           <div class="form-row">
-            <label for="feedback-input" class="form-lbl">// IF INCORRECT — WHAT SPECIES WAS IT?</label>
+            <label for="feedback-input" class="form-lbl">IF INCORRECT — WHAT SPECIES WAS IT?</label>
             <input id="feedback-input" name="species" type="text"
                    placeholder="e.g. Northern Cardinal..."
                    class="term-input" disabled>
@@ -171,7 +159,7 @@
               <span>submitting...</span>
             </div>
             <a href="{% url 'upload_file' %}" class="term-btn secondary">
-              ↺ CLASSIFY ANOTHER
+              CLASSIFY ANOTHER
             </a>
           </div>
 
@@ -188,19 +176,10 @@
   </div>
 
   <div id="lightbox" onclick="closeLightbox()">
-    <span class="lb-close" onclick="closeLightbox()">[ × CLOSE ]</span>
+    <span class="lb-close" onclick="closeLightbox()">CLOSE</span>
     <img id="lb-img" src="" alt="">
   </div>
 
-  <div id="statusbar">
-    <div>
-      <span style="color:var(--mgs-cyan)">●</span>&nbsp; inference complete
-      &nbsp;·&nbsp; species: <span style="color:var(--mgs-teal)">{{ result.bird }}</span>
-      &nbsp;·&nbsp; confidence: {{ result.confidence }}%
-      &nbsp;·&nbsp; segments: {{ result.num_segments }}
-    </div>
-    <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
-  </div>
 
 </div>
 

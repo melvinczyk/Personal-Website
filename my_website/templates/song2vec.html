@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Song2Vec</title>
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/bird_classifier.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/song2vec.css' %}">
@@ -16,26 +15,19 @@
 
 <div id="screen">
 
-  <div id="titlebar">
-    <div class="ttl">NICK BURCZYK · SONG2VEC</div>
-    <div class="clk" id="clock">00:00:00</div>
-  </div>
-
-  <div id="navback">
-    <a href="/" class="nb-link">home</a>
-    <span class="nb-sep">/</span>
-    <span class="nb-active">song2vec</span>
-    <div style="margin-left:auto;">
-      <a href="/" class="nb-link">← home</a>
-    </div>
-  </div>
+  <nav id="site-bar">
+    <a href="/" class="sb-home">NICK BURCZYK</a>
+    <span class="sb-sep">/</span>
+    <span class="sb-here">SONG2VEC</span>
+    <a href="/" class="sb-back">Back to the codec</a>
+  </nav>
 
   <div id="main">
 
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">SONG2VEC</span>
-        <span class="ts-sub">VAE · PCA · genre embeddings · mood tags</span>
+        <span class="ts-sub">VAE / PCA / genre embeddings / mood tags</span>
       </div>
       <div class="ts-bd">
         <div class="section-comment">Each song produces a unique blob image. Position and colour come from PCA projections of 1,305 genre and 985 tag embedding vectors.</div>
@@ -75,7 +67,7 @@
           <div class="sv-left">
             <div class="sv-search-wrap">
               <div class="term-input-row">
-                <span class="prefix">⌕</span>
+                <span class="prefix">FIND</span>
                 <input type="text" id="sv-input" class="term-input" placeholder="e.g. Bohemian Rhapsody, Kendrick..." autocomplete="off" spellcheck="false">
               </div>
               <div class="sv-results" id="sv-results"></div>
@@ -96,9 +88,9 @@
             </div>
 
             <div class="sv-idle-hint" id="sv-idle-hint">
-              <div class="sv-hint-line">◈ type a song or artist</div>
-              <div class="sv-hint-line">◈ select from the dropdown</div>
-              <div class="sv-hint-line">◈ blob renders from embeddings</div>
+              <div class="sv-hint-line">type a song or artist</div>
+              <div class="sv-hint-line">select from the dropdown</div>
+              <div class="sv-hint-line">blob renders from embeddings</div>
             </div>
           </div>
 
@@ -119,7 +111,7 @@
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">EMBEDDING SPACE</span>
-        <span class="ts-sub">PCA projection · genre + tag vectors</span>
+        <span class="ts-sub">PCA projection / genre + tag vectors</span>
       </div>
       <div class="ts-bd">
         <div class="sv-scatter-single">
@@ -132,33 +124,33 @@
     <div class="ts">
       <div class="ts-hd">
         <span class="ts-title">PIPELINE</span>
-        <span class="ts-sub">embedding lookup · PCA · blob synthesis · post-processing</span>
+        <span class="ts-sub">embedding lookup / PCA / blob synthesis / post-processing</span>
       </div>
       <div class="ts-bd">
         <div class="pipeline">
           <div class="pipe-step">
-            <div class="pipe-icon">①</div>
+            <div class="pipe-icon">01</div>
             <div class="pipe-body">
               <div class="pipe-num">EMBEDDING LOOKUP</div>
               <div class="pipe-desc">Genres and tags are looked up in 32-dim and 64-dim tables built from Last.fm co-occurrence data.</div>
             </div>
           </div>
           <div class="pipe-step">
-            <div class="pipe-icon">②</div>
+            <div class="pipe-icon">02</div>
             <div class="pipe-body">
               <div class="pipe-num">PCA PROJECTION</div>
               <div class="pipe-desc">Four PCA transforms reduce embeddings to 2D (position) and 3D (RGB). <code>tanh</code> stretching spreads blobs across the canvas.</div>
             </div>
           </div>
           <div class="pipe-step">
-            <div class="pipe-icon">③</div>
+            <div class="pipe-icon">03</div>
             <div class="pipe-body">
               <div class="pipe-num">BLOB SYNTHESIS</div>
               <div class="pipe-desc">Each genre/tag places a radial blob with quadratic falloff. Blobs accumulate additively on a float32 canvas.</div>
             </div>
           </div>
           <div class="pipe-step">
-            <div class="pipe-icon">④</div>
+            <div class="pipe-icon">04</div>
             <div class="pipe-body">
               <div class="pipe-num">POST-PROCESSING</div>
               <div class="pipe-desc">Lightness capped at 0.78, gamma 0.85 applied per channel. Output is a 400x400 PNG unique to the song.</div>
@@ -170,10 +162,6 @@
 
   </div>
 
-  <div id="statusbar">
-    <div><span style="color:var(--mgs-cyan)">●</span>&nbsp; song2vec · 203K songs · 1305 genres · 985 tags</div>
-    <div>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></div>
-  </div>
 
 </div>
 

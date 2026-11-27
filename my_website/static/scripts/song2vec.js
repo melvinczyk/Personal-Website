@@ -1,14 +1,3 @@
-function updateClock() {
-  const now = new Date();
-  const s = t => String(t).padStart(2, '0');
-  const str = `${s(now.getHours())}:${s(now.getMinutes())}:${s(now.getSeconds())}`;
-  const el1 = document.getElementById('clock');
-  const el2 = document.getElementById('sclk');
-  if (el1) el1.textContent = str;
-  if (el2) el2.textContent = str;
-}
-setInterval(updateClock, 1000);
-updateClock();
 
 let _blobData = null;
 fetch(BLOB_DATA_URL)
@@ -88,7 +77,7 @@ function renderResults(songs) {
 
 function selectSong(id, name, artist) {
   hideResults();
-  input.value = `${name}  ·  ${artist}`;
+  input.value = `${name} / ${artist}`;
 
   setOverlay('RENDERING...');
   if (caption) caption.textContent = '';
@@ -124,7 +113,7 @@ function drawBlob(data) {
 
     songInfo.style.display = 'flex';
     idleHint.style.display = 'none';
-    if (caption) caption.textContent = `${data.name}  ·  ${data.artist}`;
+    if (caption) caption.textContent = `${data.name} / ${data.artist}`;
 
     drawScatter(data.genres);
   };
@@ -183,7 +172,7 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
     ctx.fill();
   }
 
-  ctx.font = '12px "Share Tech Mono", monospace';
+  ctx.font = '16px "MGS1 Codec", monospace';
   ctx.textBaseline = 'middle';
   if (!activeSet) {
     for (const [name, v] of pairs) {
@@ -224,7 +213,7 @@ function _drawScatterCanvas(cvs, entries, activeSet, labelSet) {
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = `rgb(${v.r},${v.g},${v.b})`;
-      ctx.font = '13px "Share Tech Mono", monospace';
+      ctx.font = '16px "MGS1 Codec", monospace';
       ctx.fillText(name, gx + 9, gy);
     }
   }

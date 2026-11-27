@@ -219,22 +219,7 @@ def portal(request):
         'live_json': json.dumps(board) if board else 'null',
         'map_url':  LIVE_MAP + LIVE_MAP_VIEW if live and LIVE_MAP else None,
         'map_home': LIVE_MAP,
-        'forge_stamp': _stamp_for('data.json'),
-        'ench_stamp': _stamp_for('enchanting.json'),
     })
-
-
-def _stamp_for(filename):
-    """The mtime of one of the apotheosis data files, as a cache buster.
-
-    These are fetched by script rather than named in the markup, so they never
-    pick up the stamp every other asset on the page carries. They are static
-    files that want caching hard, and a re-extract served out of a browser
-    cache holding the old one is how a changed reforging cost silently does
-    not change - so each goes out stamped with its own mtime, which caches
-    until the extractor next runs and no longer.
-    """
-    return _mtime(os.path.join(MINECRAFT_ROOT, 'apotheosis', filename))
 
 
 def _mtime(path):

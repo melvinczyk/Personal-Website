@@ -8,8 +8,6 @@
 <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/minecraft.css' %}">
-<link rel="stylesheet" href="{% stamped 'css/forge.css' %}">
-<link rel="stylesheet" href="{% stamped 'css/enchant.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/guide.css' %}">
 </head>
 <body>
@@ -109,120 +107,37 @@
             <div class="ls-tiles" id="ls-tiles"></div>
           </section>
 
-          <!-- ── the two things you make something with ──────────────────
-               These are not readings and they do not fold, which is why they
-               sat so badly among the sections that are and do: collapse the
-               rosters and the pair of them were left hanging in the middle of
-               nothing. They belong together and they belong here, directly
-               under the dashboard - the instruments above, the workshop
-               below, and then the lists. Side by side, because they are two
-               of the same kind of thing. -->
-          <div class="ls-shop">
-            <div class="ls-shop-head"><span class="shop-t">WORKSHOP</span></div>
-            <div class="ls-shop-row">
-
-              <div class="ls-plan-wrap" id="sk-wrap">
-                <button class="sk-open-btn" id="sk-open-btn" onclick="planOpen()">
-                  <span class="sk-open-glow" aria-hidden="true"></span>
-                  <span class="sk-open-title">SKILLTREE</span>
-                </button>
-                <div class="ls-plan" id="ls-plan"></div>
-              </div>
-
-              <!-- The tree's sibling: the other thing on this page you make
-                   something with rather than read, so it gets the same frame
-                   and the same sweep in a colour of its own, and opens in
-                   place the same way. Shut, it has fetched nothing - the
-                   forge's data file is a hundred kilobytes of affix curves
-                   and gem tables, which is a lot to spend on everyone who
-                   came for the screenshots. -->
-              <div class="ls-plan-wrap fg-wrap" id="fg-wrap">
-                <button class="sk-open-btn fg-open" onclick="forgeOpen()">
-                  <span class="sk-open-glow" aria-hidden="true"></span>
-                  <span class="sk-open-title">APOTHIC FORGE</span>
-                </button>
-                <div class="fg-panel" id="sec-forge"
-                     data-root="{% static 'minecraft/apotheosis/' %}"
-                     data-stamp="{{ forge_stamp }}">
-                  <div class="sk-plan-head">
-                    <span class="sk-plan-title">APOTHIC FORGE</span>
-                    <button type="button" class="sk-close" onclick="forgeShut()"
-                            aria-label="Close the forge">CLOSE</button>
-                  </div>
-                  <div class="fg-stage" id="fg-stage">
-                    <p class="fg-loading">Reading the pack's data files…</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- The third of the three. Reforging rolls the affixes on a
-                   piece, the tree plans what the player themselves can do,
-                   and this is the other half of gearing up: what the table
-                   will offer, and what it takes to make it offer more. -->
-              <div class="ls-plan-wrap en-wrap" id="en-wrap">
-                <button class="sk-open-btn en-open" onclick="enchOpen()">
-                  <span class="sk-open-glow" aria-hidden="true"></span>
-                  <span class="sk-open-title">ENCHANTING</span>
-                </button>
-                <div class="en-panel" id="sec-ench"
-                     data-root="{% static 'minecraft/apotheosis/' %}"
-                     data-stamp="{{ ench_stamp }}">
-                  <div class="sk-plan-head">
-                    <span class="sk-plan-title">ENCHANTING</span>
-                    <button type="button" class="sk-close" onclick="enchShut()"
-                            aria-label="Close the enchanting panel">CLOSE</button>
-                  </div>
-                  <div class="en-stage" id="ench-stage">
-                    <p class="en-loading">Reading the pack's data files…</p>
-                  </div>
-                </div>
-              </div>
-
+          <!-- the skill tree planner opens in place under the dashboard -->
+          <div class="ls-shop"><div class="ls-shop-row">
+            <div class="ls-plan-wrap" id="sk-wrap">
+              <button class="sk-open-btn" id="sk-open-btn" onclick="planOpen()">
+                <span class="sk-open-glow" aria-hidden="true"></span>
+                <span class="sk-open-title">SKILLTREE</span>
+              </button>
+              <div class="ls-plan" id="ls-plan"></div>
             </div>
-          </div>
+          </div></div>
 
-          <div class="ls-bar">
-            <span class="lb-t">Players</span>
-            <button class="ls-btn sm" data-sec="sec-players" onclick="toggleSection('sec-players')">Hide</button>
-            <span class="lb-r" id="ls-count">...</span>
+          <!-- the rosters: one list at a time, picked by tab -->
+          <div class="ls-tabs" role="tablist">
+            <button class="ls-tab on" role="tab" aria-selected="true" data-sec="sec-players" onclick="showRoster('sec-players')">
+              Players <span class="lt-n" id="ls-count">...</span></button>
+            <button class="ls-tab boss" role="tab" aria-selected="false" data-sec="sec-bosses" onclick="showRoster('sec-bosses')">
+              Bosses <span class="lt-n" id="ls-boss-count">...</span></button>
+            <button class="ls-tab mini" role="tab" aria-selected="false" data-sec="sec-minibosses" onclick="showRoster('sec-minibosses')">
+              Minibosses <span class="lt-n" id="ls-mini-count">...</span></button>
+            <label class="ls-only" id="ls-only" hidden><input type="checkbox" id="ls-beaten" checked
+                   onchange="filterBosses()"> beaten only</label>
           </div>
           <div class="ls-sec" id="sec-players">
             <div class="ls-grid" id="ls-list"></div>
           </div>
-
-          <div class="ls-bar boss">
-            <span class="lb-t">Bosses</span>
-            <button class="ls-btn sm" data-sec="sec-bosses" onclick="toggleSection('sec-bosses')">Hide</button>
-            <label class="ls-only"><input type="checkbox" id="ls-beaten" checked
-                   onchange="filterBosses()"> beaten only</label>
-            <span class="lb-r" id="ls-boss-count">...</span>
-          </div>
-          <div class="ls-sec" id="sec-bosses">
+          <div class="ls-sec shut" id="sec-bosses">
             <div class="ls-bosses" id="ls-bosses"></div>
           </div>
-
-          <div class="ls-bar mini">
-            <span class="lb-t">Minibosses</span>
-            <button class="ls-btn sm" data-sec="sec-minibosses" onclick="toggleSection('sec-minibosses')">Hide</button>
-            <label class="ls-only"><input type="checkbox" id="ls-mini-beaten" checked
-                   onchange="filterBosses()"> beaten only</label>
-            <span class="lb-r" id="ls-mini-count">...</span>
-          </div>
-          <div class="ls-sec" id="sec-minibosses">
+          <div class="ls-sec shut" id="sec-minibosses">
             <div class="ls-bosses mini" id="ls-minibosses"></div>
           </div>
-
-          <div class="ls-bar fish">
-            <span class="lb-t">Legendary Fish</span>
-            <button class="ls-btn sm" data-sec="sec-fish" onclick="toggleSection('sec-fish')">Hide</button>
-            <label class="ls-only"><input type="checkbox" id="ls-fish-caught"
-                   onchange="filterFish()"> caught only</label>
-            <span class="lb-r" id="ls-fish-count">&mdash;</span>
-          </div>
-          <div class="ls-sec" id="sec-fish">
-            <div class="ls-fish" id="ls-fish"></div>
-          </div>
-
 
         </div>
         {% endif %}
@@ -255,34 +170,11 @@
         <div class="disc-info">
           <div class="disc-title" id="disc-title">...</div>
           <div class="disc-desc" id="disc-desc"></div>
-          <div class="disc-meters">
-            <div class="ps-row">
-              <span class="ps-nm">SCREENSHOTS</span>
-              <div class="ps-prog"><div class="ps-fill" id="meter-shots" style="width:0%"></div></div>
-              <span class="ps-pc" id="count-shots">0</span>
-            </div>
-            <div class="ps-row ps-dim">
-              <span class="ps-nm">CLIPS</span>
-              <div class="ps-prog"><div class="ps-fill" id="meter-clips" style="width:0%"></div></div>
-              <span class="ps-pc" id="count-clips">0</span>
-            </div>
-          </div>
-
-          <div class="disc-menu">
-            <button class="disc-entry" id="entry-roster" onclick="toggleRoster()">
-              <span class="icon triangle"></span>
-              <span class="de-text">
-                <b>ROSTER</b><i>Who was on the server, and what they carried</i>
-              </span>
-              <span class="de-count" id="entry-roster-count">0</span>
-            </button>
-            <button class="disc-entry" id="entry-gallery" onclick="toggleMedia()">
-              <span class="icon x"></span>
-              <span class="de-text">
-                <b>GALLERY</b><i>Screenshots and clips from the season</i>
-              </span>
-              <span class="de-count" id="entry-gallery-count">0</span>
-            </button>
+          <div class="ls-tabs season-tabs" role="tablist">
+            <button class="ls-tab on" role="tab" id="entry-gallery" onclick="showSeasonTab('gallery')">
+              Gallery <span class="lt-n" id="entry-gallery-count">0</span></button>
+            <button class="ls-tab" role="tab" id="entry-roster" onclick="showSeasonTab('roster')">
+              Players <span class="lt-n" id="entry-roster-count">0</span></button>
           </div>
 
           <div class="roster" id="roster"></div>
@@ -290,11 +182,11 @@
           <div class="disc-media" id="disc-media">
             <div class="media-tabs">
               <button class="media-tab active" data-tab="screenshots" onclick="switchTab('screenshots')">
-                <span class="icon l2"></span><span class="lbl">SCREENSHOTS</span>
+                <span class="lbl">SCREENSHOTS</span>
                 <span class="tab-count" id="tab-count-shots">0</span>
               </button>
-              <button class="media-tab" data-tab="videos" onclick="switchTab('videos')">
-                <span class="icon r2"></span><span class="lbl">CLIPS</span>
+              <button class="media-tab" id="tab-clips" data-tab="videos" onclick="switchTab('videos')">
+                <span class="lbl">CLIPS</span>
                 <span class="tab-count" id="tab-count-clips">0</span>
               </button>
             </div>
@@ -307,41 +199,6 @@
         </div>
       </div>
 
-      <div class="console-deck">
-
-        <div class="deck-cluster">
-          <div class="deck-shoulders">
-            <button class="icon l2 clickable" onclick="switchTab('screenshots')" title="Screenshots"></button>
-            <button class="icon l1 clickable" onclick="shoulder(-1)" title="Previous disc"></button>
-          </div>
-          <div class="dpad">
-            <button class="icon arrow-up clickable"    onclick="jumpTop()"    title="Top"></button>
-            <button class="icon arrow-left clickable"  onclick="discStep(-1)" title="Previous disc"></button>
-            <div class="dpad-hub"></div>
-            <button class="icon arrow-right clickable" onclick="discStep(1)"  title="Next disc"></button>
-            <button class="icon arrow-down clickable"  onclick="jumpMedia()"  title="Jump to media"></button>
-          </div>
-        </div>
-
-        <div class="deck-mid">
-          <a class="icon select select-label clickable" href="{% url 'index' %}" title="Back to codec"></a>
-          <button class="icon start start-label clickable" onclick="loadDisc()" title="Load this disc"></button>
-        </div>
-
-        <div class="deck-cluster">
-          <div class="deck-shoulders">
-            <button class="icon r2 clickable" onclick="switchTab('videos')" title="Clips"></button>
-            <button class="icon r1 clickable" onclick="shoulder(1)" title="Next disc"></button>
-          </div>
-          <div class="face">
-            <button class="icon triangle clickable" onclick="toggleRoster()" title="Roster"></button>
-            <button class="icon square clickable"   onclick="cycleTab()" title="Switch media"></button>
-            <button class="icon circle clickable"   onclick="psxBack()"  title="Back"></button>
-            <button class="icon x clickable"        onclick="loadDisc()" title="Load disc"></button>
-          </div>
-        </div>
-
-      </div>
     </div>
 
   </div>
@@ -431,7 +288,5 @@ const SEASONS = [
 
 <script type="module" src="{% stamped 'scripts/mcmodel.js' %}"></script>
 <script src="{% stamped 'scripts/minecraft.js' %}"></script>
-<script src="{% stamped 'scripts/forge.js' %}"></script>
-<script src="{% stamped 'scripts/enchant.js' %}"></script>
 </body>
 </html>

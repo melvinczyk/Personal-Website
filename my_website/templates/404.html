@@ -4,10 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="404 - Page Not Found">
-<title>404</title>
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex, nofollow">
+<title>Page not found</title>
+<link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 <link rel="stylesheet" href="{% stamped 'css/portfolio.css' %}">
 <link rel="stylesheet" href="{% stamped 'css/404.css' %}">
 </head>
@@ -16,58 +15,29 @@
 <div class="scanline"></div>
 
 <div id="screen">
+  <nav id="site-bar">
+    <a href="/" class="sb-home">NICK BURCZYK</a>
+    <span class="sb-sep">/</span>
+    <span class="sb-here">NOT FOUND</span>
+  </nav>
 
-  <div id="titlebar">
-    <div class="ttl">NICK BURCZYK — 404</div>
-    <div class="clk" id="clock">00:00:00</div>
-  </div>
-
-  <div id="main">
-    <div class="terminal-window">
-      <div class="win-bar">
-        <div class="dots">
-          <div class="dot dot-r"></div>
-          <div class="dot dot-y"></div>
-          <div class="dot dot-g"></div>
-        </div>
-        <span class="win-title">segfault — core dumped — pid 404</span>
+  <main class="nf">
+    <div class="nf-set" aria-hidden="true">
+      <div class="cx-portrait static"><div class="cx-noise"></div></div>
+      <div class="cx-device nf-device">
+        <div class="cx-freq"><span class="ghost">888.88</span><span id="freq-num">404.00</span></div>
       </div>
-
-      <div class="win-body">
-
-        <div class="err-num" id="errnum">404</div>
-        <div class="err-label">SEGMENTATION FAULT</div>
-
-        <hr class="divider">
-
-        <div id="kp-output"></div>
-
-        <div class="tw-wrap">
-          <div class="tw-msg" id="tw-msg"></div>
-        </div>
-
-        <div class="actions">
-          <a href="/" class="btn-home">↩ &nbsp;cd ~/ &nbsp;&nbsp;return home</a>
-          <button class="btn-back" onclick="history.back()">← &nbsp;go back</button>
-        </div>
-
-        <div class="bottom-prompt">
-          <span style="color:var(--mgs-border)">nick@burczyk:~$</span>
-          <span style="color:var(--mgs-teal)">find . -name "this_page"</span>
-          <span class="cursor"></span>
-        </div>
-
-      </div>
+      <div class="cx-portrait static"><div class="cx-noise"></div></div>
     </div>
-  </div>
 
-  <div id="statusbar">
-    <span><span style="color:var(--alert-red)">✖ EXIT CODE 404</span> &nbsp;·&nbsp; page not found</span>
-    <span>UTF-8 &nbsp;·&nbsp; LF &nbsp;·&nbsp; <span id="sclk">00:00:00</span></span>
-  </div>
+    <h1 class="nf-title">NO RESPONSE</h1>
+    <p class="nf-text">Nothing on this frequency.</p>
 
+    <div class="nf-actions">
+      <a href="/" class="ps-btn ps-sm"><span class="ps-lbl">BACK TO THE CODEC</span></a>
+      <button type="button" class="ps-btn ps-sm ps-alt" onclick="history.back()"><span class="ps-lbl">GO BACK</span></button>
+    </div>
+  </main>
 </div>
-
-<script src="{% stamped 'scripts/404.js' %}"></script>
 </body>
 </html>
