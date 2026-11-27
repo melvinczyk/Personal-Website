@@ -26,11 +26,13 @@ REF_TEXT = ("Tomorrow, the president and his Russian counterpart are scheduled t
 # Spoken text uses phonetic respellings (Burcheck, Tie-tans, Sandeea) so the
 # clone pronounces things right; the on-screen text keeps real spellings.
 LINES = {
-    "c0_l0": "Snake, this is Nick Burcheck. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a Titans software R and D intern.",
+    "c0_l0": "Snake, this is Nick Burcheck. He's a software developer and A I integration engineer at Viper Imaging.",
     "c0_l1": "Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list.",
     "c1_l0": "His operation records. Twelve declassified projects on file.",
     # portfolio.js asks for c1_l0_<count> whenever the count is not twelve
+    "c1_l0_13": "His operation records. Thirteen declassified projects on file.",
     "c1_l0_14": "His operation records. Fourteen declassified projects on file.",
+    "c1_l0_15": "His operation records. Fifteen declassified projects on file.",
     "c1_l1": "For the details, get Ottacon on the line. Hal's been cataloguing all of it.",
     "c1_l2": "He's already listening.",
     "c2_l0": "He also records as Zero Barbecue. A one-man operation.",
@@ -43,15 +45,16 @@ LINES = {
 # (a TTS can't be trusted to hold a beat). Generators that support it should
 # prefer this over the flat LINES text for these keys.
 SPLIT_LINES = {
+    "c0_l0": {"parts": ["Snake, this is Nick Burcheck.",
+                         "He's a software developer and A I integration engineer at Viper Imaging."], "gap_ms": 430},
     "c0_l1": {"parts": ["Everything we've gathered on him is laid out below.",
                          "We've also attached his direct links.",
                          "For anything specific, tune through the other channels, or open MEMORY for the list."], "gap_ms": 430},
     "c1_l0": {"parts": ["His operation records.", "Twelve declassified projects on file."], "gap_ms": 450},
+    "c1_l0_13": {"parts": ["His operation records.", "Thirteen declassified projects on file."], "gap_ms": 450},
     "c1_l0_14": {"parts": ["His operation records.", "Fourteen declassified projects on file."], "gap_ms": 450},
-    "c1_l1": {"parts": ["For the details, get Ottacon on the line.",
-                         "Hal's been cataloguing all of it."], "gap_ms": 420},
+    "c1_l0_15": {"parts": ["His operation records.", "Fifteen declassified projects on file."], "gap_ms": 450},
     "c2_l0": {"parts": ["He also records as Zero Barbecue.", "A one-man operation."], "gap_ms": 420},
-    "c2_l1": {"parts": ["First single's out now.", "Listen below."], "gap_ms": 450},
     "c3_p0": {"parts": ["A private Minecraft world: custom modpack, custom server.",
                          "Five seasons on record."], "gap_ms": 450},
     "c3_p1": {"parts": ["We've opened a portal into it.",
@@ -78,7 +81,8 @@ SNAKE_LINES = {
 }
 
 SNAKE_SPLIT_LINES = {
-    "snake_hal": {"parts": ["Hal Emmerick.", "Been a while since Shadow Moses.",
+    # the name rides with the next sentence: on its own the clone garbles it
+    "snake_hal": {"parts": ["Hal Emmerick. Been a while since Shadow Moses.",
                              "Patch him in."], "gap_ms": 380},
     "snake_look": {"parts": ["Alright.", "Let's take a look, then."], "gap_ms": 380},
 }
@@ -100,111 +104,88 @@ OTACON_SPLIT_LINES = {
 }
 
 # ── Per-project briefings ──
-# Clicking a project plays: Snake asks, then Otacon explains it (scientific,
-# two lines, with the tech/software/usage). Spoken text below uses phonetic
+# Clicking a project plays: Snake asks, then Otacon answers in two short lines:
+# what it is, then the one thing worth knowing. Short sentences with few commas;
+# the clone rushes through long clauses. Spoken text below uses phonetic
 # respellings and spelled-out acronyms so the clone pronounces them; the
-# on-screen text (portfolio.js CX_PROJECT_DIALOGUE) keeps the real spellings.
+# on-screen text (portfolio.js PROJECTS) keeps the real spellings.
 PROJECT_DIALOGUE = {
     "oculosaurus": {
-        "snake": "Oculosaurus. What am I looking at?",
-        "otacon": [
-            "A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pie headset triangulate depth in real time, the way your own eyes judge distance.",
-            "It runs Yolo object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way.",
-        ],
+        "snake": "Ockyulo-saurus. What am I looking at?",
+        "otacon": ["Goggles for the visually impaired. Two cameras judge depth the way your eyes do.",
+                   "When something gets close, a phone alert warns you. It took first place."],
+    },
+    "gvoice": {
+        "snake": "Gee Voice. What does it do?",
+        "otacon": ["It reads Minecraft chat out loud. Every player gets their own voice.",
+                   "There are eighteen thousand to choose from. It all runs in one Docker container."],
+    },
+    "albumdl": {
+        "snake": "Album D L. What's this one for?",
+        "otacon": ["It downloads whole albums. Covers, tags and lyrics are filled in for you.",
+                   "It runs on his home server. That's where his music library lives."],
+    },
+    "homelab": {
+        "snake": "A home lab. What's he running?",
+        "otacon": ["An old office PC, rebuilt as a Linux server. It routes the whole house.",
+                   "It blocks ads, streams his media, and keeps the music library."],
+    },
+    "groidberbium": {
+        "snake": "Groid-burbium. Sounds unstable.",
+        "otacon": ["It's actually very stable. It makes Minecraft draw faster.",
+                   "With two hundred forty mods, a MacBook Air still runs at two hundred fifty frames per second."],
     },
     "memprobe": {
         "snake": "Memprobe. Break it down for me.",
-        "otacon": [
-            "It's a firmware forensics tool. You point it at a compiled elf binary and it parses the dwarf debug data to map exactly where every byte of flash and RAM goes.",
-            "It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your C I when the firmware outgrows its budget.",
-        ],
+        "otacon": ["It reads compiled firmware and shows where every byte of memory goes.",
+                   "If a build grows too big, it stops it before it ships."],
     },
     "echo-scout": {
-        "snake": "Echo Scout. This one's yours in the field.",
-        "otacon": [
-            "A handheld scanner built on an E S P thirty-two. Millimeter wave radar sweeps an eighty degree arc to detect people in the dark, even behind thin cover.",
-            "An eight by eight time of flight sensor rebuilds the room as a 3D point cloud, while the inertial sensor keeps a live compass on the touchscreen. Written in C plus plus.",
-        ],
+        "snake": "Echo Scout. What does it pick up?",
+        "otacon": ["People. Its radar can find someone in the dark.",
+                   "A depth sensor maps the room in 3D at the same time."],
     },
     "song2vec": {
         "snake": "Song to Vec. What's the science here?",
-        "otacon": [
-            "It takes word embedding theory and applies it to music. A skip gram model learns vectors for genres, tags, and songs in one shared latent space.",
-            "A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with principal component analysis.",
-        ],
+        "otacon": ["It places every song on a map. Songs that feel alike land close together.",
+                   "Then it paints each one as a blob of color."],
     },
     "bird-classifier": {
         "snake": "Backyard Bird Classifier. Explain.",
-        "otacon": [
-            "A convolutional neural network trained to identify thirty Alabama bird species purely from their calls.",
-            "It turns each recording into a mel spectrogram, an image of sound, then classifies it. Wrapped in a Jango app that returns the top five guesses and the spectrogram itself.",
-        ],
+        "otacon": ["Play it a bird call and it names the species.",
+                   "It knows thirty Alabama birds. You can try it below."],
     },
     "personal-website": {
         "snake": "His personal site. Anything to it?",
-        "otacon": [
-            "You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text to speech model on a cloud G P U, then computed our mouth movements straight off the waveform.",
-            "The interface is the real thing too. That's the actual M G S one bitmap font off the disc, and every menu panel is a Playstation component borrowed from an open source stylesheet called P S one.",
-            "It even serves live machine learning inference, hosting the bird classifier model right alongside the portfolio.",
-        ],
+        "otacon": ["You're inside it right now. Our voices were cloned with A I.",
+                   "Even our mouths move with the audio."],
     },
     "waste-drone": {
         "snake": "Waste Detection Drone. Give me the specs.",
-        "otacon": [
-            "An autonomous quadcopter for environmental monitoring. A custom Yolo vee five model, trained on annotated waste imagery, spots litter from the air.",
-            "It flies programmatically through the Tello software kit, logging telemetry and tagging every detection for spatial analysis.",
-        ],
+        "otacon": ["A small drone that flies itself and looks for trash.",
+                   "A vision model marks every piece it finds."],
     },
     # "2": the app was rewritten, and the first take describes the old one.
     # portfolio.js sets voice:'modpack-updater2' on the project to match.
     "modpack-updater2": {
-        "snake": "Modpack Updater. What's it do?",
-        "otacon": [
-            "It keeps everyone's Minecraft modpack identical to the server. It hashes every tracked file, then downloads, replaces or deletes whatever drifted. Worlds, screenshots and settings are never touched.",
-            "Rebuilt from the ground up in Java. Packs live in Backblaze B two cloud storage, admins publish versioned changes with a changelog, and the app even updates itself on launch.",
-        ],
-    },
-    "gvoice": {
-        "snake": "G Voice. Another radio?",
-        "otacon": [
-            "Closer than you'd think. It's the speech server behind Groid Voice, a Minecraft mod that reads every chat message aloud through proximity voice chat.",
-            "Two stages. Kokoro turns the text into speech, then an R V C model repaints the timbre into any of eighteen thousand voices. It all ships as one Docker container, so it deploys to a local G P U or Cloud Run.",
-        ],
-    },
-    "groidberbium": {
-        "snake": "Groid berbium. Sounds unstable.",
-        "otacon": [
-            "It's the opposite. A fork of Ember bium, the Forge rendering engine descended from Sodium, rebuilt to draw Minecraft faster.",
-            "About thirty percent more frames on average, and it holds sixty at a sixty-four chunk render distance. On a laptop, Snake.",
-        ],
+        "snake": "Groid Pack Updater. What's it do?",
+        "otacon": ["It keeps everyone's mods matched to the server. One click and you're current.",
+                   "Your worlds and settings are never touched."],
     },
     "visaudio": {
-        "snake": "Vis Audio. Run it down.",
-        "otacon": [
-            "An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built in downloader.",
-            "It visualizes every file as a waveform and a mel spectrogram through Librosa, wrapped in a Pie Q T interface. Handles nearly every codec you'd throw at it.",
-        ],
+        "snake": "Vizz Audio. Run it down.",
+        "otacon": ["An audio toolkit. It converts files and cleans out noise.",
+                   "It also draws each file as a waveform."],
     },
     "born-in-spellbooks": {
         "snake": "Born in Spellbooks. A game mod?",
-        "otacon": [
-            "A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch.",
-            "Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep.",
-        ],
-    },
-    "fretwatch": {
-        "snake": "Fretwatch. What's the readout?",
-        "otacon": [
-            "Real time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play.",
-            "Librosa extracts the spectral features while Open C V tracks the fretboard frame by frame. Still in development.",
-        ],
+        "otacon": ["A Minecraft mod. It joins two magic mods into one.",
+                   "Seventeen new spells, all written from scratch."],
     },
     "minecraft-server": {
         "snake": "The Minecraft server. That's infrastructure.",
-        "otacon": [
-            "A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand built data packs.",
-            "The data packs are scripted in Jason and M C script to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management.",
-        ],
+        "otacon": ["A private world with its own modpack. Five seasons so far.",
+                   "The portal shows who's online right now."],
     },
 }
 
@@ -219,9 +200,9 @@ def _sentence_split(text, gap_ms=380):
 # Fold the per-project briefings into the flat line/split tables by voice.
 for _pid, _d in PROJECT_DIALOGUE.items():
     _sk = f"sk_{_pid}"
+    # Snake's question is rendered whole. Split, the project name became a
+    # one-word sentence of its own, and the clone shouts those.
     SNAKE_LINES[_sk] = _d["snake"]
-    if (_sp := _sentence_split(_d["snake"])):
-        SNAKE_SPLIT_LINES[_sk] = _sp
     for _i, _line in enumerate(_d["otacon"]):
         _ok = f"ot_{_pid}_{_i}"
         OTACON_LINES[_ok] = _line

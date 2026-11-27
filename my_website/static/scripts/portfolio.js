@@ -21,150 +21,142 @@ const ICONS = {
   learn:  '<rect x="6" y="6" width="12" height="12"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/>',
   cube:   '<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
+  nodes:  '<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 12h3M14 11l3.5-3.5M14 13l3.5 3.5"/>',
+  tool:   '<rect x="3" y="4" width="18" height="16"/><path d="M7 9l3 3-3 3M12 15h5"/>',
+  server: '<rect x="4" y="3" width="16" height="7"/><rect x="4" y="14" width="16" height="7"/><path d="M8 6.5h2M8 17.5h2"/>',
+  globe:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
 };
 const icon = (name, size = 18) =>
   `<svg class="ic" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">${ICONS[name]}</svg>`;
 
-// The personnel file at 140.85: where he is posted, then what he is into.
+// The profile at 140.85: where he works, then what he is into.
 const BIO_POSTS = [
-  ['work',   'Software Developer II', 'Viper Imaging'],
-  ['lab',    'Year-Round Intern',     'Sandia National Labs'],
-  ['school', 'MSAI',                  'UAB · Spring 2027'],
+  ['work',   'Viper Imaging',        'Software developer, AI integration'],
+  ['lab',    'Sandia National Labs', 'Part time'],
+  ['school', 'UAB',                  'MS in AI, Spring 2027'],
 ];
 const BIO_TRACKS = [
-  ['learn',  'LEARNING',  ['High-performance AI integration', 'Dockerized deployable software']],
-  ['target', 'INTERESTS', ['Distributed systems', 'Hardware + AI integration', 'Docker']],
-  ['cube',   'GAMING',    ['Minecraft modding', 'Custom server', 'Forge mods']],
+  ['learn',  'LEARNING',  ['Dockerized deployable software', 'Linux hosting', 'Agentic AI integration']],
+  ['target', 'INTERESTS', ['Distributed systems', 'Networking', 'AI integration', 'Docker']],
 ];
 
-const TAG_CLASS = {
-  'LIVE':'live', 'IN DEV':'dev', 'ONGOING':'ongoing', '1ST PLACE':'award', 'ML/DL':'ai',
-  'EMBEDDED':'embedded', 'HARDWARE':'hardware', 'NETWORKING':'networking',
+// What kind of thing each project is. The kind gives a project its colour, so
+// the grid reads by kind at a glance instead of as one wall of green.
+const KINDS = {
+  'HARDWARE':       { color:'#ff9f43', icon:'learn' },
+  'AI / ML':        { color:'#b48cff', icon:'nodes' },
+  'TOOLS':          { color:'#ff6f91', icon:'tool' },
+  'INFRASTRUCTURE': { color:'#ffd84d', icon:'server' },
+  'MINECRAFT':      { color:'#59c2ff', icon:'cube' },
+  'WEB':            { color:'#63e690', icon:'globe' },
 };
 const GH = 'https://github.com/melvinczyk/';
+const IMG = name => `${STATIC_URLS.projImg}/${name}`;
 
-// One record per project: a one-line `sum` and three `points`, never a
-// paragraph. `ask` is Snake's question and `tell` Otacon's answer; their voice
-// clips are sk_<voice>.m4a and ot_<voice>_<n>.m4a (see
-// tools/generate_codec_voices.py), `voice` defaulting to the id. A line whose
-// clip does not exist yet plays as text. A project with no `link` is ours and
-// stays unlinked.
+// One record per project. `sum` says what it is in one sentence; `note` is the
+// one thing worth knowing beyond that. `ask` is Snake's question and `tell`
+// Otacon's answer, kept short; their clips are sk_<voice>.m4a and
+// ot_<voice>_<n>.m4a (tools/generate_codec_voices.py), `voice` defaulting to
+// the id. A project with no `link` is ours and stays unlinked.
 const PROJECTS = [
-  { id:'oculosaurus', name:'OCULOSAURUS', tags:['1ST PLACE','HARDWARE','NETWORKING'],
+  { id:'oculosaurus', name:'OCULOSAURUS', kind:'HARDWARE', status:'1ST PLACE',
     tech:'Python / OpenCV / Raspberry Pi / YOLO', link:GH+'StereoCamera-DepthObjectEstimator',
-    img:GH+'StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/example.gif',
-    img2:GH+'StereoCamera-DepthObjectEstimator/raw/main/assets/presentation/point_cloud.png', thumb:'img2',
-    sum:'Stereo-vision goggles that give visually impaired users real-time depth awareness.',
-    points:['Raspberry Pi headset, cloud compute, phone alerts', 'Live 3D point cloud and proximity warnings', '1st place, Senior Capstone competition'],
+    img:IMG('oculosaurus_example.webp'), img2:IMG('oculosaurus_point_cloud.webp'), thumb:'img2',
+    sum:'Stereo-camera goggles that warn visually impaired users about obstacles.',
+    note:'First place at the senior capstone competition.',
     ask:"Oculosaurus. What am I looking at?",
-    tell:["A stereo vision rig for the visually impaired. Two cameras on a Raspberry Pi headset triangulate depth in real time, the way your own eyes judge distance.",
-          "It runs YOLO object recognition and streams a live 3D point cloud to the cloud, firing proximity alerts to your phone. Took first place, by the way."] },
-  { id:'gvoice', name:'GVOICE', tags:['ML/DL','NETWORKING','IN DEV'],
-    tech:'Python / FastAPI / Docker / Kokoro TTS / RVC / Cloud Run', link:GH+'GVoice',
-    sum:'Dockerized speech server that gives every Minecraft chat message an AI voice.',
-    points:['Kokoro text-to-speech into RVC voice conversion', '~18,000 pretrained voices to pick from', 'Deploys to a local GPU or Cloud Run'],
-    ask:"GVoice. Another radio?",
-    tell:["Closer than you'd think. It's the speech server behind GroidVoice, a Minecraft mod that reads every chat message aloud through proximity voice chat.",
-          "Two stages. Kokoro turns the text into speech, then an RVC model repaints the timbre into any of eighteen thousand voices. It all ships as one Docker container, so it deploys to a local GPU or Cloud Run."] },
-  { id:'groidberbium', name:'GROIDBERBIUM', tags:['ONGOING'],
-    tech:'Java / Minecraft Forge 1.20.1 / OpenGL / Gradle',
-    sum:'Our fork of the Emberbium rendering engine for Forge, tuned for more frames.',
-    points:['~30% more FPS on average, up to 60%', '250 FPS with ~240 mods on an M2 Air', 'A smooth 60 at 64-chunk render distance'],
-    ask:"Groidberbium. Sounds unstable.",
-    tell:["It's the opposite. A fork of Emberbium, the Forge rendering engine descended from Sodium, rebuilt to draw Minecraft faster.",
-          "About thirty percent more frames on average, and it holds sixty at a sixty-four chunk render distance. On a laptop, Snake."] },
-  { id:'memprobe', name:'MEMPROBE', tags:['EMBEDDED','IN DEV'],
-    tech:'Python / pyelftools / ELF + DWARF / pytest', link:GH+'memprobe/tree/master',
-    sum:'Firmware memory analyzer that shows exactly where flash and RAM go.',
-    points:['Parses ELF/DWARF and GCC/IAR linker maps', 'Per-symbol attribution, stack usage, dead code', 'Size budgets that fail CI'],
+    tell:["Goggles for the visually impaired. Two cameras judge depth the way your eyes do.",
+          "When something gets close, a phone alert warns you. It took first place."] },
+  { id:'gvoice', name:'GVOICE', kind:'AI / ML', also:['TOOLS'], status:'IN DEV',
+    tech:'Python / FastAPI / Docker / Kokoro TTS / RVC', link:GH+'GVoice',
+    sum:'A speech server that reads Minecraft chat aloud in AI voices.',
+    note:'Each player picks from about 18,000 voices.',
+    ask:"GVoice. What does it do?",
+    tell:["It reads Minecraft chat out loud. Every player gets their own voice.",
+          "There are eighteen thousand to choose from. It all runs in one Docker container."] },
+  { id:'albumdl', name:'ALBUMDL', kind:'TOOLS', status:'LIVE',
+    tech:'Python / FastAPI / yt-dlp / MusicBrainz / Docker', link:GH+'AlbumDL',
+    img:GH+'AlbumDL/raw/master/docs/banner.gif',
+    sum:'A self-hosted app that downloads whole albums as tagged MP3s.',
+    note:'Covers, tags and lyrics are filled in automatically.',
+    ask:"AlbumDL. What's this one for?",
+    tell:["It downloads whole albums. Covers, tags and lyrics are filled in for you.",
+          "It runs on his home server. That's where his music library lives."] },
+  { id:'echo-scout', name:'ECHO SCOUT', kind:'HARDWARE',
+    tech:'C++ / ESP32-S3 / mmWave radar / ToF', link:GH+'Echo-Scout',
+    img:IMG('echo_scout_logo.gif'), pixel:true,
+    sum:'A handheld scanner that finds people with radar and maps rooms in 3D.',
+    ask:"Echo Scout. What does it pick up?",
+    tell:["People. Its radar can find someone in the dark.",
+          "A depth sensor maps the room in 3D at the same time."] },
+  { id:'memprobe', name:'MEMPROBE', kind:'TOOLS', status:'IN DEV',
+    tech:'Python / pyelftools / ELF + DWARF', link:GH+'memprobe/tree/master',
+    sum:'Shows exactly where a firmware build spends its flash and RAM.',
+    note:'Fails CI when firmware outgrows its size budget.',
     ask:"Memprobe. Break it down for me.",
-    tell:["It's a firmware forensics tool. You point it at a compiled ELF binary and it parses the DWARF debug data to map exactly where every byte of flash and RAM goes.",
-          "It's fully open source now. A Python package that flags dead code, measures stack usage, and diffs builds, then fails your CI when the firmware outgrows its budget."] },
-  { id:'echo-scout', name:'ECHO SCOUT', tags:['EMBEDDED','HARDWARE','NETWORKING'],
-    tech:'C++ / ESP32-S3 / PlatformIO / LVGL / mmWave / ToF', link:GH+'Heartbeat-Sensor',
-    img:'https://store.freenove.com/cdn/shop/files/FNK0104B.PT02.jpg?v=1758974333&width=1946',
-    sum:'Handheld scanner that detects people and maps rooms in real time.',
-    points:['mmWave radar with an 80° field of view', '8x8 ToF sensor builds a 3D point cloud', 'IMU compass on a 2.8" touchscreen'],
-    ask:"Echo Scout. This one's yours in the field.",
-    tell:["A handheld scanner built on an ESP32. Millimeter-wave radar sweeps an 80 degree arc to detect people in the dark, even behind thin cover.",
-          "An 8x8 time-of-flight sensor rebuilds the room as a 3D point cloud, while the IMU keeps a live compass on the touchscreen. Written in C++."] },
-  { id:'song2vec', name:'SONG2VEC', tags:['ML/DL','LIVE'],
-    tech:'Python / PyTorch / VAE / PCA / scikit-learn', link:GH+'Song2Vec',
+    tell:["It reads compiled firmware and shows where every byte of memory goes.",
+          "If a build grows too big, it stops it before it ships."] },
+  { id:'homelab', name:'HOMELAB', kind:'INFRASTRUCTURE', status:'LIVE', noRepo:true,
+    tech:'Ubuntu Server / Docker / Pi-hole / Jellyfin / Tailscale',
+    sum:'A Dell OptiPlex 7080 rebuilt as my Ubuntu home server and router.',
+    note:'Runs Pi-hole, Jellyfin, Tailscale, the music library and AlbumDL.',
+    ask:"A homelab. What's he running?",
+    tell:["An old office PC, rebuilt as a Linux server. It routes the whole house.",
+          "It blocks ads, streams his media, and keeps the music library."] },
+  { id:'song2vec', name:'SONG2VEC', kind:'AI / ML',
+    tech:'Python / PyTorch / VAE / PCA', link:GH+'Song2Vec',
     img:GH+'Song2Vec/raw/main/outputs/multi_blobs.png',
     img2:GH+'Song2Vec/raw/main/outputs/comparisons/latent_path_Bossa_Antigua_to_Player_One.png',
-    sum:'Embeds songs, genres and tags in one latent space, then paints each song as a colour blob.',
-    points:['Skip-gram embeddings and a 16-dimension VAE', '203K songs, 1,305 genres, 985 tags', 'PCA maps vectors to colour and layout'],
+    sum:'Maps songs by how they sound, then paints each one as a colour blob.',
     ask:"Song2Vec. What's the science here?",
-    tell:["It takes word-embedding theory and applies it to music. A skip-gram model learns vectors for genres, tags, and songs in one shared latent space.",
-          "A variational autoencoder compresses each track into sixteen dimensions and paints a color blob from its mood. Built in PyTorch, projecting over two thousand vectors with PCA."] },
-  { id:'bird-classifier', name:'BACKYARD BIRD CLASSIFIER', tags:['ML/DL','LIVE'],
-    tech:'Python / CNN / Django / mel-spectrogram', link:GH+'Bird-Classifier',
+    tell:["It places every song on a map. Songs that feel alike land close together.",
+          "Then it paints each one as a blob of colour."] },
+  { id:'modpack-updater', name:'GROIDPACK UPDATER', kind:'MINECRAFT', also:['TOOLS'], status:'LIVE',
+    tech:'Java 17 / Swing / Backblaze B2', link:GH+'ModpackUpdater',
+    img:IMG('groidpack_updater_logo.gif'), pixel:true,
+    sum:"A desktop app that keeps every player's modpack matched to the server.",
+    note:'Worlds, screenshots and settings are never touched.',
+    ask:"GroidPack Updater. What's it do?",
+    tell:["It keeps everyone's mods matched to the server. One click and you're current.",
+          "Your worlds and settings are never touched."] },
+  { id:'groidberbium', name:'GROIDBERBIUM', kind:'MINECRAFT', status:'IN DEV',
+    tech:'Java / Minecraft Forge 1.20.1 / OpenGL', link:GH+'Groidberbium',
+    img:IMG('groidberbium_logo.gif'), pixel:true,
+    sum:'My fork of the Emberbium renderer that makes heavy modpacks run faster.',
+    note:'About 30% more FPS on average.',
+    ask:"Groidberbium. Sounds unstable.",
+    tell:["It's actually very stable. It makes Minecraft draw faster.",
+          "With two hundred forty mods, a MacBook Air still runs at two hundred fifty frames per second."] },
+  { id:'personal-website', name:'NICHOLASBURCZYK.COM', kind:'WEB', status:'LIVE',
+    tech:'Django / Qwen3-TTS / Modal / Web Audio', link:GH+'Personal-Website',
+    img:IMG('site_icon.png'), pixel:true,
+    sum:'This site: a codec screen with AI-cloned character voices.',
+    ask:"His personal site. Anything to it?",
+    tell:["You're inside it right now. My voice was cloned with AI.",
+          "Even my mouth moves with the audio."] },
+  { id:'bird-classifier', name:'BACKYARD BIRD CLASSIFIER', kind:'AI / ML', status:'LIVE',
+    tech:'Python / CNN / Django', link:GH+'Bird-Classifier',
     img:'https://statesymbolsusa.org/sites/default/files/primary-images/NorthernFlickerMaleALbirdsymbol.jpg',
     img2:GH+'Bird-classifier/blob/main/final_matrix.png?raw=true',
-    sum:'A CNN that identifies 30 Alabama bird species from their calls.',
-    points:['Classifies mel-spectrograms of the audio', 'Upload, record, or pull a sample call', 'Returns the top five guesses and the spectrogram'],
+    sum:'Names 30 Alabama bird species from a recording of their call.',
     ask:"Backyard Bird Classifier. Explain.",
-    tell:["A convolutional neural network trained to identify thirty Alabama bird species purely from their calls.",
-          "It turns each recording into a mel-spectrogram, an image of sound, then classifies it. Wrapped in a Django app that returns the top five guesses and the spectrogram itself."] },
-  { id:'personal-website', name:'NICHOLASBURCZYK.COM', tags:['LIVE'],
-    tech:'Django / Python / Qwen3-TTS / Web Audio API', link:GH+'Personal-Website',
-    img:'https://www.svgrepo.com/show/353657/django-icon.svg',
-    sum:'This site: an MGS codec with AI-cloned character voices.',
-    points:['Voices cloned with a TTS model on a cloud GPU', "Lip-sync computed from each clip's waveform", 'MGS1 font and PSone.css components'],
-    ask:"His personal site. Anything to it?",
-    tell:["You're standing in it, Snake. And these voices? They aren't recordings. He cloned all three of us with a text-to-speech model on a cloud GPU, then computed our mouth movements straight off the waveform.",
-          "The interface is the real thing too. That's the actual MGS1 bitmap font off the disc, and every menu panel is a PlayStation component borrowed from an open-source stylesheet called PSone.",
-          "It even serves live machine-learning inference, hosting the bird classifier model right alongside the portfolio."] },
-  { id:'waste-drone', name:'WASTE DETECTION DRONE', tags:['ML/DL','HARDWARE','NETWORKING'],
+    tell:["Play it a bird call and it names the species.",
+          "It knows thirty Alabama birds. You can try it below."] },
+  { id:'waste-drone', name:'WASTE DETECTION DRONE', kind:'HARDWARE', also:['AI / ML'],
     tech:'Python / YOLOv5 / Tello SDK', link:GH+'Waste-detection-drone',
     img:GH+'Waste-detection-drone/raw/main/images/Medium%20model%20frame.png',
     img2:GH+'Waste-detection-drone/raw/main/images/model_.gif',
-    sum:'Autonomous drone that spots litter from the air.',
-    points:['Custom-trained YOLOv5 detector', 'Programmatic flight through the Tello SDK', 'Telemetry logging and spatial tagging'],
+    sum:'A drone that flies itself and spots litter from the air.',
     ask:"Waste Detection Drone. Give me the specs.",
-    tell:["An autonomous quadcopter for environmental monitoring. A custom YOLOv5 model, trained on annotated waste imagery, spots litter from the air.",
-          "It flies programmatically through the Tello SDK, logging telemetry and tagging every detection for spatial analysis."] },
-  // voice 'modpack-updater2': the app was rewritten, so Otacon's old clips
-  // describe software that no longer exists. Snake's question still fits.
-  { id:'modpack-updater', name:'GROIDPACK UPDATER', tags:['NETWORKING','LIVE'], voice:'modpack-updater2', askVoice:'modpack-updater',
-    tech:'Java 17 / Swing + FlatLaf / Backblaze B2 / Gradle', link:GH+'ModpackUpdater',
-    sum:"Keeps every player's Minecraft modpack identical to the server.",
-    points:['Update and Repair by file hash', 'Admins publish versions with a changelog', 'Self-updating, on Windows and macOS'],
-    ask:"Modpack Updater. What's it do?",
-    tell:["It keeps everyone's Minecraft modpack identical to the server. It hashes every tracked file, then downloads, replaces or deletes whatever drifted. Worlds, screenshots and settings are never touched.",
-          "Rebuilt from the ground up in Java. Packs live in Backblaze B2 cloud storage, admins publish versioned changes with a changelog, and the app even updates itself on launch."] },
-  { id:'visaudio', name:'VISAUDIO', tags:[],
-    tech:'Python / librosa / PyQt', link:GH+'VisAudio',
-    img:GH+'VisAudio/blob/main/images/menu.png?raw=true',
-    sum:'Desktop workbench for converting, cleaning and visualising audio.',
-    points:['Format conversion and resampling', 'Noise reduction', 'Waveform and mel-spectrogram views'],
-    ask:"VisAudio. Run it down.",
-    tell:["An audio workbench in Python. Format conversion, bitrate resampling, spectral noise reduction, even a built-in downloader.",
-          "It visualizes every file as a waveform and a mel-spectrogram through librosa, wrapped in a PyQt interface. Handles nearly every codec you'd throw at it."] },
-  { id:'born-in-spellbooks', name:'BORN IN SPELLBOOKS MOD', tags:[],
-    tech:'Java / Minecraft Forge 1.20.1', link:GH+'Born_in_spellbooks',
-    img:'https://i.ibb.co/BPCKZhr/2024-10-07-09-39-39.png',
-    sum:"Forge mod bridging Iron's Spells & Spellbooks with Born In Chaos.",
-    points:['17+ custom spells', 'Custom rendering and layered animation', 'Three releases'],
-    ask:"Born in Spellbooks. A game mod?",
-    tell:["A compatibility mod for Minecraft Forge, bridging two combat systems into one. Seventeen spells coded from scratch.",
-          "Custom rendering, layered animation, and shared entity logic keep it stable. Open source, three alpha releases deep."] },
-  { id:'fretwatch', name:'FRETWATCH', tags:['IN DEV'],
-    tech:'Python / OpenCV / PyTorch / librosa', link:GH+'FretWatch',
-    img:'https://i.ibb.co/Wn3Jxd2/Screenshot-2024-10-02-at-5-08-12-PM.png',
-    sum:'Detects guitar notes and chords live from video and audio.',
-    points:['librosa pulls the audio features', 'OpenCV tracks the fretboard', 'Still in development'],
-    ask:"FretWatch. What's the readout?",
-    tell:["Real-time guitar transcription. It fuses two signals, the audio and the video of your hands, to detect notes and chords as you play.",
-          "librosa extracts the spectral features while OpenCV tracks the fretboard frame by frame. Still in development."] },
-  { id:'minecraft-server', name:'MINECRAFT SERVER & MODPACK', tags:['NETWORKING','ONGOING'],
-    tech:'Java / Python / Linux server admin', link:GH+'Datapacks',
-    img:'https://i.ibb.co/7KCwNZr/minecraft.png',
-    sum:'A long-running custom modpack and server, now on Season 5.',
-    points:['Curated mods, resource packs and data packs', 'Custom mobs, biomes, loot and structures', 'Linux server administration'],
+    tell:["A small drone that flies itself and looks for trash.",
+          "A vision model marks every piece it finds."] },
+  { id:'minecraft-server', name:'MINECRAFT SERVER', kind:'MINECRAFT', status:'LIVE',
+    tech:'Java / Python / Linux', link:GH+'Datapacks',
+    img:IMG('minecraft_server_logo.webp'), pixel:true,
+    sum:'My private server and custom modpack, now in its fifth season.',
     ask:"The Minecraft server. That's infrastructure.",
-    tell:["A fully custom world, administered on a Linux host. Curated mods, resource packs, and hand-built data packs.",
-          "The data packs are scripted in JSON and mcscript to generate custom mobs, biomes, loot tables, and structures. Ongoing network and config management."] },
+    tell:["A private world with its own modpack. Five seasons so far.",
+          "The portal shows who's online right now."] },
 ];
 const NUM_WORDS = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve',
                    'Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen','Twenty'];
@@ -209,12 +201,14 @@ function updateMuteBtn() {
   b.innerHTML = cxMuted ? CX_ICON_MUTED : CX_ICON_SOUND;
 }
 function initMuteButton() {
-  if (document.getElementById('cx-mute')) return;
-  const b = document.createElement('button');
-  b.id = 'cx-mute';
-  b.className = 'cx-mute';
+  let b = document.getElementById('cx-mute');
+  if (!b) {
+    b = document.createElement('button');
+    b.id = 'cx-mute';
+    b.className = 'cx-mute';
+    (document.body || document.documentElement).appendChild(b);
+  }
   b.onclick = (e) => { e.stopPropagation(); cxToggleMute(); };
-  (document.body || document.documentElement).appendChild(b);
   updateMuteBtn();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMuteButton);
@@ -347,15 +341,21 @@ async function enterSite() {
   const screen = document.getElementById('screen');
 
   btn.disabled = true;
-  btn.textContent = '[ CONNECTING... ]';
+  try { sessionStorage.setItem('cxEntered', '1'); } catch (e) {}
   cxUnlockVoice();   // prime the voice element while we're in a user gesture
   codec.classList.add('codec-entering');
 
-  // everything is fetched at once; only the ring has to land before it plays
-  const rest = Promise.all(['hover', 'click', 'menu', 'open'].map(k => loadSound(STATIC_URLS[k])));
+  // everything is fetched at once; only the ring has to land before it plays.
+  // The music is the one large file, so the codec opens without waiting on it
+  // and the track starts whenever it arrives.
+  loadSound(STATIC_URLS.menu).then(buf => {
+    bgMusic = buf;
+    if (screen.classList.contains('visible')) playBackgroundMusic();
+  });
+  const rest = Promise.all(['hover', 'click', 'open'].map(k => loadSound(STATIC_URLS[k])));
   playBuffer(await loadSound(STATIC_URLS.ring), 0.8);
   let openBuffer;
-  [hoverBuffer, clickBuffer, bgMusic, openBuffer] = await rest;
+  [hoverBuffer, clickBuffer, openBuffer] = await rest;
 
   setTimeout(() => {
     codec.classList.add('fade-out');
@@ -374,7 +374,12 @@ async function enterSite() {
 // ── the content panel under the codec ──────────────────────────────────────
 const out = document.getElementById('output');
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const tagsHtml = tags => tags.map(t => `<span class="tag ${TAG_CLASS[t] || ''}">${esc(t)}</span>`).join('');
+// LIVE and IN DEV say whether it runs today; an award outranks both.
+const statusHtml = st => st
+  ? `<span class="pj-status ${st === 'LIVE' ? 'live' : st === 'IN DEV' ? 'dev' : 'award'}">${esc(st)}</span>` : '';
+// `kind` sets the colour and icon; `also` lists any other kinds it counts as.
+const kindsOf = p => [p.kind, ...(p.also || [])];
+const kindStyle = p => `--accent:${KINDS[p.kind].color}`;
 const chipsHtml = items => `<div class="chips">${items.map(c => `<span>${esc(c)}</span>`).join('')}</div>`;
 const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -383,8 +388,11 @@ const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function cxShow(html, after, morph){
   const swap = () => { out.innerHTML = html; cxDecodeAll(); if (after) after(); };
   if (morph !== 'slide') delete document.documentElement.dataset.dir;
-  if (morph && document.startViewTransition && !REDUCED_MOTION) document.startViewTransition(swap);
-  else swap();
+  if (morph && document.startViewTransition && !REDUCED_MOTION) {
+    // a transition cut short by the next one (fast tuning) is expected, not an error
+    const vt = document.startViewTransition(swap);
+    [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p.catch(() => {}));
+  } else swap();
 }
 
 // Text that resolves out of noise, left to right, the way the codec tunes in.
@@ -403,12 +411,12 @@ function cxDecodeAll(){
 
 function aboutHtml(){
   return `<section class="ps-panel dossier">
-    <div class="ps-bar"><span class="ps-t">${icon('mark')}PERSONNEL FILE</span><span class="ps-r"><span class="ps-live"></span>ACTIVE · 140.85</span></div>
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}PROFILE</span><span class="ps-r">140.85</span></div>
     <div class="dos-id">
-      <div class="dos-badge" aria-hidden="true">NB</div>
+      <div class="dos-badge" aria-hidden="true"><img src="${IMG('site_icon.png')}" alt=""></div>
       <div>
         <div class="dos-name" data-decode>NICK BURCZYK</div>
-        <div class="dos-role">SOFTWARE DEVELOPER</div>
+        <div class="dos-role">SOFTWARE DEVELOPER / AI INTEGRATION ENGINEER</div>
       </div>
     </div>
     <div class="dos-posts">${BIO_POSTS.map(([ic, head, where], i) => `<div class="dos-post" style="--i:${i}">
@@ -424,7 +432,7 @@ function aboutHtml(){
 
 function musicHtml(){
   return `<section class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">${icon('mark')}ZERO BARBECUE</span><span class="ps-r">FIRST SINGLE</span></div>
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}ZERO BARBECUE</span><span class="ps-r">141.52</span></div>
     <div class="ps-body">
       <div class="ps-frame"><iframe src="https://open.spotify.com/embed/album/0i6OlE6MZoOlEIAwWcI5aL?utm_source=generator&theme=0" height="200" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Zero Barbecue on Spotify"></iframe></div>
       <div class="ps-btnrow">
@@ -439,21 +447,21 @@ function musicHtml(){
 const projectById = id => PROJECTS.find(p => p.id === id);
 
 function projectsHtml(heroId){
-  const filters = ['ALL', ...new Set(PROJECTS.flatMap(p => p.tags))];
+  const filters = ['ALL', ...Object.keys(KINDS).filter(k => PROJECTS.some(p => kindsOf(p).includes(k)))];
   return `<section class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">${icon('mark')}OPERATION RECORDS</span><span class="ps-r">${PROJECTS.length} DECLASSIFIED</span></div>
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}PROJECTS</span><span class="ps-r" id="pj-count">${PROJECTS.length} SHOWN</span></div>
     <div class="ps-body">
       <div class="pj-filter">${filters.map((f, i) =>
-        `<button class="tag ${TAG_CLASS[f] || ''}${i ? '' : ' on'}" onclick="cxFilterProjects(this)">${esc(f)}</button>`).join('')}</div>
+        `<button class="tag${i ? '' : ' on'}" aria-pressed="${i ? 'false' : 'true'}" style="${i ? `--accent:${KINDS[f].color}` : ''}" onclick="cxFilterProjects(this)">${esc(f)}</button>`).join('')}</div>
       <div class="pj-grid">${PROJECTS.map((p, i) => {
         const shot = p[p.thumb || 'img'];
-        return `<button class="pj-tile" data-tags="${esc(p.tags.join('|'))}" onclick="cxOpenProject('${p.id}', this)"
-            style="--i:${i}${p.id === heroId ? ';view-transition-name:pj-hero' : ''}">
-          ${shot ? `<img class="pj-shot" src="${shot}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-          <span class="pj-freq">141.${13 + i}</span>
+        return `<button class="pj-tile${p.pixel ? ' pixel' : ''}" data-kind="${esc(kindsOf(p).join('|'))}" onclick="cxOpenProject('${p.id}', this)"
+            style="--i:${i};${kindStyle(p)}${p.id === heroId ? ';view-transition-name:pj-hero' : ''}">
+          <span class="pj-art${shot ? '' : ' pj-sig'}">${shot ? `<img class="pj-shot" src="${shot}" alt="" loading="lazy" onerror="this.parentElement.classList.add('pj-sig');this.remove()">` : ''}${icon(KINDS[p.kind].icon, 44)}<span class="pj-file">${String(i + 1).padStart(2, '0')}</span><i class="pj-sweep"></i></span>
+          <span class="pj-kind">${esc(kindsOf(p).join(' · '))}</span>
           <span class="pj-name">${esc(p.name)}</span>
-          <span class="pj-tech">${esc(p.tech.split(' / ').slice(0, 3).join(' · '))}</span>
-          <span class="pj-tags">${tagsHtml(p.tags)}</span>
+          <span class="pj-sum">${esc(p.sum)}</span>
+          ${statusHtml(p.status)}
         </button>`;
       }).join('')}</div>
     </div>
@@ -466,58 +474,46 @@ out.addEventListener('pointermove', e => {
   const r = t.getBoundingClientRect();
   t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
   t.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  if (t.classList.contains('pj-tile') && !REDUCED_MOTION) {
+    t.style.setProperty('--ry', (((e.clientX - r.left) / r.width) - 0.5) * 7 + 'deg');
+    t.style.setProperty('--rx', (0.5 - ((e.clientY - r.top) / r.height)) * 7 + 'deg');
+  }
 });
+out.addEventListener('pointerout', e => {
+  const t = e.target.closest('.pj-tile');
+  if (t && !t.contains(e.relatedTarget)) { t.style.removeProperty('--rx'); t.style.removeProperty('--ry'); }
+});
+
+// Every few seconds one record catches interference, so the grid never sits
+// dead even when nobody is touching it.
+setInterval(() => {
+  if (REDUCED_MOTION || document.hidden) return;
+  const tiles = [...out.querySelectorAll('.pj-tile:not([hidden]):not(:hover)')];
+  if (!tiles.length) return;
+  const t = tiles[Math.floor(Math.random() * tiles.length)];
+  t.classList.remove('glitch'); void t.offsetWidth; t.classList.add('glitch');
+  setTimeout(() => t.classList.remove('glitch'), 600);
+}, 2600);
 
 function cxFilterProjects(btn){
   const tag = btn.textContent;
-  btn.parentElement.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
+  btn.parentElement.querySelectorAll('.on').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
   btn.classList.add('on');
+  btn.setAttribute('aria-pressed', 'true');
   let shown = 0;
   out.querySelectorAll('.pj-tile').forEach(t => {
-    t.hidden = tag !== 'ALL' && !t.dataset.tags.split('|').includes(tag);
+    t.hidden = tag !== 'ALL' && !t.dataset.kind.split('|').includes(tag);
     if (t.hidden) return;
     // replay the entrance so the survivors close ranks instead of jumping
     t.style.setProperty('--i', shown++);
     t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
   });
+  const count = document.getElementById('pj-count');
+  if (count) count.textContent = `${shown} SHOWN`;
 }
 
 // What a project card carries besides its description.
 const PROJECT_DEMOS = {
-  'echo-scout': { html: () => `<div class="proj-demo">
-      <div class="ps-bar"><span class="ps-t">${icon('mark')}EMULATED LIVE DEMO</span><span class="ps-r proj-demo-sim">SIMULATED SENSOR DATA</span></div>
-      <div class="proj-demo-body">
-        <div class="echo-device-outer">
-          <div class="echo-device-bezel">
-            <div class="echo-device-notch"></div>
-            <canvas id="es-demo" width="240" height="320" class="echo-device-canvas"></canvas>
-          </div>
-          <div class="echo-device-controls">
-            <button class="echo-reset-btn" id="es-demo-reset">${icon('reset', 16)}RESET</button>
-            <div class="echo-device-footer">ECHO SCOUT v1.0 · ESP32-S3</div>
-          </div>
-        </div>
-        <ul class="echo-demo-hint">
-          <li>Boots automatically to the menu</li>
-          <li>Tap menu buttons to navigate</li>
-          <li>Tap <b>&lt; MENU</b> to go back</li>
-          <li>Tab bars switch sensor views</li>
-          <li>RESET restarts from the boot screen</li>
-        </ul>
-      </div>
-    </div>`,
-    // seven hundred lines of emulator nobody needs until this card is open
-    after(){
-      const run = () => startEchoScoutDemo('es-demo');
-      if (window.startEchoScoutDemo) return run();
-      const s = document.createElement('script');
-      s.src = STATIC_URLS.echoScout; s.onload = run;
-      document.head.appendChild(s);
-    } },
-  'song2vec': { html: () => `<div class="proj-demo">
-      <div class="ps-bar"><span class="ps-t">${icon('mark')}LIVE INTERACTIVE DEMO</span><span class="ps-r">203K SONGS · 1305 GENRES · 985 TAGS</span></div>
-      <div class="ps-body"><a class="ps-btn" href="${STATIC_URLS.song2vec}"><span class="ps-lbl">OPEN SONG2VEC</span></a></div>
-    </div>` },
   'bird-classifier':  { html: () => `<div class="proj-demo">${psBirdPanel()}</div>` },
   'minecraft-server': { html: () => `<div class="proj-demo">${psPortalPanel()}</div>`, after: () => psFillFaces() },
 };
@@ -527,26 +523,26 @@ function projectHtml(p){
   const prev = PROJECTS[(i + n - 1) % n], next = PROJECTS[(i + 1) % n];
   const shots = [p.img, p.img2].filter(Boolean);
   const demo = PROJECT_DEMOS[p.id];
-  return `<article class="ps-panel proj-card">
+  return `<article class="ps-panel proj-card" style="${kindStyle(p)}">
     <div class="ps-bar">
       <button class="pj-back" onclick="cxBackToProjects('${p.id}')">${icon('left', 14)}RECORDS</button>
       <span class="ps-t" data-decode>${esc(p.name)}</span>
-      <span class="ps-r">FILE ${String(i + 1).padStart(2, '0')} / ${n}</span>
+      <span class="ps-r">${String(i + 1).padStart(2, '0')} / ${n}</span>
     </div>
     <div class="proj-body">
-      ${shots.length ? `<div class="proj-media">
+      ${shots.length ? `<div class="proj-media${p.pixel ? ' pixel' : ''}">
         <img class="proj-main" src="${shots[0]}" alt="${esc(p.name)}" onerror="this.closest('.proj-media').remove()">
         ${shots.length > 1 ? `<div class="proj-strip">${shots.map((s, k) =>
           `<button class="${k ? '' : 'on'}" onclick="cxSwapShot(this)" aria-label="Image ${k + 1}"><img src="${s}" alt="" loading="lazy" onerror="this.parentElement.remove()"></button>`).join('')}</div>` : ''}
       </div>` : ''}
       <div class="proj-info">
-        ${p.tags.length ? `<div class="proj-tags">${tagsHtml(p.tags)}</div>` : ''}
-        ${chipsHtml(p.tech.split(' / '))}
+        <div class="proj-kind">${icon(KINDS[p.kind].icon, 16)}${esc(kindsOf(p).join(' · '))}${statusHtml(p.status)}</div>
         <p class="proj-sum">${esc(p.sum)}</p>
-        <ul class="proj-points">${p.points.map((pt, k) => `<li style="--i:${k}">${esc(pt)}</li>`).join('')}</ul>
+        ${p.note ? `<p class="proj-note">${esc(p.note)}</p>` : ''}
+        ${chipsHtml(p.tech.split(' / '))}
         ${p.link
           ? `<a class="ps-btn ps-sm" href="${p.link}" target="_blank" rel="noopener"><span class="ps-lbl">VIEW ON GITHUB${icon('ext', 17)}</span></a>`
-          : `<div class="proj-private">${icon('lock', 15)}IN-HOUSE BUILD · NOT PUBLIC</div>`}
+          : p.noRepo ? '' : `<div class="proj-private">${icon('lock', 15)}PRIVATE REPOSITORY</div>`}
       </div>
     </div>
     ${demo ? demo.html() : ''}
@@ -570,7 +566,11 @@ function cxSwapShot(btn){
 function cxOpenProject(id, tile){
   const p = projectById(id);
   if (!p) return;
-  if (tile) tile.style.viewTransitionName = 'pj-hero';
+  // the tile the visitor came back to still carries the name; only one may
+  if (tile) {
+    out.querySelectorAll('.pj-tile').forEach(t => t.style.viewTransitionName = '');
+    tile.style.viewTransitionName = 'pj-hero';
+  }
   const demo = PROJECT_DEMOS[id];
   cxShow(projectHtml(p), demo && demo.after, true);
   document.getElementById('cx-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -592,7 +592,7 @@ function psPortalPanel(){
   const mc = STATIC_URLS.mc, url = STATIC_URLS.minecraft;
   const stats = [[mc.seasons, 'SEASONS'], [mc.shots, 'SCREENSHOTS'], [mc.clips, 'CLIPS'], [mc.span, 'UPTIME']];
   return `<section class="ps-panel ps-portal">
-    <div class="ps-bar"><span class="ps-t">${icon('mark')}MINECRAFT PORTAL</span><span class="ps-r"><span class="ps-live"></span>SEASON ${mc.seasons} LIVE</span></div>
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}MINECRAFT SERVER</span><span class="ps-r"><span class="ps-live"></span>SEASON ${mc.seasons}</span></div>
     <div class="ps-body">
       <div class="ps-stats">${stats.map(([v, k], i) => `<div style="--i:${i}"><b>${v}</b><i>${k}</i></div>`).join('')}</div>
       <div class="ps-thumbs">${mc.thumbs.map((t, i) =>
@@ -648,9 +648,9 @@ function psBirdPanel(){
         <span class="ps-pc">${pc}%</span>
       </div>`).join('');
   return `<section class="ps-panel">
-    <div class="ps-bar"><span class="ps-t">${icon('mark')}BIRD CLASSIFIER</span><span class="ps-r"><span class="ps-live"></span>MODEL ONLINE</span></div>
+    <div class="ps-bar"><span class="ps-t">${icon('mark')}BIRD CLASSIFIER</span><span class="ps-r">30 SPECIES</span></div>
     <div class="ps-body">
-      ${chipsHtml(['CNN', 'MEL-SPECTROGRAM', '30 SPECIES', 'PYTORCH', 'DJANGO'])}
+      ${chipsHtml(['CNN', 'MEL-SPECTROGRAM', 'PYTORCH', 'DJANGO'])}
       <p class="ps-p">Feed it a bird call and it returns a species, the top five candidates with confidence, and the spectrogram it actually classified.</p>
       <div class="ps-sub"><span>SAMPLE OUTPUT</span><span>northern_flicker.wav</span></div>
       ${rows}
@@ -659,15 +659,15 @@ function psBirdPanel(){
         <a class="ps-btn ps-sm ps-alt" href="${u}#start-recording"><span class="ps-lbl">RECORD FROM MIC</span></a>
         <a class="ps-btn ps-sm ps-alt" href="${u}#bird-search"><span class="ps-lbl">TRY A SAMPLE CALL</span></a>
       </div>
-      <div class="ps-hint">wav / mp3 / ogg / m4a · or pull one by Macaulay ML number</div>
+      <div class="ps-hint">WAV, MP3, OGG or M4A, or pull one by Macaulay ML number</div>
     </div>
   </section>`;
 }
 
-// Sprites and voice load without Django's ?t= cache-buster, so the browser
-// caches them hard. Stamp every codec asset URL with a per-load token or a
-// replaced frame keeps showing the stale one.
-const CX_BUST = Date.now();
+// Sprites and voice lines are built here rather than by {% static %}, so they
+// carry the server's stamp: the newest mtime among them. A replaced frame or
+// line changes it; until then every visit is served from the browser cache.
+const CX_BUST = STATIC_URLS.codecVer || Date.now();
 const CX_F = n => `${STATIC_URLS.codecBase}/campbell_f${n}.png?v=${CX_BUST}`;
 const SN_F = n => `${STATIC_URLS.codecBase}/snake_f${n}.png?v=${CX_BUST}`;
 const OT_F = n => `${STATIC_URLS.codecBase}/otacon_f${n}.png?v=${CX_BUST}`;
@@ -683,6 +683,11 @@ const CX_SPEAKERS = {
              pose: [OT_F('00'), OT_F('01'), OT_F('02'), OT_F('02')] },
 };
 let cxSpeaker = CX_SPEAKERS.colonel;
+// Every frame is fetched and decoded up front and held here. A frame swapped in
+// for the first time mid-line otherwise blanks the portrait while it loads,
+// which is what made Otacon's face drop out as he started talking.
+const cxFrames = [...new Set(Object.values(CX_SPEAKERS).flatMap(s => [s.neutral, ...s.pose]))]
+  .map(src => { const im = new Image(); im.src = src; if (im.decode) im.decode().catch(() => {}); return im; });
 // What each slot shows at rest, so it keeps the last character who used it.
 const cxSlotNeutral = {
   [CX_SPEAKERS.colonel.imgId]: CX_SPEAKERS.colonel.neutral,
@@ -709,7 +714,7 @@ const CX_CONTACTS = [
       if (this.done) return null;
       this.done = true;
       return [
-        { key:'c0_l0', text:"Snake, this is Nick Burczyk. A software engineer who dabbles in audio, vision, and embedded systems. He's currently stationed at Sandia National Labs as a TITANS software R&D intern." },
+        { key:'c0_l0', text:"Snake, this is Nick Burczyk. He's a software developer and AI integration engineer at Viper Imaging." },
         { key:'c0_l1', text:"Everything we've gathered on him is laid out below. We've also attached his direct links. For anything specific, tune through the other channels, or open MEMORY for the list." },
       ];
     } },
@@ -1015,6 +1020,8 @@ function skipTyping(){
 let cxFreqTimer = null;
 function cxRollFreq(to){
   const el = document.getElementById('freq-num');
+  const pin = document.getElementById('pin-freq');
+  if (pin) pin.textContent = to;
   clearInterval(cxFreqTimer);
   if (REDUCED_MOTION) { el.textContent = to; return; }
   let n = 0;
@@ -1078,6 +1085,29 @@ function toggleMemory(force){
   if (!p) return;
   const open = typeof force === 'boolean' ? force : !p.classList.contains('open');
   p.classList.toggle('open', open);
+  document.querySelectorAll('.cx-memory').forEach(b => b.setAttribute('aria-expanded', String(open)));
+  if (open) { const row = p.querySelector('.cx-mem-row.active') || p.querySelector('.cx-mem-row'); if (row) row.focus({ preventScroll: true }); }
+}
+document.addEventListener('pointerdown', e => {
+  const p = document.getElementById('cx-memory-panel');
+  if (p && p.classList.contains('open') && !p.contains(e.target) && !e.target.closest('.cx-memory')) toggleMemory(false);
+});
+
+// The subtitle strip: once the codec has scrolled out of sight, what is being
+// said keeps showing along the top of the screen.
+function cxInitPin(){
+  const pin = document.getElementById('cx-pin'), dlg = document.getElementById('cx-dialogue');
+  if (!pin || !dlg) return;
+  const who = document.getElementById('pin-who'), line = document.getElementById('pin-line');
+  const mirror = () => {
+    who.textContent = dlg.dataset.who ? dlg.dataset.who + ':' : '';
+    line.textContent = dlg.textContent;
+  };
+  new MutationObserver(mirror).observe(dlg, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['data-who'] });
+  new IntersectionObserver(([en]) => {
+    pin.classList.toggle('on', !en.isIntersecting && en.boundingClientRect.top < 0);
+  }, { root: document.getElementById('screen') }).observe(dlg);
+  document.getElementById('pin-text').onclick = () => document.getElementById('screen').scrollTo({ top: 0 });
 }
 
 function initCodec(){
@@ -1086,14 +1116,16 @@ function initCodec(){
   // Signal meter: a dense stack of left-aligned bars on a concave curve, top
   // bar longest, matching the real codec display.
   const bars = document.getElementById('cx-bars');
-  cxBarEls = [196, 118, 92, 78, 68, 61, 56, 52, 49].map(w => {
+  cxBarEls = [98, 59, 46, 39, 34, 30.5, 28, 26, 24.5].map(w => {
     const s = document.createElement('span');
-    s.style.width = w + 'px';
+    s.style.width = w + '%';
     s._base = 0.28;
     return bars.appendChild(s);
   });
   cxBuildMemory();
+  cxInitPin();
   document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
     // the arrows on screen click for themselves; the keys have to be given one
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { playClickSound(); tuneStep(e.key === 'ArrowLeft' ? -1 : 1); }
     if (e.key === 'm' || e.key === 'M') toggleMemory();
@@ -1101,3 +1133,21 @@ function initCodec(){
   });
   cxOpenContact(0);
 }
+
+// Returning in the same tab: skip the call screen. Browsers keep audio locked
+// until the visitor touches the page, so the codec opens silent and the music
+// starts on their first click or key.
+function resumeSite(){
+  const screen = document.getElementById('screen');
+  screen.classList.add('visible', 'crt-open');
+  initCodec();
+  loadSound(STATIC_URLS.menu).then(buf => { bgMusic = buf; if (getAudioCtx().state === 'running') playBackgroundMusic(); });
+  Promise.all(['hover', 'click'].map(k => loadSound(STATIC_URLS[k])))
+    .then(([h, c]) => { hoverBuffer = h; clickBuffer = c; });
+  const wake = () => {
+    ['pointerdown', 'keydown'].forEach(t => document.removeEventListener(t, wake, true));
+    getAudioCtx().resume().then(playBackgroundMusic);
+  };
+  ['pointerdown', 'keydown'].forEach(t => document.addEventListener(t, wake, true));
+}
+if (document.documentElement.classList.contains('cx-returning')) resumeSite();

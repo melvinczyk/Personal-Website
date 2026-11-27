@@ -139,13 +139,6 @@ function selectDisc(i) {
   document.getElementById('disc-title').textContent = s.name;
   document.getElementById('disc-desc').textContent  = s.description;
 
-  // scaled against the fullest disc, so the biggest one reads full
-  const maxShots = Math.max(1, ...SEASONS.map(x => x.screenshots.length));
-  const maxClips = Math.max(1, ...SEASONS.map(x => x.videos.length));
-  document.getElementById('meter-shots').style.width = (s.screenshots.length / maxShots * 100) + '%';
-  document.getElementById('meter-clips').style.width = (s.videos.length / maxClips * 100) + '%';
-  document.getElementById('count-shots').textContent = s.screenshots.length;
-  document.getElementById('count-clips').textContent = s.videos.length;
   document.getElementById('tab-count-shots').textContent = s.screenshots.length;
   document.getElementById('tab-count-clips').textContent = s.videos.length;
 
@@ -158,9 +151,10 @@ function selectDisc(i) {
   document.getElementById('entry-roster-count').textContent = (s.roster || []).length;
   document.getElementById('entry-gallery-count').textContent =
     s.screenshots.length + s.videos.length;
-  document.getElementById('entry-roster').classList.toggle('empty', !(s.roster || []).length);
-  document.getElementById('entry-gallery').classList.toggle('empty',
-    !(s.screenshots.length + s.videos.length));
+  // a season with no clips does not offer an empty Clips tab
+  document.getElementById('tab-clips').hidden = !s.videos.length;
+  if (!s.videos.length && currentTab === 'videos') switchTab('screenshots');
+  showSeasonTab(seasonTab);
 }
 
 // The roster is a second rail: one card per player, centred like the discs.
@@ -828,56 +822,22 @@ function mcRevealPanel(panel) {
     { duration: 300, delay: 90, easing: 'cubic-bezier(.2,.7,.3,1)' });
 }
 
-// Clicking the highlighted disc loads it; any other disc moves the rail first.
-function discClick(i) {
-  if (i === discIdx) { toggleMedia(); return; }
-  selectDisc(i);
-  toggleMedia(false);
-  toggleRoster(false);
-}
-// The disc has two screens on it and neither opens on its own: picking a
-// disc leaves you on its menu, the way a console does.
-function openSection(id, entry, force) {
-  const el = document.getElementById(id);
-  const open = typeof force === 'boolean' ? force : !el.classList.contains('open');
-  el.classList.toggle('open', open);
-  document.getElementById(entry).classList.toggle('open', open);
-  if (open) closeOthers(id);
-  syncScreen();
-  layoutRail();     // the slots resized, so re-centre
-  layoutRoster();   // the roster rail could not be measured while it was shut
-  if (open) requestAnimationFrame(() => {
-    layoutRoster();
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });
-}
+// Picking a disc shows that season straight away: its gallery by default,
+// or its players, whichever tab was last chosen.
+function discClick(i) { if (i !== discIdx) selectDisc(i); }
+function discStep(dir) { selectDisc(discIdx + dir); }
 
-function closeOthers(keep) {
-  for (const [id, entry] of [['roster', 'entry-roster'], ['disc-media', 'entry-gallery']]) {
-    if (id === keep) continue;
-    document.getElementById(id).classList.remove('open');
-    document.getElementById(entry).classList.remove('open');
-  }
-}
-
-// the disc rail gives up room whenever either screen is showing
-function syncScreen() {
-  const open = document.querySelector('#roster.open, #disc-media.open');
-  document.querySelector('.console-screen').classList.toggle('loaded', !!open);
-}
-
-function toggleMedia(force)  { openSection('disc-media', 'entry-gallery', force); }
-function toggleRoster(force) { openSection('roster', 'entry-roster', force); }
-function sectionOpen() { return document.querySelector('#roster.open, #disc-media.open'); }
-function discStep(dir) {
-  selectDisc(discIdx + dir);
-  toggleMedia(false);
-  toggleRoster(false);
-}
-// L1/R1 page the viewer while it is open, otherwise they change disc
-function shoulder(dir) {
-  if (lbOpen()) { lbStep(dir); return; }
-  discStep(dir);
+let seasonTab = 'gallery';
+function showSeasonTab(which) {
+  seasonTab = which;
+  const media = which === 'gallery';
+  document.getElementById('disc-media').classList.toggle('open', media);
+  document.getElementById('roster').classList.toggle('open', !media);
+  document.getElementById('entry-gallery').classList.toggle('on', media);
+  document.getElementById('entry-roster').classList.toggle('on', !media);
+  document.querySelector('.console-screen').classList.add('loaded');
+  layoutRail();
+  requestAnimationFrame(layoutRoster);
 }
 
 function renderMedia() {
@@ -907,28 +867,9 @@ function renderMedia() {
 
 function switchTab(tabName) {
   currentTab = tabName;
-  toggleMedia(true);
   document.querySelectorAll('.media-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tabName));
 }
-function cycleTab() { switchTab(currentTab === 'screenshots' ? 'videos' : 'screenshots'); }
-
-function jumpTop()   { document.getElementById('stage').scrollTo({ top: 0, behavior: 'smooth' }); }
-function jumpMedia() { toggleMedia(true); }
-function loadDisc()  { toggleMedia(); }
-// ○ backs out one level: viewer, then the open disc, then home
-function psxBack() {
-  if (lbOpen()) { closeLightbox(); return; }
-  const drawer = panelOpen();
-  if (drawer) { hidePanel(Number(drawer.id.replace('rc-panel-', ''))); return; }
-  const screen = sectionOpen();
-  if (screen) {
-    return screen.id === 'roster' ? toggleRoster(false) : toggleMedia(false);
-  }
-  if (liveOpen) { toggleLive(liveOpen); return; }
-  window.location.href = HOME_URL;
-}
-
 let lbMediaType = 'screenshots';
 let lbIdx = 0;
 function lbOpen() { return document.getElementById('lightbox').classList.contains('open'); }
@@ -994,7 +935,7 @@ document.getElementById('lightbox').addEventListener('click', e => {
   if (e.target === document.getElementById('lightbox')) closeLightbox();
 });
 
-// keyboard mirrors the on-screen pad
+// arrow keys change disc; the viewer takes them while it is open
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea')) return;
   if (lbOpen()) {
@@ -1005,11 +946,6 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'ArrowRight') { e.preventDefault(); discStep(1); }
   if (e.key === 'ArrowLeft')  { e.preventDefault(); discStep(-1); }
-  if (e.key === 'ArrowDown')  { e.preventDefault(); jumpMedia(); }
-  if (e.key === 'ArrowUp')    { e.preventDefault(); jumpTop(); }
-  if (e.key === 'Enter')      { e.preventDefault(); loadDisc(); }
-  if (e.key === 'Backspace')  { e.preventDefault(); psxBack(); }
-  if (e.key === 'Tab')        { e.preventDefault(); cycleTab(); }
 });
 
 
@@ -1794,62 +1730,15 @@ function buildLive(board) {
     </div>`;
   };
 
-  // The legendary fish are a collection rather than a fight, so the board is
-  // a shelf of them: every one Starcatcher can produce in this pack has a
-  // slot from the start, drawn as the mod's own unknown_fish silhouette until
-  // somebody lands it and it lights up gold. The name is left showing on a
-  // slot nobody has filled - a boss keeps its name back because finding out
-  // what it is IS the reward, where a fish you have not caught yet is
-  // something to go looking for, and a shelf of thirteen identical ??? would
-  // tell nobody where to cast.
-  const unknown = board.fish_unknown || '';
-  const fishCard = f => {
-    const best = f.best;
-    return `
-    <div class="fcard${f.caught ? ' caught' : ' locked'}" id="fc-${f.key}"
-         data-caught="${f.caught ? 1 : 0}">
-      <div class="fc-stage">
-        <img class="fc-icon" src="${f.caught || REVEAL ? f.icon : unknown}" alt=""
-             loading="lazy" width="64" height="64">
-      </div>
-      <div class="fc-foot">
-        <div class="fc-name">${f.name}</div>
-        ${f.caught ? `
-          <div class="fc-tally">${compact(f.count)} landed</div>
-          <div class="fc-anglers">${f.anglers.map(a => `
-            <span class="bc-killer"${a.skin ? ` style="--skin:url('${a.skin}')"` : ''}>
-              <i class="bc-face"></i><b>${a.name}</b><em>${a.count}\u00d7</em>
-            </span>`).join('')}</div>
-          ${best ? `<div class="fc-best">${best.size} cm \u00b7 ${best.weight}</div>
-            ${(() => {
-              // a tile is a hundred and twenty pixels wide, so the placing and
-              // the two flags share the one line rather than each running off
-              // the end of its own
-              const marks = [best.top ? `TOP ${best.top}%` : '',
-                             best.golden ? 'GOLDEN' : '',
-                             best.perfect ? 'PERFECT' : ''].filter(Boolean);
-              return marks.length ? `<div class="fc-marks">${marks.join(' \u00b7 ')}</div>` : '';
-            })()}` : ''}
-        ` : ''}
-      </div>
-    </div>`;
-  };
-
   const all = board.bosses || [];
   document.getElementById('ls-bosses').innerHTML =
     all.filter(b => b.category !== 'miniboss').map(bossCard).join('');
   document.getElementById('ls-minibosses').innerHTML =
     all.filter(b => b.category === 'miniboss').map(bossCard).join('');
-  const shelf = document.getElementById('ls-fish');
-  if (shelf) {
-    shelf.innerHTML = (board.fish || []).map(fishCard).join('')
-      || '<p class="rp-none">no legendary fish are catchable in this pack</p>';
-  }
   filterBosses();
-  filterFish();
   // the grids were just rebuilt, so nothing in them has played its entrance
   mcRevealReset();
-  mcReveal('.pcard, .bcard, .fcard');
+  mcReveal('.pcard, .bcard');
 }
 
 // The list can be cut down to the ones already felled. A card that is filtered
@@ -1878,29 +1767,9 @@ function filterSection(gridId, checkboxId, countId) {
 
 function filterBosses() {
   filterSection('ls-bosses', 'ls-beaten', 'ls-boss-count');
-  filterSection('ls-minibosses', 'ls-mini-beaten', 'ls-mini-count');
+  filterSection('ls-minibosses', 'ls-beaten', 'ls-mini-count');
 }
 
-// The same cut-down as the boss grids, over the tiles the fish shelf holds.
-function filterFish() {
-  const shelf = document.getElementById('ls-fish');
-  if (!shelf) return;
-  const only = (document.getElementById('ls-fish-caught') || {}).checked;
-  let shown = 0, caught = 0, total = 0;
-  for (const tile of shelf.querySelectorAll('.fcard')) {
-    total += 1;
-    const landed = tile.dataset.caught === '1';
-    if (landed) caught += 1;
-    const hide = only && !landed;
-    tile.classList.toggle('hidden', hide);
-    if (!hide) shown += 1;
-  }
-  const count = document.getElementById('ls-fish-count');
-  if (count) {
-    count.textContent = only ? `${shown} shown of ${total}`
-                             : `${caught} caught of ${total}`;
-  }
-}
 
 // a model turns while the pointer is on it and stands still otherwise: ten
 // scenes all spinning at once is a lot of painting for no one's benefit
@@ -3121,7 +2990,6 @@ function updateLive(board) {
   document.getElementById('ls-count').textContent =
     `${T.online} of ${T.tracked} online`;
   filterBosses();
-  filterFish();
 
   const worst = Math.max(1, ...(board.players || []).map(p => p.deaths));
   for (const p of board.players || []) {
@@ -3308,21 +3176,18 @@ async function pollLive() {
 // observer that builds them only firing on something that can actually be
 // seen. The map's frame is made on first open and then left alone, because
 // tearing it down would mean downloading the world again on the next look.
-function toggleSection(key) {
-  const box = document.getElementById(key);
-  if (!box) return;
-  const shut = box.classList.toggle('shut');
-  const btn = document.querySelector(`[data-sec="${key}"]`);
-  if (btn) btn.textContent = shut ? 'Show' : 'Hide';
-  if (shut) return;
-
-  if (box.dataset.src && !box.firstChild) {
-    const frame = document.createElement('iframe');
-    frame.title = 'Live world map';
-    frame.src = box.dataset.src;
-    box.appendChild(frame);
-  }
-  requestAnimationFrame(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+// The rosters share one panel: a tab picks which list shows, and the
+// "beaten only" filter is offered only on the boss lists it applies to.
+function showRoster(key) {
+  document.querySelectorAll('.ls-tab').forEach(t => {
+    const on = t.dataset.sec === key;
+    t.classList.toggle('on', on);
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    const box = document.getElementById(t.dataset.sec);
+    if (box) box.classList.toggle('shut', !on);
+  });
+  const only = document.getElementById('ls-only');
+  if (only) only.hidden = key === 'sec-players';
 }
 
 // ── the server's chat ───────────────────────────────────────────────────────
