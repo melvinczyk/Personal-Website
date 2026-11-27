@@ -117,6 +117,10 @@ body::after {
   background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgba(0,0,0,0.4) 3px 4px);
   -webkit-background-clip: text; background-clip: text;
 }
+/* the CALL box blinks like the incoming call in MGS1 */
+.codec-call-box { animation: call-blink 1s step-end infinite; }
+@keyframes call-blink { 50% { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .codec-call-box { animation: none; } }
 .codec-sub { font-size: var(--t-md); color: #888; animation: blink 1.2s step-end infinite; }
 @keyframes blink { 50% { opacity: 0.3 } }
 .codec-btn {
